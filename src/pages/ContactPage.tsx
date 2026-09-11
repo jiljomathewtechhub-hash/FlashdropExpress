@@ -1,0 +1,227 @@
+import React, { useState } from 'react';
+import { Phone, Mail, Clock, MapPin, Send, CheckCircle2, MessageSquare } from 'lucide-react';
+import { store } from '../lib/store';
+import { TiltCard } from '../components/common/TiltCard';
+
+interface ContactPageProps {
+  onNavigate: (tab: string) => void;
+}
+
+export const ContactPage: React.FC<ContactPageProps> = ({ onNavigate }) => {
+  const settings = store.getSettings();
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
+  const [message, setMessage] = useState('');
+  const [sent, setSent] = useState(false);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setSent(true);
+    setTimeout(() => {
+      setName('');
+      setEmail('');
+      setPhone('');
+      setMessage('');
+      setSent(false);
+    }, 3000);
+  };
+
+  return (
+    <div className="py-16 px-4 sm:px-6 max-w-6xl mx-auto space-y-12 relative">
+      {/* Glow */}
+      <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[300px] bg-red-600/5 blur-[120px] pointer-events-none rounded-full" />
+
+      {/* Header */}
+      <div className="max-w-2xl mx-auto text-center space-y-3 relative z-10">
+        <span className="badge-soft-rose px-3.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider inline-block">
+          Direct Operations
+        </span>
+        <h1 className="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-white via-red-100 to-red-300 font-['Outfit'] tracking-tight">
+          Contact FlashDrop Express
+        </h1>
+        <p className="text-slate-400 text-sm">
+          Live GTA dispatch coordinator for immediate pickup or commercial account setup.
+        </p>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 relative z-10">
+        {/* Left Column: 3D Contact Cards */}
+        <div className="lg:col-span-5 space-y-6">
+          <TiltCard maxTilt={6}>
+            <div className="bg-[#111624]/90 backdrop-blur-md border border-slate-800/80 rounded-2xl p-6 space-y-5 shadow-xl">
+              <h2 className="text-lg font-bold text-white font-['Outfit'] border-b border-slate-800 pb-3">
+                Commercial Dispatch Desk
+              </h2>
+
+              <div className="space-y-4 text-xs">
+                {/* Phone */}
+                <div className="flex items-start space-x-3.5">
+                  <div className="p-2.5 rounded-xl bg-red-500/10 border border-red-500/20 text-red-300 flex-shrink-0">
+                    <Phone className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <span className="text-slate-400 block text-[11px] uppercase font-bold">Dispatch Direct Line</span>
+                    <a
+                      href="tel:+16478049775"
+                      className="text-lg font-black text-white hover:text-red-300 transition font-['Outfit'] tracking-wide"
+                    >
+                      +1 (647) 804-9775
+                    </a>
+                    <span className="text-emerald-400 text-[11px] block mt-0.5">● Live Dispatch Active</span>
+                  </div>
+                </div>
+
+                {/* Email */}
+                <div className="flex items-start space-x-3.5">
+                  <div className="p-2.5 rounded-xl bg-red-500/10 border border-red-500/20 text-red-300 flex-shrink-0">
+                    <Mail className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <span className="text-slate-400 block text-[11px] uppercase font-bold">Electronic Billing & Support</span>
+                    <a
+                      href="mailto:support@flashdropexpress.com"
+                      className="text-white hover:text-red-300 transition font-medium text-xs"
+                    >
+                      support@flashdropexpress.com
+                    </a>
+                  </div>
+                </div>
+
+                {/* Operating Hours */}
+                <div className="flex items-start space-x-3.5">
+                  <div className="p-2.5 rounded-xl bg-red-500/10 border border-red-500/20 text-red-300 flex-shrink-0">
+                    <Clock className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <span className="text-slate-400 block text-[11px] uppercase font-bold">Standard & After-Hours</span>
+                    <span className="text-white font-medium block">
+                      {settings.operating_hours_start} – {settings.operating_hours_end} (Mon–Sat)
+                    </span>
+                    <span className="text-red-300 font-semibold block mt-0.5">
+                      24/7 On-Call Emergency Service Available
+                    </span>
+                  </div>
+                </div>
+
+                {/* Service Region */}
+                <div className="flex items-start space-x-3.5">
+                  <div className="p-2.5 rounded-xl bg-red-500/10 border border-red-500/20 text-red-300 flex-shrink-0">
+                    <MapPin className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <span className="text-slate-400 block text-[11px] uppercase font-bold">Primary Hub</span>
+                    <span className="text-white font-medium">
+                      Toronto & Greater Toronto Area, Ontario
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </TiltCard>
+
+          {/* Official Brand Identity Card */}
+          <div className="rounded-2xl bg-white/95 border border-slate-700/50 p-5 shadow-xl flex items-center justify-center space-x-4">
+            <img
+              src="/images/flashdrop-logo.jpg"
+              alt="FlashDrop Express"
+              className="h-14 w-auto object-contain"
+            />
+            <div className="text-left border-l border-slate-300 pl-4">
+              <div className="text-xs font-black text-slate-900 uppercase tracking-wide">
+                FlashDrop Express Inc.
+              </div>
+              <div className="text-[11px] text-slate-500">
+                Ontario Commercial Freight Carrier
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Right Column: Inquiry Form */}
+        <div className="lg:col-span-7">
+          <div className="bg-[#111624]/90 backdrop-blur-md border border-slate-800 rounded-2xl p-6 sm:p-8 shadow-xl space-y-6">
+            <div className="flex items-center justify-between border-b border-slate-800 pb-4">
+              <div>
+                <h2 className="text-lg font-bold text-white font-['Outfit']">
+                  Send Dispatch Message
+                </h2>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  Quick response guaranteed for commercial quotes and immediate pickups.
+                </p>
+              </div>
+              <MessageSquare className="w-5 h-5 text-red-400" />
+            </div>
+
+            <form onSubmit={handleSubmit} className="space-y-4 text-xs">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-slate-300 font-semibold mb-1">Name / Business *</label>
+                  <input
+                    type="text"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    placeholder="e.g. Acme Industrial Supplies Ltd. / John Doe"
+                    className="w-full bg-[#0A0D14] border border-slate-700/80 p-2.5 rounded-xl text-white placeholder:text-slate-500 focus:border-red-400 focus:outline-none"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-slate-300 font-semibold mb-1">Phone Number *</label>
+                  <input
+                    type="tel"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    placeholder="e.g. +1 (647) 555-0199"
+                    className="w-full bg-[#0A0D14] border border-slate-700/80 p-2.5 rounded-xl text-white placeholder:text-slate-500 focus:border-red-400 focus:outline-none"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-slate-300 font-semibold mb-1">Email Address *</label>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="e.g. logistics@company.com"
+                  className="w-full bg-[#0A0D14] border border-slate-700/80 p-2.5 rounded-xl text-white placeholder:text-slate-500 focus:border-red-400 focus:outline-none"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-slate-300 font-semibold mb-1">Freight or Service Requirements *</label>
+                <textarea
+                  value={message}
+                  onChange={(e) => setMessage(e.target.value)}
+                  placeholder="e.g. Need daily pallet transfers between Mississauga and Markham, approx 800 lbs per load..."
+                  rows={4}
+                  className="w-full bg-[#0A0D14] border border-slate-700/80 p-2.5 rounded-xl text-white placeholder:text-slate-500 focus:border-red-400 focus:outline-none"
+                  required
+                />
+              </div>
+
+              {sent ? (
+                <div className="p-3.5 rounded-xl bg-emerald-950/80 border border-emerald-500/30 text-emerald-300 font-bold text-center flex items-center justify-center space-x-2">
+                  <CheckCircle2 className="w-5 h-5 text-emerald-400" />
+                  <span>Message dispatched to support@flashdropexpress.com! We will reach out shortly.</span>
+                </div>
+              ) : (
+                <button
+                  type="submit"
+                  className="w-full py-3.5 btn-gradient-primary text-white font-bold rounded-xl shadow-lg shadow-red-950/40 transition flex items-center justify-center space-x-2 cursor-pointer"
+                >
+                  <Send className="w-4 h-4" />
+                  <span>Send Message</span>
+                </button>
+              )}
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+

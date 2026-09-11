@@ -1,0 +1,1367 @@
+import React, { useState, useMemo, useEffect } from 'react';
+import confetti from 'canvas-confetti';
+import {
+  User,
+  MapPin,
+  Calendar,
+  Package,
+  Truck,
+  DollarSign,
+  CheckCircle2,
+  ArrowRight,
+  ArrowLeft,
+  Clock,
+  Car,
+  FileDown,
+  Search,
+  AlertCircle,
+  Sparkles,
+  Phone,
+  Mail,
+  Building,
+  ShieldCheck,
+  Zap,
+  Info,
+  Layers,
+  ChevronRight,
+  Loader2,
+  Navigation,
+} from 'lucide-react';
+import {
+  VehicleSlug,
+  DeliveryTimeOption,
+  ItemType,
+  Order,
+} from '../../types/order';
+import {
+  checkIsGta,
+  POPULAR_LOCATIONS,
+} from '../../lib/distance';
+import { calculateDeliveryPrice } from '../../lib/pricing';
+import { store } from '../../lib/store';
+import { generateOrderPdf } from '../../lib/pdf';
+import { AddressAutocompleteInput } from '../common/AddressAutocompleteInput';
+import { CalendarDatePicker } from '../common/CalendarDatePicker';
+import { FloatingTimePicker } from '../common/FloatingTimePicker';
+import { useOSRMDistance } from '../../hooks/useOSRMDistance';
+import { AddressSuggestion } from '../../hooks/useAddressAutocomplete';
+
+interface OrderWizardProps {
+  initialData?: any;
+  onNavigate: (tab: string, param?: any) => void;
+}
+
+export const OrderWizard: React.FC<OrderWizardProps> = ({ initialData, onNavigate }) => {
+  // 3-step consolidated wizard:
+  // Step 1: Route & Schedule (Where & When)
+  // Step 2: Cargo & Vehicle (What & How)
+  // Step 3: Contact & Review (Who & Confirm)
+  // Step 4: Confirmation & Receipt
+  const [step, setStep] = useState<number>(1);
+  const [createdOrder, setCreatedOrder] = useState<Order | null>(null);
+  const [validationError, setValidationError] = useState<string | null>(null);
+
+  // Form states
+  // 1. Customer Info
+  const [customerName, setCustomerName] = useState('');
+  const [customerPhone, setCustomerPhone] = useState('');
+  const [customerEmail, setCustomerEmail] = useState('');
+  const [companyName, setCompanyName] = useState('');
+
+  // 2. Pickup Address (Starts empty for live production)
+  const [pickupAddress, setPickupAddress] = useState('');
+  const [pickupUnit, setPickupUnit] = useState('');
+  const [pickupContactName, setPickupContactName] = useState('');
+  const [pickupContactPhone, setPickupContactPhone] = useState('');
+  const [pickupLat, setPickupLat] = useState<number>(0);
+  const [pickupLng, setPickupLng] = useState<number>(0);
+
+  // 3. Delivery Address (Starts empty for live production)
+  const [deliveryAddress, setDeliveryAddress] = useState('');
+  const [deliveryUnit, setDeliveryUnit] = useState('');
+  const [deliveryContactName, setDeliveryContactName] = useState('');
+  const [deliveryContactPhone, setDeliveryContactPhone] = useState('');
+  const [deliveryLat, setDeliveryLat] = useState<number>(0);
+  const [deliveryLng, setDeliveryLng] = useState<number>(0);
+
+  // 4. Scheduling
+  const todayStr = new Date().toISOString().split('T')[0];
+  const [pickupDate, setPickupDate] = useState(todayStr);
+  const [pickupTime, setPickupTime] = useState('11:00');
+  const [deliveryTimeOption, setDeliveryTimeOption] = useState<DeliveryTimeOption>('2-3h');
+
+  // 5. Item & Cargo (Starts empty for live production)
+  const [itemType, setItemType] = useState<ItemType>(
+    initialData?.pailsCount ? 'paint_pails' : 'paint_pails'
+  );
+  const [itemDescription, setItemDescription] = useState(
+    initialData?.pailsCount ? `${initialData.pailsCount} Commercial Paint Pails` : ''
+  );
+  const [weightLbs, setWeightLbs] = useState<number>(initialData?.weightLbs || 0);
+  const [quantity, setQuantity] = useState<number>(initialData?.pailsCount || 1);
+  const [customInstructions, setCustomInstructions] = useState('');
+
+  // 6. Vehicle
+  const initialVehSlug: VehicleSlug =
+    typeof initialData === 'string'
+      ? (initialData as VehicleSlug)
+      : initialData?.vehicleSlug || 'cargo_van';
+  const [vehicleSlug, setVehicleSlug] = useState<VehicleSlug>(initialVehSlug);
+
+  // 7. Extra options
+  const [waitingHours, setWaitingHours] = useState<number>(0);
+  const [laborHours, setLaborHours] = useState<number>(0);
+
+  // Settings & Tiers from store
+  const settings = store.getSettings();
+  const pricingTiers = store.getPricingTiers();
+  const vehicles = store.getVehicles();
+
+  // Dynamic Open-Source OSRM Driving Distance Hook
+  const {
+    distanceKm,
+    formattedDistance,
+    durationMinutes,
+    isLoading: isRouteLoading,
+    isLiveRoute,
+    error: routeError,
+  } = useOSRMDistance({
+    pickupLat,
+    pickupLng,
+    dropoffLat: deliveryLat,
+    dropoffLng: deliveryLng,
+  });
+
+  // Populate logged in user info if present
+  useEffect(() => {
+    const user = store.getCurrentUser();
+    if (user && !customerName) {
+      setCustomerName(user.name);
+      setCustomerEmail(user.email);
+      if (user.phone) setCustomerPhone(user.phone);
+    }
+  }, []);
+
+  // Service area detection
+  const isPickupGta = useMemo(() => checkIsGta(pickupAddress), [pickupAddress]);
+  const isDeliveryGta = useMemo(() => checkIsGta(deliveryAddress), [deliveryAddress]);
+  const serviceArea = isPickupGta && isDeliveryGta ? 'GTA' : 'Outside GTA';
+
+  // Live Price Calculation based on active driving distance
+  const breakdown = useMemo(() => {
+    return calculateDeliveryPrice(
+      {
+        vehicleSlug,
+        distanceKm,
+        weightLbs,
+        quantity,
+        isPaintPails: itemType === 'paint_pails',
+        pickupTime,
+        waitingHours,
+        laborHours,
+        isOutsideGta: serviceArea === 'Outside GTA',
+      },
+      settings,
+      pricingTiers
+    );
+  }, [
+    vehicleSlug,
+    distanceKm,
+    weightLbs,
+    quantity,
+    itemType,
+    pickupTime,
+    waitingHours,
+    laborHours,
+    serviceArea,
+    settings,
+    pricingTiers,
+  ]);
+
+  // Autocomplete Selection Handlers
+  const handleSelectPickup = (suggestion: AddressSuggestion) => {
+    setPickupAddress(suggestion.fullAddress);
+    setPickupLat(suggestion.lat);
+    setPickupLng(suggestion.lon);
+    setValidationError(null);
+  };
+
+  const handleSelectDelivery = (suggestion: AddressSuggestion) => {
+    setDeliveryAddress(suggestion.fullAddress);
+    setDeliveryLat(suggestion.lat);
+    setDeliveryLng(suggestion.lon);
+    setValidationError(null);
+  };
+
+  // Step transitions & validation
+  const handleGoToStep2 = () => {
+    if (!pickupAddress.trim()) {
+      setValidationError('Please enter a valid pickup address.');
+      return;
+    }
+    if (!deliveryAddress.trim()) {
+      setValidationError('Please enter a valid delivery destination address.');
+      return;
+    }
+    setValidationError(null);
+    setStep(2);
+    window.scrollTo({ top: 120, behavior: 'smooth' });
+  };
+
+  const handleGoToStep3 = () => {
+    if (!itemDescription.trim()) {
+      setItemDescription('Commercial Delivery Cargo');
+    }
+    if (weightLbs <= 0) {
+      setValidationError('Please enter an estimated cargo weight in lbs.');
+      return;
+    }
+    if (quantity <= 0) {
+      setValidationError('Please enter a valid cargo quantity (minimum 1).');
+      return;
+    }
+    setValidationError(null);
+    setStep(3);
+    window.scrollTo({ top: 120, behavior: 'smooth' });
+  };
+
+  // Submit Order
+  const handleSubmitOrder = () => {
+    if (!customerName.trim()) {
+      setValidationError('Please provide your name or business contact name.');
+      return;
+    }
+    if (!customerPhone.trim()) {
+      setValidationError('Please provide a phone number for the driver and dispatch team.');
+      return;
+    }
+    if (!customerEmail.trim()) {
+      setValidationError('Please provide an email address to receive your confirmation & PDF receipt.');
+      return;
+    }
+
+    setValidationError(null);
+    const selectedVeh = vehicles.find((v) => v.slug === vehicleSlug) || vehicles[0];
+
+    const orderData = {
+      customer_id: store.getCurrentUser()?.email || null,
+      customer_name: customerName.trim(),
+      customer_phone: customerPhone.trim(),
+      customer_email: customerEmail.trim(),
+      company_name: companyName.trim() || undefined,
+
+      pickup_address: pickupAddress,
+      pickup_lat: pickupLat,
+      pickup_lng: pickupLng,
+      pickup_unit: pickupUnit || undefined,
+      pickup_contact_name: pickupContactName || undefined,
+      pickup_contact_phone: pickupContactPhone || undefined,
+
+      delivery_address: deliveryAddress,
+      delivery_lat: deliveryLat,
+      delivery_lng: deliveryLng,
+      delivery_unit: deliveryUnit || undefined,
+      delivery_contact_name: deliveryContactName || undefined,
+      delivery_contact_phone: deliveryContactPhone || undefined,
+
+      pickup_date: pickupDate,
+      pickup_time: pickupTime,
+      delivery_time_option: deliveryTimeOption,
+
+      service_area: serviceArea,
+      vehicle_id: selectedVeh.id,
+      vehicle_slug: vehicleSlug,
+      vehicle_name: selectedVeh.name,
+      item_type: itemType,
+      item_description: itemDescription || 'Commercial Freight Cargo',
+      weight_lbs: weightLbs,
+      quantity,
+      distance_km: distanceKm,
+      custom_instructions: customInstructions || undefined,
+
+      base_price: breakdown.baseDistanceCharge,
+      excess_km_charge: breakdown.excessKmCharge,
+      after_hours_charge: breakdown.afterHoursCharge,
+      waiting_charge: breakdown.waitingCharge,
+      labor_charge: breakdown.laborCharge,
+      subtotal: breakdown.subtotal,
+      tax_amount: breakdown.taxAmount,
+      total_price: breakdown.totalPrice,
+
+      payment_status: 'pay_later' as const,
+      order_status: 'submitted' as const,
+    };
+
+    const newOrder = store.createOrder(orderData);
+    setCreatedOrder(newOrder);
+    setStep(4); // Confirmation step
+
+    // Confetti celebration
+    try {
+      confetti({
+        particleCount: 140,
+        spread: 90,
+        origin: { y: 0.6 },
+        colors: ['#C5161D', '#F43F5E', '#ffffff', '#22c55e'],
+      });
+    } catch {
+      // ignore
+    }
+  };
+
+  const stepsList = [
+    { num: 1, label: 'Route & Schedule', desc: 'Locations & Timing' },
+    { num: 2, label: 'Cargo & Vehicle', desc: 'Freight & Fleet' },
+    { num: 3, label: 'Contact & Review', desc: 'Quote & Dispatch' },
+  ];
+
+  return (
+    <div className="py-10 px-4 sm:px-6 max-w-5xl mx-auto">
+      {/* Stepper Header */}
+      <div className="mb-8">
+        <div className="text-center mb-6">
+          <span className="badge-soft-rose px-3.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider inline-block">
+            Fast 3-Step Dispatch
+          </span>
+          <h1 className="text-2xl sm:text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-white via-red-100 to-red-300 font-['Outfit'] mt-2">
+            {step === 4 ? 'Delivery Request Confirmed!' : 'Request a Delivery Service'}
+          </h1>
+          <p className="text-xs sm:text-sm text-slate-400 mt-1 max-w-xl mx-auto">
+            {step === 4
+              ? `Your delivery request is registered under ${createdOrder?.order_number}. Our dispatch desk is processing your order.`
+              : 'Enter pickup & delivery locations with live OpenStreetMap autocomplete, match fleet capacity, and dispatch in minutes.'}
+          </p>
+        </div>
+
+        {/* 3-Step Progress Indicators */}
+        {step < 4 && (
+          <div>
+            {/* Desktop / Tablet View */}
+            <div className="hidden sm:grid grid-cols-3 gap-4 border-b border-slate-800 pb-5">
+              {stepsList.map((s) => {
+                const isCompleted = step > s.num;
+                const isCurrent = step === s.num;
+                return (
+                  <button
+                    key={s.num}
+                    type="button"
+                    onClick={() => {
+                      if (isCompleted) {
+                        setValidationError(null);
+                        setStep(s.num);
+                      }
+                    }}
+                    className={`flex items-center space-x-3 text-left p-3 rounded-xl border transition-all ${
+                      isCurrent
+                        ? 'bg-red-950/40 border-red-500/50 shadow-lg shadow-red-950/20 ring-1 ring-red-500/40'
+                        : isCompleted
+                        ? 'bg-slate-900/50 border-slate-800 hover:border-slate-700 cursor-pointer'
+                        : 'bg-slate-950/30 border-slate-900 opacity-60 cursor-default'
+                    }`}
+                  >
+                    <div
+                      className={`w-9 h-9 rounded-xl flex items-center justify-center text-xs font-black transition-all flex-shrink-0 ${
+                        isCompleted
+                          ? 'bg-emerald-500 text-black shadow-md shadow-emerald-500/20'
+                          : isCurrent
+                          ? 'btn-gradient-primary text-white shadow-md shadow-red-950/40 ring-2 ring-red-400/30'
+                          : 'bg-slate-800 text-slate-400'
+                      }`}
+                    >
+                      {isCompleted ? <CheckCircle2 className="w-5 h-5" /> : s.num}
+                    </div>
+                    <div className="min-w-0">
+                      <div
+                        className={`text-xs font-bold truncate ${
+                          isCurrent ? 'text-white' : isCompleted ? 'text-slate-200' : 'text-slate-500'
+                        }`}
+                      >
+                        {s.label}
+                      </div>
+                      <div className="text-[10px] text-slate-400 truncate">{s.desc}</div>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Mobile View */}
+            <div className="sm:hidden bg-slate-900/60 border border-slate-800 rounded-xl p-3.5 flex items-center justify-between">
+              <div className="flex items-center space-x-2.5">
+                <span className="w-7 h-7 rounded-lg btn-gradient-primary text-white text-xs font-black flex items-center justify-center">
+                  {step}
+                </span>
+                <div>
+                  <div className="text-xs font-bold text-white">
+                    Step {step} of 3: {stepsList[step - 1]?.label}
+                  </div>
+                  <div className="text-[10px] text-slate-400">
+                    {stepsList[step - 1]?.desc}
+                  </div>
+                </div>
+              </div>
+              <div className="flex items-center space-x-1.5">
+                {[1, 2, 3].map((num) => (
+                  <span
+                    key={num}
+                    className={`h-2 rounded-full transition-all ${
+                      num === step
+                        ? 'w-6 bg-red-500'
+                        : num < step
+                        ? 'w-2 bg-emerald-400'
+                        : 'w-2 bg-slate-700'
+                    }`}
+                  />
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Validation Error Banner */}
+      {validationError && (
+        <div className="mb-6 p-4 rounded-xl bg-red-950/60 border border-red-500/50 text-xs text-red-200 flex items-center space-x-3 shadow-lg animate-pulse">
+          <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0" />
+          <span className="font-medium">{validationError}</span>
+        </div>
+      )}
+
+      {/* Main Wizard Form Container */}
+      <div className="bg-[#111624]/90 backdrop-blur-md border border-slate-800 rounded-2xl shadow-2xl p-6 sm:p-8">
+        
+        {/* ========================================================================= */}
+        {/* STEP 1: ROUTE & SCHEDULE (WHERE & WHEN)                                  */}
+        {/* ========================================================================= */}
+        {step === 1 && (
+          <div className="space-y-8">
+            <div className="border-b border-slate-800 pb-4">
+              <h2 className="text-xl sm:text-2xl font-black text-white font-['Outfit'] flex items-center space-x-2.5">
+                <span className="p-2 rounded-xl bg-red-950/60 border border-red-500/30 text-red-400">
+                  <MapPin className="w-5 h-5" />
+                </span>
+                <span>Step 1: Route & Scheduling</span>
+              </h2>
+              <p className="text-xs sm:text-sm text-slate-400 mt-1">
+                Enter your pickup facility and drop-off destination. Real-time OpenStreetMap autocomplete will suggest verified addresses with live OSRM driving distance.
+              </p>
+            </div>
+
+            {/* Two-Column Locations Layout */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              
+              {/* Pickup Location Card */}
+              <div className="bg-slate-900/60 border border-slate-800/80 rounded-2xl p-5 space-y-4 relative">
+                <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+                  <div className="flex items-center space-x-2">
+                    <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 ring-4 ring-emerald-500/20" />
+                    <span className="text-xs font-bold text-white uppercase tracking-wider">
+                      1. Pickup Location
+                    </span>
+                  </div>
+                  <span className="text-[11px] font-semibold text-emerald-400 bg-emerald-950/50 border border-emerald-500/20 px-2.5 py-0.5 rounded-full">
+                    {isPickupGta ? 'Inside GTA' : 'Outside GTA'}
+                  </span>
+                </div>
+
+                {/* Real-time Photon Autocomplete for Pickup */}
+                <AddressAutocompleteInput
+                  label="Pickup Street Address *"
+                  value={pickupAddress}
+                  onChange={(val) => {
+                    setPickupAddress(val);
+                    setValidationError(null);
+                  }}
+                  onSelect={handleSelectPickup}
+                  accentColor="emerald"
+                  placeholder="Start typing pickup address or warehouse name..."
+                  required
+                />
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div>
+                    <label className="block text-xs font-medium text-slate-400 mb-1">
+                      Unit / Dock #
+                    </label>
+                    <input
+                      type="text"
+                      value={pickupUnit}
+                      onChange={(e) => setPickupUnit(e.target.value)}
+                      placeholder="e.g. Dock 4 / Bay B"
+                      className="w-full bg-[#0A0D14] border border-slate-700/80 px-3 py-2 text-xs text-white rounded-xl focus:border-red-500 focus:outline-none placeholder:text-slate-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-slate-400 mb-1">
+                      Site Contact Name
+                    </label>
+                    <input
+                      type="text"
+                      value={pickupContactName}
+                      onChange={(e) => setPickupContactName(e.target.value)}
+                      placeholder="e.g. Site Supervisor / John Doe"
+                      className="w-full bg-[#0A0D14] border border-slate-700/80 px-3 py-2 text-xs text-white rounded-xl focus:border-red-500 focus:outline-none placeholder:text-slate-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-slate-400 mb-1">
+                      Site Contact Phone
+                    </label>
+                    <input
+                      type="tel"
+                      value={pickupContactPhone}
+                      onChange={(e) => setPickupContactPhone(e.target.value)}
+                      placeholder="e.g. +1 (416) 555-0192"
+                      className="w-full bg-[#0A0D14] border border-slate-700/80 px-3 py-2 text-xs text-white rounded-xl focus:border-red-500 focus:outline-none placeholder:text-slate-500"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Delivery Destination Card */}
+              <div className="bg-slate-900/60 border border-slate-800/80 rounded-2xl p-5 space-y-4 relative">
+                <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+                  <div className="flex items-center space-x-2">
+                    <span className="w-2.5 h-2.5 rounded-full bg-red-500 ring-4 ring-red-500/20" />
+                    <span className="text-xs font-bold text-white uppercase tracking-wider">
+                      2. Delivery Drop-Off Destination
+                    </span>
+                  </div>
+                  <span className="text-[11px] font-semibold text-red-400 bg-red-950/50 border border-red-500/20 px-2.5 py-0.5 rounded-full">
+                    {isDeliveryGta ? 'Inside GTA' : 'Outside GTA'}
+                  </span>
+                </div>
+
+                {/* Real-time Photon Autocomplete for Delivery */}
+                <AddressAutocompleteInput
+                  label="Delivery Destination Address *"
+                  value={deliveryAddress}
+                  onChange={(val) => {
+                    setDeliveryAddress(val);
+                    setValidationError(null);
+                  }}
+                  onSelect={handleSelectDelivery}
+                  accentColor="rose"
+                  placeholder="e.g. 5500 Dixie Rd, Mississauga, ON"
+                  required
+                />
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div>
+                    <label className="block text-xs font-medium text-slate-400 mb-1">
+                      Unit / Buzzer #
+                    </label>
+                    <input
+                      type="text"
+                      value={deliveryUnit}
+                      onChange={(e) => setDeliveryUnit(e.target.value)}
+                      placeholder="e.g. Suite 400 / Door 2"
+                      className="w-full bg-[#0A0D14] border border-slate-700/80 px-3 py-2 text-xs text-white rounded-xl focus:border-red-500 focus:outline-none placeholder:text-slate-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-slate-400 mb-1">
+                      Recipient Name
+                    </label>
+                    <input
+                      type="text"
+                      value={deliveryContactName}
+                      onChange={(e) => setDeliveryContactName(e.target.value)}
+                      placeholder="e.g. Site Receiver / Jane Smith"
+                      className="w-full bg-[#0A0D14] border border-slate-700/80 px-3 py-2 text-xs text-white rounded-xl focus:border-red-500 focus:outline-none placeholder:text-slate-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-slate-400 mb-1">
+                      Recipient Phone
+                    </label>
+                    <input
+                      type="tel"
+                      value={deliveryContactPhone}
+                      onChange={(e) => setDeliveryContactPhone(e.target.value)}
+                      placeholder="e.g. +1 (905) 555-0144"
+                      className="w-full bg-[#0A0D14] border border-slate-700/80 px-3 py-2 text-xs text-white rounded-xl focus:border-red-500 focus:outline-none placeholder:text-slate-500"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Dynamic OSRM Driving Distance & Routing Badge */}
+            <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+              <div className="flex items-center space-x-3.5">
+                <div className="w-11 h-11 rounded-xl bg-red-950/60 border border-red-500/30 flex items-center justify-center text-red-400 flex-shrink-0">
+                  {isRouteLoading ? (
+                    <Loader2 className="w-5 h-5 animate-spin text-red-400" />
+                  ) : (
+                    <Navigation className="w-5 h-5" />
+                  )}
+                </div>
+                <div>
+                  <div className="flex items-center space-x-2">
+                    <span className="text-xs text-slate-400 font-medium">Estimated Direct Driving Route:</span>
+                    {isRouteLoading && (
+                      <span className="text-[10px] text-red-400 animate-pulse font-semibold">
+                        (Calculating via OSRM...)
+                      </span>
+                    )}
+                  </div>
+                  <div className="text-lg sm:text-xl font-black text-white font-['Outfit'] flex items-center space-x-2.5 mt-0.5">
+                    {distanceKm > 0 ? (
+                      <>
+                        <span>{formattedDistance}</span>
+                        {durationMinutes && (
+                          <span className="text-xs font-medium text-emerald-400 bg-emerald-950/50 border border-emerald-500/20 px-2 py-0.5 rounded-md">
+                            ~{durationMinutes} mins drive
+                          </span>
+                        )}
+                        <span className="text-xs font-normal text-slate-400">({serviceArea} Zone)</span>
+                      </>
+                    ) : (
+                      <span className="text-sm sm:text-base font-normal text-slate-400">
+                        Enter pickup and delivery locations to calculate live route
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-2 self-stretch sm:self-auto justify-end">
+                {distanceKm > 0 ? (
+                  <>
+                    <span className="text-[11px] font-bold text-slate-300 bg-slate-800/80 border border-slate-700 px-3 py-1 rounded-xl flex items-center space-x-1.5">
+                      <span className={`w-2 h-2 rounded-full ${isLiveRoute ? 'bg-emerald-400 animate-pulse' : 'bg-slate-400'}`} />
+                      <span>{isLiveRoute ? 'OSRM Live Routing' : 'Road Curvature Net'}</span>
+                    </span>
+                    <span className="text-xs font-bold text-red-300 bg-red-950/60 border border-red-500/30 px-3 py-1.5 rounded-xl">
+                      {distanceKm <= 25 ? '0–25 km Standard Tier' : distanceKm <= 40 ? '25–40 km Mid Tier' : '40+ km Extended Highway Tier'}
+                    </span>
+                  </>
+                ) : (
+                  <span className="text-xs font-medium text-slate-400 bg-slate-800/50 border border-slate-700/60 px-3 py-1.5 rounded-xl">
+                    Awaiting locations
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {/* Schedule & Speed Window */}
+            <div className="space-y-4 pt-2">
+              <div className="flex items-center space-x-2 border-b border-slate-800 pb-2">
+                <Calendar className="w-4 h-4 text-red-400" />
+                <span className="text-sm font-bold text-white font-['Outfit']">
+                  Pickup Timing & Delivery Speed Window
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <CalendarDatePicker
+                  label="Pickup Date *"
+                  value={pickupDate}
+                  onChange={(dateStr) => setPickupDate(dateStr)}
+                  minDate={todayStr}
+                />
+
+                <div>
+                  <FloatingTimePicker
+                    label="Pickup / Target Ready Time *"
+                    value={pickupTime}
+                    onChange={(timeStr) => setPickupTime(timeStr)}
+                    isAfterHours={breakdown.isAfterHours}
+                  />
+                  {breakdown.isAfterHours && (
+                    <span className="inline-block mt-1.5 text-[11px] text-amber-300 font-bold bg-amber-950/50 border border-amber-500/30 px-2.5 py-0.5 rounded-md">
+                      ⚡ After-Hours Service (1.5× Rate applies outside 8 AM – 5 PM)
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              {/* Delivery Speed Options */}
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 mb-2">
+                  Required Delivery Speed Window *
+                </label>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  {[
+                    { id: 'asap' as DeliveryTimeOption, label: 'ASAP / 1–2 Hours', sub: 'Urgent Rush Dispatch', badge: 'Fastest' },
+                    { id: '2-3h' as DeliveryTimeOption, label: '2–3 Hours', sub: 'Priority Same-Day', badge: 'Popular' },
+                    { id: '4-5h' as DeliveryTimeOption, label: '4–5 Hours', sub: 'Standard Same-Day', badge: 'Economical' },
+                    { id: 'anytime_today' as DeliveryTimeOption, label: 'Anytime Today', sub: 'End of Business', badge: 'Flexible' },
+                  ].map((tf) => (
+                    <button
+                      key={tf.id}
+                      type="button"
+                      onClick={() => setDeliveryTimeOption(tf.id)}
+                      className={`p-3.5 rounded-xl border text-left transition-all relative ${
+                        deliveryTimeOption === tf.id
+                          ? 'bg-red-950/50 border-red-500 text-white shadow-lg shadow-red-950/30 ring-1 ring-red-500/40'
+                          : 'bg-slate-900/60 border-slate-800 text-slate-400 hover:border-slate-700 hover:text-white'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="font-bold text-xs text-white">{tf.label}</span>
+                        <span className={`text-[9px] px-1.5 py-0.2 rounded font-bold ${
+                          deliveryTimeOption === tf.id ? 'bg-red-500 text-white' : 'bg-slate-800 text-slate-400'
+                        }`}>
+                          {tf.badge}
+                        </span>
+                      </div>
+                      <div className="text-[10px] text-slate-400">{tf.sub}</div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ========================================================================= */}
+        {/* STEP 2: CARGO & VEHICLE (WHAT & HOW)                                     */}
+        {/* ========================================================================= */}
+        {step === 2 && (
+          <div className="space-y-8">
+            <div className="border-b border-slate-800 pb-4">
+              <h2 className="text-xl sm:text-2xl font-black text-white font-['Outfit'] flex items-center space-x-2.5">
+                <span className="p-2 rounded-xl bg-red-950/60 border border-red-500/30 text-red-400">
+                  <Package className="w-5 h-5" />
+                </span>
+                <span>Step 2: Cargo Details & Vehicle Fleet</span>
+              </h2>
+              <p className="text-xs sm:text-sm text-slate-400 mt-1">
+                Select your freight category, load specifications, and match with the optimal delivery vehicle.
+              </p>
+            </div>
+
+            {/* Cargo Category Pills */}
+            <div>
+              <label className="block text-xs font-semibold text-slate-300 mb-2.5">
+                Cargo Classification *
+              </label>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                {[
+                  { id: 'paint_pails' as ItemType, label: 'Paint / Chemical Pails', desc: '5-Gallon paint or liquid pails' },
+                  { id: 'furniture' as ItemType, label: 'Furniture / Cabinetry', desc: 'Desks, fixtures, millwork' },
+                  { id: 'small_boxes' as ItemType, label: 'Small Boxes / Parcels', desc: 'Cartons, documents, retail' },
+                  { id: 'medium_boxes' as ItemType, label: 'Medium Boxes / Goods', desc: 'Commercial inventory cartons' },
+                  { id: 'large_boxes' as ItemType, label: 'Large Crates / Oversized', desc: 'Bulky equipment or skids' },
+                  { id: 'other' as ItemType, label: 'Custom / Construction', desc: 'Job-site materials, hardware' },
+                ].map((item) => (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={() => {
+                      setItemType(item.id);
+                    }}
+                    className={`p-3.5 rounded-xl border text-left transition-all ${
+                      itemType === item.id
+                        ? 'bg-red-950/50 border-red-500 text-white shadow-lg shadow-red-950/30 ring-1 ring-red-500/40'
+                        : 'bg-slate-900/60 border-slate-800 text-slate-400 hover:border-slate-700 hover:text-white'
+                    }`}
+                  >
+                    <div className="text-xs font-bold text-white">{item.label}</div>
+                    <div className="text-[10px] text-slate-400 mt-0.5">{item.desc}</div>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Cargo Load Specs */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+                  Cargo Description *
+                </label>
+                <input
+                  type="text"
+                  value={itemDescription}
+                  onChange={(e) => setItemDescription(e.target.value)}
+                  placeholder="e.g. 10 Pails Benjamin Moore Paint / Hardware Skids"
+                  className="w-full bg-[#0A0D14] border border-slate-700 px-3.5 py-2.5 text-xs text-white rounded-xl focus:border-red-500 focus:outline-none placeholder:text-slate-500"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+                  Estimated Total Weight (lbs) *
+                </label>
+                <input
+                  type="number"
+                  min="5"
+                  max="4000"
+                  step="25"
+                  value={weightLbs === 0 ? '' : weightLbs}
+                  onChange={(e) => setWeightLbs(e.target.value === '' ? 0 : Math.max(0, Number(e.target.value)))}
+                  placeholder="e.g. 500"
+                  className="w-full bg-[#0A0D14] border border-slate-700 px-3.5 py-2.5 text-xs text-white rounded-xl focus:border-red-500 focus:outline-none placeholder:text-slate-500"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+                  Total Units / Pails / Items *
+                </label>
+                <input
+                  type="number"
+                  min="1"
+                  max="200"
+                  value={quantity === 0 ? '' : quantity}
+                  onChange={(e) => setQuantity(e.target.value === '' ? 0 : Math.max(0, Number(e.target.value)))}
+                  placeholder="e.g. 10"
+                  className="w-full bg-[#0A0D14] border border-slate-700 px-3.5 py-2.5 text-xs text-white rounded-xl focus:border-red-500 focus:outline-none placeholder:text-slate-500"
+                />
+              </div>
+            </div>
+
+            {/* Special Instructions */}
+            <div>
+              <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+                Special Handling Instructions / Site Gate Codes (Optional)
+              </label>
+              <textarea
+                value={customInstructions}
+                onChange={(e) => setCustomInstructions(e.target.value)}
+                placeholder="e.g. Gate code #4821, forklift on site, call receiver 15 min prior to arrival..."
+                rows={2}
+                className="w-full bg-[#0A0D14] border border-slate-700 px-3.5 py-2.5 text-xs text-white rounded-xl focus:border-red-500 focus:outline-none placeholder:text-slate-500"
+              />
+            </div>
+
+            {/* Fleet Vehicle Selection Grid */}
+            <div>
+              <div className="flex items-center justify-between mb-3 border-b border-slate-800 pb-2">
+                <label className="text-sm font-bold text-white font-['Outfit'] flex items-center space-x-2">
+                  <Truck className="w-4 h-4 text-red-400" />
+                  <span>Choose Your Delivery Vehicle</span>
+                </label>
+                <span className="text-[11px] text-slate-400">
+                  Cargo Weight: <strong className="text-red-300">{weightLbs} lbs</strong>
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                {vehicles.map((veh) => {
+                  const isSelected = vehicleSlug === veh.slug;
+                  const isOverweight = weightLbs > veh.max_weight_lbs;
+                  return (
+                    <div
+                      key={veh.id}
+                      onClick={() => setVehicleSlug(veh.slug)}
+                      className={`p-4 rounded-xl border cursor-pointer transition flex flex-col justify-between ${
+                        isSelected
+                          ? 'bg-red-950/40 border-red-500 shadow-lg shadow-red-950/30 ring-1 ring-red-500'
+                          : 'bg-slate-900/60 border-slate-800 hover:border-slate-700'
+                      }`}
+                    >
+                      <div>
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-xs font-black text-white font-['Outfit']">
+                            {veh.name}
+                          </span>
+                          {isSelected && (
+                            <span className="w-2.5 h-2.5 rounded-full bg-red-500 ring-2 ring-red-400/40" />
+                          )}
+                        </div>
+                        <p className="text-[11px] text-slate-400 leading-relaxed mb-3">
+                          {veh.description}
+                        </p>
+                        <div className="space-y-1 text-[11px] border-t border-slate-800 pt-2">
+                          <div className="flex justify-between text-slate-300">
+                            <span>Max Payload:</span>
+                            <span className="font-bold text-white">{veh.max_weight_lbs} lbs</span>
+                          </div>
+                          <div className="flex justify-between text-slate-300">
+                            <span>Max Capacity:</span>
+                            <span className="font-bold text-white">{veh.max_pails} Pails</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {isOverweight ? (
+                        <div className="mt-3 p-1.5 rounded bg-amber-950/60 border border-amber-500/30 text-[10px] text-amber-300 flex items-center space-x-1">
+                          <AlertCircle className="w-3 h-3 flex-shrink-0" />
+                          <span>Exceeds weight ({weightLbs} lbs)</span>
+                        </div>
+                      ) : (
+                        <div className="mt-3 text-[10px] text-emerald-400 font-semibold flex items-center space-x-1">
+                          <CheckCircle2 className="w-3 h-3" />
+                          <span>Compatible with load</span>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Optional Priority Add-ons */}
+            <div className="bg-slate-900/40 border border-slate-800 rounded-xl p-4 space-y-3">
+              <div className="text-xs font-bold text-white uppercase tracking-wider">
+                Optional Handling & On-Site Add-Ons
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                <div className="flex items-center justify-between p-3 bg-[#0A0D14] border border-slate-800 rounded-xl">
+                  <div>
+                    <div className="font-semibold text-slate-200">Waiting Time Allowance</div>
+                    <div className="text-[10px] text-slate-400">Loading/unloading delay (${settings.waiting_rate_hourly}/hr)</div>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <button
+                      type="button"
+                      onClick={() => setWaitingHours((h) => Math.max(0, h - 1))}
+                      className="w-7 h-7 rounded bg-slate-800 hover:bg-slate-700 text-white font-bold"
+                    >
+                      -
+                    </button>
+                    <span className="w-6 text-center font-bold text-white">{waitingHours}h</span>
+                    <button
+                      type="button"
+                      onClick={() => setWaitingHours((h) => Math.min(5, h + 1))}
+                      className="w-7 h-7 rounded bg-slate-800 hover:bg-slate-700 text-white font-bold"
+                    >
+                      +
+                    </button>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between p-3 bg-[#0A0D14] border border-slate-800 rounded-xl">
+                  <div>
+                    <div className="font-semibold text-slate-200">Helper Labor Assistance</div>
+                    <div className="text-[10px] text-slate-400">Extra crew for heavy carrying (${settings.labor_rate_hourly}/hr)</div>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <button
+                      type="button"
+                      onClick={() => setLaborHours((h) => Math.max(0, h - 1))}
+                      className="w-7 h-7 rounded bg-slate-800 hover:bg-slate-700 text-white font-bold"
+                    >
+                      -
+                    </button>
+                    <span className="w-6 text-center font-bold text-white">{laborHours}h</span>
+                    <button
+                      type="button"
+                      onClick={() => setLaborHours((h) => Math.min(5, h + 1))}
+                      className="w-7 h-7 rounded bg-slate-800 hover:bg-slate-700 text-white font-bold"
+                    >
+                      +
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ========================================================================= */}
+        {/* STEP 3: CONTACT & REVIEW (WHO & CONFIRM)                                 */}
+        {/* ========================================================================= */}
+        {step === 3 && (
+          <div className="space-y-8">
+            <div className="border-b border-slate-800 pb-4">
+              <h2 className="text-xl sm:text-2xl font-black text-white font-['Outfit'] flex items-center space-x-2.5">
+                <span className="p-2 rounded-xl bg-red-950/60 border border-red-500/30 text-red-400">
+                  <CheckCircle2 className="w-5 h-5" />
+                </span>
+                <span>Step 3: Contact Details & Order Review</span>
+              </h2>
+              <p className="text-xs sm:text-sm text-slate-400 mt-1">
+                Enter your contact info to receive live tracking and official PDF invoice. Review the itemized quote below.
+              </p>
+            </div>
+
+            {/* Customer Contact Inputs */}
+            <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-5 space-y-4">
+              <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+                <span className="text-xs font-bold text-white uppercase tracking-wider flex items-center space-x-2">
+                  <User className="w-4 h-4 text-red-400" />
+                  <span>Sender & Billing Information</span>
+                </span>
+                <span className="text-[11px] text-slate-400">Guest Checkout Enabled</span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+                    Contact / Business Name *
+                  </label>
+                  <div className="relative">
+                    <User className="w-4 h-4 text-slate-500 absolute left-3.5 top-3.5" />
+                    <input
+                      type="text"
+                      value={customerName}
+                      onChange={(e) => {
+                        setCustomerName(e.target.value);
+                        setValidationError(null);
+                      }}
+                      placeholder="e.g. Jane Doe / Apex Supplies Ltd."
+                      className="w-full bg-[#0A0D14] border border-slate-700 pl-10 pr-4 py-2.5 text-sm text-white rounded-xl focus:border-red-500 focus:outline-none placeholder:text-slate-500"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+                    Phone Number (For Driver SMS/Call) *
+                  </label>
+                  <div className="relative">
+                    <Phone className="w-4 h-4 text-slate-500 absolute left-3.5 top-3.5" />
+                    <input
+                      type="tel"
+                      value={customerPhone}
+                      onChange={(e) => {
+                        setCustomerPhone(e.target.value);
+                        setValidationError(null);
+                      }}
+                      placeholder="e.g. +1 (647) 555-0199"
+                      className="w-full bg-[#0A0D14] border border-slate-700 pl-10 pr-4 py-2.5 text-sm text-white rounded-xl focus:border-red-500 focus:outline-none placeholder:text-slate-500"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+                    Email Address (For Invoice & PDF) *
+                  </label>
+                  <div className="relative">
+                    <Mail className="w-4 h-4 text-slate-500 absolute left-3.5 top-3.5" />
+                    <input
+                      type="email"
+                      value={customerEmail}
+                      onChange={(e) => {
+                        setCustomerEmail(e.target.value);
+                        setValidationError(null);
+                      }}
+                      placeholder="e.g. billing@acmesupply.ca"
+                      className="w-full bg-[#0A0D14] border border-slate-700 pl-10 pr-4 py-2.5 text-sm text-white rounded-xl focus:border-red-500 focus:outline-none placeholder:text-slate-500"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+                    Company / Organization (Optional)
+                  </label>
+                  <div className="relative">
+                    <Building className="w-4 h-4 text-slate-500 absolute left-3.5 top-3.5" />
+                    <input
+                      type="text"
+                      value={companyName}
+                      onChange={(e) => setCompanyName(e.target.value)}
+                      placeholder="e.g. Apex Industrial Logistics Inc."
+                      className="w-full bg-[#0A0D14] border border-slate-700 pl-10 pr-4 py-2.5 text-sm text-white rounded-xl focus:border-red-500 focus:outline-none placeholder:text-slate-500"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Two-Column Order Recap */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5 text-xs">
+              <div className="bg-slate-900/60 border border-slate-800 rounded-xl p-4 space-y-2.5">
+                <div className="flex items-center justify-between border-b border-slate-800 pb-2">
+                  <span className="font-bold text-white uppercase text-[11px] flex items-center space-x-1.5">
+                    <MapPin className="w-3.5 h-3.5 text-red-400" />
+                    <span>Route & Timing</span>
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setStep(1)}
+                    className="text-[10px] text-red-400 hover:text-red-300 font-semibold"
+                  >
+                    Edit Route
+                  </button>
+                </div>
+                <div>
+                  <span className="text-slate-400">Pickup:</span>{' '}
+                  <strong className="text-white">{pickupAddress}</strong>
+                  {pickupUnit && <span className="text-slate-400"> ({pickupUnit})</span>}
+                </div>
+                <div>
+                  <span className="text-slate-400">Dropoff:</span>{' '}
+                  <strong className="text-white">{deliveryAddress}</strong>
+                  {deliveryUnit && <span className="text-slate-400"> ({deliveryUnit})</span>}
+                </div>
+                <div className="flex justify-between border-t border-slate-800/80 pt-2 text-slate-300">
+                  <span>Driving Distance:</span>
+                  <span className="font-bold text-white">
+                    {formattedDistance} ({serviceArea})
+                  </span>
+                </div>
+                {durationMinutes && (
+                  <div className="flex justify-between text-slate-300">
+                    <span>Est. Drive Time:</span>
+                    <span className="font-bold text-emerald-400">~{durationMinutes} minutes</span>
+                  </div>
+                )}
+                <div className="flex justify-between text-slate-300">
+                  <span>Schedule:</span>
+                  <span className="font-bold text-white">{pickupDate} at {pickupTime}</span>
+                </div>
+                <div className="flex justify-between text-slate-300">
+                  <span>Speed:</span>
+                  <span className="font-bold text-red-300">{deliveryTimeOption.toUpperCase()}</span>
+                </div>
+              </div>
+
+              <div className="bg-slate-900/60 border border-slate-800 rounded-xl p-4 space-y-2.5">
+                <div className="flex items-center justify-between border-b border-slate-800 pb-2">
+                  <span className="font-bold text-white uppercase text-[11px] flex items-center space-x-1.5">
+                    <Truck className="w-3.5 h-3.5 text-red-400" />
+                    <span>Cargo & Vehicle</span>
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setStep(2)}
+                    className="text-[10px] text-red-400 hover:text-red-300 font-semibold"
+                  >
+                    Edit Cargo
+                  </button>
+                </div>
+                <div>
+                  <span className="text-slate-400">Vehicle:</span>{' '}
+                  <strong className="text-white">{vehicleSlug.replace('_', ' ').toUpperCase()}</strong>
+                </div>
+                <div>
+                  <span className="text-slate-400">Cargo:</span>{' '}
+                  <strong className="text-white">{itemDescription}</strong>
+                </div>
+                <div className="flex justify-between border-t border-slate-800/80 pt-2 text-slate-300">
+                  <span>Weight & Count:</span>
+                  <span className="font-bold text-white">{quantity} units ({weightLbs} lbs)</span>
+                </div>
+                {customInstructions && (
+                  <div className="text-[11px] text-slate-400 truncate">
+                    <span>Notes: {customInstructions}</span>
+                  </div>
+                )}
+                <div className="flex justify-between text-slate-300">
+                  <span>Payment Terms:</span>
+                  <span className="font-bold text-emerald-400">Pay Later (Due on Delivery)</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Itemized Price Calculation Invoice Card */}
+            <div className="bg-[#0A0D14] border border-slate-800 rounded-2xl p-5 sm:p-6 space-y-4">
+              <div className="flex items-center justify-between border-b border-slate-800 pb-3 text-xs">
+                <span className="font-bold text-white uppercase tracking-wider flex items-center space-x-2">
+                  <DollarSign className="w-4 h-4 text-red-400" />
+                  <span>Itemized Quotation Breakdown</span>
+                </span>
+                <span className="font-bold text-red-300 bg-red-950/60 border border-red-500/30 px-3 py-1 rounded-lg">
+                  {breakdown.tierName}
+                </span>
+              </div>
+
+              <div className="space-y-2.5 text-xs">
+                <div className="flex justify-between text-slate-400">
+                  <span>Base Distance Rate ({distanceKm} km):</span>
+                  <span className="text-white font-medium">${breakdown.baseDistanceCharge.toFixed(2)}</span>
+                </div>
+
+                {breakdown.excessKmCharge > 0 && (
+                  <div className="flex justify-between text-slate-400">
+                    <span>
+                      Excess Distance (&gt;40 km: {breakdown.excessKm} km @ ${breakdown.excessKmRate.toFixed(2)}/km):
+                    </span>
+                    <span className="text-white font-medium">${breakdown.excessKmCharge.toFixed(2)}</span>
+                  </div>
+                )}
+
+                {breakdown.afterHoursCharge > 0 && (
+                  <div className="flex justify-between text-red-400">
+                    <span>After-Hours Premium Surcharge (1.5×):</span>
+                    <span className="font-bold">+${breakdown.afterHoursCharge.toFixed(2)}</span>
+                  </div>
+                )}
+
+                {waitingHours > 0 && (
+                  <div className="flex justify-between text-slate-400">
+                    <span>Waiting Time ({waitingHours} hrs):</span>
+                    <span className="text-white font-medium">+${breakdown.waitingCharge.toFixed(2)}</span>
+                  </div>
+                )}
+
+                {laborHours > 0 && (
+                  <div className="flex justify-between text-slate-400">
+                    <span>Labor Helper ({laborHours} hrs):</span>
+                    <span className="text-white font-medium">+${breakdown.laborCharge.toFixed(2)}</span>
+                  </div>
+                )}
+
+                {serviceArea === 'Outside GTA' && (
+                  <div className="flex justify-between text-slate-400">
+                    <span>Outside GTA Remote Handling Surcharge:</span>
+                    <span className="text-white font-medium">+$25.00</span>
+                  </div>
+                )}
+
+                <div className="pt-2.5 border-t border-slate-800 flex justify-between text-slate-300 font-semibold">
+                  <span>Subtotal:</span>
+                  <span>${breakdown.subtotal.toFixed(2)} CAD</span>
+                </div>
+
+                <div className="flex justify-between text-slate-400">
+                  <span>Ontario HST (13%):</span>
+                  <span className="text-white font-medium">${breakdown.taxAmount.toFixed(2)}</span>
+                </div>
+              </div>
+
+              {/* Total Card */}
+              <div className="mt-4 pt-4 border-t border-slate-800 bg-red-950/20 border border-red-500/20 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div>
+                  <div className="text-xs font-black text-white uppercase tracking-wider">Total Guaranteed Price (CAD)</div>
+                  <div className="text-[11px] text-slate-400 mt-0.5">Payment Terms: Pay Later (Pay upon delivery arrival)</div>
+                </div>
+                <div className="text-3xl sm:text-4xl font-black text-red-400 font-['Outfit']">
+                  ${breakdown.totalPrice.toFixed(2)}
+                </div>
+              </div>
+            </div>
+
+            {/* Terms Acceptance Notice */}
+            <div className="p-4 rounded-xl bg-slate-900/60 border border-slate-800 text-[11px] text-slate-400 leading-relaxed">
+              By clicking <strong>&quot;Confirm & Dispatch Delivery&quot;</strong>, your delivery request is directly transmitted to the FlashDrop dispatch desk. An official <strong>FD-XXXXXX</strong> tracking reference and downloadable PDF invoice will be generated immediately.
+            </div>
+          </div>
+        )}
+
+        {/* ========================================================================= */}
+        {/* STEP 4: CONFIRMATION & RECEIPT VIEW                                      */}
+        {/* ========================================================================= */}
+        {step === 4 && createdOrder && (
+          <div className="space-y-6 text-center py-6">
+            <div className="w-16 h-16 rounded-2xl bg-emerald-500/20 border-2 border-emerald-500 flex items-center justify-center mx-auto text-emerald-400 shadow-xl shadow-emerald-500/10">
+              <CheckCircle2 className="w-9 h-9" />
+            </div>
+
+            <div>
+              <span className="text-xs font-bold text-emerald-400 uppercase tracking-wider bg-emerald-950/50 border border-emerald-500/20 px-3 py-1 rounded-full inline-block">
+                Successfully Dispatched
+              </span>
+              <h2 className="text-3xl sm:text-4xl font-black text-white font-['Outfit'] mt-2">
+                Order #{createdOrder.order_number}
+              </h2>
+              <p className="text-xs sm:text-sm text-slate-400 mt-2 max-w-md mx-auto">
+                Thank you, <strong>{createdOrder.customer_name}</strong>! Your delivery request is active in the dispatch queue.
+              </p>
+            </div>
+
+            {/* Quick Action Bar */}
+            <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => generateOrderPdf(createdOrder, settings)}
+                className="flex items-center space-x-2 px-6 py-3.5 btn-gradient-primary text-white font-bold text-xs sm:text-sm rounded-xl shadow-lg shadow-red-950/40 transition hover:opacity-95"
+              >
+                <FileDown className="w-4 h-4" />
+                <span>Download PDF Invoice / Receipt</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => onNavigate('tracking', createdOrder.order_number)}
+                className="flex items-center space-x-2 px-6 py-3.5 bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white font-bold text-xs sm:text-sm rounded-xl border border-slate-700 transition"
+              >
+                <Search className="w-4 h-4 text-red-400" />
+                <span>Track Live Status</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => onNavigate('customer')}
+                className="flex items-center space-x-2 px-5 py-3.5 bg-slate-900 hover:bg-slate-800 text-slate-300 text-xs font-semibold rounded-xl border border-slate-800 transition"
+              >
+                <span>Go to Customer Portal</span>
+              </button>
+            </div>
+
+            {/* Summary Card */}
+            <div className="bg-[#0A0D14] border border-slate-800 rounded-xl p-5 max-w-lg mx-auto text-left text-xs space-y-2 mt-6">
+              <div className="flex justify-between border-b border-slate-800 pb-2 font-bold text-white">
+                <span>Order Reference:</span>
+                <span className="font-mono text-red-400 font-bold">{createdOrder.order_number}</span>
+              </div>
+              <div className="flex justify-between text-slate-400">
+                <span>Pickup Route:</span>
+                <span className="text-white truncate max-w-[220px]">{createdOrder.pickup_address}</span>
+              </div>
+              <div className="flex justify-between text-slate-400">
+                <span>Dropoff Destination:</span>
+                <span className="text-white truncate max-w-[220px]">{createdOrder.delivery_address}</span>
+              </div>
+              <div className="flex justify-between text-slate-400">
+                <span>Vehicle / Cargo:</span>
+                <span className="text-white">{createdOrder.vehicle_name} ({createdOrder.weight_lbs} lbs)</span>
+              </div>
+              <div className="flex justify-between text-slate-400">
+                <span>Delivery Time:</span>
+                <span className="text-white">{createdOrder.pickup_date} ({createdOrder.delivery_time_option})</span>
+              </div>
+              <div className="flex justify-between border-t border-slate-800 pt-2 font-bold text-white text-sm">
+                <span>Total Amount (CAD):</span>
+                <span className="text-red-400">${createdOrder.total_price.toFixed(2)} (Pay Later)</span>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ========================================================================= */}
+        {/* WIZARD BOTTOM CONTROLS & STEPPER ACTIONS                                 */}
+        {/* ========================================================================= */}
+        {step < 4 && (
+          <div className="flex items-center justify-between pt-6 border-t border-slate-800/80 mt-8">
+            <button
+              type="button"
+              disabled={step === 1}
+              onClick={() => {
+                setValidationError(null);
+                setStep((s) => Math.max(1, s - 1));
+              }}
+              className="flex items-center space-x-2 px-4 py-2.5 text-xs font-semibold text-slate-400 hover:text-white disabled:opacity-20 disabled:pointer-events-none transition min-h-[44px]"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              <span>
+                {step === 2 ? 'Back to Route' : step === 3 ? 'Back to Cargo' : 'Previous Step'}
+              </span>
+            </button>
+
+            {step === 1 && (
+              <button
+                type="button"
+                onClick={handleGoToStep2}
+                className="flex items-center space-x-2 px-7 py-3 btn-gradient-primary text-white font-bold text-xs sm:text-sm rounded-xl shadow-lg shadow-red-950/40 transition min-h-[44px] hover:opacity-95"
+              >
+                <span>Continue to Cargo & Vehicle</span>
+                <ArrowRight className="w-4 h-4" />
+              </button>
+            )}
+
+            {step === 2 && (
+              <button
+                type="button"
+                onClick={handleGoToStep3}
+                className="flex items-center space-x-2 px-7 py-3 btn-gradient-primary text-white font-bold text-xs sm:text-sm rounded-xl shadow-lg shadow-red-950/40 transition min-h-[44px] hover:opacity-95"
+              >
+                <span>Continue to Contact & Review</span>
+                <ArrowRight className="w-4 h-4" />
+              </button>
+            )}
+
+            {step === 3 && (
+              <button
+                type="button"
+                onClick={handleSubmitOrder}
+                className="flex items-center space-x-2 px-8 py-3.5 btn-gradient-primary text-white font-black text-xs sm:text-sm rounded-xl shadow-xl shadow-red-950/40 transition transform hover:-translate-y-0.5 min-h-[44px]"
+              >
+                <span>Confirm & Dispatch Delivery</span>
+                <CheckCircle2 className="w-4 h-4" />
+              </button>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};

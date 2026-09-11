@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" fill="none">
+  <!-- Dark premium base -->
+  <rect width="128" height="128" rx="28" fill="#0B0F17"/>
+  <rect x="1" y="1" width="126" height="126" rx="27" stroke="#1E293B" stroke-width="2"/>
+  
+  <g transform="translate(18, 22) scale(0.72)">
+    <!-- 5 Sharp Speed Streaks in Deep Crimson Red -->
+    <polygon points="-4,16 38,10 37,18 4,18" fill="#C5161D"/>
+    <polygon points="-12,32 34,26 33,34 -2,34" fill="#C5161D"/>
+    <polygon points="-20,48 30,42 29,50 -8,50" fill="#C5161D"/>
+    <polygon points="-12,64 26,58 25,66 -2,66" fill="#C5161D"/>
+    <polygon points="-4,80 22,74 21,82 4,82" fill="#C5161D"/>
+    
+    <!-- Stylized Slanted 'F' Body in Crisp High-Contrast White -->
+    <path d="M 28 6 H 80 L 76 22 H 48 L 44 38 H 70 L 66 52 H 41 L 33 86 H 17 L 28 6 Z" fill="#FFFFFF"/>
+    
+    <!-- Bold 'D' Loop in Deep Crimson Red -->
+    <path d="M 86 6 H 106 C 124 6 136 18 136 42 C 136 66 122 86 98 86 H 54 L 59 70 H 94 C 108 70 118 58 118 42 C 118 24 108 18 92 18 H 83 L 86 6 Z" fill="#C5161D"/>
+  </g>
+</svg>
