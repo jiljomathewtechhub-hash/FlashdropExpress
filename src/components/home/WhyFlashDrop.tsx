@@ -108,7 +108,7 @@ export const WhyFlashDrop: React.FC<WhyFlashDropProps> = ({ onNavigate }) => {
           <TiltCard
             maxTilt={6}
             scale={1.015}
-            className="bg-gradient-to-b from-white/[0.08] via-amber-300/[0.015] to-transparent backdrop-blur-xl p-5 sm:p-6 rounded-2xl flex flex-col justify-between border border-white/10 hover:border-amber-300/35 transition-smooth shadow-xl"
+            className="bg-gradient-to-b from-amber-500/[0.08] via-white/[0.04] to-transparent backdrop-blur-xl p-5 sm:p-6 rounded-2xl flex flex-col justify-between border border-amber-500/20 hover:border-amber-400/40 transition-all duration-300 shadow-xl relative overflow-hidden group"
           >
             <div>
               <span className="p-2.5 rounded-xl badge-soft-amber inline-block mb-3">
@@ -130,7 +130,7 @@ export const WhyFlashDrop: React.FC<WhyFlashDropProps> = ({ onNavigate }) => {
           <TiltCard
             maxTilt={6}
             scale={1.015}
-            className="bg-gradient-to-b from-white/[0.08] via-emerald-300/[0.015] to-transparent backdrop-blur-xl p-5 sm:p-6 rounded-2xl flex flex-col justify-between border border-white/10 hover:border-emerald-300/35 transition-smooth shadow-xl group"
+            className="bg-gradient-to-b from-emerald-500/[0.08] via-white/[0.04] to-transparent backdrop-blur-xl p-5 sm:p-6 rounded-2xl flex flex-col justify-between border border-emerald-500/20 hover:border-emerald-400/40 transition-all duration-300 shadow-xl relative overflow-hidden group"
           >
             <div className="relative rounded-xl overflow-hidden aspect-[16/10] mb-3.5">
               <img

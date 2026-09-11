@@ -47,7 +47,7 @@ export const Hero: React.FC<HeroProps> = ({ onNavigate }) => {
           <div className="space-y-3">
             <h1 className="hero-headline text-4xl sm:text-6xl lg:text-7xl font-black tracking-tight text-white font-['Outfit'] leading-[1.05]">
               FAST. RELIABLE.{' '}
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-white via-red-100 to-red-300">
+              <span className="text-white">
                 DELIVERED.
               </span>
             </h1>
@@ -107,20 +107,20 @@ export const Hero: React.FC<HeroProps> = ({ onNavigate }) => {
           {/* Clean Key Metrics Spanning Evenly Across the Bottom */}
           <div className="w-full max-w-3xl mx-auto pt-6 border-t border-white/10">
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
-              <div className="glass-panel p-4 sm:p-5 rounded-2xl border border-white/10 transition-smooth hover:border-red-300/30">
-                <div className="text-2xl sm:text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-white via-red-100 to-red-200 font-['Outfit']">
+              <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-b from-red-500/[0.08] via-white/[0.04] to-transparent backdrop-blur-xl border border-red-500/20 hover:border-red-400/40 shadow-xl transition-all duration-300 relative overflow-hidden group">
+                <div className="text-2xl sm:text-3xl font-black text-white font-['Outfit']">
                   1–2 Hours
                 </div>
                 <div className="text-xs text-sky-200 font-semibold mt-1">GTA Rush Dispatch</div>
               </div>
-              <div className="glass-panel p-4 sm:p-5 rounded-2xl border border-white/10 transition-smooth hover:border-amber-300/30">
-                <div className="text-2xl sm:text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-white via-amber-100 to-amber-200 font-['Outfit']">
+              <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-b from-amber-500/[0.08] via-white/[0.04] to-transparent backdrop-blur-xl border border-amber-500/20 hover:border-amber-400/40 shadow-xl transition-all duration-300 relative overflow-hidden group">
+                <div className="text-2xl sm:text-3xl font-black text-white font-['Outfit']">
                   4,000 lbs
                 </div>
                 <div className="text-xs text-amber-200 font-semibold mt-1">Max Freight Payload</div>
               </div>
-              <div className="glass-panel p-4 sm:p-5 rounded-2xl border border-white/10 transition-smooth hover:border-emerald-300/30">
-                <div className="text-2xl sm:text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-white via-emerald-100 to-emerald-200 font-['Outfit']">
+              <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-b from-emerald-500/[0.08] via-white/[0.04] to-transparent backdrop-blur-xl border border-emerald-500/20 hover:border-emerald-400/40 shadow-xl transition-all duration-300 relative overflow-hidden group">
+                <div className="text-2xl sm:text-3xl font-black text-white font-['Outfit']">
                   Pay Later
                 </div>
                 <div className="text-xs text-emerald-200 font-semibold mt-1">Zero Deposit Required</div>

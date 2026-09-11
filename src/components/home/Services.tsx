@@ -99,7 +99,7 @@ export const Services: React.FC<ServicesProps> = ({ onNavigate }) => {
                 key={idx}
                 maxTilt={6}
                 scale={1.015}
-                className="bg-gradient-to-b from-white/[0.08] via-red-300/[0.015] to-transparent backdrop-blur-xl border border-white/10 hover:border-red-300/35 rounded-2xl p-6 transition-smooth shadow-xl flex flex-col justify-between group"
+                className="bg-gradient-to-b from-red-500/[0.08] via-white/[0.04] to-transparent backdrop-blur-xl border border-red-500/20 hover:border-red-400/40 rounded-2xl p-6 transition-all duration-300 shadow-xl flex flex-col justify-between group relative overflow-hidden"
               >
                 <div>
                   <div className="flex items-center justify-between mb-4">

@@ -93,7 +93,7 @@ export const WebsiteFlowNavigator: React.FC<WebsiteFlowNavigatorProps> = ({ onNa
                 key={s.num}
                 maxTilt={6}
                 scale={1.015}
-                className={`bg-gradient-to-b from-white/[0.08] via-red-300/[0.015] to-transparent backdrop-blur-xl border border-white/10 p-6 rounded-2xl flex flex-col justify-between transition-smooth ${s.borderAccent} group shadow-lg`}
+                className={`bg-gradient-to-b from-red-500/[0.08] via-white/[0.04] to-transparent backdrop-blur-xl border border-red-500/20 hover:border-red-400/40 p-6 rounded-2xl flex flex-col justify-between transition-all duration-300 hover:-translate-y-1 group shadow-xl relative overflow-hidden`}
               >
                 <div>
                   {/* Top Bar with Icon & Step Watermark */}
@@ -101,9 +101,7 @@ export const WebsiteFlowNavigator: React.FC<WebsiteFlowNavigatorProps> = ({ onNa
                     <div className={`w-11 h-11 rounded-xl ${s.badgeClass} flex items-center justify-center ${s.accent} transition-transform group-hover:scale-105 shadow-sm`}>
                       <Icon className="w-5 h-5" />
                     </div>
-                    <span className="text-xl font-black text-white/20 font-['Outfit'] select-none">
-                      {s.num}
-                    </span>
+                    <span className="text-xs font-mono font-bold px-2 py-0.5 rounded-md bg-white/[0.06] border border-white/10 text-slate-400 group-hover:text-white group-hover:border-red-400/40 transition-colors select-none">STEP {s.num}</span>
                   </div>
 
                   {/* Title & Tagline */}
@@ -124,7 +122,7 @@ export const WebsiteFlowNavigator: React.FC<WebsiteFlowNavigatorProps> = ({ onNa
                 <div className="mt-5 pt-3.5 border-t border-white/10">
                   <button
                     onClick={() => onNavigate(s.tab, s.param)}
-                    className="w-full min-h-[44px] flex items-center justify-between text-xs font-bold text-slate-200 hover:text-white px-3.5 py-2.5 bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 hover:border-red-300/35 rounded-xl transition-smooth group/btn cursor-pointer"
+                    className="w-full min-h-[44px] flex items-center justify-between text-xs font-bold text-slate-200 hover:text-white px-4 py-2.5 bg-white/[0.04] hover:bg-red-500/15 border border-white/10 hover:border-red-400/40 rounded-xl transition-all duration-200 group/btn cursor-pointer"
                   >
                     <span>{s.btnLabel}</span>
                     <ChevronRight className="w-4 h-4 text-red-300 transition-transform group-hover/btn:translate-x-1" />

@@ -78,7 +78,7 @@ export const FAQ: React.FC<FAQProps> = ({ onNavigate }) => {
           {FAQ_ITEMS.map((item) => {
             const isOpen = openId === item.id;
             return (
-              <div key={item.id} className="py-4 transition-colors">
+              <div key={item.id} className="py-4 px-4 my-2.5 rounded-2xl bg-gradient-to-b from-red-500/[0.05] via-white/[0.03] to-transparent backdrop-blur-xl border border-red-500/15 hover:border-red-400/35 transition-all duration-200 shadow-sm">
                 <button
                   type="button"
                   onClick={() => toggleItem(item.id)}

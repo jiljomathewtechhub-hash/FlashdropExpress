@@ -241,7 +241,7 @@ export const ServiceAreas: React.FC<ServiceAreasProps> = ({ onNavigate }) => {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
           {/* Animated Radar Vector Map - Steady Container (No 3D Tilt) */}
           <div className="lg:col-span-6">
-            <div className="bg-gradient-to-b from-white/[0.06] via-white/[0.02] to-transparent backdrop-blur-xl p-4 sm:p-5 rounded-2xl border border-white/10 shadow-2xl relative">
+            <div className="bg-gradient-to-b from-red-500/[0.08] via-white/[0.04] to-transparent backdrop-blur-xl p-5 sm:p-6 rounded-2xl border border-red-500/20 shadow-xl relative overflow-hidden">
               <div className="flex items-center justify-between border-b border-white/10 pb-2.5 mb-3">
                 <div className="flex items-center space-x-2">
                   <Compass className="w-4 h-4 text-red-400" />
@@ -507,7 +507,7 @@ export const ServiceAreas: React.FC<ServiceAreasProps> = ({ onNavigate }) => {
               return (
                 <div
                   key={idx}
-                  className={`bg-gradient-to-b from-white/[0.08] via-red-300/[0.015] to-transparent backdrop-blur-xl border p-3.5 rounded-xl flex items-center justify-between transition-smooth shadow-sm ${
+                  className={`bg-gradient-to-b from-red-500/[0.05] via-white/[0.03] to-transparent backdrop-blur-xl border border-red-500/15 hover:border-red-400/35 p-4 rounded-xl flex items-center justify-between transition-all duration-200 shadow-sm ${
                     isMatched
                       ? 'border-red-300/60 bg-red-400/[0.08] ring-1 ring-red-300/30 shadow-lg shadow-red-950/20'
                       : 'border-white/10 hover:border-red-300/30'

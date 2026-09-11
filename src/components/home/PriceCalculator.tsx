@@ -97,7 +97,7 @@ export const PriceCalculator: React.FC<PriceCalculatorProps> = ({ onNavigate }) 
         {/* Main Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
           {/* Controls Column */}
-          <div className="lg:col-span-7 bg-gradient-to-b from-white/[0.06] via-white/[0.02] to-transparent backdrop-blur-xl border border-white/10 rounded-2xl p-6 sm:p-7 space-y-6 shadow-2xl">
+          <div className="lg:col-span-7 bg-gradient-to-b from-red-500/[0.08] via-white/[0.04] to-transparent backdrop-blur-xl border border-red-500/20 rounded-2xl p-6 sm:p-7 space-y-6 shadow-xl relative overflow-hidden">
             {/* 1. Vehicle Selection (Touch-Friendly 76px) */}
             <div>
               <label className="block text-xs font-bold text-slate-200 uppercase tracking-wider mb-2.5">
@@ -139,10 +139,10 @@ export const PriceCalculator: React.FC<PriceCalculatorProps> = ({ onNavigate }) 
                   2. One-Way Distance
                 </label>
                 <div className="flex items-baseline space-x-1">
-                  <span className="text-2xl font-black text-red-300 font-['Outfit']">
+                  <span className="text-2xl font-black text-white font-['Outfit']">
                     {distanceKm}
                   </span>
-                  <span className="text-xs font-bold text-slate-300">km</span>
+                  <span className="text-xs font-bold text-slate-400 ml-1">km</span>
                 </div>
               </div>
 
@@ -254,10 +254,8 @@ export const PriceCalculator: React.FC<PriceCalculatorProps> = ({ onNavigate }) 
           {/* Invoice Card Column with Soft Frosted Gradient */}
           <div className="lg:col-span-5">
             <TiltCard maxTilt={5} className="h-full">
-              <div className="h-full bg-gradient-to-b from-white/[0.08] via-red-300/[0.015] to-transparent backdrop-blur-xl border border-white/15 rounded-2xl p-6 sm:p-7 flex flex-col justify-between shadow-2xl relative overflow-hidden">
+              <div className="h-full bg-gradient-to-b from-red-500/[0.08] via-white/[0.04] to-transparent backdrop-blur-xl border border-red-500/20 rounded-2xl p-6 sm:p-7 flex flex-col justify-between shadow-xl relative overflow-hidden">
                 {/* Visual Top Decorative Bar */}
-                <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-red-300 via-red-400 to-[#C5161D]" />
-
                 <div className="space-y-4">
                   {/* Header */}
                   <div className="flex items-center justify-between border-b border-white/10 pb-3.5">
@@ -328,9 +326,9 @@ export const PriceCalculator: React.FC<PriceCalculatorProps> = ({ onNavigate }) 
                         <div className="text-xs font-bold text-slate-200 uppercase tracking-wider">Estimated Total</div>
                         <div className="text-[11px] text-slate-300">Pay upon delivery</div>
                       </div>
-                      <div className="text-2xl sm:text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-white via-red-100 to-red-200 font-['Outfit'] tracking-tight">
+                      <div className="text-2xl sm:text-3xl font-black text-white font-['Outfit'] tracking-tight">
                         ${breakdown.totalPrice.toFixed(2)}
-                        <span className="text-xs text-red-300 font-bold ml-1.5">CAD</span>
+                        <span className="text-xs text-slate-400 font-semibold ml-1.5 font-mono">CAD</span>
                       </div>
                     </div>
                   </div>
