@@ -36,8 +36,17 @@ const VALID_TABS = [
 
 const getTabFromHash = (): string => {
   if (typeof window === 'undefined') return 'home';
-  const hash = window.location.hash.replace(/^#\/?/, '').trim();
-  return VALID_TABS.includes(hash) ? hash : 'home';
+  const rawHash = window.location.hash.replace(/^#\/?/, '').trim();
+  if (
+    rawHash.includes('type=recovery') ||
+    rawHash.includes('reset-password') ||
+    rawHash.includes('access_token=') ||
+    (typeof window !== 'undefined' && window.location.search.includes('type=recovery'))
+  ) {
+    return 'login';
+  }
+  const cleanHash = rawHash.split('?')[0].split('&')[0];
+  return VALID_TABS.includes(cleanHash) ? cleanHash : 'home';
 };
 
 export default function App() {
@@ -50,6 +59,22 @@ export default function App() {
     return store.subscribe(() => {
       setCurrentUser(store.getCurrentUser());
     });
+  }, []);
+
+  // Check on initial load if user landed from a password recovery link
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const rawHash = window.location.hash;
+    const search = window.location.search;
+    if (
+      rawHash.includes('type=recovery') ||
+      rawHash.includes('reset-password') ||
+      rawHash.includes('access_token') ||
+      search.includes('type=recovery')
+    ) {
+      setCurrentTab('login');
+      setNavParam({ mode: 'reset' });
+    }
   }, []);
 
   const handleNavigate = (tab: string, param?: any, replace = false) => {

@@ -466,3 +466,58 @@ export const createAdminStatusSms = (order: Order, newStatus: OrderStatus, notes
 
   return `📋 FlashDrop Order #${order.order_number} status is now ${newStatus.replace(/_/g, ' ').toUpperCase()}${driverInfo}. Route: ${pickupShort} -> ${dropShort}. Manage: ${origin}/admin`;
 };
+
+// Customer & Staff Password Reset Email Template
+export const createPasswordResetEmail = (
+  email: string,
+  resetUrl: string,
+  securityCode: string
+): { subject: string; html: string } => {
+  const subject = `Reset Your FlashDrop Express Password`;
+  const preheader = `Use security code ${securityCode} or click the link to securely reset your password.`;
+
+  const contentHtml = `
+    <div style="text-align: center; margin-bottom: 24px;">
+      <span class="badge badge-red">Security Notice</span>
+      <h2 style="font-size: 22px; font-weight: 800; color: #FFFFFF; margin: 14px 0 4px 0;">Reset Your Password</h2>
+      <p style="font-size: 13px; color: #94A3B8; margin: 0;">FlashDrop Express Commercial Account</p>
+    </div>
+
+    <p style="font-size: 14px; line-height: 1.6; color: #CBD5E1;">
+      Hello,
+    </p>
+    <p style="font-size: 14px; line-height: 1.6; color: #CBD5E1;">
+      We received a request to reset the password for your FlashDrop Express account registered to <strong style="color: #FFFFFF;">${email}</strong>.
+    </p>
+
+    <div class="card" style="text-align: center; border-color: #7F1D1D; background: #1A0709; padding: 24px 20px;">
+      <p style="font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px; color: #FCA5A5; margin: 0 0 8px 0; font-weight: 700;">Your 6-Digit Security PIN</p>
+      <div style="font-family: 'Courier New', Courier, monospace; font-size: 36px; font-weight: 900; letter-spacing: 8px; color: #FFFFFF; padding: 8px 0; text-shadow: 0 0 16px rgba(239, 68, 68, 0.4);">
+        ${securityCode}
+      </div>
+      <p style="font-size: 11px; color: #94A3B8; margin: 8px 0 0 0;">Valid for 30 minutes &bull; Single use only</p>
+    </div>
+
+    <div style="text-align: center; margin: 28px 0 24px 0;">
+      <a href="${resetUrl}" class="button" style="padding: 16px 36px; font-size: 14px; display: inline-block;">Reset Password Directly &rarr;</a>
+    </div>
+
+    <p style="font-size: 12px; color: #64748B; text-align: center; margin: 0 0 20px 0;">
+      Or copy and paste this link into your browser:<br/>
+      <a href="${resetUrl}" style="color: #EF4444; word-break: break-all; font-size: 11px;">${resetUrl}</a>
+    </p>
+
+    <div style="background-color: #0F172A; border-radius: 10px; padding: 16px; margin-top: 20px; border: 1px solid #1E293B;">
+      <p style="font-size: 12px; color: #E2E8F0; margin: 0 0 4px 0; font-weight: 700;">Didn't request this change?</p>
+      <p style="font-size: 11px; color: #94A3B8; margin: 0; line-height: 1.5;">
+        If you did not request a password reset, please ignore this email. Your existing credentials remain completely secure.
+      </p>
+    </div>
+  `;
+
+  return {
+    subject,
+    html: wrapHtmlEmail(subject, preheader, contentHtml),
+  };
+};
+

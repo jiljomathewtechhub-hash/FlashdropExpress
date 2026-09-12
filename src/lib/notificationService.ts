@@ -7,6 +7,7 @@ import {
   createAdminNewOrderSms,
   createAdminStatusEmail,
   createAdminStatusSms,
+  createPasswordResetEmail,
 } from './notificationTemplates';
 import { supabase, isSupabaseConfigured } from './supabase';
 
@@ -337,6 +338,27 @@ class NotificationService {
       short_redirect_fee: 18,
       hst_enabled: true,
       hst_rate: 0.13,
+    });
+  }
+
+  // Send branded password reset email via verified Resend domain
+  public async sendPasswordResetNotification(
+    email: string,
+    resetUrl: string,
+    securityCode: string
+  ): Promise<NotificationLog> {
+    const emailData = createPasswordResetEmail(email, resetUrl, securityCode);
+
+    return this.dispatchNotification({
+      order_id: 'auth_reset',
+      order_number: 'SECURITY',
+      event: 'password_reset',
+      channel: 'email',
+      recipient_type: 'customer',
+      destination: email,
+      subject: emailData.subject,
+      message: `Your FlashDrop Express reset PIN is ${securityCode}. Reset link: ${resetUrl}`,
+      html_body: emailData.html,
     });
   }
 }

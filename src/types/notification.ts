@@ -1,6 +1,6 @@
 export type NotificationChannel = 'email' | 'sms';
 export type NotificationRecipientType = 'customer' | 'admin';
-export type NotificationEvent = 'order_created' | 'status_changed' | 'test';
+export type NotificationEvent = 'order_created' | 'status_changed' | 'password_reset' | 'test';
 export type NotificationStatus = 'sent' | 'delivered' | 'failed';
 
 export interface NotificationLog {
