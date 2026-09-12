@@ -41,7 +41,7 @@ const getTabFromHash = (): string => {
 };
 
 export default function App() {
-  const [currentUser, setCurrentUser] = useState<UserSession | null>(store.getCurrentUser);
+  const [currentUser, setCurrentUser] = useState<UserSession | null>(() => store.getCurrentUser());
   const [currentTab, setCurrentTab] = useState<string>(getTabFromHash);
   const [navParam, setNavParam] = useState<any>(null);
 

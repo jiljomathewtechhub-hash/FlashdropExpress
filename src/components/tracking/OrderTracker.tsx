@@ -39,6 +39,19 @@ export const OrderTracker: React.FC<OrderTrackerProps> = ({ initialOrderNumber, 
     }
   }, [initialOrderNumber]);
 
+  useEffect(() => {
+    const refresh = () => {
+      if (searchNumber.trim()) {
+        const found = store.getOrderById(searchNumber.trim());
+        if (found) {
+          setOrder(found);
+          setNotFound(false);
+        }
+      }
+    };
+    return store.subscribe(refresh);
+  }, [searchNumber]);
+
   const handleLookup = (num: string) => {
     if (!num.trim()) return;
     const found = store.getOrderById(num.trim());

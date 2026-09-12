@@ -31,7 +31,15 @@ import {
   Briefcase,
   ArrowLeft,
   Home,
+  Edit2,
+  Calendar,
+  Building,
+  ExternalLink,
+  Bell,
+  MessageSquare,
+  Send,
 } from 'lucide-react';
+import { NotificationLog } from '../../types/notification';
 import { Order, Driver, Vehicle, OrderRequestItem, OrderStatus, BusinessSettings } from '../../types/order';
 import { store, UserSession } from '../../lib/store';
 import { PricingTierRule } from '../../lib/pricing';
@@ -43,7 +51,7 @@ interface AdminDashboardProps {
 }
 
 export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) => {
-  const [activeTab, setActiveTab] = useState<'orders' | 'drivers' | 'requests' | 'pricing' | 'settings'>('orders');
+  const [activeTab, setActiveTab] = useState<'orders' | 'drivers' | 'requests' | 'notifications' | 'pricing' | 'settings'>('orders');
   const [user, setUser] = useState<UserSession | null>(store.getCurrentUser());
   const [orders, setOrders] = useState<Order[]>([]);
   const [drivers, setDrivers] = useState<Driver[]>([]);
@@ -59,7 +67,22 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
 
   // Driver Assignment modal
   const [assignModalOrder, setAssignModalOrder] = useState<Order | null>(null);
-  const [selectedDriverForAssign, setSelectedDriverForAssign] = useState<string>('drv-01');
+  const [selectedDriverForAssign, setSelectedDriverForAssign] = useState<string>('');
+
+  // Order Edit & Delete states
+  const [editingOrder, setEditingOrder] = useState<Order | null>(null);
+  const [editFormData, setEditFormData] = useState<Partial<Order>>({});
+  const [deleteOrderConfirmId, setDeleteOrderConfirmId] = useState<string | null>(null);
+
+  // Staff Profile Modal state
+  const [viewingStaffProfile, setViewingStaffProfile] = useState<Driver | null>(null);
+
+  // Notification Monitor states
+  const [notifications, setNotifications] = useState<NotificationLog[]>(() => store.getNotificationLogs());
+  const [notifFilter, setNotifFilter] = useState<'all' | 'customer' | 'admin' | 'sms'>('all');
+  const [previewNotification, setPreviewNotification] = useState<NotificationLog | null>(null);
+  const [testSending, setTestSending] = useState(false);
+  const [testSuccess, setTestSuccess] = useState(false);
 
   // Staff & Driver Provisioning State
   const [showAddStaffModal, setShowAddStaffModal] = useState(false);
@@ -100,9 +123,34 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
       setPricingTiers(store.getPricingTiers());
       setSettings(store.getSettings());
       setRequests(store.getRequests());
+      setNotifications(store.getNotificationLogs());
     };
 
     refresh();
+
+    // Auto-reconcile drivers in Supabase with profiles
+    if (isSupabaseConfigured && supabase) {
+      (async () => {
+        try {
+          const { data: dbDrivers } = await supabase.from('drivers').select('*');
+          const { data: dbProfiles } = await supabase.from('profiles').select('id, email, role');
+          if (dbDrivers && dbProfiles) {
+            for (const d of dbDrivers) {
+              if (!d.user_id && d.email) {
+                const match = dbProfiles.find((p) => p.email.toLowerCase() === d.email.toLowerCase());
+                if (match) {
+                  await supabase.from('drivers').update({ user_id: match.id }).eq('id', d.id);
+                  d.user_id = match.id;
+                }
+              }
+            }
+          }
+        } catch (e) {
+          console.warn('Driver profile reconciliation notice:', e);
+        }
+      })();
+    }
+
     return store.subscribe(refresh);
   }, []);
 
@@ -127,7 +175,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
 
   const handleAssignDriver = () => {
     if (!assignModalOrder) return;
-    store.assignDriverToOrder(assignModalOrder.id, selectedDriverForAssign);
+    const targetDriver = selectedDriverForAssign || drivers[0]?.id;
+    if (!targetDriver) return;
+    store.assignDriverToOrder(assignModalOrder.id, targetDriver);
     setAssignModalOrder(null);
   };
 
@@ -163,6 +213,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
     const vehicleType = staffRole === 'driver' ? newStaffVehicle : 'Operations Desk / Dispatch';
     const plate = staffRole === 'driver' ? (newStaffPlate.trim() || 'ON-FLEET') : undefined;
 
+    let newUserId: string | undefined;
+
     try {
       // 1. If Supabase is configured, create Supabase Auth User without replacing Admin's current session
       if (isSupabaseConfigured) {
@@ -183,22 +235,41 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
           console.warn('Supabase Auth signUp notice:', authError.message);
         }
 
-        // Upsert into public.profiles
-        if (authData?.user && supabase) {
-          await supabase.from('profiles').upsert([
-            {
-              id: authData.user.id,
-              email: emailTrimmed,
-              role: staffRole === 'admin' ? 'admin' : staffRole === 'dispatcher' ? 'dispatcher' : 'driver',
-              full_name: nameTrimmed,
-              phone: phoneTrimmed,
-            },
-          ]);
+        // Upsert into public.profiles & public.drivers
+        if (authData?.user) {
+          newUserId = authData.user.id;
+          if (supabase) {
+            await supabase.from('profiles').upsert([
+              {
+                id: authData.user.id,
+                email: emailTrimmed,
+                role: staffRole === 'admin' ? 'admin' : staffRole === 'dispatcher' ? 'dispatcher' : 'driver',
+                full_name: nameTrimmed,
+                phone: phoneTrimmed,
+              },
+            ]);
+
+            // Link in public.drivers with foreign key
+            await supabase.from('drivers').upsert([
+              {
+                user_id: authData.user.id,
+                name: nameTrimmed,
+                email: emailTrimmed,
+                phone: phoneTrimmed,
+                vehicle_type: vehicleType,
+                license_plate: plate || 'ON-FLEET',
+                is_active: true,
+                current_status: 'available',
+              },
+            ]);
+          }
         }
       }
 
       // 2. Add to store drivers & staff
       store.addDriver({
+        id: newUserId,
+        user_id: newUserId,
         name: nameTrimmed,
         email: emailTrimmed,
         phone: phoneTrimmed,
@@ -246,8 +317,62 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
     setTimeout(() => setCopiedCredentials(false), 2500);
   };
 
+  const handleOpenEditOrder = (order: Order) => {
+    setEditingOrder(order);
+    setEditFormData({ ...order });
+  };
+
+  const handleSendTestNotification = async () => {
+    setTestSending(true);
+    try {
+      await store.sendTestNotification('customer.preview@example.com');
+      setNotifications(store.getNotificationLogs());
+      setTestSuccess(true);
+      setTimeout(() => setTestSuccess(false), 4000);
+    } catch (err) {
+      console.error('Failed to trigger test notification:', err);
+    } finally {
+      setTestSending(false);
+    }
+  };
+
+  const handleClearNotifications = () => {
+    store.clearNotificationLogs();
+    setNotifications([]);
+  };
+
+  const handleSaveEditOrderSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingOrder) return;
+    store.updateOrder(editingOrder.id, editFormData);
+    setOrders(store.getOrders());
+    setEditingOrder(null);
+  };
+
+  const handleDeleteOrder = (orderId: string) => {
+    store.deleteOrder(orderId);
+    setOrders(store.getOrders());
+    setDeleteOrderConfirmId(null);
+  };
+
   const handleDeleteDriver = (driverId: string) => {
+    // Unassign any active orders for this driver back to confirmed
+    const driverOrders = orders.filter(
+      (o) => o.assigned_driver_id === driverId || (o.assigned_driver_name && drivers.find((d) => d.id === driverId)?.name === o.assigned_driver_name)
+    );
+    driverOrders.forEach((o) => {
+      if (o.order_status !== 'delivered' && o.order_status !== 'cancelled') {
+        store.updateOrder(o.id, {
+          assigned_driver_id: null,
+          assigned_driver_name: null,
+          order_status: 'confirmed',
+        });
+      }
+    });
+
     store.deleteDriver(driverId);
+    setOrders(store.getOrders());
+    setDrivers(store.getDrivers());
     setDeleteConfirmId(null);
   };
 
@@ -354,6 +479,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
         {[
           { id: 'orders', label: `Orders Queue (${orders.length})`, icon: Package },
           { id: 'drivers', label: `Staff & Drivers (${drivers.length})`, icon: Users },
+          { id: 'notifications', label: `Email & SMS Alerts (${notifications.length})`, icon: Bell },
           { id: 'requests', label: `Customer Requests (${pendingRequests})`, icon: AlertCircle },
           { id: 'pricing', label: 'Pricing Matrix & Tiers', icon: DollarSign },
           { id: 'settings', label: 'Business & Operating Hours', icon: Sliders },
@@ -459,41 +585,93 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
                         </td>
                         <td className="py-3 px-4">
                           {ord.assigned_driver_name ? (
-                            <span className="text-emerald-400 font-semibold">{ord.assigned_driver_name}</span>
+                            <div className="flex items-center space-x-2">
+                              <span className="text-emerald-400 font-semibold">{ord.assigned_driver_name}</span>
+                              <button
+                                onClick={() => {
+                                  setSelectedDriverForAssign(ord.assigned_driver_id || drivers[0]?.id || '');
+                                  setAssignModalOrder(ord);
+                                }}
+                                className="text-[10px] text-slate-400 hover:text-white underline cursor-pointer"
+                                title="Change or reassign driver"
+                              >
+                                Reassign
+                              </button>
+                            </div>
                           ) : (
                             <button
-                              onClick={() => setAssignModalOrder(ord)}
-                              className="text-red-400 hover:text-white font-bold underline text-xs"
+                              onClick={() => {
+                                setSelectedDriverForAssign(drivers[0]?.id || '');
+                                setAssignModalOrder(ord);
+                              }}
+                              className="text-red-400 hover:text-white font-bold underline text-xs cursor-pointer flex items-center space-x-1"
                             >
-                              + Assign
+                              <span>+ Assign</span>
                             </button>
                           )}
                         </td>
                         <td className="py-3 px-4 font-bold text-white">
                           ${ord.total_price.toFixed(2)}
                         </td>
-                        <td className="py-3 px-4 text-right space-x-1">
-                          <button
-                            onClick={() => onNavigate('tracking', ord.order_number)}
-                            className="p-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-lg transition"
-                            title="Inspect Tracking"
-                          >
-                            <Search className="w-3.5 h-3.5" />
-                          </button>
-                          <button
-                            onClick={() => generateOrderPdf(ord, settings)}
-                            className="p-1.5 bg-slate-800 hover:bg-slate-700 text-red-400 hover:text-white rounded-lg transition"
-                            title="Download PDF"
-                          >
-                            <FileDown className="w-3.5 h-3.5" />
-                          </button>
-                          <button
-                            onClick={() => setAssignModalOrder(ord)}
-                            className="p-1.5 bg-slate-800 hover:bg-slate-700 text-cyan-400 hover:text-white rounded-lg transition"
-                            title="Assign Driver"
-                          >
-                            <Truck className="w-3.5 h-3.5" />
-                          </button>
+                        <td className="py-3 px-4 text-right">
+                          <div className="flex items-center justify-end space-x-1">
+                            <button
+                              onClick={() => onNavigate('tracking', ord.order_number)}
+                              className="p-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-lg transition"
+                              title="Inspect Live Tracking"
+                            >
+                              <Search className="w-3.5 h-3.5" />
+                            </button>
+                            <button
+                              onClick={() => generateOrderPdf(ord, settings)}
+                              className="p-1.5 bg-slate-800 hover:bg-slate-700 text-red-400 hover:text-white rounded-lg transition"
+                              title="Download Waybill PDF"
+                            >
+                              <FileDown className="w-3.5 h-3.5" />
+                            </button>
+                            <button
+                              onClick={() => {
+                                setSelectedDriverForAssign(ord.assigned_driver_id || drivers[0]?.id || '');
+                                setAssignModalOrder(ord);
+                              }}
+                              className="p-1.5 bg-slate-800 hover:bg-slate-700 text-cyan-400 hover:text-white rounded-lg transition"
+                              title="Assign / Reassign Driver"
+                            >
+                              <Truck className="w-3.5 h-3.5" />
+                            </button>
+                            <button
+                              onClick={() => handleOpenEditOrder(ord)}
+                              className="p-1.5 bg-slate-800 hover:bg-slate-700 text-amber-400 hover:text-white rounded-lg transition"
+                              title="Edit Full Order Details"
+                            >
+                              <Edit2 className="w-3.5 h-3.5" />
+                            </button>
+                            {deleteOrderConfirmId === ord.id ? (
+                              <div className="flex items-center space-x-1 bg-red-950 border border-red-500/50 px-2 py-0.5 rounded-lg text-[10px]">
+                                <button
+                                  onClick={() => handleDeleteOrder(ord.id)}
+                                  className="text-red-300 hover:text-white font-bold cursor-pointer"
+                                >
+                                  Del
+                                </button>
+                                <span className="text-slate-600">|</span>
+                                <button
+                                  onClick={() => setDeleteOrderConfirmId(null)}
+                                  className="text-slate-400 hover:text-white cursor-pointer"
+                                >
+                                  X
+                                </button>
+                              </div>
+                            ) : (
+                              <button
+                                onClick={() => setDeleteOrderConfirmId(ord.id)}
+                                className="p-1.5 bg-slate-800 hover:bg-red-900/60 text-slate-500 hover:text-red-400 rounded-lg transition"
+                                title="Delete Order"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            )}
+                          </div>
                         </td>
                       </tr>
                     ))
@@ -876,7 +1054,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
           </div>
 
           {/* Roster Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {drivers
               .filter((drv) => {
                 if (staffFilter === 'all') return true;
@@ -886,20 +1064,33 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
                 return true;
               })
               .map((drv) => {
+                // Find all orders assigned to this staff member
+                const staffOrders = orders.filter((o) => {
+                  if (o.assigned_driver_id && (o.assigned_driver_id === drv.id || o.assigned_driver_id === drv.user_id)) return true;
+                  if (drv.email && o.assigned_driver_id && o.assigned_driver_id.toLowerCase() === drv.email.toLowerCase()) return true;
+                  if (o.assigned_driver_name && o.assigned_driver_name.toLowerCase() === drv.name.toLowerCase()) return true;
+                  return false;
+                });
+
+                const activeRuns = staffOrders.filter(
+                  (o) => o.order_status !== 'delivered' && o.order_status !== 'cancelled'
+                );
+                const completedRuns = staffOrders.filter((o) => o.order_status === 'delivered');
+
                 const roleBadge =
                   drv.staff_role === 'admin' ? (
-                    <span className="text-[10px] font-bold text-red-300 bg-red-950/80 border border-red-500/30 px-2 py-0.5 rounded-full flex items-center space-x-1">
-                      <Shield className="w-2.5 h-2.5 mr-0.5 inline" />
-                      <span>Admin</span>
+                    <span className="text-[10px] font-bold text-red-300 bg-red-950/80 border border-red-500/30 px-2.5 py-0.5 rounded-full flex items-center space-x-1">
+                      <Shield className="w-3 h-3 mr-1 inline text-red-400" />
+                      <span>Fleet Administrator</span>
                     </span>
                   ) : drv.staff_role === 'dispatcher' ? (
-                    <span className="text-[10px] font-bold text-purple-300 bg-purple-950/80 border border-purple-500/30 px-2 py-0.5 rounded-full flex items-center space-x-1">
-                      <Users className="w-2.5 h-2.5 mr-0.5 inline" />
-                      <span>Dispatcher</span>
+                    <span className="text-[10px] font-bold text-purple-300 bg-purple-950/80 border border-purple-500/30 px-2.5 py-0.5 rounded-full flex items-center space-x-1">
+                      <Users className="w-3 h-3 mr-1 inline text-purple-400" />
+                      <span>Operations Dispatcher</span>
                     </span>
                   ) : (
-                    <span className="text-[10px] font-bold text-cyan-300 bg-cyan-950/80 border border-cyan-500/30 px-2 py-0.5 rounded-full flex items-center space-x-1">
-                      <Truck className="w-2.5 h-2.5 mr-0.5 inline" />
+                    <span className="text-[10px] font-bold text-cyan-300 bg-cyan-950/80 border border-cyan-500/30 px-2.5 py-0.5 rounded-full flex items-center space-x-1">
+                      <Truck className="w-3 h-3 mr-1 inline text-cyan-400" />
                       <span>Courier Driver</span>
                     </span>
                   );
@@ -907,116 +1098,246 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
                 return (
                   <div
                     key={drv.id}
-                    className="bg-[#111726] border border-slate-800 rounded-2xl p-5 space-y-3.5 shadow-lg flex flex-col justify-between"
+                    className="bg-gradient-to-br from-[#111726] via-[#0E1320] to-[#0A0D15] border border-slate-800 rounded-3xl p-6 space-y-5 shadow-2xl flex flex-col justify-between hover:border-slate-700/80 transition"
                   >
-                    <div>
-                      {/* Top Bar: Role badge & Active state */}
-                      <div className="flex items-center justify-between border-b border-slate-800/80 pb-3">
-                        {roleBadge}
-                        <span
-                          className={`text-[10px] font-bold px-2 py-0.5 rounded ${
-                            drv.is_active
-                              ? 'bg-emerald-950/80 text-emerald-400 border border-emerald-500/30'
-                              : 'bg-slate-800 text-slate-500 border border-slate-700'
-                          }`}
-                        >
-                          {drv.is_active ? 'Active' : 'Suspended'}
-                        </span>
-                      </div>
-
-                      {/* Staff Member Info */}
-                      <div className="mt-3 space-y-2">
-                        <div className="flex items-center space-x-2.5">
-                          <div className="w-9 h-9 rounded-xl bg-slate-800 border border-slate-700/80 text-white font-bold text-sm flex items-center justify-center font-['Outfit']">
-                            {drv.name.charAt(0)}
+                    <div className="space-y-4">
+                      {/* Top Profile Header */}
+                      <div className="flex items-center justify-between border-b border-slate-800/80 pb-4">
+                        <div className="flex items-center space-x-3.5">
+                          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-red-600 to-red-800 border border-red-500/30 text-white font-black text-lg flex items-center justify-center font-['Outfit'] shadow-md shadow-red-950/50">
+                            {drv.name.charAt(0).toUpperCase()}
                           </div>
                           <div>
-                            <div className="font-bold text-white text-sm font-['Outfit']">
-                              {drv.name}
+                            <div className="flex items-center space-x-2">
+                              <h3 className="font-bold text-white text-base font-['Outfit']">
+                                {drv.name}
+                              </h3>
+                              {roleBadge}
                             </div>
-                            <div className="text-[10px] text-slate-400">
-                              {drv.staff_role === 'admin'
-                                ? 'System Administrator'
-                                : drv.staff_role === 'dispatcher'
-                                ? 'Operations Coordinator'
-                                : 'Fleet Road Courier'}
+                            <div className="flex items-center space-x-2 text-[11px] text-slate-400 mt-0.5">
+                              <span>FlashDrop GTA Operations</span>
+                              <span>&bull;</span>
+                              <span className="font-mono text-slate-500">ID: {drv.id.slice(0, 8)}...</span>
                             </div>
                           </div>
                         </div>
 
-                        <div className="space-y-1 text-xs text-slate-400 pt-1">
-                          <div className="flex items-center space-x-1.5 truncate">
-                            <Mail className="w-3.5 h-3.5 text-slate-500 shrink-0" />
+                        {/* Status badge */}
+                        <span
+                          className={`text-[10px] font-bold px-2.5 py-1 rounded-full flex items-center space-x-1 ${
+                            drv.is_active
+                              ? 'bg-emerald-950/80 text-emerald-300 border border-emerald-500/40'
+                              : 'bg-slate-900 text-slate-500 border border-slate-700'
+                          }`}
+                        >
+                          <span className={`w-1.5 h-1.5 rounded-full mr-1.5 ${drv.is_active ? 'bg-emerald-400 animate-pulse' : 'bg-slate-500'}`} />
+                          <span>{drv.is_active ? 'Active & On Duty' : 'Shift Suspended'}</span>
+                        </span>
+                      </div>
+
+                      {/* Contact & Vehicle Info Bar */}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-[#07090E]/80 border border-slate-800/80 rounded-2xl p-3.5 text-xs">
+                        <div className="space-y-1.5">
+                          <div className="flex items-center space-x-2 truncate">
+                            <Mail className="w-3.5 h-3.5 text-red-400 shrink-0" />
                             <a
                               href={`mailto:${drv.email}`}
                               className="text-slate-300 hover:text-white hover:underline truncate"
+                              title="Send email to staff"
                             >
                               {drv.email}
                             </a>
                           </div>
-                          <div className="flex items-center space-x-1.5">
-                            <Phone className="w-3.5 h-3.5 text-slate-500 shrink-0" />
+                          <div className="flex items-center space-x-2">
+                            <Phone className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
                             <a
                               href={`tel:${drv.phone}`}
-                              className="text-slate-300 hover:text-white"
+                              className="text-slate-300 hover:text-white font-semibold"
+                              title="Call staff phone"
                             >
                               {drv.phone}
                             </a>
                           </div>
-                          {(!drv.staff_role || drv.staff_role === 'driver') && (
-                            <div className="flex items-center space-x-1.5">
-                              <Truck className="w-3.5 h-3.5 text-slate-500 shrink-0" />
-                              <span>
-                                {drv.vehicle_type}{' '}
-                                {drv.license_plate && (
-                                  <span className="font-mono text-slate-400">({drv.license_plate})</span>
-                                )}
+                        </div>
+
+                        <div className="space-y-1.5 border-t sm:border-t-0 sm:border-l border-slate-800/80 pt-2 sm:pt-0 sm:pl-3">
+                          <div className="flex items-center space-x-2">
+                            <Car className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
+                            <span className="text-slate-200 font-medium truncate">
+                              {drv.vehicle_type}
+                            </span>
+                          </div>
+                          {drv.license_plate && (
+                            <div className="flex items-center space-x-2 text-[11px]">
+                              <span className="text-slate-500">Plate:</span>
+                              <span className="font-mono text-amber-300 font-bold bg-amber-950/50 px-2 py-0.5 rounded border border-amber-500/20">
+                                {drv.license_plate}
                               </span>
                             </div>
                           )}
                         </div>
                       </div>
+
+                      {/* ASSIGNED WORK & DISPATCH STATUS FEED */}
+                      <div className="bg-[#07090E]/90 border border-slate-800/90 rounded-2xl p-4 space-y-3">
+                        <div className="flex items-center justify-between border-b border-slate-800/70 pb-2">
+                          <div className="flex items-center space-x-2">
+                            <Clock className="w-3.5 h-3.5 text-red-400" />
+                            <span className="text-xs font-bold text-white uppercase tracking-wider">
+                              Assigned Deliveries & Live Status
+                            </span>
+                          </div>
+                          <div className="flex items-center space-x-2 text-[11px]">
+                            <span className={`px-2 py-0.5 rounded-full font-bold ${
+                              activeRuns.length > 0
+                                ? 'bg-blue-950 text-blue-300 border border-blue-500/30'
+                                : 'bg-slate-900 text-slate-500 border border-slate-800'
+                            }`}>
+                              {activeRuns.length} Active Run{activeRuns.length === 1 ? '' : 's'}
+                            </span>
+                            <span className="text-slate-500">&bull;</span>
+                            <span className="text-emerald-400 font-medium">
+                              {completedRuns.length} Delivered
+                            </span>
+                          </div>
+                        </div>
+
+                        {activeRuns.length === 0 ? (
+                          <div className="p-4 bg-slate-900/40 border border-slate-800/60 rounded-xl text-center space-y-1">
+                            <CheckCircle2 className="w-5 h-5 text-emerald-400/80 mx-auto" />
+                            <div className="text-xs font-semibold text-slate-300">
+                              No Active Runs Currently Assigned
+                            </div>
+                            <p className="text-[11px] text-slate-500">
+                              This courier is currently available and awaiting dispatch assignment.
+                            </p>
+                          </div>
+                        ) : (
+                          <div className="space-y-2.5 max-h-56 overflow-y-auto pr-1">
+                            {activeRuns.map((run) => (
+                              <div
+                                key={run.id}
+                                className="p-3 bg-[#0D121F] border border-slate-800 rounded-xl space-y-2 text-xs hover:border-slate-700 transition"
+                              >
+                                <div className="flex items-center justify-between">
+                                  <div className="flex items-center space-x-2">
+                                    <span className="font-mono font-bold text-white text-xs">
+                                      #{run.order_number}
+                                    </span>
+                                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border ${
+                                      run.order_status === 'assigned'
+                                        ? 'bg-blue-950 text-blue-400 border-blue-500/30'
+                                        : run.order_status === 'en_route_pickup'
+                                        ? 'bg-amber-950 text-amber-400 border-amber-500/30'
+                                        : run.order_status === 'picked_up'
+                                        ? 'bg-purple-950 text-purple-400 border-purple-500/30'
+                                        : run.order_status === 'in_transit'
+                                        ? 'bg-indigo-950 text-indigo-400 border-indigo-500/30 animate-pulse'
+                                        : 'bg-slate-900 text-slate-300 border-slate-700'
+                                    }`}>
+                                      {run.order_status.replace(/_/g, ' ')}
+                                    </span>
+                                  </div>
+                                  <span className="font-bold text-emerald-400">
+                                    ${run.total_price.toFixed(2)} CAD
+                                  </span>
+                                </div>
+
+                                <div className="text-[11px] text-slate-400 leading-relaxed truncate">
+                                  <span className="text-slate-300 font-medium">Pickup:</span> {run.pickup_address.split(',')[0]}
+                                  <span className="text-slate-500 mx-1.5">&rarr;</span>
+                                  <span className="text-slate-300 font-medium">Drop:</span> {run.delivery_address.split(',')[0]}
+                                </div>
+
+                                <div className="flex items-center justify-between text-[10px] text-slate-500 pt-1 border-t border-slate-800/60">
+                                  <span>
+                                    {run.weight_lbs} lbs ({run.quantity} units) &bull; {run.distance_km} km
+                                  </span>
+                                  <div className="flex items-center space-x-2">
+                                    <button
+                                      type="button"
+                                      onClick={() => handleOpenEditOrder(run)}
+                                      className="text-amber-400 hover:text-amber-300 font-semibold cursor-pointer"
+                                      title="Edit this order"
+                                    >
+                                      Edit
+                                    </button>
+                                    <span className="text-slate-700">|</span>
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        setSelectedDriverForAssign(drv.id);
+                                        setAssignModalOrder(run);
+                                      }}
+                                      className="text-cyan-400 hover:text-cyan-300 font-bold cursor-pointer"
+                                      title="Reassign this order to another driver"
+                                    >
+                                      Reassign Run
+                                    </button>
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
                     </div>
 
-                    {/* Bottom Actions */}
-                    <div className="pt-3 border-t border-slate-800/80 flex items-center justify-between text-xs">
-                      <button
-                        onClick={() => store.toggleDriverStatus(drv.id)}
-                        className={`text-[11px] font-semibold cursor-pointer ${
-                          drv.is_active ? 'text-amber-400 hover:text-amber-300' : 'text-emerald-400 hover:text-emerald-300'
-                        }`}
-                      >
-                        {drv.is_active ? 'Suspend' : 'Activate'}
-                      </button>
+                    {/* Bottom Action Footer */}
+                    <div className="pt-4 border-t border-slate-800/80 flex flex-wrap items-center justify-between gap-3 text-xs">
+                      <div className="flex items-center space-x-3">
+                        <button
+                          type="button"
+                          onClick={() => store.toggleDriverStatus(drv.id)}
+                          className={`text-[11px] font-semibold cursor-pointer transition ${
+                            drv.is_active ? 'text-amber-400 hover:text-amber-300' : 'text-emerald-400 hover:text-emerald-300'
+                          }`}
+                        >
+                          {drv.is_active ? 'Suspend Shift' : 'Activate Shift'}
+                        </button>
+                        <span className="text-slate-700">&bull;</span>
+                        <button
+                          type="button"
+                          onClick={() => setViewingStaffProfile(drv)}
+                          className="text-slate-300 hover:text-white text-[11px] font-semibold cursor-pointer"
+                        >
+                          View Full Profile
+                        </button>
+                      </div>
 
                       <div className="flex items-center space-x-2">
                         <button
+                          type="button"
                           onClick={() => onNavigate('driver')}
                           className="text-red-400 hover:text-red-300 font-bold text-[11px] cursor-pointer"
                         >
                           Staff Portal &rarr;
                         </button>
                         {deleteConfirmId === drv.id ? (
-                          <div className="flex items-center space-x-1 bg-red-950/80 border border-red-500/40 px-2 py-0.5 rounded-lg text-[10px]">
+                          <div className="flex items-center space-x-1.5 bg-red-950 border border-red-500/50 px-2 py-0.5 rounded-lg text-[10px]">
+                            <span className="text-red-300 font-bold">Remove?</span>
                             <button
+                              type="button"
                               onClick={() => handleDeleteDriver(drv.id)}
-                              className="text-red-300 hover:text-white font-bold cursor-pointer"
+                              className="text-white font-black hover:underline cursor-pointer"
                             >
-                              Confirm
+                              Yes
                             </button>
-                            <span className="text-slate-500">|</span>
+                            <span className="text-slate-600">|</span>
                             <button
+                              type="button"
                               onClick={() => setDeleteConfirmId(null)}
                               className="text-slate-400 hover:text-white cursor-pointer"
                             >
-                              Cancel
+                              No
                             </button>
                           </div>
                         ) : (
                           <button
+                            type="button"
                             onClick={() => setDeleteConfirmId(drv.id)}
-                            className="p-1 text-slate-500 hover:text-red-400 rounded transition cursor-pointer"
-                            title="Remove staff account"
+                            className="p-1.5 text-slate-500 hover:text-red-400 rounded-lg hover:bg-red-950/40 transition cursor-pointer"
+                            title="Remove staff member"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
                           </button>
@@ -1121,6 +1442,374 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
               ))}
             </div>
           )}
+        </div>
+      )}
+
+      {/* TAB: AUTOMATED DISPATCH NOTIFICATIONS (EMAIL & SMS) */}
+      {activeTab === 'notifications' && (
+        <div className="space-y-6">
+          {/* Top Banner & Actions */}
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-gradient-to-r from-[#111726] via-[#0E1320] to-[#0A0D15] border border-slate-800 rounded-3xl p-6 shadow-2xl">
+            <div className="space-y-1">
+              <div className="flex items-center space-x-2.5">
+                <h2 className="text-xl font-black text-white font-['Outfit'] tracking-tight">
+                  Automated Customer & Admin Notifications
+                </h2>
+                <span className="text-[10px] font-bold text-emerald-400 bg-emerald-950/80 border border-emerald-500/30 px-2.5 py-0.5 rounded-full flex items-center">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse mr-1.5" />
+                  Live Dispatch Active
+                </span>
+              </div>
+              <p className="text-xs text-slate-400 max-w-2xl">
+                Automatic multi-channel notification engine. Customers receive instant HTML email confirmations & live status updates. Admins receive real-time email waybills and instant SMS text alerts directly on phone <strong>+1 647 804 9775</strong>.
+              </p>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2.5">
+              <button
+                type="button"
+                onClick={handleSendTestNotification}
+                disabled={testSending}
+                className="flex items-center space-x-2 px-4 py-2.5 bg-[#C5161D] hover:bg-red-700 text-white font-bold text-xs rounded-xl shadow-lg shadow-red-950/50 transition cursor-pointer disabled:opacity-50 shrink-0"
+              >
+                {testSending ? (
+                  <>
+                    <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                    <span>Dispatching Test...</span>
+                  </>
+                ) : (
+                  <>
+                    <Send className="w-3.5 h-3.5" />
+                    <span>Send Test Notification Pipeline</span>
+                  </>
+                )}
+              </button>
+
+              {notifications.length > 0 && (
+                <button
+                  type="button"
+                  onClick={handleClearNotifications}
+                  className="px-3.5 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white text-xs font-semibold rounded-xl border border-slate-700 transition cursor-pointer"
+                  title="Clear log history"
+                >
+                  Clear Logs
+                </button>
+              )}
+            </div>
+          </div>
+
+          {testSuccess && (
+            <div className="p-4 bg-emerald-950/80 border border-emerald-500/50 rounded-2xl flex items-center justify-between text-xs text-emerald-200 animate-fade-in shadow-xl">
+              <div className="flex items-center space-x-2">
+                <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
+                <span>
+                  <strong>Test Notification Dispatched Successfully!</strong> Generated Customer Email (preview), Admin Dispatch Email, and Admin SMS to <strong>+1 647 804 9775</strong>. Check the audit feed below.
+                </span>
+              </div>
+              <button onClick={() => setTestSuccess(false)} className="text-emerald-400 hover:text-white font-bold px-2 cursor-pointer">
+                &times;
+              </button>
+            </div>
+          )}
+
+          {/* 3-Channel Overview Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+            {/* Customer Channel Card */}
+            <div className="bg-[#111726] border border-slate-800 rounded-2xl p-5 space-y-2.5 shadow-lg">
+              <div className="flex items-center justify-between border-b border-slate-800/80 pb-2.5">
+                <span className="font-bold text-white text-sm flex items-center">
+                  <Mail className="w-4 h-4 text-cyan-400 mr-2" />
+                  Customer Channel
+                </span>
+                <span className="text-[10px] font-bold text-cyan-300 bg-cyan-950/80 border border-cyan-500/30 px-2 py-0.5 rounded-full">
+                  Email Only
+                </span>
+              </div>
+              <p className="text-slate-400 text-[11px]">
+                Sent directly to the customer's provided email address (<code className="text-slate-300">order.customer_email</code>).
+              </p>
+              <div className="bg-[#0B0F17] p-2.5 rounded-xl border border-slate-800/80 space-y-1 text-[11px]">
+                <div className="text-slate-300">&bull; <strong>Order Confirmation:</strong> Instant waybill & pricing</div>
+                <div className="text-slate-300">&bull; <strong>Live Status Updates:</strong> Driver assigned, picked up, in transit</div>
+                <div className="text-slate-300">&bull; <strong>POD Delivery Notice:</strong> Verified receiver & timestamp</div>
+              </div>
+            </div>
+
+            {/* Admin Email Channel Card */}
+            <div className="bg-[#111726] border border-slate-800 rounded-2xl p-5 space-y-2.5 shadow-lg">
+              <div className="flex items-center justify-between border-b border-slate-800/80 pb-2.5">
+                <span className="font-bold text-white text-sm flex items-center">
+                  <Mail className="w-4 h-4 text-red-400 mr-2" />
+                  Admin Email Channel
+                </span>
+                <span className="text-[10px] font-bold text-red-300 bg-red-950/80 border border-red-500/30 px-2 py-0.5 rounded-full">
+                  Direct Email
+                </span>
+              </div>
+              <p className="text-slate-400 text-[11px]">
+                Sent to Admin operations desk (<code className="text-slate-300">{settings.email || 'nidhin@flashdropexpress.com'}</code>).
+              </p>
+              <div className="bg-[#0B0F17] p-2.5 rounded-xl border border-slate-800/80 space-y-1 text-[11px]">
+                <div className="text-slate-300">&bull; <strong>Urgent Booking Alerts:</strong> Customer details, phone, route</div>
+                <div className="text-slate-300">&bull; <strong>Cargo & Pricing:</strong> Weight, pails, vehicle, total CAD</div>
+                <div className="text-slate-300">&bull; <strong>1-Click Dispatch Link:</strong> Direct link to Admin portal</div>
+              </div>
+            </div>
+
+            {/* Admin SMS Channel Card */}
+            <div className="bg-[#111726] border border-slate-800 rounded-2xl p-5 space-y-2.5 shadow-lg">
+              <div className="flex items-center justify-between border-b border-slate-800/80 pb-2.5">
+                <span className="font-bold text-white text-sm flex items-center">
+                  <Phone className="w-4 h-4 text-emerald-400 mr-2" />
+                  Admin SMS Channel
+                </span>
+                <span className="text-[10px] font-bold text-emerald-300 bg-emerald-950/80 border border-emerald-500/30 px-2 py-0.5 rounded-full">
+                  SMS / Phone
+                </span>
+              </div>
+              <p className="text-slate-400 text-[11px]">
+                Sent directly to Admin mobile: <strong className="text-emerald-400 font-mono">+1 647 804 9775</strong>.
+              </p>
+              <div className="bg-[#0B0F17] p-2.5 rounded-xl border border-slate-800/80 space-y-1 text-[11px]">
+                <div className="text-slate-300">&bull; <strong>New Order Alert SMS:</strong> Order #, route, amount, customer</div>
+                <div className="text-slate-300">&bull; <strong>Driver Status SMS:</strong> Road courier transitions</div>
+                <div className="text-slate-300">&bull; <strong>Delivered SMS:</strong> Final receiver POD completion</div>
+              </div>
+            </div>
+          </div>
+
+          {/* Live Delivery Provider Setup (Resend & Canadian SMS Gateway) */}
+          <div className="bg-[#0B0F17] border border-slate-800 rounded-2xl p-5 space-y-4 text-xs shadow-xl">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800/80 pb-3">
+              <div>
+                <h3 className="font-bold text-white text-sm flex items-center space-x-2">
+                  <Key className="w-4 h-4 text-amber-400" />
+                  <span>Real Email & SMS Delivery Provider Setup</span>
+                </h3>
+                <p className="text-[11px] text-slate-400 mt-0.5">
+                  Connect your 100% Free Resend API Key (3,000 free emails/mo) so customer & admin emails land in real inboxes.
+                </p>
+              </div>
+              <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
+                settings.resend_api_key
+                  ? 'bg-emerald-950 text-emerald-300 border border-emerald-500/40'
+                  : 'bg-amber-950 text-amber-300 border border-amber-500/30'
+              }`}>
+                {settings.resend_api_key ? '✓ Resend API Key Active' : 'Simulation Mode (Awaiting Free Key)'}
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-slate-300 font-semibold mb-1">
+                  Resend Free API Key (<code className="text-amber-300">re_...</code>)
+                </label>
+                <div className="flex space-x-2">
+                  <input
+                    type="password"
+                    placeholder="e.g. re_123456789abcdef..."
+                    value={settings.resend_api_key || ''}
+                    onChange={(e) => setSettings({ ...settings, resend_api_key: e.target.value })}
+                    className="w-full bg-[#111726] border border-slate-700 px-3 py-2 rounded-xl text-white font-mono focus:outline-none focus:border-red-500"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      store.updateSettings({ resend_api_key: settings.resend_api_key });
+                      alert('Resend API Key saved successfully! Real email delivery is now active.');
+                    }}
+                    className="px-4 py-2 bg-emerald-700 hover:bg-emerald-600 text-white font-bold rounded-xl whitespace-nowrap cursor-pointer transition shadow"
+                  >
+                    Save Key
+                  </button>
+                </div>
+                <div className="flex items-center space-x-2 text-[11px] text-slate-400 mt-1.5">
+                  <span>Don't have a free key?</span>
+                  <a
+                    href="https://resend.com/signup"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-red-400 hover:underline font-semibold flex items-center"
+                  >
+                    Get 3,000 Free Emails/Month on Resend.com &rarr;
+                  </a>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-slate-300 font-semibold mb-1">
+                  Admin SMS Canadian Carrier Gateway (+1 647 804 9775)
+                </label>
+                <select
+                  value={settings.carrier_sms_gateway || 'rogers'}
+                  onChange={(e) => {
+                    const updated = { ...settings, carrier_sms_gateway: e.target.value };
+                    setSettings(updated);
+                    store.updateSettings(updated);
+                  }}
+                  className="w-full bg-[#111726] border border-slate-700 px-3 py-2 rounded-xl text-white focus:outline-none focus:border-red-500"
+                >
+                  <option value="rogers">Rogers / Fido (6478049775@pcs.rogers.com)</option>
+                  <option value="bell">Bell / Virgin (6478049775@txt.bell.ca)</option>
+                  <option value="telus">Telus / Koodo (6478049775@msg.telus.com)</option>
+                  <option value="freedom">Freedom Mobile (6478049775@txt.freedommobile.ca)</option>
+                </select>
+                <span className="text-[10px] text-slate-500 mt-1.5 block">
+                  Converts email alerts directly into 100% free SMS delivered to +1 647 804 9775 via Canadian carrier gateways.
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Filter Pills */}
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800/80 pb-3">
+            <div className="flex items-center space-x-2">
+              <span className="text-xs font-semibold text-slate-400">Filter Feed:</span>
+              {[
+                { id: 'all' as const, label: `All Notifications (${notifications.length})` },
+                {
+                  id: 'customer' as const,
+                  label: `Customer Emails (${notifications.filter((n) => n.recipient_type === 'customer').length})`,
+                },
+                {
+                  id: 'admin' as const,
+                  label: `Admin Dispatches (${notifications.filter((n) => n.recipient_type === 'admin').length})`,
+                },
+                {
+                  id: 'sms' as const,
+                  label: `Admin SMS Alerts (${notifications.filter((n) => n.channel === 'sms').length})`,
+                },
+              ].map((pill) => (
+                <button
+                  key={pill.id}
+                  type="button"
+                  onClick={() => setNotifFilter(pill.id)}
+                  className={`px-3 py-1 text-xs font-semibold rounded-lg transition cursor-pointer ${
+                    notifFilter === pill.id
+                      ? 'bg-slate-800 text-white border border-slate-700 shadow-sm'
+                      : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/60'
+                  }`}
+                >
+                  {pill.label}
+                </button>
+              ))}
+            </div>
+
+            <div className="text-xs text-slate-500 font-mono">
+              Audit Stream: {notifications.length} dispatches logged
+            </div>
+          </div>
+
+          {/* Notification Logs Table */}
+          <div className="bg-[#111726] border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs text-slate-300">
+                <thead className="bg-[#0B0F17] text-slate-400 uppercase text-[10px] font-bold border-b border-slate-800">
+                  <tr>
+                    <th className="py-3 px-4">Time</th>
+                    <th className="py-3 px-4">Recipient</th>
+                    <th className="py-3 px-4">Channel</th>
+                    <th className="py-3 px-4">Destination</th>
+                    <th className="py-3 px-4">Order #</th>
+                    <th className="py-3 px-4">Subject / SMS Message</th>
+                    <th className="py-3 px-4">Status</th>
+                    <th className="py-3 px-4 text-right">Action</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-800/60">
+                  {notifications
+                    .filter((n) => {
+                      if (notifFilter === 'all') return true;
+                      if (notifFilter === 'customer') return n.recipient_type === 'customer';
+                      if (notifFilter === 'admin') return n.recipient_type === 'admin';
+                      if (notifFilter === 'sms') return n.channel === 'sms';
+                      return true;
+                    })
+                    .map((notif) => (
+                      <tr key={notif.id} className="hover:bg-slate-900/40 transition">
+                        <td className="py-3 px-4 font-mono text-[11px] text-slate-400 whitespace-nowrap">
+                          {new Date(notif.sent_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          <span className="text-[10px] text-slate-500 block">
+                            {new Date(notif.sent_at).toLocaleDateString([], { month: 'short', day: 'numeric' })}
+                          </span>
+                        </td>
+                        <td className="py-3 px-4">
+                          <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
+                            notif.recipient_type === 'customer'
+                              ? 'bg-emerald-950/80 text-emerald-300 border border-emerald-500/30'
+                              : 'bg-red-950/80 text-red-300 border border-red-500/30'
+                          }`}>
+                            {notif.recipient_type}
+                          </span>
+                        </td>
+                        <td className="py-3 px-4">
+                          <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase flex items-center space-x-1 w-max ${
+                            notif.channel === 'email'
+                              ? 'bg-cyan-950 text-cyan-300 border border-cyan-500/30'
+                              : 'bg-amber-950 text-amber-300 border border-amber-500/30'
+                          }`}>
+                            {notif.channel === 'email' ? (
+                              <>
+                                <Mail className="w-2.5 h-2.5 mr-1" />
+                                <span>EMAIL</span>
+                              </>
+                            ) : (
+                              <>
+                                <Phone className="w-2.5 h-2.5 mr-1" />
+                                <span>SMS</span>
+                              </>
+                            )}
+                          </span>
+                        </td>
+                        <td className="py-3 px-4 font-mono text-xs">
+                          {notif.channel === 'sms' ? (
+                            <span className="text-emerald-400 font-bold bg-emerald-950/40 px-2 py-0.5 rounded border border-emerald-500/20">
+                              {notif.destination}
+                            </span>
+                          ) : (
+                            <span className="text-slate-300 truncate max-w-[160px] block">
+                              {notif.destination}
+                            </span>
+                          )}
+                        </td>
+                        <td className="py-3 px-4 font-mono font-bold text-white">
+                          #{notif.order_number}
+                        </td>
+                        <td className="py-3 px-4">
+                          <div className="max-w-[280px] truncate text-slate-200 font-medium">
+                            {notif.subject || notif.message}
+                          </div>
+                          <div className="max-w-[280px] truncate text-[10px] text-slate-500">
+                            {notif.message}
+                          </div>
+                        </td>
+                        <td className="py-3 px-4">
+                          <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-emerald-950/60 text-emerald-400 border border-emerald-500/30">
+                            Sent &bull; Delivered
+                          </span>
+                        </td>
+                        <td className="py-3 px-4 text-right">
+                          <button
+                            type="button"
+                            onClick={() => setPreviewNotification(notif)}
+                            className="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-lg transition text-[11px] font-semibold cursor-pointer"
+                          >
+                            Preview
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  {notifications.length === 0 && (
+                    <tr>
+                      <td colSpan={8} className="py-10 text-center text-slate-500">
+                        No notifications sent yet. Click "Send Test Notification Pipeline" to test the customer email and admin email/SMS delivery!
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
         </div>
       )}
 
@@ -1343,6 +2032,667 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
         </form>
       )}
 
+      {/* EDIT ORDER MODAL */}
+      {editingOrder && (
+        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-[#111726] border border-slate-700 rounded-3xl max-w-4xl w-full max-h-[92vh] overflow-y-auto shadow-2xl space-y-5 p-6 text-xs">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between border-b border-slate-800 pb-4">
+              <div>
+                <div className="flex items-center space-x-3">
+                  <h3 className="text-lg font-bold text-white font-['Outfit']">
+                    Edit Order #{editingOrder.order_number}
+                  </h3>
+                  <span className="px-2.5 py-0.5 rounded text-[10px] font-bold uppercase bg-red-950 text-red-300 border border-red-500/30">
+                    Dispatch Admin Override
+                  </span>
+                </div>
+                <p className="text-slate-400 text-xs mt-0.5">
+                  Update customer information, addresses, cargo manifest, pricing, assignment, and status.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setEditingOrder(null)}
+                className="p-1.5 text-slate-400 hover:text-white rounded-lg bg-slate-800/80 cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveEditOrderSubmit} className="space-y-6">
+              {/* Status & Assignment Section */}
+              <div className="bg-[#0B0F17] p-4 rounded-2xl border border-slate-800 space-y-3">
+                <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                  Status & Fleet Assignment
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div>
+                    <label className="block text-slate-300 mb-1 font-semibold">Order Status</label>
+                    <select
+                      value={editFormData.order_status || editingOrder.order_status}
+                      onChange={(e) => setEditFormData({ ...editFormData, order_status: e.target.value as OrderStatus })}
+                      className="w-full bg-[#111726] border border-slate-700 px-3 py-2 rounded-xl text-white focus:outline-none focus:border-red-500"
+                    >
+                      <option value="submitted">Submitted</option>
+                      <option value="confirmed">Confirmed</option>
+                      <option value="assigned">Assigned</option>
+                      <option value="en_route_pickup">En Route to Pickup</option>
+                      <option value="picked_up">Picked Up & Loaded</option>
+                      <option value="in_transit">In Transit</option>
+                      <option value="delivered">Delivered</option>
+                      <option value="cancellation_requested">Cancellation Requested</option>
+                      <option value="cancelled">Cancelled</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-slate-300 mb-1 font-semibold">Assigned Driver</label>
+                    <select
+                      value={editFormData.assigned_driver_id || editingOrder.assigned_driver_id || ''}
+                      onChange={(e) => {
+                        const drvId = e.target.value;
+                        const match = drivers.find((d) => d.id === drvId);
+                        setEditFormData({
+                          ...editFormData,
+                          assigned_driver_id: drvId || null,
+                          assigned_driver_name: match ? match.name : null,
+                        });
+                      }}
+                      className="w-full bg-[#111726] border border-slate-700 px-3 py-2 rounded-xl text-white focus:outline-none focus:border-red-500"
+                    >
+                      <option value="">-- Unassigned --</option>
+                      {drivers.map((d) => (
+                        <option key={d.id} value={d.id}>
+                          {d.name} ({d.vehicle_type})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-slate-300 mb-1 font-semibold">Payment Status</label>
+                    <select
+                      value={editFormData.payment_status || editingOrder.payment_status}
+                      onChange={(e) => setEditFormData({ ...editFormData, payment_status: e.target.value as any })}
+                      className="w-full bg-[#111726] border border-slate-700 px-3 py-2 rounded-xl text-white focus:outline-none focus:border-red-500"
+                    >
+                      <option value="pay_later">Pay Later on Delivery</option>
+                      <option value="paid">Paid (Card Online)</option>
+                      <option value="pending">Pending Payment</option>
+                      <option value="invoiced">Invoiced (Net 30)</option>
+                      <option value="refunded">Refunded</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              {/* Customer Info Section */}
+              <div className="bg-[#0B0F17] p-4 rounded-2xl border border-slate-800 space-y-3">
+                <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                  Customer & Billing Account Details
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                  <div>
+                    <label className="block text-slate-300 mb-1 font-semibold">Customer Name *</label>
+                    <input
+                      type="text"
+                      value={editFormData.customer_name ?? editingOrder.customer_name}
+                      onChange={(e) => setEditFormData({ ...editFormData, customer_name: e.target.value })}
+                      required
+                      className="w-full bg-[#111726] border border-slate-700 px-3 py-2 rounded-xl text-white focus:outline-none focus:border-red-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-slate-300 mb-1 font-semibold">Company Name</label>
+                    <input
+                      type="text"
+                      value={editFormData.company_name ?? (editingOrder.company_name || '')}
+                      onChange={(e) => setEditFormData({ ...editFormData, company_name: e.target.value })}
+                      className="w-full bg-[#111726] border border-slate-700 px-3 py-2 rounded-xl text-white focus:outline-none focus:border-red-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-slate-300 mb-1 font-semibold">Customer Phone *</label>
+                    <input
+                      type="tel"
+                      value={editFormData.customer_phone ?? editingOrder.customer_phone}
+                      onChange={(e) => setEditFormData({ ...editFormData, customer_phone: e.target.value })}
+                      required
+                      className="w-full bg-[#111726] border border-slate-700 px-3 py-2 rounded-xl text-white focus:outline-none focus:border-red-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-slate-300 mb-1 font-semibold">Customer Email *</label>
+                    <input
+                      type="email"
+                      value={editFormData.customer_email ?? editingOrder.customer_email}
+                      onChange={(e) => setEditFormData({ ...editFormData, customer_email: e.target.value })}
+                      required
+                      className="w-full bg-[#111726] border border-slate-700 px-3 py-2 rounded-xl text-white focus:outline-none focus:border-red-500"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Pickup Location & Details */}
+              <div className="bg-[#0B0F17] p-4 rounded-2xl border border-slate-800 space-y-3">
+                <div className="text-[11px] font-bold uppercase tracking-wider text-red-400 flex items-center space-x-1.5">
+                  <MapPin className="w-3.5 h-3.5" />
+                  <span>Pickup Location & Shipper Contact</span>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div className="sm:col-span-2">
+                    <label className="block text-slate-300 mb-1 font-semibold">Pickup Street Address *</label>
+                    <input
+                      type="text"
+                      value={editFormData.pickup_address ?? editingOrder.pickup_address}
+                      onChange={(e) => setEditFormData({ ...editFormData, pickup_address: e.target.value })}
+                      required
+                      className="w-full bg-[#111726] border border-slate-700 px-3 py-2 rounded-xl text-white focus:outline-none focus:border-red-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-slate-300 mb-1 font-semibold">Unit / Dock / Bay</label>
+                    <input
+                      type="text"
+                      value={editFormData.pickup_unit ?? (editingOrder.pickup_unit || '')}
+                      onChange={(e) => setEditFormData({ ...editFormData, pickup_unit: e.target.value })}
+                      placeholder="e.g. Dock 4"
+                      className="w-full bg-[#111726] border border-slate-700 px-3 py-2 rounded-xl text-white focus:outline-none focus:border-red-500"
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
+                  <div>
+                    <label className="block text-slate-300 mb-1 font-semibold">On-site Contact</label>
+                    <input
+                      type="text"
+                      value={editFormData.pickup_contact_name ?? (editingOrder.pickup_contact_name || '')}
+                      onChange={(e) => setEditFormData({ ...editFormData, pickup_contact_name: e.target.value })}
+                      className="w-full bg-[#111726] border border-slate-700 px-3 py-2 rounded-xl text-white focus:outline-none focus:border-red-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-slate-300 mb-1 font-semibold">On-site Phone</label>
+                    <input
+                      type="tel"
+                      value={editFormData.pickup_contact_phone ?? (editingOrder.pickup_contact_phone || '')}
+                      onChange={(e) => setEditFormData({ ...editFormData, pickup_contact_phone: e.target.value })}
+                      className="w-full bg-[#111726] border border-slate-700 px-3 py-2 rounded-xl text-white focus:outline-none focus:border-red-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-slate-300 mb-1 font-semibold">Pickup Date</label>
+                    <input
+                      type="date"
+                      value={editFormData.pickup_date ?? editingOrder.pickup_date}
+                      onChange={(e) => setEditFormData({ ...editFormData, pickup_date: e.target.value })}
+                      className="w-full bg-[#111726] border border-slate-700 px-3 py-2 rounded-xl text-white focus:outline-none focus:border-red-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-slate-300 mb-1 font-semibold">Pickup Time</label>
+                    <input
+                      type="time"
+                      value={editFormData.pickup_time ?? editingOrder.pickup_time}
+                      onChange={(e) => setEditFormData({ ...editFormData, pickup_time: e.target.value })}
+                      className="w-full bg-[#111726] border border-slate-700 px-3 py-2 rounded-xl text-white focus:outline-none focus:border-red-500"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-slate-300 mb-1 font-semibold">Pickup / Dock Notes</label>
+                  <input
+                    type="text"
+                    value={editFormData.pickup_notes ?? (editingOrder.pickup_notes || '')}
+                    onChange={(e) => setEditFormData({ ...editFormData, pickup_notes: e.target.value })}
+                    placeholder="Gate instructions, buzz codes, or warehouse bay numbers"
+                    className="w-full bg-[#111726] border border-slate-700 px-3 py-2 rounded-xl text-white focus:outline-none focus:border-red-500"
+                  />
+                </div>
+              </div>
+
+              {/* Delivery Location & Details */}
+              <div className="bg-[#0B0F17] p-4 rounded-2xl border border-slate-800 space-y-3">
+                <div className="text-[11px] font-bold uppercase tracking-wider text-emerald-400 flex items-center space-x-1.5">
+                  <MapPin className="w-3.5 h-3.5" />
+                  <span>Delivery Destination & Consignee Contact</span>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div className="sm:col-span-2">
+                    <label className="block text-slate-300 mb-1 font-semibold">Delivery Address *</label>
+                    <input
+                      type="text"
+                      value={editFormData.delivery_address ?? editingOrder.delivery_address}
+                      onChange={(e) => setEditFormData({ ...editFormData, delivery_address: e.target.value })}
+                      required
+                      className="w-full bg-[#111726] border border-slate-700 px-3 py-2 rounded-xl text-white focus:outline-none focus:border-red-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-slate-300 mb-1 font-semibold">Unit / Suite / Buzzer</label>
+                    <input
+                      type="text"
+                      value={editFormData.delivery_unit ?? (editingOrder.delivery_unit || '')}
+                      onChange={(e) => setEditFormData({ ...editFormData, delivery_unit: e.target.value })}
+                      placeholder="e.g. Suite 204"
+                      className="w-full bg-[#111726] border border-slate-700 px-3 py-2 rounded-xl text-white focus:outline-none focus:border-red-500"
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div>
+                    <label className="block text-slate-300 mb-1 font-semibold">Receiving Contact</label>
+                    <input
+                      type="text"
+                      value={editFormData.delivery_contact_name ?? (editingOrder.delivery_contact_name || '')}
+                      onChange={(e) => setEditFormData({ ...editFormData, delivery_contact_name: e.target.value })}
+                      className="w-full bg-[#111726] border border-slate-700 px-3 py-2 rounded-xl text-white focus:outline-none focus:border-red-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-slate-300 mb-1 font-semibold">Receiving Phone</label>
+                    <input
+                      type="tel"
+                      value={editFormData.delivery_contact_phone ?? (editingOrder.delivery_contact_phone || '')}
+                      onChange={(e) => setEditFormData({ ...editFormData, delivery_contact_phone: e.target.value })}
+                      className="w-full bg-[#111726] border border-slate-700 px-3 py-2 rounded-xl text-white focus:outline-none focus:border-red-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-slate-300 mb-1 font-semibold">Delivery Service Window</label>
+                    <select
+                      value={editFormData.delivery_time_option || editingOrder.delivery_time_option}
+                      onChange={(e) => setEditFormData({ ...editFormData, delivery_time_option: e.target.value as any })}
+                      className="w-full bg-[#111726] border border-slate-700 px-3 py-2 rounded-xl text-white focus:outline-none focus:border-red-500"
+                    >
+                      <option value="asap">ASAP (Direct Drive)</option>
+                      <option value="1-2h">1-2 Hours</option>
+                      <option value="2-3h">2-3 Hours</option>
+                      <option value="4-5h">4-5 Hours</option>
+                      <option value="anytime_today">Same Day / Anytime</option>
+                    </select>
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-slate-300 mb-1 font-semibold">Delivery / Receiving Notes</label>
+                  <input
+                    type="text"
+                    value={editFormData.delivery_notes ?? (editingOrder.delivery_notes || '')}
+                    onChange={(e) => setEditFormData({ ...editFormData, delivery_notes: e.target.value })}
+                    placeholder="Specific drop instructions, freight elevator, security desk check-in"
+                    className="w-full bg-[#111726] border border-slate-700 px-3 py-2 rounded-xl text-white focus:outline-none focus:border-red-500"
+                  />
+                </div>
+              </div>
+
+              {/* Cargo & Fleet Specs */}
+              <div className="bg-[#0B0F17] p-4 rounded-2xl border border-slate-800 space-y-3">
+                <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400 flex items-center space-x-1.5">
+                  <Package className="w-3.5 h-3.5 text-cyan-400" />
+                  <span>Cargo Manifest & Vehicle Specifications</span>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
+                  <div>
+                    <label className="block text-slate-300 mb-1 font-semibold">Vehicle Required</label>
+                    <input
+                      type="text"
+                      value={editFormData.vehicle_name ?? editingOrder.vehicle_name}
+                      onChange={(e) => setEditFormData({ ...editFormData, vehicle_name: e.target.value })}
+                      className="w-full bg-[#111726] border border-slate-700 px-3 py-2 rounded-xl text-white focus:outline-none focus:border-red-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-slate-300 mb-1 font-semibold">Cargo Category</label>
+                    <select
+                      value={editFormData.item_type || editingOrder.item_type}
+                      onChange={(e) => setEditFormData({ ...editFormData, item_type: e.target.value as any })}
+                      className="w-full bg-[#111726] border border-slate-700 px-3 py-2 rounded-xl text-white focus:outline-none focus:border-red-500"
+                    >
+                      <option value="paint_pails">Paint Pails</option>
+                      <option value="furniture">Furniture / Bulk</option>
+                      <option value="small_boxes">Small Boxes</option>
+                      <option value="medium_boxes">Medium Boxes</option>
+                      <option value="large_boxes">Large Boxes</option>
+                      <option value="other">Other Commercial</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-slate-300 mb-1 font-semibold">Weight (lbs)</label>
+                    <input
+                      type="number"
+                      value={editFormData.weight_lbs ?? editingOrder.weight_lbs}
+                      onChange={(e) => setEditFormData({ ...editFormData, weight_lbs: Number(e.target.value) })}
+                      className="w-full bg-[#111726] border border-slate-700 px-3 py-2 rounded-xl text-white focus:outline-none focus:border-red-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-slate-300 mb-1 font-semibold">Quantity (Units / Pails)</label>
+                    <input
+                      type="number"
+                      value={editFormData.quantity ?? editingOrder.quantity}
+                      onChange={(e) => setEditFormData({ ...editFormData, quantity: Number(e.target.value) })}
+                      className="w-full bg-[#111726] border border-slate-700 px-3 py-2 rounded-xl text-white focus:outline-none focus:border-red-500"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-slate-300 mb-1 font-semibold">Item Manifest Description</label>
+                  <input
+                    type="text"
+                    value={editFormData.item_description ?? (editingOrder.item_description || '')}
+                    onChange={(e) => setEditFormData({ ...editFormData, item_description: e.target.value })}
+                    className="w-full bg-[#111726] border border-slate-700 px-3 py-2 rounded-xl text-white focus:outline-none focus:border-red-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-slate-300 mb-1 font-semibold">Driver Instructions</label>
+                  <input
+                    type="text"
+                    value={editFormData.custom_instructions ?? (editingOrder.custom_instructions || '')}
+                    onChange={(e) => setEditFormData({ ...editFormData, custom_instructions: e.target.value })}
+                    className="w-full bg-[#111726] border border-slate-700 px-3 py-2 rounded-xl text-white focus:outline-none focus:border-red-500"
+                  />
+                </div>
+              </div>
+
+              {/* Financials & Price Breakdown */}
+              <div className="bg-[#0B0F17] p-4 rounded-2xl border border-slate-800 space-y-3">
+                <div className="text-[11px] font-bold uppercase tracking-wider text-emerald-400 flex items-center space-x-1.5">
+                  <DollarSign className="w-3.5 h-3.5" />
+                  <span>Financial Breakdown & Pricing (CAD)</span>
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  <div>
+                    <label className="block text-slate-300 mb-1 font-semibold">Base Price ($)</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={editFormData.base_price ?? editingOrder.base_price}
+                      onChange={(e) => setEditFormData({ ...editFormData, base_price: Number(e.target.value) })}
+                      className="w-full bg-[#111726] border border-slate-700 px-3 py-2 rounded-xl text-white focus:outline-none focus:border-red-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-slate-300 mb-1 font-semibold">Excess KM Surcharge ($)</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={editFormData.excess_km_charge ?? (editingOrder.excess_km_charge || 0)}
+                      onChange={(e) => setEditFormData({ ...editFormData, excess_km_charge: Number(e.target.value) })}
+                      className="w-full bg-[#111726] border border-slate-700 px-3 py-2 rounded-xl text-white focus:outline-none focus:border-red-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-slate-300 mb-1 font-semibold">After Hours ($)</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={editFormData.after_hours_charge ?? (editingOrder.after_hours_charge || 0)}
+                      onChange={(e) => setEditFormData({ ...editFormData, after_hours_charge: Number(e.target.value) })}
+                      className="w-full bg-[#111726] border border-slate-700 px-3 py-2 rounded-xl text-white focus:outline-none focus:border-red-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-slate-300 mb-1 font-semibold">Total Price ($ CAD) *</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={editFormData.total_price ?? editingOrder.total_price}
+                      onChange={(e) => {
+                        const tot = Number(e.target.value);
+                        const sub = Number((tot / 1.13).toFixed(2));
+                        const tax = Number((tot - sub).toFixed(2));
+                        setEditFormData({
+                          ...editFormData,
+                          total_price: tot,
+                          subtotal: sub,
+                          tax_amount: tax,
+                        });
+                      }}
+                      required
+                      className="w-full bg-emerald-950/40 border border-emerald-500/50 px-3 py-2 rounded-xl text-emerald-300 font-bold focus:outline-none"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Form Buttons */}
+              <div className="pt-2 border-t border-slate-800 flex items-center justify-between">
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (confirm('Permanently delete this order?')) {
+                      handleDeleteOrder(editingOrder.id);
+                      setEditingOrder(null);
+                    }
+                  }}
+                  className="px-4 py-2.5 bg-red-950/60 hover:bg-red-900 border border-red-500/40 text-red-300 font-semibold rounded-xl text-xs flex items-center space-x-1.5 transition cursor-pointer"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                  <span>Delete Order</span>
+                </button>
+
+                <div className="flex items-center space-x-3">
+                  <button
+                    type="button"
+                    onClick={() => setEditingOrder(null)}
+                    className="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold rounded-xl text-xs transition cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-6 py-2.5 bg-[#C5161D] hover:bg-red-700 text-white font-bold rounded-xl text-xs transition shadow-lg shadow-red-950/50 flex items-center space-x-2 cursor-pointer"
+                  >
+                    <Save className="w-3.5 h-3.5" />
+                    <span>Save Order Changes</span>
+                  </button>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* NOTIFICATION PREVIEW MODAL */}
+      {previewNotification && (
+        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-[#111726] border border-slate-700 rounded-3xl max-w-2xl w-full max-h-[92vh] overflow-y-auto shadow-2xl p-6 space-y-4 text-xs">
+            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+              <div className="flex items-center space-x-3">
+                <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase ${
+                  previewNotification.channel === 'email'
+                    ? 'bg-cyan-950 text-cyan-300 border border-cyan-500/30'
+                    : 'bg-amber-950 text-amber-300 border border-amber-500/30'
+                }`}>
+                  {previewNotification.channel.toUpperCase()} DISPATCH
+                </span>
+                <span className="font-mono text-slate-400 text-xs">
+                  Order #{previewNotification.order_number}
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setPreviewNotification(null)}
+                className="p-1.5 text-slate-400 hover:text-white rounded-lg bg-slate-800/80 cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Notification Meta */}
+            <div className="bg-[#0B0F17] p-3.5 rounded-2xl border border-slate-800 space-y-1.5 text-[11px]">
+              <div className="flex items-center justify-between">
+                <span className="text-slate-400">Recipient:</span>
+                <span className="text-white font-bold capitalize">{previewNotification.recipient_type}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-slate-400">Destination:</span>
+                <span className="text-emerald-400 font-mono font-bold">{previewNotification.destination}</span>
+              </div>
+              {previewNotification.subject && (
+                <div className="flex items-center justify-between">
+                  <span className="text-slate-400">Subject:</span>
+                  <span className="text-white font-semibold">{previewNotification.subject}</span>
+                </div>
+              )}
+              <div className="flex items-center justify-between">
+                <span className="text-slate-400">Timestamp:</span>
+                <span className="text-slate-300 font-mono">{new Date(previewNotification.sent_at).toLocaleString()}</span>
+              </div>
+            </div>
+
+            {/* Rendered Preview */}
+            {previewNotification.channel === 'sms' ? (
+              <div className="space-y-2">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                  Mobile SMS Text Screen (+1 647 804 9775)
+                </span>
+                <div className="bg-[#07090E] border-2 border-emerald-500/40 rounded-2xl p-4 text-emerald-300 font-mono text-xs leading-relaxed shadow-inner">
+                  {previewNotification.message}
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                  HTML Email Render Preview
+                </span>
+                <div
+                  className="bg-[#07090E] border border-slate-800 rounded-2xl p-4 max-h-96 overflow-y-auto"
+                  dangerouslySetInnerHTML={{ __html: previewNotification.html_body || previewNotification.message }}
+                />
+              </div>
+            )}
+
+            <div className="flex justify-end pt-2 border-t border-slate-800">
+              <button
+                type="button"
+                onClick={() => setPreviewNotification(null)}
+                className="px-5 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-xl font-bold cursor-pointer transition"
+              >
+                Close Preview
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* STAFF FULL PROFILE MODAL */}
+      {viewingStaffProfile && (
+        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-[#111726] border border-slate-700 rounded-3xl max-w-xl w-full max-h-[90vh] overflow-y-auto shadow-2xl p-6 space-y-6 text-xs">
+            <div className="flex items-center justify-between border-b border-slate-800 pb-4">
+              <div className="flex items-center space-x-3">
+                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-red-600 to-red-800 flex items-center justify-center text-white font-black text-xl font-['Outfit']">
+                  {viewingStaffProfile.name.charAt(0).toUpperCase()}
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-white font-['Outfit']">
+                    {viewingStaffProfile.name}
+                  </h3>
+                  <span className="text-[11px] text-slate-400 capitalize">
+                    {viewingStaffProfile.staff_role === 'admin'
+                      ? 'System Administrator'
+                      : viewingStaffProfile.staff_role === 'dispatcher'
+                      ? 'Operations Coordinator'
+                      : 'Authorized Road Courier'}
+                  </span>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setViewingStaffProfile(null)}
+                className="p-1.5 text-slate-400 hover:text-white rounded-lg bg-slate-800/80 cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Profile Metrics */}
+            <div className="grid grid-cols-3 gap-3 text-center">
+              {(() => {
+                const myOrders = orders.filter(
+                  (o) =>
+                    o.assigned_driver_id === viewingStaffProfile.id ||
+                    o.assigned_driver_id === viewingStaffProfile.user_id ||
+                    (viewingStaffProfile.email && o.assigned_driver_id && o.assigned_driver_id.toLowerCase() === viewingStaffProfile.email.toLowerCase()) ||
+                    (o.assigned_driver_name && o.assigned_driver_name.toLowerCase() === viewingStaffProfile.name.toLowerCase())
+                );
+                const active = myOrders.filter((o) => o.order_status !== 'delivered' && o.order_status !== 'cancelled').length;
+                const completed = myOrders.filter((o) => o.order_status === 'delivered').length;
+
+                return (
+                  <>
+                    <div className="bg-[#0B0F17] p-3 rounded-xl border border-slate-800">
+                      <span className="text-slate-400 text-[10px] uppercase font-bold block">Total Jobs</span>
+                      <span className="text-lg font-black text-white">{myOrders.length}</span>
+                    </div>
+                    <div className="bg-[#0B0F17] p-3 rounded-xl border border-slate-800">
+                      <span className="text-blue-400 text-[10px] uppercase font-bold block">Active Runs</span>
+                      <span className="text-lg font-black text-blue-400">{active}</span>
+                    </div>
+                    <div className="bg-[#0B0F17] p-3 rounded-xl border border-slate-800">
+                      <span className="text-emerald-400 text-[10px] uppercase font-bold block">Delivered</span>
+                      <span className="text-lg font-black text-emerald-400">{completed}</span>
+                    </div>
+                  </>
+                );
+              })()}
+            </div>
+
+            {/* Full Profile Details List */}
+            <div className="bg-[#0B0F17] p-4 rounded-2xl border border-slate-800 space-y-3">
+              <div className="flex items-center justify-between border-b border-slate-800/60 pb-2">
+                <span className="text-slate-400 font-semibold">Login Email</span>
+                <a href={`mailto:${viewingStaffProfile.email}`} className="text-cyan-400 hover:underline font-semibold">
+                  {viewingStaffProfile.email}
+                </a>
+              </div>
+              <div className="flex items-center justify-between border-b border-slate-800/60 pb-2">
+                <span className="text-slate-400 font-semibold">Direct Phone</span>
+                <a href={`tel:${viewingStaffProfile.phone}`} className="text-emerald-400 hover:underline font-semibold">
+                  {viewingStaffProfile.phone}
+                </a>
+              </div>
+              <div className="flex items-center justify-between border-b border-slate-800/60 pb-2">
+                <span className="text-slate-400 font-semibold">Assigned Vehicle</span>
+                <span className="text-white font-medium">{viewingStaffProfile.vehicle_type}</span>
+              </div>
+              <div className="flex items-center justify-between border-b border-slate-800/60 pb-2">
+                <span className="text-slate-400 font-semibold">License Plate</span>
+                <span className="font-mono text-amber-300 font-bold bg-amber-950/60 px-2 py-0.5 rounded border border-amber-500/20">
+                  {viewingStaffProfile.license_plate || 'ON-FLEET'}
+                </span>
+              </div>
+              <div className="flex items-center justify-between border-b border-slate-800/60 pb-2">
+                <span className="text-slate-400 font-semibold">Current Shift Status</span>
+                <span className={`font-bold ${viewingStaffProfile.is_active ? 'text-emerald-400' : 'text-slate-500'}`}>
+                  {viewingStaffProfile.is_active ? 'Active & On Duty' : 'Shift Suspended'}
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-slate-400 font-semibold">Date Registered</span>
+                <span className="text-slate-300">
+                  {viewingStaffProfile.created_at ? new Date(viewingStaffProfile.created_at).toLocaleDateString() : 'Active Member'}
+                </span>
+              </div>
+            </div>
+
+            <div className="flex justify-end pt-2 border-t border-slate-800">
+              <button
+                type="button"
+                onClick={() => setViewingStaffProfile(null)}
+                className="px-5 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-xl font-bold cursor-pointer transition"
+              >
+                Close Profile
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* DRIVER ASSIGNMENT MODAL */}
       {assignModalOrder && (
         <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
@@ -1358,17 +2708,23 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
               <label className="block text-xs font-bold text-slate-300 mb-1.5">
                 Select Fleet Driver
               </label>
-              <select
-                value={selectedDriverForAssign}
-                onChange={(e) => setSelectedDriverForAssign(e.target.value)}
-                className="w-full bg-[#0B0F17] border border-slate-700 px-3 py-2 text-xs text-white rounded-xl"
-              >
-                {drivers.map((d) => (
-                  <option key={d.id} value={d.id}>
-                    {d.name} — {d.vehicle_type} ({d.phone})
-                  </option>
-                ))}
-              </select>
+              {drivers.length === 0 ? (
+                <div className="p-3 bg-amber-950/40 border border-amber-500/30 rounded-xl text-xs text-amber-300">
+                  No drivers provisioned yet. Please provision a driver in the Staff tab first.
+                </div>
+              ) : (
+                <select
+                  value={selectedDriverForAssign}
+                  onChange={(e) => setSelectedDriverForAssign(e.target.value)}
+                  className="w-full bg-[#0B0F17] border border-slate-700 px-3 py-2 text-xs text-white rounded-xl"
+                >
+                  {drivers.map((d) => (
+                    <option key={d.id} value={d.id}>
+                      {d.name} {d.staff_role ? `(${d.staff_role})` : ''} — {d.vehicle_type} ({d.phone})
+                    </option>
+                  ))}
+                </select>
+              )}
             </div>
 
             <div className="flex justify-end space-x-3 pt-3 border-t border-slate-800">

@@ -206,12 +206,43 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate, initialParams 
           throw new Error('Access Denied: This account is not authorized as FlashDrop staff. Accounts must be provisioned by the Administrator.');
         }
 
+        // Look up driver in local store or fetch from Supabase
+        let matchingDriver = store.getDrivers().find(
+          (d) =>
+            (d.email && d.email.toLowerCase() === userEmail.toLowerCase()) ||
+            (d.user_id && d.user_id === authData.user.id) ||
+            d.id === authData.user.id
+        );
+
+        if (!matchingDriver && supabase) {
+          const { data: dbDriver } = await supabase
+            .from('drivers')
+            .select('*')
+            .or(`email.ilike.${userEmail},user_id.eq.${authData.user.id}`)
+            .maybeSingle();
+
+          if (dbDriver) {
+            matchingDriver = store.addDriver({
+              id: dbDriver.id,
+              user_id: dbDriver.user_id || authData.user.id,
+              name: dbDriver.name,
+              email: dbDriver.email,
+              phone: dbDriver.phone,
+              vehicle_type: dbDriver.vehicle_type,
+              license_plate: dbDriver.license_plate,
+              is_active: dbDriver.is_active,
+              current_status: dbDriver.current_status,
+              staff_role: dbDriver.staff_role || 'driver',
+            });
+          }
+        }
+
         store.setCurrentUser({
           role: isAdminUser ? 'admin' : 'driver',
           email: userEmail,
-          name: profile?.full_name || authData.user.user_metadata?.full_name || 'Staff Member',
-          phone: profile?.phone || '',
-          driverId: authData.user.id,
+          name: profile?.full_name || matchingDriver?.name || authData.user.user_metadata?.full_name || 'Staff Member',
+          phone: profile?.phone || matchingDriver?.phone || '',
+          driverId: matchingDriver?.id || authData.user.id,
         });
 
         setSuccessMessage('Staff authenticated. Loading Driver Fleet Portal...');

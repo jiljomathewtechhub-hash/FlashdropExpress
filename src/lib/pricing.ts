@@ -51,6 +51,8 @@ export const DEFAULT_BUSINESS_SETTINGS: BusinessSettings = {
   short_redirect_fee: 18.0,
   hst_enabled: true,
   hst_rate: 0.13,
+  admin_sms_phone: '+1 647 804 9775',
+  resend_api_key: (import.meta.env.VITE_RESEND_API_KEY as string) || '',
 };
 
 export interface PricingTierRule {

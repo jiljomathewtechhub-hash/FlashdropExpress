@@ -10,6 +10,8 @@ import {
 } from '../types/order';
 import { DEFAULT_BUSINESS_SETTINGS, DEFAULT_PRICING_TIERS, PricingTierRule } from './pricing';
 import { supabase, isSupabaseConfigured } from './supabase';
+import { notificationService } from './notificationService';
+import { NotificationLog } from '../types/notification';
 
 const STORAGE_KEY_PREFIX = 'flashdrop_';
 
@@ -75,31 +77,7 @@ export const INITIAL_VEHICLES: Vehicle[] = [
 
 export const INITIAL_DRIVERS: Driver[] = [
   {
-    id: 'drv-01',
-    name: 'Dave Miller',
-    phone: '+1 647 555 0192',
-    email: 'dave.miller@flashdropexpress.com',
-    vehicle_type: 'Cargo Van (High-Roof)',
-    license_plate: 'ON-FD882',
-    is_active: true,
-    current_status: 'available',
-    staff_role: 'driver',
-    created_at: new Date(Date.now() - 86400000 * 30).toISOString(),
-  },
-  {
-    id: 'drv-02',
-    name: 'Samir Patel',
-    phone: '+1 647 555 0481',
-    email: 'sam.patel@flashdropexpress.com',
-    vehicle_type: 'Van / SUV',
-    license_plate: 'ON-FD419',
-    is_active: true,
-    current_status: 'on_delivery',
-    staff_role: 'driver',
-    created_at: new Date(Date.now() - 86400000 * 20).toISOString(),
-  },
-  {
-    id: 'drv-03',
+    id: 'd3333333-3333-3333-3333-333333333333',
     name: 'Nidhin (Lead Dispatch Admin)',
     phone: '+1 647 804 9775',
     email: 'nidhin@flashdropexpress.com',
@@ -109,6 +87,18 @@ export const INITIAL_DRIVERS: Driver[] = [
     current_status: 'available',
     staff_role: 'admin',
     created_at: new Date(Date.now() - 86400000 * 60).toISOString(),
+  },
+  {
+    id: '3e70ac07-43ec-4d0a-a978-2538666c491d',
+    name: 'Jiljo Mathew',
+    phone: '+1 647 555 0192',
+    email: 'jiljo555@gmail.com',
+    vehicle_type: 'Cargo Van (High-Roof)',
+    license_plate: 'ON-FLEET',
+    is_active: true,
+    current_status: 'available',
+    staff_role: 'driver',
+    created_at: new Date(Date.now() - 86400000 * 30).toISOString(),
   },
 ];
 
@@ -136,8 +126,30 @@ class FlashDropStore {
   private listeners: Array<() => void> = [];
 
   constructor() {
+    this.getCurrentUser = this.getCurrentUser.bind(this);
     this.loadFromStorage();
+    this.initCrossTabSync();
     this.initSupabaseSync();
+  }
+
+  private initCrossTabSync() {
+    if (typeof window !== 'undefined') {
+      window.addEventListener('storage', (e) => {
+        if (e.key && e.key.startsWith(STORAGE_KEY_PREFIX)) {
+          this.loadFromStorage();
+          this.notify();
+        }
+      });
+
+      // Background cross-device sync interval (every 7 seconds)
+      setInterval(() => {
+        if (isSupabaseConfigured && supabase) {
+          this.fetchDriversFromSupabase().then(() => {
+            this.fetchOrdersFromSupabase();
+          });
+        }
+      }, 7000);
+    }
   }
 
   private async initSupabaseSync() {
@@ -145,7 +157,10 @@ class FlashDropStore {
     if (!isSupabaseConfigured || !sb) return;
 
     try {
-      // 1. Restore auth session
+      // 1. Initial fetch of live Supabase drivers FIRST so records exist in memory
+      await this.fetchDriversFromSupabase();
+
+      // 2. Restore auth session
       const { data: { session } } = await sb.auth.getSession();
       if (session?.user) {
         const { data: profile } = await sb
@@ -158,17 +173,24 @@ class FlashDropStore {
         const role = (profile?.role as UserRole) || 
           (emailLower.includes('admin') || emailLower.includes('@flashdropexpress.com') || emailLower === 'jiljomathew.techhub@gmail.com' ? 'admin' : 'customer');
 
+        const matchingDriver = this.drivers.find(
+          (d) =>
+            (d.email && d.email.toLowerCase() === emailLower) ||
+            (d.user_id && d.user_id === session.user.id) ||
+            d.id === session.user.id
+        );
+
         this.currentUser = {
           role,
           email: session.user.email || '',
-          name: profile?.full_name || session.user.user_metadata?.full_name || session.user.email?.split('@')[0] || 'User',
-          phone: profile?.phone || session.user.user_metadata?.phone,
-          driverId: role === 'driver' ? (profile?.id || session.user.id) : undefined,
+          name: profile?.full_name || matchingDriver?.name || session.user.user_metadata?.full_name || session.user.email?.split('@')[0] || 'User',
+          phone: profile?.phone || matchingDriver?.phone || session.user.user_metadata?.phone,
+          driverId: role === 'driver' ? (matchingDriver?.id || profile?.id || session.user.id) : undefined,
         };
         this.notify();
       }
 
-      // 2. Listen to Auth changes
+      // 3. Listen to Auth changes
       sb.auth.onAuthStateChange(async (event, session) => {
         if (session?.user) {
           const { data: profile } = await sb
@@ -181,12 +203,19 @@ class FlashDropStore {
           const role = (profile?.role as UserRole) || 
             (emailLower.includes('admin') || emailLower.includes('@flashdropexpress.com') || emailLower === 'jiljomathew.techhub@gmail.com' ? 'admin' : 'customer');
 
+          const matchingDriver = this.drivers.find(
+            (d) =>
+              (d.email && d.email.toLowerCase() === emailLower) ||
+              (d.user_id && d.user_id === session.user.id) ||
+              d.id === session.user.id
+          );
+
           this.currentUser = {
             role,
             email: session.user.email || '',
-            name: profile?.full_name || session.user.user_metadata?.full_name || session.user.email?.split('@')[0] || 'User',
-            phone: profile?.phone || session.user.user_metadata?.phone,
-            driverId: role === 'driver' ? (profile?.id || session.user.id) : undefined,
+            name: profile?.full_name || matchingDriver?.name || session.user.user_metadata?.full_name || session.user.email?.split('@')[0] || 'User',
+            phone: profile?.phone || matchingDriver?.phone || session.user.user_metadata?.phone,
+            driverId: role === 'driver' ? (matchingDriver?.id || profile?.id || session.user.id) : undefined,
           };
           this.saveToStorage();
         } else if (event === 'SIGNED_OUT') {
@@ -195,15 +224,21 @@ class FlashDropStore {
         }
       });
 
-      // 3. Initial fetch of live Supabase data
+      // 4. Fetch orders after drivers are loaded so assigned_driver_name is mapped
       await this.fetchOrdersFromSupabase();
-      await this.fetchDriversFromSupabase();
 
-      // 4. Realtime subscription to orders table
+      // 5. Realtime subscriptions
       sb
         .channel('public:orders_channel')
         .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, () => {
           this.fetchOrdersFromSupabase();
+        })
+        .subscribe();
+
+      sb
+        .channel('public:drivers_channel')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'drivers' }, () => {
+          this.fetchDriversFromSupabase();
         })
         .subscribe();
     } catch (err) {
@@ -221,57 +256,67 @@ class FlashDropStore {
         .order('created_at', { ascending: false });
 
       if (!error && data && data.length > 0) {
-        this.orders = data.map((row: any) => ({
-          id: row.id,
-          order_number: row.order_number,
-          customer_id: row.customer_id,
-          customer_name: row.customer_name,
-          customer_phone: row.customer_phone,
-          customer_email: row.customer_email,
-          company_name: row.company_name,
-          pickup_address: row.pickup_address,
-          pickup_lat: row.pickup_lat,
-          pickup_lng: row.pickup_lng,
-          pickup_unit: row.pickup_unit,
-          pickup_contact_name: row.pickup_contact_name,
-          pickup_contact_phone: row.pickup_contact_phone,
-          pickup_notes: row.pickup_notes,
-          delivery_address: row.delivery_address,
-          delivery_lat: row.delivery_lat,
-          delivery_lng: row.delivery_lng,
-          delivery_unit: row.delivery_unit,
-          delivery_contact_name: row.delivery_contact_name,
-          delivery_contact_phone: row.delivery_contact_phone,
-          delivery_notes: row.delivery_notes,
-          pickup_date: row.pickup_date,
-          pickup_time: row.pickup_time,
-          delivery_time_option: row.delivery_time_option,
-          service_area: row.service_area,
-          vehicle_id: row.vehicle_id,
-          vehicle_slug: row.vehicle_slug || 'cargo_van',
-          vehicle_name: row.vehicle_name || 'Cargo Van',
-          item_type: row.item_type,
-          item_description: row.item_description,
-          weight_lbs: Number(row.weight_lbs),
-          quantity: Number(row.quantity),
-          distance_km: Number(row.distance_km),
-          custom_instructions: row.custom_instructions,
-          base_price: Number(row.base_price),
-          excess_km_charge: Number(row.excess_km_charge),
-          after_hours_charge: Number(row.after_hours_charge),
-          waiting_charge: Number(row.waiting_charge),
-          labor_charge: Number(row.labor_charge),
-          subtotal: Number(row.subtotal),
-          tax_amount: Number(row.tax_amount),
-          total_price: Number(row.total_price),
-          payment_status: row.payment_status,
-          order_status: row.order_status,
-          assigned_driver_id: row.assigned_driver_id,
-          created_at: row.created_at,
-          updated_at: row.updated_at,
-          status_history: row.order_status_history || [],
-          proof_of_delivery: row.proof_of_delivery?.[0] || undefined,
-        }));
+        this.orders = data.map((row: any) => {
+          const assignedDriver = this.drivers.find(
+            (d) =>
+              d.id === row.assigned_driver_id ||
+              d.user_id === row.assigned_driver_id ||
+              (d.email && row.assigned_driver_id && d.email.toLowerCase() === row.assigned_driver_id.toLowerCase())
+          );
+
+          return {
+            id: row.id,
+            order_number: row.order_number,
+            customer_id: row.customer_id,
+            customer_name: row.customer_name,
+            customer_phone: row.customer_phone,
+            customer_email: row.customer_email,
+            company_name: row.company_name,
+            pickup_address: row.pickup_address,
+            pickup_lat: row.pickup_lat,
+            pickup_lng: row.pickup_lng,
+            pickup_unit: row.pickup_unit,
+            pickup_contact_name: row.pickup_contact_name,
+            pickup_contact_phone: row.pickup_contact_phone,
+            pickup_notes: row.pickup_notes,
+            delivery_address: row.delivery_address,
+            delivery_lat: row.delivery_lat,
+            delivery_lng: row.delivery_lng,
+            delivery_unit: row.delivery_unit,
+            delivery_contact_name: row.delivery_contact_name,
+            delivery_contact_phone: row.delivery_contact_phone,
+            delivery_notes: row.delivery_notes,
+            pickup_date: row.pickup_date,
+            pickup_time: row.pickup_time,
+            delivery_time_option: row.delivery_time_option,
+            service_area: row.service_area,
+            vehicle_id: row.vehicle_id,
+            vehicle_slug: row.vehicle_slug || 'cargo_van',
+            vehicle_name: row.vehicle_name || 'Cargo Van',
+            item_type: row.item_type,
+            item_description: row.item_description,
+            weight_lbs: Number(row.weight_lbs),
+            quantity: Number(row.quantity),
+            distance_km: Number(row.distance_km),
+            custom_instructions: row.custom_instructions,
+            base_price: Number(row.base_price),
+            excess_km_charge: Number(row.excess_km_charge),
+            after_hours_charge: Number(row.after_hours_charge),
+            waiting_charge: Number(row.waiting_charge),
+            labor_charge: Number(row.labor_charge),
+            subtotal: Number(row.subtotal),
+            tax_amount: Number(row.tax_amount),
+            total_price: Number(row.total_price),
+            payment_status: row.payment_status,
+            order_status: row.order_status,
+            assigned_driver_id: row.assigned_driver_id,
+            assigned_driver_name: assignedDriver?.name || row.assigned_driver_name || undefined,
+            created_at: row.created_at,
+            updated_at: row.updated_at,
+            status_history: row.order_status_history || [],
+            proof_of_delivery: row.proof_of_delivery?.[0] || undefined,
+          };
+        });
         this.saveToStorage();
       }
     } catch (e) {
@@ -286,6 +331,7 @@ class FlashDropStore {
       if (!error && data && data.length > 0) {
         this.drivers = data.map((d: any) => ({
           id: d.id,
+          user_id: d.user_id || undefined,
           name: d.name,
           phone: d.phone,
           email: d.email,
@@ -296,6 +342,15 @@ class FlashDropStore {
           staff_role: d.staff_role || (d.email?.toLowerCase().includes('admin') ? 'admin' : 'driver'),
           created_at: d.created_at,
         }));
+
+        // Backfill assigned_driver_name on existing orders in memory if missing
+        this.orders.forEach((o) => {
+          if (o.assigned_driver_id && !o.assigned_driver_name) {
+            const found = this.drivers.find((d) => d.id === o.assigned_driver_id || d.user_id === o.assigned_driver_id);
+            if (found) o.assigned_driver_name = found.name;
+          }
+        });
+
         this.saveToStorage();
       }
     } catch (e) {
@@ -324,7 +379,19 @@ class FlashDropStore {
       }
 
       const savedDrivers = localStorage.getItem(`${STORAGE_KEY_PREFIX}drivers`);
-      this.drivers = savedDrivers ? JSON.parse(savedDrivers) : INITIAL_DRIVERS;
+      if (savedDrivers) {
+        try {
+          const parsed = JSON.parse(savedDrivers);
+          this.drivers = Array.isArray(parsed)
+            ? parsed.filter((d: Driver) => !['drv-01', 'drv-02', 'drv-03'].includes(d.id))
+            : INITIAL_DRIVERS;
+          if (this.drivers.length === 0) this.drivers = INITIAL_DRIVERS;
+        } catch {
+          this.drivers = INITIAL_DRIVERS;
+        }
+      } else {
+        this.drivers = INITIAL_DRIVERS;
+      }
 
       const savedVehicles = localStorage.getItem(`${STORAGE_KEY_PREFIX}vehicles`);
       this.vehicles = savedVehicles ? JSON.parse(savedVehicles) : INITIAL_VEHICLES;
@@ -445,6 +512,9 @@ class FlashDropStore {
     this.orders = [newOrder, ...this.orders];
     this.saveToStorage();
 
+    // Multi-channel dispatch: Customer Email + Admin Email & SMS
+    notificationService.notifyOrderCreated(newOrder, this.settings);
+
     // Async sync to Supabase if configured
     const sb = supabase;
     if (isSupabaseConfigured && sb) {
@@ -517,10 +587,151 @@ class FlashDropStore {
     return newOrder;
   }
 
+  public updateOrder(orderId: string, updates: Partial<Order>): Order | null {
+    const orderIndex = this.orders.findIndex((o) => o.id === orderId || o.order_number === orderId);
+    if (orderIndex === -1) return null;
+
+    const oldOrder = this.orders[orderIndex];
+    const updatedOrder: Order = {
+      ...oldOrder,
+      ...updates,
+      updated_at: new Date().toISOString(),
+    };
+
+    // If driver changed, update assigned_driver_name
+    if (updates.assigned_driver_id && updates.assigned_driver_id !== oldOrder.assigned_driver_id) {
+      const drv = this.drivers.find(
+        (d) =>
+          d.id === updates.assigned_driver_id ||
+          d.user_id === updates.assigned_driver_id ||
+          (d.email && d.email.toLowerCase() === updates.assigned_driver_id?.toLowerCase())
+      );
+      if (drv) {
+        updatedOrder.assigned_driver_name = drv.name;
+      }
+    }
+
+    const historyItem = {
+      id: `sh-${Date.now()}`,
+      order_id: updatedOrder.id,
+      status: updatedOrder.order_status,
+      notes: `Order updated by Dispatch Command Desk`,
+      created_at: new Date().toISOString(),
+    };
+    updatedOrder.status_history = [...(updatedOrder.status_history || []), historyItem];
+
+    this.orders[orderIndex] = updatedOrder;
+    this.saveToStorage();
+
+    // Trigger status change notification if order_status changed
+    if (updates.order_status && updates.order_status !== oldOrder.order_status) {
+      notificationService.notifyOrderStatusChanged(
+        updatedOrder,
+        oldOrder.order_status,
+        updatedOrder.order_status,
+        'Order updated via Dispatch Command Center',
+        this.settings
+      );
+    }
+
+    if (isSupabaseConfigured && supabase) {
+      const matchFilter = updatedOrder.id.length === 36 ? { id: updatedOrder.id } : { order_number: updatedOrder.order_number };
+      const driverUUID =
+        updatedOrder.assigned_driver_id && updatedOrder.assigned_driver_id.length === 36
+          ? updatedOrder.assigned_driver_id
+          : null;
+
+      const payload: Record<string, any> = {
+        customer_name: updatedOrder.customer_name,
+        customer_phone: updatedOrder.customer_phone,
+        customer_email: updatedOrder.customer_email,
+        company_name: updatedOrder.company_name || null,
+        pickup_address: updatedOrder.pickup_address,
+        pickup_unit: updatedOrder.pickup_unit || null,
+        pickup_contact_name: updatedOrder.pickup_contact_name || null,
+        pickup_contact_phone: updatedOrder.pickup_contact_phone || null,
+        pickup_notes: updatedOrder.pickup_notes || null,
+        delivery_address: updatedOrder.delivery_address,
+        delivery_unit: updatedOrder.delivery_unit || null,
+        delivery_contact_name: updatedOrder.delivery_contact_name || null,
+        delivery_contact_phone: updatedOrder.delivery_contact_phone || null,
+        delivery_notes: updatedOrder.delivery_notes || null,
+        pickup_date: updatedOrder.pickup_date,
+        pickup_time: updatedOrder.pickup_time,
+        delivery_time_option: updatedOrder.delivery_time_option,
+        service_area: updatedOrder.service_area,
+        item_type: updatedOrder.item_type,
+        item_description: updatedOrder.item_description || null,
+        weight_lbs: updatedOrder.weight_lbs,
+        quantity: updatedOrder.quantity,
+        distance_km: updatedOrder.distance_km,
+        custom_instructions: updatedOrder.custom_instructions || null,
+        base_price: updatedOrder.base_price,
+        excess_km_charge: updatedOrder.excess_km_charge || 0,
+        after_hours_charge: updatedOrder.after_hours_charge || 0,
+        waiting_charge: updatedOrder.waiting_charge || 0,
+        labor_charge: updatedOrder.labor_charge || 0,
+        subtotal: updatedOrder.subtotal,
+        tax_amount: updatedOrder.tax_amount,
+        total_price: updatedOrder.total_price,
+        payment_status: updatedOrder.payment_status,
+        order_status: updatedOrder.order_status,
+        assigned_driver_id: driverUUID,
+        updated_at: updatedOrder.updated_at,
+      };
+
+      supabase
+        .from('orders')
+        .update(payload)
+        .match(matchFilter)
+        .then(({ error }) => {
+          if (error) console.warn('Supabase updateOrder notice:', error.message);
+        });
+
+      if (updatedOrder.id.length === 36) {
+        supabase
+          .from('order_status_history')
+          .insert([
+            {
+              order_id: updatedOrder.id,
+              status: updatedOrder.order_status,
+              notes: 'Order updated by Dispatch Command Desk',
+            },
+          ])
+          .then();
+      }
+    }
+
+    return updatedOrder;
+  }
+
+  public deleteOrder(orderId: string): boolean {
+    const orderIndex = this.orders.findIndex((o) => o.id === orderId || o.order_number === orderId);
+    if (orderIndex === -1) return false;
+
+    const targetOrder = this.orders[orderIndex];
+    this.orders = this.orders.filter((o) => o.id !== targetOrder.id && o.order_number !== targetOrder.order_number);
+    this.saveToStorage();
+
+    if (isSupabaseConfigured && supabase) {
+      const matchFilter = targetOrder.id.length === 36 ? { id: targetOrder.id } : { order_number: targetOrder.order_number };
+      supabase
+        .from('orders')
+        .delete()
+        .match(matchFilter)
+        .then(({ error }) => {
+          if (error) console.warn('Supabase deleteOrder notice:', error.message);
+        });
+    }
+
+    return true;
+  }
+
   public updateOrderStatus(orderId: string, status: OrderStatus, notes?: string, changedBy?: string): Order | null {
     const orderIndex = this.orders.findIndex((o) => o.id === orderId || o.order_number === orderId);
     if (orderIndex === -1) return null;
 
+    const prevStatus = this.orders[orderIndex].order_status;
     const order = { ...this.orders[orderIndex] };
     order.order_status = status;
     order.updated_at = new Date().toISOString();
@@ -538,6 +749,11 @@ class FlashDropStore {
 
     this.orders[orderIndex] = order;
     this.saveToStorage();
+
+    // Multi-channel dispatch: Customer Email + Admin Email & SMS
+    if (prevStatus !== status) {
+      notificationService.notifyOrderStatusChanged(order, prevStatus, status, notes, this.settings);
+    }
 
     // Supabase update
     if (isSupabaseConfigured && supabase) {
@@ -568,33 +784,47 @@ class FlashDropStore {
   }
 
   public assignDriverToOrder(orderId: string, driverId: string): Order | null {
-    const driver = this.drivers.find((d) => d.id === driverId);
+    const driver = this.drivers.find(
+      (d) =>
+        d.id === driverId ||
+        d.user_id === driverId ||
+        (d.email && d.email.toLowerCase() === driverId.toLowerCase())
+    );
     if (!driver) return null;
 
     const orderIndex = this.orders.findIndex((o) => o.id === orderId || o.order_number === orderId);
     if (orderIndex === -1) return null;
 
+    const prevStatus = this.orders[orderIndex].order_status;
     const order = { ...this.orders[orderIndex] };
     order.assigned_driver_id = driver.id;
     order.assigned_driver_name = driver.name;
-    if (order.order_status === 'submitted') {
+    if (order.order_status === 'submitted' || order.order_status === 'confirmed') {
       order.order_status = 'assigned';
     }
     order.updated_at = new Date().toISOString();
 
-    order.status_history = [
-      ...(order.status_history || []),
-      {
-        id: `sh-${Date.now()}`,
-        order_id: order.id,
-        status: order.order_status,
-        notes: `Assigned to driver: ${driver.name} (${driver.phone})`,
-        created_at: new Date().toISOString(),
-      },
-    ];
+    const historyItem = {
+      id: `sh-${Date.now()}`,
+      order_id: order.id,
+      status: order.order_status,
+      notes: `Assigned to driver: ${driver.name} (${driver.phone})`,
+      created_at: new Date().toISOString(),
+    };
+
+    order.status_history = [...(order.status_history || []), historyItem];
 
     this.orders[orderIndex] = order;
     this.saveToStorage();
+
+    // Multi-channel notification: Customer Email + Admin Email & SMS
+    notificationService.notifyOrderStatusChanged(
+      order,
+      prevStatus,
+      order.order_status,
+      `Assigned to driver: ${driver.name} (${driver.phone})`,
+      this.settings
+    );
 
     // Supabase sync
     if (isSupabaseConfigured && supabase) {
@@ -611,6 +841,19 @@ class FlashDropStore {
         .then(({ error }) => {
           if (error) console.warn('Supabase assignDriver warning:', error.message);
         });
+
+      if (order.id.length === 36) {
+        supabase
+          .from('order_status_history')
+          .insert([
+            {
+              order_id: order.id,
+              status: order.order_status,
+              notes: `Assigned to driver: ${driver.name} (${driver.phone})`,
+            },
+          ])
+          .then();
+      }
     }
 
     return order;
@@ -628,6 +871,7 @@ class FlashDropStore {
       delivered_at: new Date().toISOString(),
     };
 
+    const prevStatus = order.order_status;
     order.proof_of_delivery = pod;
     order.order_status = 'delivered';
     order.updated_at = new Date().toISOString();
@@ -638,13 +882,22 @@ class FlashDropStore {
         id: `sh-${Date.now()}`,
         order_id: order.id,
         status: 'delivered',
-        notes: `Delivered by ${pod.driver_name}. Proof of delivery recorded.`,
+        notes: `Delivered by ${pod.driver_name}. Digital proof of delivery verified.`,
         created_at: new Date().toISOString(),
       },
     ];
 
     this.orders[orderIndex] = order;
     this.saveToStorage();
+
+    // Multi-channel notification: Customer Email + Admin Email & SMS
+    notificationService.notifyOrderStatusChanged(
+      order,
+      prevStatus,
+      'delivered',
+      `Delivered by ${pod.driver_name}. Verified receiver: ${pod.recipient_name}.`,
+      this.settings
+    );
 
     // Supabase sync
     if (isSupabaseConfigured && supabase) {
@@ -656,15 +909,28 @@ class FlashDropStore {
         .then();
 
       if (order.id.length === 36) {
+        const driverUUID = order.assigned_driver_id && order.assigned_driver_id.length === 36 ? order.assigned_driver_id : null;
         supabase
           .from('proof_of_delivery')
           .insert([
             {
               order_id: order.id,
+              driver_id: driverUUID,
               recipient_name: podData.recipient_name,
               driver_notes: podData.driver_notes,
               photo_url: podData.photo_url || null,
               signature_url: podData.signature_url || null,
+            },
+          ])
+          .then();
+
+        supabase
+          .from('order_status_history')
+          .insert([
+            {
+              order_id: order.id,
+              status: 'delivered',
+              notes: `Delivered by ${pod.driver_name}. Proof of delivery recorded.`,
             },
           ])
           .then();
@@ -732,28 +998,47 @@ class FlashDropStore {
     return this.drivers;
   }
 
-  public addDriver(driver: Omit<Driver, 'id' | 'created_at'>): Driver {
+  public addDriver(driver: Omit<Driver, 'id' | 'created_at'> & { id?: string }): Driver {
     const newDrv: Driver = {
       ...driver,
-      id: `drv-${Date.now()}`,
+      id: driver.id || `drv-${Date.now()}`,
       staff_role: driver.staff_role || 'driver',
       created_at: new Date().toISOString(),
     };
-    this.drivers = [...this.drivers, newDrv];
+
+    const existingIndex = this.drivers.findIndex(
+      (d) =>
+        (driver.id && d.id === driver.id) ||
+        (driver.email && d.email.toLowerCase() === driver.email.toLowerCase())
+    );
+
+    if (existingIndex >= 0) {
+      this.drivers[existingIndex] = { ...this.drivers[existingIndex], ...newDrv };
+    } else {
+      this.drivers = [...this.drivers, newDrv];
+    }
     this.saveToStorage();
 
     if (isSupabaseConfigured && supabase) {
+      const payload: Record<string, any> = {
+        name: newDrv.name,
+        phone: newDrv.phone,
+        email: newDrv.email,
+        vehicle_type: newDrv.vehicle_type,
+        license_plate: newDrv.license_plate || '',
+        is_active: newDrv.is_active,
+        current_status: newDrv.current_status,
+      };
+      if (newDrv.id && newDrv.id.length === 36) {
+        payload.id = newDrv.id;
+      }
+      if (newDrv.user_id && newDrv.user_id.length === 36) {
+        payload.user_id = newDrv.user_id;
+      }
+
       supabase
         .from('drivers')
-        .insert([{
-          name: newDrv.name,
-          phone: newDrv.phone,
-          email: newDrv.email,
-          vehicle_type: newDrv.vehicle_type,
-          license_plate: newDrv.license_plate || '',
-          is_active: newDrv.is_active,
-          current_status: newDrv.current_status,
-        }])
+        .upsert([payload])
         .then(({ error }) => {
           if (error) console.warn('Supabase addDriver notice:', error.message);
         });
@@ -826,6 +1111,19 @@ class FlashDropStore {
       Object.assign(v, updated);
       this.saveToStorage();
     }
+  }
+
+  // Notification Audit & Test Dispatches
+  public getNotificationLogs(): NotificationLog[] {
+    return notificationService.getLogs();
+  }
+
+  public clearNotificationLogs() {
+    notificationService.clearLogs();
+  }
+
+  public sendTestNotification(customCustomerEmail?: string): Promise<NotificationLog[]> {
+    return notificationService.sendTestNotification(customCustomerEmail);
   }
 
   // Reset to factory seed

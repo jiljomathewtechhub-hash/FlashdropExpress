@@ -195,4 +195,7 @@ export interface BusinessSettings {
   short_redirect_fee: number;
   hst_enabled: boolean;
   hst_rate: number;
+  resend_api_key?: string;
+  admin_sms_phone?: string;
+  carrier_sms_gateway?: string;
 }
