@@ -1,4 +1,4 @@
-import { VehicleSlug, BusinessSettings } from '../types/order';
+import { VehicleSlug, BusinessSettings, DeliveryTimeOption } from '../types/order';
 
 export interface CalculationInput {
   vehicleSlug: VehicleSlug;
@@ -8,6 +8,7 @@ export interface CalculationInput {
   isPaintPails?: boolean;
   isAfterHours?: boolean;
   pickupTime?: string; // HH:MM
+  deliveryType?: DeliveryTimeOption;
   waitingHours?: number;
   laborHours?: number;
   isShortRedirect?: boolean;
@@ -23,6 +24,9 @@ export interface PricingBreakdown {
   excessKm: number;
   excessKmRate: number;
   standardSubtotal: number;
+  deliveryType: 'standard' | 'direct' | 'urgent';
+  deliveryTypeMultiplier: number;
+  deliveryTypeCharge: number;
   isAfterHours: boolean;
   afterHoursMultiplier: number;
   afterHoursCharge: number;
@@ -46,6 +50,8 @@ export const DEFAULT_BUSINESS_SETTINGS: BusinessSettings = {
   operating_hours_end: '17:00',
   operating_days: 'Monday - Saturday',
   after_hours_multiplier: 1.5,
+  direct_delivery_multiplier: 1.25,
+  urgent_delivery_multiplier: 1.50,
   waiting_rate_hourly: 25.0,
   labor_rate_hourly: 30.0,
   short_redirect_fee: 18.0,
@@ -217,17 +223,39 @@ export function calculateDeliveryPrice(
 
   const standardTransportCharge = baseDistanceCharge + excessKmCharge;
 
-  // 2. After-hours logic (1.5x regular price)
-  const afterHours = input.isAfterHours ?? isTimeAfterHours(pickupTime, settings);
-  let afterHoursCharge = 0;
-  let transportTotal = standardTransportCharge;
-
-  if (afterHours) {
-    transportTotal = Math.round(standardTransportCharge * settings.after_hours_multiplier * 100) / 100;
-    afterHoursCharge = Math.round((transportTotal - standardTransportCharge) * 100) / 100;
+  // 2. Delivery Type logic (1: Standard, 2: Direct / On Demand, 3: Urgent / ASAP)
+  const rawType = input.deliveryType || 'standard';
+  let resolvedType: 'standard' | 'direct' | 'urgent' = 'standard';
+  if (rawType === 'urgent' || rawType === 'asap' || rawType === '1-2h') {
+    resolvedType = 'urgent';
+  } else if (rawType === 'direct' || rawType === '2-3h') {
+    resolvedType = 'direct';
+  } else {
+    resolvedType = 'standard';
   }
 
-  // 3. Ancillary charges
+  const directMultiplier = settings.direct_delivery_multiplier ?? 1.25;
+  const urgentMultiplier = settings.urgent_delivery_multiplier ?? 1.50;
+
+  let deliveryTypeMultiplier = 1.0;
+  if (resolvedType === 'direct') {
+    deliveryTypeMultiplier = directMultiplier;
+  } else if (resolvedType === 'urgent') {
+    deliveryTypeMultiplier = urgentMultiplier;
+  }
+
+  const deliveryTypeCharge = Math.round(standardTransportCharge * (deliveryTypeMultiplier - 1) * 100) / 100;
+
+  // 3. After-hours logic (1.5x regular price)
+  const afterHours = input.isAfterHours ?? isTimeAfterHours(pickupTime, settings);
+  let afterHoursCharge = 0;
+  if (afterHours) {
+    afterHoursCharge = Math.round(standardTransportCharge * (settings.after_hours_multiplier - 1) * 100) / 100;
+  }
+
+  const transportTotal = Math.round((standardTransportCharge + deliveryTypeCharge + afterHoursCharge) * 100) / 100;
+
+  // 4. Ancillary charges
   const waitingCharge = Math.round(waitingHours * settings.waiting_rate_hourly * 100) / 100;
   const laborCharge = Math.round(laborHours * settings.labor_rate_hourly * 100) / 100;
   const redirectCharge = isShortRedirect ? settings.short_redirect_fee : 0;
@@ -237,7 +265,7 @@ export function calculateDeliveryPrice(
     (transportTotal + waitingCharge + laborCharge + redirectCharge + outsideCharge) * 100
   ) / 100;
 
-  // 4. HST (13% for Ontario, if enabled)
+  // 5. HST (13% for Ontario, if enabled)
   const hstRate = settings.hst_enabled ? settings.hst_rate : 0;
   const taxAmount = Math.round(subtotal * hstRate * 100) / 100;
   const totalPrice = Math.round((subtotal + taxAmount) * 100) / 100;
@@ -250,6 +278,9 @@ export function calculateDeliveryPrice(
     excessKmRate: tier.ratePerKmOver40,
     excessKmCharge,
     standardSubtotal: standardTransportCharge,
+    deliveryType: resolvedType,
+    deliveryTypeMultiplier,
+    deliveryTypeCharge,
     isAfterHours: afterHours,
     afterHoursMultiplier: settings.after_hours_multiplier,
     afterHoursCharge,

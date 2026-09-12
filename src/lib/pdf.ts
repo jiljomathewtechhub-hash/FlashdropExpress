@@ -177,6 +177,13 @@ export function generateOrderPdf(
     addRow('Excess Distance (> 40km)', `Beyond 40km threshold`, order.excess_km_charge, true);
   }
 
+  if (order.delivery_type_charge && order.delivery_type_charge > 0) {
+    const typeLabel = order.delivery_time_option === 'urgent' || order.delivery_time_option === 'asap' || order.delivery_time_option === '1-2h'
+      ? '3) Urgent / ASAP (1.50x)'
+      : '2) On Demand / Direct (1.25x)';
+    addRow('Delivery Type Premium', typeLabel, order.delivery_type_charge, true);
+  }
+
   if (order.after_hours_charge > 0) {
     addRow('After-Hours Service Surcharge', '1.5x Premium Rate', order.after_hours_charge, true);
   }

@@ -400,7 +400,7 @@ class FlashDropStore {
       this.pricingTiers = savedTiers ? JSON.parse(savedTiers) : DEFAULT_PRICING_TIERS;
 
       const savedSettings = localStorage.getItem(`${STORAGE_KEY_PREFIX}settings`);
-      this.settings = savedSettings ? JSON.parse(savedSettings) : DEFAULT_BUSINESS_SETTINGS;
+      this.settings = savedSettings ? { ...DEFAULT_BUSINESS_SETTINGS, ...JSON.parse(savedSettings) } : DEFAULT_BUSINESS_SETTINGS;
 
       const savedRequests = localStorage.getItem(`${STORAGE_KEY_PREFIX}requests`);
       this.requests = savedRequests ? JSON.parse(savedRequests) : [];

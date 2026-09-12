@@ -1944,6 +1944,36 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
 
             <div>
               <label className="block text-slate-300 font-bold mb-1.5">
+                2) On Demand / Direct Delivery Multiplier (e.g. 1.25×)
+              </label>
+              <input
+                type="number"
+                step="0.05"
+                min="1.0"
+                max="3.0"
+                value={settings.direct_delivery_multiplier ?? 1.25}
+                onChange={(e) => setSettings({ ...settings, direct_delivery_multiplier: Number(e.target.value) })}
+                className="w-full bg-[#0B0F17] border border-slate-700 p-2.5 rounded-xl text-white"
+              />
+            </div>
+
+            <div>
+              <label className="block text-slate-300 font-bold mb-1.5">
+                3) Urgent / ASAP Delivery Multiplier (e.g. 1.50×)
+              </label>
+              <input
+                type="number"
+                step="0.05"
+                min="1.0"
+                max="3.0"
+                value={settings.urgent_delivery_multiplier ?? 1.50}
+                onChange={(e) => setSettings({ ...settings, urgent_delivery_multiplier: Number(e.target.value) })}
+                className="w-full bg-[#0B0F17] border border-slate-700 p-2.5 rounded-xl text-white"
+              />
+            </div>
+
+            <div>
+              <label className="block text-slate-300 font-bold mb-1.5">
                 Waiting Charge ($ / Hour after 20 mins)
               </label>
               <input
@@ -2301,17 +2331,20 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
                     />
                   </div>
                   <div>
-                    <label className="block text-slate-300 mb-1 font-semibold">Delivery Service Window</label>
+                    <label className="block text-slate-300 mb-1 font-semibold">Type of Delivery</label>
                     <select
                       value={editFormData.delivery_time_option || editingOrder.delivery_time_option}
                       onChange={(e) => setEditFormData({ ...editFormData, delivery_time_option: e.target.value as any })}
                       className="w-full bg-[#111726] border border-slate-700 px-3 py-2 rounded-xl text-white focus:outline-none focus:border-red-500"
                     >
-                      <option value="asap">ASAP (Direct Drive)</option>
-                      <option value="1-2h">1-2 Hours</option>
-                      <option value="2-3h">2-3 Hours</option>
-                      <option value="4-5h">4-5 Hours</option>
-                      <option value="anytime_today">Same Day / Anytime</option>
+                      <option value="standard">1) Standard / Same day delivery (1.00×)</option>
+                      <option value="direct">2) On demand / Direct Delivery (1.25×)</option>
+                      <option value="urgent">3) Urgent / ASAP (1.50×)</option>
+                      <option value="asap">ASAP (Legacy Rush)</option>
+                      <option value="1-2h">1-2 Hours (Legacy)</option>
+                      <option value="2-3h">2-3 Hours (Legacy)</option>
+                      <option value="4-5h">4-5 Hours (Legacy)</option>
+                      <option value="anytime_today">Same Day / Anytime (Legacy)</option>
                     </select>
                   </div>
                 </div>

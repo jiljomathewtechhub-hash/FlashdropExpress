@@ -10,6 +10,13 @@ const getOrigin = () => {
   return BASE_DOMAIN;
 };
 
+const formatDeliveryType = (opt?: string): string => {
+  if (!opt) return 'Standard / Same-Day';
+  if (opt === 'urgent' || opt === 'asap' || opt === '1-2h') return '3) Urgent / ASAP';
+  if (opt === 'direct' || opt === '2-3h') return '2) On Demand / Direct';
+  return '1) Standard / Same-Day';
+};
+
 // Base responsive HTML wrapper for FlashDrop Express branded emails
 const wrapHtmlEmail = (title: string, preheader: string, contentHtml: string): string => {
   return `<!DOCTYPE html>
@@ -98,8 +105,8 @@ export const createCustomerOrderEmail = (order: Order, settings: BusinessSetting
         <span class="row-value">${order.pickup_date} at ${order.pickup_time}</span>
       </div>
       <div class="row">
-        <span class="row-label">Delivery Priority</span>
-        <span class="row-value" style="text-transform: uppercase;">${order.delivery_time_option}</span>
+        <span class="row-label">Type of Delivery</span>
+        <span class="row-value" style="color: #F8FAFC; font-weight: 700;">${formatDeliveryType(order.delivery_time_option)}</span>
       </div>
       <div class="row">
         <span class="row-label">Assigned Fleet Vehicle</span>
@@ -307,8 +314,8 @@ export const createAdminNewOrderEmail = (order: Order, settings: BusinessSetting
         <span class="row-value">${order.payment_status.toUpperCase()}</span>
       </div>
       <div class="row">
-        <span class="row-label">Service Level</span>
-        <span class="row-value" style="text-transform: uppercase;">${order.delivery_time_option}</span>
+        <span class="row-label">Type of Delivery</span>
+        <span class="row-value" style="color: #F8FAFC; font-weight: 700;">${formatDeliveryType(order.delivery_time_option)}</span>
       </div>
       <div class="row">
         <span class="row-label">Vehicle Type</span>

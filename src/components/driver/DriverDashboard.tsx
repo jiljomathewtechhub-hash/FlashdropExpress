@@ -407,8 +407,18 @@ export const DriverDashboard: React.FC<DriverDashboardProps> = ({ onNavigate }) 
                         }`}>
                           {ord.order_status.replace(/_/g, ' ')}
                         </span>
-                        <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-slate-800 text-slate-300 border border-slate-700">
-                          {ord.delivery_time_option.toUpperCase()} PRIORITY
+                        <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold border ${
+                          ord.delivery_time_option === 'urgent' || ord.delivery_time_option === 'asap' || ord.delivery_time_option === '1-2h'
+                            ? 'bg-red-950/80 text-red-300 border-red-500/50 animate-pulse'
+                            : ord.delivery_time_option === 'direct' || ord.delivery_time_option === '2-3h'
+                            ? 'bg-amber-950/80 text-amber-300 border-amber-500/50'
+                            : 'bg-blue-950/80 text-blue-300 border-blue-500/50'
+                        }`}>
+                          {ord.delivery_time_option === 'urgent' || ord.delivery_time_option === 'asap' || ord.delivery_time_option === '1-2h'
+                            ? '3) URGENT / ASAP'
+                            : ord.delivery_time_option === 'direct' || ord.delivery_time_option === '2-3h'
+                            ? '2) ON DEMAND / DIRECT'
+                            : '1) STANDARD SAME-DAY'}
                         </span>
                         <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold border ${
                           ord.payment_status === 'paid'

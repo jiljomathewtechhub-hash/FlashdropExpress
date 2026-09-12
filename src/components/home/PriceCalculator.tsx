@@ -7,7 +7,7 @@ import {
   CheckCircle2,
   Zap,
 } from 'lucide-react';
-import { VehicleSlug } from '../../types/order';
+import { VehicleSlug, DeliveryTimeOption } from '../../types/order';
 import { calculateDeliveryPrice } from '../../lib/pricing';
 import { store } from '../../lib/store';
 import { TiltCard } from '../common/TiltCard';
@@ -22,6 +22,7 @@ export const PriceCalculator: React.FC<PriceCalculatorProps> = ({ onNavigate }) 
   const [weightLbs, setWeightLbs] = useState<number>(850);
   const [pailsCount, setPailsCount] = useState<number>(18);
   const [isPails, setIsPails] = useState<boolean>(true);
+  const [deliveryType, setDeliveryType] = useState<DeliveryTimeOption>('standard');
   const [isAfterHours, setIsAfterHours] = useState<boolean>(false);
   const [waitingHours, setWaitingHours] = useState<number>(0);
   const [laborHours, setLaborHours] = useState<number>(0);
@@ -38,6 +39,7 @@ export const PriceCalculator: React.FC<PriceCalculatorProps> = ({ onNavigate }) 
         quantity: pailsCount,
         isPaintPails: isPails,
         isAfterHours,
+        deliveryType,
         waitingHours,
         laborHours,
       },
@@ -51,6 +53,7 @@ export const PriceCalculator: React.FC<PriceCalculatorProps> = ({ onNavigate }) 
     pailsCount,
     isPails,
     isAfterHours,
+    deliveryType,
     waitingHours,
     laborHours,
     settings,
@@ -64,6 +67,7 @@ export const PriceCalculator: React.FC<PriceCalculatorProps> = ({ onNavigate }) 
       weightLbs,
       pailsCount: isPails ? pailsCount : undefined,
       isAfterHours,
+      deliveryType,
     });
   };
 
@@ -222,6 +226,37 @@ export const PriceCalculator: React.FC<PriceCalculatorProps> = ({ onNavigate }) 
               </div>
             </div>
 
+            {/* Type of Delivery Selector */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-slate-200 uppercase tracking-wider">
+                  Type of Delivery
+                </span>
+                <span className="text-[11px] text-slate-400">Select speed & urgency</span>
+              </div>
+              <div className="grid grid-cols-3 gap-2">
+                {[
+                  { id: 'standard' as DeliveryTimeOption, label: '1) Standard', sub: 'Same-Day (Base)' },
+                  { id: 'direct' as DeliveryTimeOption, label: '2) On Demand', sub: 'Direct (+25%)' },
+                  { id: 'urgent' as DeliveryTimeOption, label: '3) Urgent', sub: 'ASAP (+50%)' },
+                ].map((t) => (
+                  <button
+                    key={t.id}
+                    type="button"
+                    onClick={() => setDeliveryType(t.id)}
+                    className={`py-2.5 px-2 rounded-xl border text-center transition-all cursor-pointer ${
+                      deliveryType === t.id
+                        ? 'bg-gradient-to-r from-red-500/25 to-red-600/15 border-red-500/60 text-white shadow-sm ring-1 ring-red-500/30'
+                        : 'bg-slate-900/60 border-slate-800 text-slate-400 hover:text-white hover:border-slate-700'
+                    }`}
+                  >
+                    <div className="text-xs font-bold leading-tight">{t.label}</div>
+                    <div className="text-[10px] text-slate-400 mt-0.5">{t.sub}</div>
+                  </button>
+                ))}
+              </div>
+            </div>
+
             {/* 4. Priority Add-ons */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
               <label className="min-h-[44px] flex items-center space-x-3 p-3.5 rounded-xl bg-slate-900/50 border border-slate-800 cursor-pointer hover:border-slate-700 transition-smooth">
@@ -291,6 +326,15 @@ export const PriceCalculator: React.FC<PriceCalculatorProps> = ({ onNavigate }) 
                           Excess Distance ({breakdown.excessKm} km):
                         </span>
                         <span className="font-semibold text-white">${breakdown.excessKmCharge.toFixed(2)}</span>
+                      </div>
+                    )}
+
+                    {breakdown.deliveryTypeCharge > 0 && (
+                      <div className="flex justify-between text-red-200 font-semibold">
+                        <span>
+                          Type: {deliveryType === 'urgent' ? '3) Urgent / ASAP' : '2) On Demand / Direct'} ({breakdown.deliveryTypeMultiplier}×):
+                        </span>
+                        <span className="font-bold">+${breakdown.deliveryTypeCharge.toFixed(2)}</span>
                       </div>
                     )}
 

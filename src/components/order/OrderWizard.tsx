@@ -88,7 +88,9 @@ export const OrderWizard: React.FC<OrderWizardProps> = ({ initialData, onNavigat
   const todayStr = new Date().toISOString().split('T')[0];
   const [pickupDate, setPickupDate] = useState(todayStr);
   const [pickupTime, setPickupTime] = useState('11:00');
-  const [deliveryTimeOption, setDeliveryTimeOption] = useState<DeliveryTimeOption>('2-3h');
+  const [deliveryTimeOption, setDeliveryTimeOption] = useState<DeliveryTimeOption>(
+    initialData?.deliveryType || 'standard'
+  );
 
   // 5. Item & Cargo (Starts empty for live production)
   const [itemType, setItemType] = useState<ItemType>(
@@ -157,6 +159,7 @@ export const OrderWizard: React.FC<OrderWizardProps> = ({ initialData, onNavigat
         quantity,
         isPaintPails: itemType === 'paint_pails',
         pickupTime,
+        deliveryType: deliveryTimeOption,
         waitingHours,
         laborHours,
         isOutsideGta: serviceArea === 'Outside GTA',
@@ -171,6 +174,7 @@ export const OrderWizard: React.FC<OrderWizardProps> = ({ initialData, onNavigat
     quantity,
     itemType,
     pickupTime,
+    deliveryTimeOption,
     waitingHours,
     laborHours,
     serviceArea,
@@ -284,6 +288,7 @@ export const OrderWizard: React.FC<OrderWizardProps> = ({ initialData, onNavigat
       after_hours_charge: breakdown.afterHoursCharge,
       waiting_charge: breakdown.waitingCharge,
       labor_charge: breakdown.laborCharge,
+      delivery_type_charge: breakdown.deliveryTypeCharge,
       subtotal: breakdown.subtotal,
       tax_amount: breakdown.taxAmount,
       total_price: breakdown.totalPrice,
@@ -677,39 +682,93 @@ export const OrderWizard: React.FC<OrderWizardProps> = ({ initialData, onNavigat
                 </div>
               </div>
 
-              {/* Delivery Speed Options */}
+              {/* Type of Delivery (Service Level & Speed) */}
               <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-2">
-                  Required Delivery Speed Window *
-                </label>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <div className="flex items-center justify-between mb-2">
+                  <label className="block text-xs font-semibold text-slate-200">
+                    Type of Delivery <span className="text-red-400">*</span>
+                  </label>
+                  <span className="text-[11px] text-slate-400">
+                    Rates adjust dynamically based on service priority
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5">
                   {[
-                    { id: 'asap' as DeliveryTimeOption, label: 'ASAP / 1–2 Hours', sub: 'Urgent Rush Dispatch', badge: 'Fastest' },
-                    { id: '2-3h' as DeliveryTimeOption, label: '2–3 Hours', sub: 'Priority Same-Day', badge: 'Popular' },
-                    { id: '4-5h' as DeliveryTimeOption, label: '4–5 Hours', sub: 'Standard Same-Day', badge: 'Economical' },
-                    { id: 'anytime_today' as DeliveryTimeOption, label: 'Anytime Today', sub: 'End of Business', badge: 'Flexible' },
-                  ].map((tf) => (
-                    <button
-                      key={tf.id}
-                      type="button"
-                      onClick={() => setDeliveryTimeOption(tf.id)}
-                      className={`p-3.5 rounded-xl border text-left transition-all relative ${
-                        deliveryTimeOption === tf.id
-                          ? 'bg-red-950/50 border-red-500 text-white shadow-lg shadow-red-950/30 ring-1 ring-red-500/40'
-                          : 'bg-slate-900/60 border-slate-800 text-slate-400 hover:border-slate-700 hover:text-white'
-                      }`}
-                    >
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="font-bold text-xs text-white">{tf.label}</span>
-                        <span className={`text-[9px] px-1.5 py-0.2 rounded font-bold ${
-                          deliveryTimeOption === tf.id ? 'bg-red-500 text-white' : 'bg-slate-800 text-slate-400'
-                        }`}>
-                          {tf.badge}
-                        </span>
-                      </div>
-                      <div className="text-[10px] text-slate-400">{tf.sub}</div>
-                    </button>
-                  ))}
+                    {
+                      id: 'standard' as DeliveryTimeOption,
+                      number: '1',
+                      label: 'Standard / Same-Day Delivery',
+                      sub: 'Economical same-day batch route. Delivered by end of business day.',
+                      badge: 'Standard Rate',
+                      rateNote: 'Base Distance Rate',
+                    },
+                    {
+                      id: 'direct' as DeliveryTimeOption,
+                      number: '2',
+                      label: 'On Demand / Direct Delivery',
+                      sub: 'Dedicated vehicle dispatched direct from pickup to delivery. No intermediate stops.',
+                      badge: 'Direct (1.25×)',
+                      rateNote: '+25% Priority Dispatch',
+                    },
+                    {
+                      id: 'urgent' as DeliveryTimeOption,
+                      number: '3',
+                      label: 'Urgent / ASAP Delivery',
+                      sub: 'Immediate emergency pickup & fastest priority direct express delivery across GTA.',
+                      badge: 'Rush (1.50×)',
+                      rateNote: '+50% Urgent Rush',
+                    },
+                  ].map((tf) => {
+                    const isSelected =
+                      deliveryTimeOption === tf.id ||
+                      (tf.id === 'standard' && (deliveryTimeOption === '4-5h' || deliveryTimeOption === 'anytime_today')) ||
+                      (tf.id === 'direct' && deliveryTimeOption === '2-3h') ||
+                      (tf.id === 'urgent' && (deliveryTimeOption === 'asap' || deliveryTimeOption === '1-2h'));
+
+                    return (
+                      <button
+                        key={tf.id}
+                        type="button"
+                        onClick={() => setDeliveryTimeOption(tf.id)}
+                        className={`p-4 rounded-2xl border text-left transition-all relative flex flex-col justify-between cursor-pointer ${
+                          isSelected
+                            ? 'bg-gradient-to-b from-red-950/60 to-[#120507] border-red-500 text-white shadow-xl shadow-red-950/40 ring-1 ring-red-500/50'
+                            : 'bg-slate-900/60 border-slate-800 text-slate-400 hover:border-slate-700 hover:text-white hover:bg-slate-800/40'
+                        }`}
+                      >
+                        <div>
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="flex items-center space-x-2">
+                              <span
+                                className={`w-5 h-5 rounded-full flex items-center justify-center text-[11px] font-black ${
+                                  isSelected ? 'bg-red-500 text-white' : 'bg-slate-800 text-slate-400'
+                                }`}
+                              >
+                                {tf.number}
+                              </span>
+                              <span className="font-bold text-xs text-white leading-tight">{tf.label}</span>
+                            </span>
+                          </div>
+                          <p className="text-[11px] text-slate-400 leading-relaxed mb-3">{tf.sub}</p>
+                        </div>
+                        <div className="flex items-center justify-between pt-2 border-t border-slate-800/60 text-[10px]">
+                          <span
+                            className={`px-2 py-0.5 rounded font-bold uppercase tracking-wider ${
+                              isSelected
+                                ? 'bg-red-500/20 text-red-300 border border-red-500/30'
+                                : 'bg-slate-800 text-slate-400'
+                            }`}
+                          >
+                            {tf.badge}
+                          </span>
+                          <span className={isSelected ? 'text-red-400 font-semibold' : 'text-slate-500'}>
+                            {tf.rateNote}
+                          </span>
+                        </div>
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             </div>
@@ -1099,8 +1158,14 @@ export const OrderWizard: React.FC<OrderWizardProps> = ({ initialData, onNavigat
                   <span className="font-bold text-white">{pickupDate} at {pickupTime}</span>
                 </div>
                 <div className="flex justify-between text-slate-300">
-                  <span>Speed:</span>
-                  <span className="font-bold text-red-300">{deliveryTimeOption.toUpperCase()}</span>
+                  <span>Type of Delivery:</span>
+                  <span className="font-bold text-red-300">
+                    {deliveryTimeOption === 'urgent' || deliveryTimeOption === 'asap' || deliveryTimeOption === '1-2h'
+                      ? '3) Urgent / ASAP'
+                      : deliveryTimeOption === 'direct' || deliveryTimeOption === '2-3h'
+                      ? '2) On Demand / Direct'
+                      : '1) Standard / Same-Day'}
+                  </span>
                 </div>
               </div>
 
@@ -1166,6 +1231,22 @@ export const OrderWizard: React.FC<OrderWizardProps> = ({ initialData, onNavigat
                       Excess Distance (&gt;40 km: {breakdown.excessKm} km @ ${breakdown.excessKmRate.toFixed(2)}/km):
                     </span>
                     <span className="text-white font-medium">${breakdown.excessKmCharge.toFixed(2)}</span>
+                  </div>
+                )}
+
+                {breakdown.deliveryTypeCharge > 0 ? (
+                  <div className="flex justify-between text-amber-400">
+                    <span>
+                      {breakdown.deliveryType === 'urgent'
+                        ? '3) Urgent / ASAP Rush Dispatch Premium (1.50×):'
+                        : '2) On-Demand / Direct Delivery Premium (1.25×):'}
+                    </span>
+                    <span className="font-bold">+${breakdown.deliveryTypeCharge.toFixed(2)}</span>
+                  </div>
+                ) : (
+                  <div className="flex justify-between text-slate-400">
+                    <span>Type of Delivery:</span>
+                    <span className="text-emerald-400 font-medium">1) Standard / Same-Day (Base Rate Included)</span>
                   </div>
                 )}
 
@@ -1296,8 +1377,14 @@ export const OrderWizard: React.FC<OrderWizardProps> = ({ initialData, onNavigat
                 <span className="text-white">{createdOrder.vehicle_name} ({createdOrder.weight_lbs} lbs)</span>
               </div>
               <div className="flex justify-between text-slate-400">
-                <span>Delivery Time:</span>
-                <span className="text-white">{createdOrder.pickup_date} ({createdOrder.delivery_time_option})</span>
+                <span>Type of Delivery:</span>
+                <span className="text-white font-bold text-red-300">
+                  {createdOrder.delivery_time_option === 'urgent' || createdOrder.delivery_time_option === 'asap' || createdOrder.delivery_time_option === '1-2h'
+                    ? '3) Urgent / ASAP'
+                    : createdOrder.delivery_time_option === 'direct' || createdOrder.delivery_time_option === '2-3h'
+                    ? '2) On Demand / Direct'
+                    : '1) Standard / Same-Day'}
+                </span>
               </div>
               <div className="flex justify-between border-t border-slate-800 pt-2 font-bold text-white text-sm">
                 <span>Total Amount (CAD):</span>

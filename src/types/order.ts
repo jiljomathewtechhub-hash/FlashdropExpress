@@ -14,7 +14,15 @@ export type OrderStatus =
 
 export type PaymentStatus = 'pay_later' | 'pending' | 'paid' | 'invoiced' | 'refunded';
 
-export type DeliveryTimeOption = 'asap' | '1-2h' | '2-3h' | '4-5h' | 'anytime_today';
+export type DeliveryTimeOption =
+  | 'standard'
+  | 'direct'
+  | 'urgent'
+  | 'asap'
+  | '1-2h'
+  | '2-3h'
+  | '4-5h'
+  | 'anytime_today';
 
 export type ItemType =
   | 'paint_pails'
@@ -112,6 +120,7 @@ export interface Order {
   after_hours_charge: number;
   waiting_charge: number;
   labor_charge: number;
+  delivery_type_charge?: number;
   subtotal: number;
   tax_amount: number;
   total_price: number;
@@ -190,6 +199,8 @@ export interface BusinessSettings {
   operating_hours_end: string;
   operating_days: string;
   after_hours_multiplier: number;
+  direct_delivery_multiplier?: number;
+  urgent_delivery_multiplier?: number;
   waiting_rate_hourly: number;
   labor_rate_hourly: number;
   short_redirect_fee: number;
