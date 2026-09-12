@@ -36,7 +36,7 @@ import { Order, Driver, Vehicle, OrderRequestItem, OrderStatus, BusinessSettings
 import { store, UserSession } from '../../lib/store';
 import { PricingTierRule } from '../../lib/pricing';
 import { generateOrderPdf } from '../../lib/pdf';
-import { supabase, isSupabaseConfigured } from '../../lib/supabase';
+import { supabase, isSupabaseConfigured, createUnpersistedClient } from '../../lib/supabase';
 
 interface AdminDashboardProps {
   onNavigate: (tab: string, param?: any) => void;
@@ -164,9 +164,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
     const plate = staffRole === 'driver' ? (newStaffPlate.trim() || 'ON-FLEET') : undefined;
 
     try {
-      // 1. If Supabase is configured, create Supabase Auth User
-      if (isSupabaseConfigured && supabase) {
-        const { data: authData, error: authError } = await supabase.auth.signUp({
+      // 1. If Supabase is configured, create Supabase Auth User without replacing Admin's current session
+      if (isSupabaseConfigured) {
+        const adminAuthClient = createUnpersistedClient();
+        const { data: authData, error: authError } = await adminAuthClient.auth.signUp({
           email: emailTrimmed,
           password: newStaffPassword.trim(),
           options: {
@@ -183,7 +184,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
         }
 
         // Upsert into public.profiles
-        if (authData?.user) {
+        if (authData?.user && supabase) {
           await supabase.from('profiles').upsert([
             {
               id: authData.user.id,

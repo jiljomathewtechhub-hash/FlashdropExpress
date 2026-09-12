@@ -264,10 +264,10 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
               </li>
               <li>
                 <button
-                  onClick={() => onNavigate('admin')}
+                  onClick={() => onNavigate('login')}
                   className="py-1 text-slate-400 hover:text-slate-200 transition-smooth cursor-pointer block text-left"
                 >
-                  Staff & Admin Dispatch
+                  Staff & Admin Portal
                 </button>
               </li>
             </ul>

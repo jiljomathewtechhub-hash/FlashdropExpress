@@ -15,7 +15,7 @@ import { DriverDashboard } from './components/driver/DriverDashboard';
 import { AdminDashboard } from './components/admin/AdminDashboard';
 import { OwnerDashboard } from './components/owner/OwnerDashboard';
 import { Phone, Truck, Search, Shield, User } from 'lucide-react';
-import { store } from './lib/store';
+import { store, UserSession } from './lib/store';
 import { FullPage3DHighway } from './components/common/FullPage3DHighway';
 
 const VALID_TABS = [
@@ -41,8 +41,16 @@ const getTabFromHash = (): string => {
 };
 
 export default function App() {
+  const [currentUser, setCurrentUser] = useState<UserSession | null>(store.getCurrentUser);
   const [currentTab, setCurrentTab] = useState<string>(getTabFromHash);
   const [navParam, setNavParam] = useState<any>(null);
+
+  // Subscribe to auth store updates
+  useEffect(() => {
+    return store.subscribe(() => {
+      setCurrentUser(store.getCurrentUser());
+    });
+  }, []);
 
   const handleNavigate = (tab: string, param?: any, replace = false) => {
     setCurrentTab(tab);
@@ -84,13 +92,23 @@ export default function App() {
     };
   }, []);
 
-  // Route protection for dashboards: redirect to login if not logged in
+  // Strict route protection for dashboards: redirect unauthorized users to login
   useEffect(() => {
     const user = store.getCurrentUser();
-    if ((currentTab === 'customer' || currentTab === 'driver' || currentTab === 'admin' || currentTab === 'owner') && !user) {
-      // Allow authorized preview or stay on page
+    if (currentTab === 'admin' || currentTab === 'owner') {
+      if (!user || (user.role !== 'admin' && user.role !== 'owner')) {
+        handleNavigate('login', { role: 'admin', error: 'Administrator credentials required to access this portal.' }, true);
+      }
+    } else if (currentTab === 'driver') {
+      if (!user || (user.role !== 'driver' && user.role !== 'dispatcher' && user.role !== 'admin' && user.role !== 'owner')) {
+        handleNavigate('login', { role: 'driver', error: 'Staff credentials required to access this portal.' }, true);
+      }
+    } else if (currentTab === 'customer') {
+      if (!user) {
+        handleNavigate('login', { role: 'customer', error: 'Please sign in or register to access the Customer Portal.' }, true);
+      }
     }
-  }, [currentTab]);
+  }, [currentTab, currentUser]);
 
   return (
     <div className="min-h-screen bg-[#07090E] text-slate-100 flex flex-col justify-between selection:bg-red-500 selection:text-white relative">
@@ -115,10 +133,12 @@ export default function App() {
           />
         )}
         {currentTab === 'contact' && <ContactPage onNavigate={handleNavigate} />}
-        {currentTab === 'login' && <LoginPage onNavigate={handleNavigate} />}
-        {currentTab === 'customer' && <CustomerPortal onNavigate={handleNavigate} />}
-        {currentTab === 'driver' && <DriverDashboard onNavigate={handleNavigate} />}
-        {(currentTab === 'admin' || currentTab === 'owner') && (
+        {currentTab === 'login' && <LoginPage onNavigate={handleNavigate} initialParams={navParam} />}
+        {currentTab === 'customer' && currentUser && <CustomerPortal onNavigate={handleNavigate} />}
+        {currentTab === 'driver' && currentUser && (currentUser.role === 'driver' || currentUser.role === 'dispatcher' || currentUser.role === 'admin' || currentUser.role === 'owner') && (
+          <DriverDashboard onNavigate={handleNavigate} />
+        )}
+        {(currentTab === 'admin' || currentTab === 'owner') && currentUser && (currentUser.role === 'admin' || currentUser.role === 'owner') && (
           <AdminDashboard onNavigate={handleNavigate} />
         )}
       </main>
