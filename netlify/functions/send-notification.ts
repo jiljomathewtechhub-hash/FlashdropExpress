@@ -29,7 +29,7 @@ export const handler = async (event: any) => {
     // 1. Email delivery via Resend
     if (channel === 'email' && apiKey) {
       try {
-        const senderDomain = process.env.RESEND_DOMAIN_VERIFIED ? 'FlashDrop Express <dispatch@flashdropexpress.com>' : 'FlashDrop Express <onboarding@resend.dev>';
+        const senderDomain = 'FlashDrop Express <dispatch@flashdropexpress.com>';
         const res = await fetch('https://api.resend.com/emails', {
           method: 'POST',
           headers: {
