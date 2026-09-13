@@ -88,12 +88,12 @@ export const Navbar: React.FC<NavbarProps> = ({ currentTab, onNavigate }) => {
         </div>
 
         {/* Sleek Compact Main Navigation Bar */}
-        <nav className="px-4 sm:px-6">
-          <div className="max-w-7xl mx-auto py-2 sm:py-2.5 flex items-center justify-between">
+        <nav className="px-3 sm:px-6">
+          <div className="max-w-7xl mx-auto py-2 sm:py-2.5 flex items-center justify-between gap-2">
           {/* Authentic Recreated Brand Logo */}
           <div
             onClick={() => onNavigate('home')}
-            className="cursor-pointer group select-none flex items-center"
+            className="cursor-pointer group select-none flex items-center shrink-0 min-w-0"
           >
             <BrandLogo size="sm" />
           </div>
@@ -177,19 +177,19 @@ export const Navbar: React.FC<NavbarProps> = ({ currentTab, onNavigate }) => {
           </div>
 
           {/* Mobile Menu Controls */}
-          <div className="flex items-center space-x-2 sm:hidden">
+          <div className="flex items-center space-x-1.5 sm:hidden shrink-0">
             <button
               onClick={() => onNavigate('order')}
-              className="min-h-[38px] px-3 py-1.5 text-xs font-bold text-white btn-gradient-primary rounded-lg shadow-sm transition-smooth flex items-center justify-center cursor-pointer"
+              className="min-h-[36px] px-2.5 py-1 text-[11px] font-bold text-white btn-gradient-primary rounded-lg shadow-sm transition-smooth flex items-center justify-center cursor-pointer whitespace-nowrap"
             >
-              Request a Quote
+              Order Now
             </button>
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="min-h-[44px] min-w-[44px] p-2.5 text-slate-700 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-xl transition-smooth flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-red-500/40 cursor-pointer"
+              className="min-h-[38px] min-w-[38px] p-2 text-slate-700 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-xl transition-smooth flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-red-500/40 cursor-pointer shrink-0"
               aria-label={mobileMenuOpen ? 'Close navigation menu' : 'Open navigation menu'}
             >
-              {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+              {mobileMenuOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
             </button>
           </div>
         </div>
