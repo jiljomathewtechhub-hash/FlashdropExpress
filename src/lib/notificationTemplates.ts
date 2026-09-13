@@ -61,7 +61,8 @@ const wrapHtmlEmail = (title: string, preheader: string, contentHtml: string): s
             ${contentHtml}
           </div>
           <div class="footer">
-            <p style="margin: 0 0 8px 0; color: #94A3B8; font-weight: 600;">FlashDrop Express GTA Operations</p>
+            <p style="margin: 0 0 6px 0; color: #94A3B8; font-weight: 600;">FlashDrop Express Inc. &bull; GTA Operations</p>
+            <p style="margin: 0 0 6px 0; color: #64748B;">108 Apartment, 3064 Jaguar Valley Dr, Mississauga, ON L5A 2J3, Canada</p>
             <p style="margin: 0 0 8px 0;">24/7 Hotline: ${ADMIN_PHONE_DEFAULT} &bull; Email: support@flashdropexpress.com</p>
             <p style="margin: 0;">&copy; ${new Date().getFullYear()} FlashDrop Express. All commercial courier rights reserved.</p>
           </div>

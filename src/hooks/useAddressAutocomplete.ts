@@ -139,6 +139,14 @@ export const ONTARIO_DATABASE: LocationPoint[] = [
   },
   // Mississauga Commercial & Logistics
   {
+    address: '108 Apartment, 3064 Jaguar Valley Dr, Mississauga, ON L5A 2J3',
+    city: 'Mississauga',
+    postalCode: 'L5A 2J3',
+    lat: 43.5855,
+    lng: -79.6105,
+    isGta: true,
+  },
+  {
     address: '100 City Centre Dr, Mississauga, ON L5B 2C9',
     city: 'Mississauga',
     postalCode: 'L5B 2C9',

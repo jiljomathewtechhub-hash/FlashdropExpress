@@ -2044,27 +2044,43 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 text-xs">
+            <div className="sm:col-span-2">
+              <label className="block text-slate-700 font-bold mb-1.5">
+                Registered Business / Headquarters Address
+              </label>
+              <input
+                type="text"
+                value={settings.address || ''}
+                onChange={(e) => setSettings({ ...settings, address: e.target.value })}
+                placeholder="e.g. 108 Apartment, 3064 Jaguar Valley Dr, Mississauga, ON L5A 2J3, Canada"
+                className="w-full bg-slate-50 border border-slate-300 p-2.5 rounded-xl text-slate-900 focus:outline-none focus:border-red-600 shadow-xs"
+              />
+              <span className="text-[10px] text-slate-500 mt-1 block">
+                Official commercial courier headquarters address shown on invoices, emails, and contact pages.
+              </span>
+            </div>
+
             <div>
-              <label className="block text-slate-300 font-bold mb-1.5">
+              <label className="block text-slate-700 font-bold mb-1.5">
                 Standard Operating Hours Start
               </label>
               <input
                 type="time"
                 value={settings.operating_hours_start}
                 onChange={(e) => setSettings({ ...settings, operating_hours_start: e.target.value })}
-                className="w-full bg-slate-50 border border-slate-300 p-2.5 rounded-xl text-white"
+                className="w-full bg-slate-50 border border-slate-300 p-2.5 rounded-xl text-slate-900 focus:outline-none focus:border-red-600"
               />
             </div>
 
             <div>
-              <label className="block text-slate-300 font-bold mb-1.5">
+              <label className="block text-slate-700 font-bold mb-1.5">
                 Standard Operating Hours End
               </label>
               <input
                 type="time"
                 value={settings.operating_hours_end}
                 onChange={(e) => setSettings({ ...settings, operating_hours_end: e.target.value })}
-                className="w-full bg-slate-50 border border-slate-300 p-2.5 rounded-xl text-white"
+                className="w-full bg-slate-50 border border-slate-300 p-2.5 rounded-xl text-slate-900 focus:outline-none focus:border-red-600"
               />
               <span className="text-[10px] text-slate-500 mt-1 block">
                 Deliveries outside this window trigger the after-hours premium rate.
@@ -2072,7 +2088,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
             </div>
 
             <div>
-              <label className="block text-slate-300 font-bold mb-1.5">
+              <label className="block text-slate-700 font-bold mb-1.5">
                 After-Hours Rate Multiplier (e.g. 1.5×)
               </label>
               <input
@@ -2082,12 +2098,12 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
                 max="3.0"
                 value={settings.after_hours_multiplier}
                 onChange={(e) => setSettings({ ...settings, after_hours_multiplier: Number(e.target.value) })}
-                className="w-full bg-slate-50 border border-slate-300 p-2.5 rounded-xl text-white"
+                className="w-full bg-slate-50 border border-slate-300 p-2.5 rounded-xl text-slate-900 focus:outline-none focus:border-red-600"
               />
             </div>
 
             <div>
-              <label className="block text-slate-300 font-bold mb-1.5">
+              <label className="block text-slate-700 font-bold mb-1.5">
                 2) On Demand / Direct Delivery Multiplier (e.g. 1.25×)
               </label>
               <input
@@ -2097,12 +2113,12 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
                 max="3.0"
                 value={settings.direct_delivery_multiplier ?? 1.25}
                 onChange={(e) => setSettings({ ...settings, direct_delivery_multiplier: Number(e.target.value) })}
-                className="w-full bg-slate-50 border border-slate-300 p-2.5 rounded-xl text-white"
+                className="w-full bg-slate-50 border border-slate-300 p-2.5 rounded-xl text-slate-900 focus:outline-none focus:border-red-600"
               />
             </div>
 
             <div>
-              <label className="block text-slate-300 font-bold mb-1.5">
+              <label className="block text-slate-700 font-bold mb-1.5">
                 3) Urgent / ASAP Delivery Multiplier (e.g. 1.50×)
               </label>
               <input
@@ -2112,67 +2128,67 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
                 max="3.0"
                 value={settings.urgent_delivery_multiplier ?? 1.50}
                 onChange={(e) => setSettings({ ...settings, urgent_delivery_multiplier: Number(e.target.value) })}
-                className="w-full bg-slate-50 border border-slate-300 p-2.5 rounded-xl text-white"
+                className="w-full bg-slate-50 border border-slate-300 p-2.5 rounded-xl text-slate-900 focus:outline-none focus:border-red-600"
               />
             </div>
 
             <div>
-              <label className="block text-slate-300 font-bold mb-1.5">
+              <label className="block text-slate-700 font-bold mb-1.5">
                 Waiting Charge ($ / Hour after 20 mins)
               </label>
               <input
                 type="number"
                 value={settings.waiting_rate_hourly}
                 onChange={(e) => setSettings({ ...settings, waiting_rate_hourly: Number(e.target.value) })}
-                className="w-full bg-slate-50 border border-slate-300 p-2.5 rounded-xl text-white"
+                className="w-full bg-slate-50 border border-slate-300 p-2.5 rounded-xl text-slate-900 focus:outline-none focus:border-red-600"
               />
             </div>
 
             <div>
-              <label className="block text-slate-300 font-bold mb-1.5">
+              <label className="block text-slate-700 font-bold mb-1.5">
                 Additional Labor Charge ($ / Hour)
               </label>
               <input
                 type="number"
                 value={settings.labor_rate_hourly}
                 onChange={(e) => setSettings({ ...settings, labor_rate_hourly: Number(e.target.value) })}
-                className="w-full bg-slate-50 border border-slate-300 p-2.5 rounded-xl text-white"
+                className="w-full bg-slate-50 border border-slate-300 p-2.5 rounded-xl text-slate-900 focus:outline-none focus:border-red-600"
               />
             </div>
 
             <div>
-              <label className="block text-slate-300 font-bold mb-1.5">
+              <label className="block text-slate-700 font-bold mb-1.5">
                 Short Redirect Charge ($)
               </label>
               <input
                 type="number"
                 value={settings.short_redirect_fee}
                 onChange={(e) => setSettings({ ...settings, short_redirect_fee: Number(e.target.value) })}
-                className="w-full bg-slate-50 border border-slate-300 p-2.5 rounded-xl text-white"
+                className="w-full bg-slate-50 border border-slate-300 p-2.5 rounded-xl text-slate-900 focus:outline-none focus:border-red-600"
               />
             </div>
 
             <div>
-              <label className="block text-slate-300 font-bold mb-1.5">
+              <label className="block text-slate-700 font-bold mb-1.5">
                 Primary Phone Number
               </label>
               <input
                 type="text"
                 value={settings.phone}
                 onChange={(e) => setSettings({ ...settings, phone: e.target.value })}
-                className="w-full bg-slate-50 border border-slate-300 p-2.5 rounded-xl text-white"
+                className="w-full bg-slate-50 border border-slate-300 p-2.5 rounded-xl text-slate-900 focus:outline-none focus:border-red-600"
               />
             </div>
 
             <div>
-              <label className="block text-slate-300 font-bold mb-1.5">
+              <label className="block text-slate-700 font-bold mb-1.5">
                 Support Email Address
               </label>
               <input
                 type="email"
                 value={settings.email}
                 onChange={(e) => setSettings({ ...settings, email: e.target.value })}
-                className="w-full bg-slate-50 border border-slate-300 p-2.5 rounded-xl text-white"
+                className="w-full bg-slate-50 border border-slate-300 p-2.5 rounded-xl text-slate-900 focus:outline-none focus:border-red-600"
               />
             </div>
           </div>

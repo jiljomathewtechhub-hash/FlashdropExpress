@@ -43,11 +43,12 @@ export function generateOrderPdf(
   doc.setTextColor(255, 255, 255);
   doc.text('FLASHDROP EXPRESS', 36, 18);
 
-  doc.setFontSize(9);
+  doc.setFontSize(8);
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(220, 220, 220);
-  doc.text('FAST. RELIABLE. DELIVERED. — TORONTO & GTA COURIER', 36, 25);
-  doc.text(`Phone: ${settings.phone}  |  Email: ${settings.email}`, 36, 31);
+  doc.text('FAST. RELIABLE. DELIVERED. — TORONTO & GTA COMMERCIAL COURIER', 36, 24);
+  doc.text(`Phone: ${settings.phone}  |  Email: ${settings.email}`, 36, 29.5);
+  doc.text(`HQ: ${settings.address || '108 Apartment, 3064 Jaguar Valley Dr, Mississauga, ON L5A 2J3'}`, 36, 35);
 
   // Document Title & Order Number Badge (Top Right)
   doc.setFontSize(16);

@@ -198,6 +198,7 @@ export interface BusinessSettings {
   phone: string;
   alt_phone?: string;
   email: string;
+  address?: string;
   domain: string;
   tagline: string;
   operating_hours_start: string;

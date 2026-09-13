@@ -404,6 +404,9 @@ class FlashDropStore {
       if (!this.settings.email || this.settings.email.toLowerCase().includes('nidhin@flashdropexpress.com')) {
         this.settings.email = 'support@flashdropexpress.com';
       }
+      if (!this.settings.address) {
+        this.settings.address = DEFAULT_BUSINESS_SETTINGS.address;
+      }
       this.drivers = this.drivers.map((d) =>
         d.email && d.email.toLowerCase().includes('nidhin@flashdropexpress.com')
           ? { ...d, email: 'support@flashdropexpress.com' }

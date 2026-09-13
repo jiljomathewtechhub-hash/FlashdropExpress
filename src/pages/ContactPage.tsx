@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Phone, Mail, Clock, MapPin, Send, CheckCircle2, MessageSquare } from 'lucide-react';
+import { Phone, Mail, Clock, MapPin, Send, CheckCircle2, MessageSquare, Building } from 'lucide-react';
 import { store } from '../lib/store';
 import { TiltCard } from '../components/common/TiltCard';
 
@@ -104,15 +104,35 @@ export const ContactPage: React.FC<ContactPageProps> = ({ onNavigate }) => {
                   </div>
                 </div>
 
-                {/* Service Region */}
+                {/* Registered Business Address */}
                 <div className="flex items-start space-x-3.5">
                   <div className="p-2.5 rounded-xl bg-red-50 border border-red-200 text-red-600 flex-shrink-0">
                     <MapPin className="w-4 h-4" />
                   </div>
                   <div>
-                    <span className="text-slate-500 block text-[11px] uppercase font-bold">Primary Hub</span>
-                    <span className="text-slate-800 font-medium">
-                      Toronto & Greater Toronto Area, Ontario
+                    <span className="text-slate-500 block text-[11px] uppercase font-bold">Registered Business Address</span>
+                    <a
+                      href="https://www.google.com/maps/search/?api=1&query=3064+Jaguar+Valley+Dr+Mississauga+ON+L5A+2J3"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-slate-800 hover:text-red-600 transition font-medium text-xs block leading-relaxed"
+                    >
+                      108 Apartment, 3064 Jaguar Valley Dr<br />
+                      Mississauga, ON L5A 2J3, Canada
+                    </a>
+                    <span className="text-slate-500 text-[11px] block mt-0.5">Commercial Dispatch & Operations Base</span>
+                  </div>
+                </div>
+
+                {/* Service Region */}
+                <div className="flex items-start space-x-3.5">
+                  <div className="p-2.5 rounded-xl bg-red-50 border border-red-200 text-red-600 flex-shrink-0">
+                    <Building className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <span className="text-slate-500 block text-[11px] uppercase font-bold">Courier Operations Hub</span>
+                    <span className="text-slate-800 font-medium block">
+                      Toronto, Peel (Mississauga / Brampton), York & Greater Toronto Area
                     </span>
                   </div>
                 </div>
@@ -133,6 +153,9 @@ export const ContactPage: React.FC<ContactPageProps> = ({ onNavigate }) => {
               </div>
               <div className="text-[11px] text-slate-500">
                 Ontario Commercial Freight Carrier
+              </div>
+              <div className="text-[10px] text-slate-500 mt-0.5">
+                108 Apartment, 3064 Jaguar Valley Dr, Mississauga, ON L5A 2J3
               </div>
             </div>
           </div>

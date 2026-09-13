@@ -104,9 +104,16 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
                   support@flashdropexpress.com
                 </a>
               </div>
-              <div className="flex items-center space-x-2 text-slate-600">
-                <MapPin className="w-4 h-4 text-red-600" />
-                <span>Serving Toronto & Greater Toronto Area, Ontario</span>
+              <div className="flex items-start space-x-2 text-slate-600">
+                <MapPin className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
+                <a
+                  href="https://www.google.com/maps/search/?api=1&query=3064+Jaguar+Valley+Dr+Mississauga+ON+L5A+2J3"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:text-red-600 transition-smooth"
+                >
+                  108 Apartment, 3064 Jaguar Valley Dr, Mississauga, ON L5A 2J3, Canada
+                </a>
               </div>
             </div>
           </div>
