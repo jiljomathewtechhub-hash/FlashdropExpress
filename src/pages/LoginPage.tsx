@@ -530,11 +530,11 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate, initialParams 
 
   return (
     <div className="min-h-[85vh] flex items-center justify-center py-12 px-4 sm:px-6 relative z-10">
-      <div className="max-w-md w-full space-y-6 bg-[#0A0E18]/95 backdrop-blur-xl border border-slate-800 p-8 rounded-3xl shadow-2xl relative">
+      <div className="max-w-md w-full space-y-6 bg-white border border-slate-200 p-8 rounded-3xl shadow-sm relative">
         
         {/* Header Icon & Title */}
         <div className="text-center space-y-2">
-          <div className="w-12 h-12 rounded-2xl bg-red-500/10 border border-red-500/30 text-red-400 flex items-center justify-center mx-auto shadow-inner">
+          <div className="w-12 h-12 rounded-2xl bg-red-50 border border-red-200 text-red-600 flex items-center justify-center mx-auto shadow-xs">
             {mode === 'forgot' || mode === 'reset' ? (
               <KeyRound className="w-6 h-6 text-red-400 animate-pulse" />
             ) : selectedRole === 'admin' ? (
@@ -546,7 +546,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate, initialParams 
             )}
           </div>
 
-          <h2 className="text-2xl font-black text-white font-['Outfit'] tracking-tight">
+          <h2 className="text-2xl font-black text-slate-900 font-['Outfit'] tracking-tight">
             {mode === 'forgot'
               ? 'Reset Your Password'
               : mode === 'reset'
@@ -560,7 +560,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate, initialParams 
               : 'Customer Portal Login'}
           </h2>
 
-          <p className="text-xs text-slate-400 leading-relaxed">
+          <p className="text-xs text-slate-600 leading-relaxed">
             {mode === 'forgot'
               ? 'Enter your account email. We will send you a 6-digit security PIN and a direct recovery link.'
               : mode === 'reset'
@@ -577,15 +577,15 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate, initialParams 
 
         {/* Error / Success Alerts */}
         {errorMessage && (
-          <div className="p-3.5 bg-red-950/80 border border-red-500/50 rounded-xl flex items-start space-x-2.5 text-xs text-red-200 animate-fade-in shadow-lg">
-            <AlertCircle className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />
+          <div className="p-3.5 bg-red-50 border border-red-200 rounded-xl flex items-start space-x-2.5 text-xs text-red-800 animate-fade-in shadow-xs">
+            <AlertCircle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
             <span className="leading-relaxed font-medium">{errorMessage}</span>
           </div>
         )}
 
         {successMessage && (
-          <div className="p-3.5 bg-emerald-950/80 border border-emerald-500/50 rounded-xl flex items-start space-x-2.5 text-xs text-emerald-200 animate-fade-in shadow-lg">
-            <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+          <div className="p-3.5 bg-emerald-50 border border-emerald-200 rounded-xl flex items-start space-x-2.5 text-xs text-emerald-800 animate-fade-in shadow-xs">
+            <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
             <span className="leading-relaxed font-medium">{successMessage}</span>
           </div>
         )}
@@ -593,7 +593,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate, initialParams 
         {/* Role Switcher (Hidden in Forgot/Reset Mode) */}
         {mode !== 'forgot' && mode !== 'reset' && (
           <div>
-            <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2 text-center">
+            <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2 text-center">
               Select Your Portal
             </label>
             <div className="grid grid-cols-3 gap-2">
@@ -611,11 +611,11 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate, initialParams 
                     onClick={() => handleRoleChange(r.role)}
                     className={`py-2.5 px-2 rounded-xl border text-center transition flex flex-col items-center justify-center space-y-1 cursor-pointer ${
                       isSelected
-                        ? 'bg-red-950/40 border-red-500/40 text-white shadow-sm ring-1 ring-red-500/30'
-                        : 'bg-slate-900/60 border-slate-800 text-slate-400 hover:text-white hover:bg-slate-800/80'
+                        ? 'bg-red-50 border-red-500 text-red-700 shadow-xs ring-1 ring-red-300'
+                        : 'bg-slate-50 border-slate-200 text-slate-600 hover:text-slate-900 hover:bg-slate-100'
                     }`}
                   >
-                    <Icon className={`w-4 h-4 ${isSelected ? 'text-red-400' : 'text-slate-500'}`} />
+                    <Icon className={`w-4 h-4 ${isSelected ? 'text-red-600' : 'text-slate-400'}`} />
                     <span className="text-xs font-bold leading-tight">{r.label}</span>
                     <span className="text-[9px] text-slate-500 hidden sm:block">{r.desc}</span>
                   </button>
@@ -627,7 +627,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate, initialParams 
 
         {/* Security Notice for Admin & Staff in standard login */}
         {mode === 'login' && selectedRole === 'admin' && (
-          <div className="p-3 bg-red-950/30 border border-red-500/20 rounded-xl flex items-start space-x-2 text-[11px] text-slate-300">
+          <div className="p-3 bg-red-50 border border-red-200 rounded-xl flex items-start space-x-2 text-[11px] text-slate-700">
             <Shield className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />
             <span>
               <strong>Secure Dispatch Area:</strong> Only accounts registered with Administrator privileges can access this panel.
@@ -636,7 +636,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate, initialParams 
         )}
 
         {mode === 'login' && selectedRole === 'driver' && (
-          <div className="p-3 bg-slate-900/80 border border-slate-800 rounded-xl flex items-start space-x-2 text-[11px] text-slate-300">
+          <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl flex items-start space-x-2 text-[11px] text-slate-700">
             <Info className="w-4 h-4 text-blue-400 shrink-0 mt-0.5" />
             <span>
               <strong>Staff Accounts:</strong> Driver and employee accounts are created directly by the Administrator in the Admin Dashboard.
@@ -650,7 +650,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate, initialParams 
         {mode === 'forgot' && (
           <form onSubmit={handleForgotPasswordSubmit} className="space-y-4 text-xs">
             <div>
-              <label className="block text-slate-300 font-semibold mb-1">
+              <label className="block text-slate-700 font-semibold mb-1">
                 Account Email Address <span className="text-red-400">*</span>
               </label>
               <div className="relative">
@@ -660,21 +660,21 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate, initialParams 
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="e.g. client@company.com"
-                  className="w-full bg-[#0B0F17] border border-slate-700 pl-10 pr-3 py-2.5 rounded-xl text-white placeholder:text-slate-500 focus:border-red-500 focus:outline-none"
+                  className="w-full bg-slate-50 border border-slate-300 pl-10 pr-3 py-2.5 rounded-xl text-slate-900 placeholder:text-slate-400 focus:bg-white focus:border-red-500 focus:outline-none shadow-xs"
                   required
                   autoFocus
                 />
               </div>
             </div>
 
-            <div className="p-3 bg-slate-900/70 border border-slate-800 rounded-xl space-y-1.5 text-[11px] text-slate-400">
-              <div className="flex items-center space-x-1.5 text-slate-300 font-medium">
+            <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-1.5 text-[11px] text-slate-600">
+              <div className="flex items-center space-x-1.5 text-slate-700 font-medium">
                 <Sparkles className="w-3.5 h-3.5 text-red-400" />
                 <span>Instant Verification</span>
               </div>
               <p>
                 A 6-digit security code and a 1-click recovery link will be dispatched from{' '}
-                <strong className="text-white">dispatch@flashdropexpress.com</strong>.
+                <strong className="text-slate-900">dispatch@flashdropexpress.com</strong>.
               </p>
             </div>
 
@@ -701,7 +701,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate, initialParams 
                   setErrorMessage(null);
                   setSuccessMessage(null);
                 }}
-                className="inline-flex items-center space-x-1.5 text-xs text-slate-400 hover:text-white transition cursor-pointer"
+                className="inline-flex items-center space-x-1.5 text-xs text-slate-600 hover:text-slate-900 transition cursor-pointer"
               >
                 <ArrowLeft className="w-3.5 h-3.5" />
                 <span>Return to Sign In</span>
@@ -716,7 +716,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate, initialParams 
         {mode === 'reset' && (
           <form onSubmit={handleResetPasswordSubmit} className="space-y-4 text-xs">
             <div>
-              <label className="block text-slate-300 font-semibold mb-1">
+              <label className="block text-slate-700 font-semibold mb-1">
                 Account Email Address <span className="text-red-400">*</span>
               </label>
               <div className="relative">
@@ -726,7 +726,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate, initialParams 
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="e.g. client@company.com"
-                  className="w-full bg-[#0B0F17] border border-slate-700 pl-10 pr-3 py-2.5 rounded-xl text-white placeholder:text-slate-500 focus:border-red-500 focus:outline-none"
+                  className="w-full bg-slate-50 border border-slate-300 pl-10 pr-3 py-2.5 rounded-xl text-slate-900 placeholder:text-slate-400 focus:bg-white focus:border-red-500 focus:outline-none shadow-xs"
                   required
                 />
               </div>
@@ -734,7 +734,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate, initialParams 
 
             <div>
               <div className="flex items-center justify-between mb-1">
-                <label className="block text-slate-300 font-semibold">
+                <label className="block text-slate-700 font-semibold">
                   6-Digit Security PIN <span className="text-red-400">*</span>
                 </label>
                 {resendCooldown > 0 ? (
@@ -758,7 +758,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate, initialParams 
                   value={resetCode}
                   onChange={(e) => setResetCode(e.target.value.replace(/\D/g, ''))}
                   placeholder="e.g. 849201"
-                  className="w-full bg-[#0B0F17] border border-slate-700 pl-10 pr-3 py-2.5 rounded-xl text-white font-mono tracking-widest text-sm placeholder:text-slate-500 placeholder:tracking-normal focus:border-red-500 focus:outline-none"
+                  className="w-full bg-slate-50 border border-slate-300 pl-10 pr-3 py-2.5 rounded-xl text-slate-900 font-mono tracking-widest text-sm placeholder:text-slate-400 placeholder:tracking-normal focus:bg-white focus:border-red-500 focus:outline-none shadow-xs"
                   required={!isRecoverySession}
                 />
               </div>
@@ -768,7 +768,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate, initialParams 
             </div>
 
             <div>
-              <label className="block text-slate-300 font-semibold mb-1">
+              <label className="block text-slate-700 font-semibold mb-1">
                 New Password <span className="text-red-400">*</span>
               </label>
               <div className="relative">
@@ -779,7 +779,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate, initialParams 
                   onChange={(e) => setNewPassword(e.target.value)}
                   placeholder="Min 6 characters"
                   minLength={6}
-                  className="w-full bg-[#0B0F17] border border-slate-700 pl-10 pr-10 py-2.5 rounded-xl text-white placeholder:text-slate-500 focus:border-red-500 focus:outline-none"
+                  className="w-full bg-slate-50 border border-slate-300 pl-10 pr-10 py-2.5 rounded-xl text-slate-900 placeholder:text-slate-400 focus:bg-white focus:border-red-500 focus:outline-none shadow-xs"
                   required
                 />
                 <button
@@ -793,7 +793,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate, initialParams 
             </div>
 
             <div>
-              <label className="block text-slate-300 font-semibold mb-1">
+              <label className="block text-slate-700 font-semibold mb-1">
                 Confirm New Password <span className="text-red-400">*</span>
               </label>
               <div className="relative">
@@ -804,7 +804,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate, initialParams 
                   onChange={(e) => setConfirmNewPassword(e.target.value)}
                   placeholder="Re-enter new password"
                   minLength={6}
-                  className="w-full bg-[#0B0F17] border border-slate-700 pl-10 pr-10 py-2.5 rounded-xl text-white placeholder:text-slate-500 focus:border-red-500 focus:outline-none"
+                  className="w-full bg-slate-50 border border-slate-300 pl-10 pr-10 py-2.5 rounded-xl text-slate-900 placeholder:text-slate-400 focus:bg-white focus:border-red-500 focus:outline-none shadow-xs"
                   required
                 />
               </div>
@@ -833,7 +833,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate, initialParams 
                   setErrorMessage(null);
                   setSuccessMessage(null);
                 }}
-                className="inline-flex items-center space-x-1.5 text-xs text-slate-400 hover:text-white transition cursor-pointer"
+                className="inline-flex items-center space-x-1.5 text-xs text-slate-600 hover:text-slate-900 transition cursor-pointer"
               >
                 <ArrowLeft className="w-3.5 h-3.5" />
                 <span>Cancel & Return to Sign In</span>
@@ -850,7 +850,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate, initialParams 
             {mode === 'register' && selectedRole === 'customer' && (
               <>
                 <div>
-                  <label className="block text-slate-300 font-semibold mb-1">
+                  <label className="block text-slate-700 font-semibold mb-1">
                     Contact Person Full Name <span className="text-red-400">*</span>
                   </label>
                   <div className="relative">
@@ -860,14 +860,14 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate, initialParams 
                       value={fullName}
                       onChange={(e) => setFullName(e.target.value)}
                       placeholder="e.g. Michael Smith"
-                      className="w-full bg-[#0B0F17] border border-slate-700 pl-10 pr-3 py-2.5 rounded-xl text-white placeholder:text-slate-500 focus:border-red-500 focus:outline-none"
+                      className="w-full bg-slate-50 border border-slate-300 pl-10 pr-3 py-2.5 rounded-xl text-slate-900 placeholder:text-slate-400 focus:bg-white focus:border-red-500 focus:outline-none shadow-xs"
                       required
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-slate-300 font-semibold mb-1">
+                  <label className="block text-slate-700 font-semibold mb-1">
                     Company / Business Name <span className="text-red-400">*</span>
                   </label>
                   <div className="relative">
@@ -877,14 +877,14 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate, initialParams 
                       value={companyName}
                       onChange={(e) => setCompanyName(e.target.value)}
                       placeholder="e.g. Apex Coatings & Construction Inc."
-                      className="w-full bg-[#0B0F17] border border-slate-700 pl-10 pr-3 py-2.5 rounded-xl text-white placeholder:text-slate-500 focus:border-red-500 focus:outline-none"
+                      className="w-full bg-slate-50 border border-slate-300 pl-10 pr-3 py-2.5 rounded-xl text-slate-900 placeholder:text-slate-400 focus:bg-white focus:border-red-500 focus:outline-none shadow-xs"
                       required
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-slate-300 font-semibold mb-1">
+                  <label className="block text-slate-700 font-semibold mb-1">
                     Business Phone Number <span className="text-red-400">*</span>
                   </label>
                   <div className="relative">
@@ -894,14 +894,14 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate, initialParams 
                       value={phone}
                       onChange={(e) => setPhone(e.target.value)}
                       placeholder="e.g. +1 (647) 555-0199"
-                      className="w-full bg-[#0B0F17] border border-slate-700 pl-10 pr-3 py-2.5 rounded-xl text-white placeholder:text-slate-500 focus:border-red-500 focus:outline-none"
+                      className="w-full bg-slate-50 border border-slate-300 pl-10 pr-3 py-2.5 rounded-xl text-slate-900 placeholder:text-slate-400 focus:bg-white focus:border-red-500 focus:outline-none shadow-xs"
                       required
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-slate-300 font-semibold mb-1">
+                  <label className="block text-slate-700 font-semibold mb-1">
                     Business / Delivery Address <span className="text-red-400">*</span>
                   </label>
                   <div className="relative">
@@ -911,7 +911,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate, initialParams 
                       value={address}
                       onChange={(e) => setAddress(e.target.value)}
                       placeholder="e.g. 150 King St W, Toronto, ON"
-                      className="w-full bg-[#0B0F17] border border-slate-700 pl-10 pr-3 py-2.5 rounded-xl text-white placeholder:text-slate-500 focus:border-red-500 focus:outline-none"
+                      className="w-full bg-slate-50 border border-slate-300 pl-10 pr-3 py-2.5 rounded-xl text-slate-900 placeholder:text-slate-400 focus:bg-white focus:border-red-500 focus:outline-none shadow-xs"
                       required
                     />
                   </div>
@@ -920,7 +920,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate, initialParams 
             )}
 
             <div>
-              <label className="block text-slate-300 font-semibold mb-1">
+              <label className="block text-slate-700 font-semibold mb-1">
                 Email Address <span className="text-red-400">*</span>
               </label>
               <div className="relative">
@@ -936,7 +936,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate, initialParams 
                       ? 'e.g. staff.name@flashdropexpress.com'
                       : 'e.g. client@company.com'
                   }
-                  className="w-full bg-[#0B0F17] border border-slate-700 pl-10 pr-3 py-2.5 rounded-xl text-white placeholder:text-slate-500 focus:border-red-500 focus:outline-none"
+                  className="w-full bg-slate-50 border border-slate-300 pl-10 pr-3 py-2.5 rounded-xl text-slate-900 placeholder:text-slate-400 focus:bg-white focus:border-red-500 focus:outline-none shadow-xs"
                   required
                 />
               </div>
@@ -944,7 +944,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate, initialParams 
 
             <div>
               <div className="flex items-center justify-between mb-1">
-                <label className="block text-slate-300 font-semibold">
+                <label className="block text-slate-700 font-semibold">
                   Password <span className="text-red-400">*</span>
                 </label>
                 {mode === 'login' && (
@@ -955,7 +955,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate, initialParams 
                       setErrorMessage(null);
                       setSuccessMessage(null);
                     }}
-                    className="text-[11px] text-red-400 hover:text-red-300 hover:underline cursor-pointer font-medium"
+                    className="text-[11px] text-red-600 hover:text-red-700 hover:underline cursor-pointer font-medium"
                   >
                     Forgot password?
                   </button>
@@ -969,7 +969,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate, initialParams 
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
                   minLength={6}
-                  className="w-full bg-[#0B0F17] border border-slate-700 pl-10 pr-10 py-2.5 rounded-xl text-white placeholder:text-slate-500 focus:border-red-500 focus:outline-none"
+                  className="w-full bg-slate-50 border border-slate-300 pl-10 pr-10 py-2.5 rounded-xl text-slate-900 placeholder:text-slate-400 focus:bg-white focus:border-red-500 focus:outline-none shadow-xs"
                   required
                 />
                 <button
@@ -984,7 +984,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate, initialParams 
 
             {mode === 'register' && selectedRole === 'customer' && (
               <div>
-                <label className="block text-slate-300 font-semibold mb-1">
+                <label className="block text-slate-700 font-semibold mb-1">
                   Confirm Password <span className="text-red-400">*</span>
                 </label>
                 <div className="relative">
@@ -995,7 +995,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate, initialParams 
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     placeholder="••••••••"
                     minLength={6}
-                    className="w-full bg-[#0B0F17] border border-slate-700 pl-10 pr-3 py-2.5 rounded-xl text-white placeholder:text-slate-500 focus:border-red-500 focus:outline-none"
+                    className="w-full bg-slate-50 border border-slate-300 pl-10 pr-3 py-2.5 rounded-xl text-slate-900 placeholder:text-slate-400 focus:bg-white focus:border-red-500 focus:outline-none shadow-xs"
                     required
                   />
                 </div>
@@ -1029,7 +1029,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate, initialParams 
 
         {/* Register / Sign In toggle for Customer only */}
         {mode !== 'forgot' && mode !== 'reset' && selectedRole === 'customer' && (
-          <div className="text-center pt-2 text-xs text-slate-400 border-t border-slate-800/80">
+          <div className="text-center pt-2 text-xs text-slate-600 border-t border-slate-100">
             <button
               type="button"
               onClick={() => {

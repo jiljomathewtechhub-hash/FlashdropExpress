@@ -131,7 +131,7 @@ export const DriverDashboard: React.FC<DriverDashboardProps> = ({ onNavigate }) 
 
     ctx.lineWidth = 2;
     ctx.lineCap = 'round';
-    ctx.strokeStyle = '#FFFFFF';
+    ctx.strokeStyle = '#0F172A';
 
     const rect = canvas.getBoundingClientRect();
     const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
@@ -207,7 +207,7 @@ export const DriverDashboard: React.FC<DriverDashboardProps> = ({ onNavigate }) 
               onNavigate('home');
             }
           }}
-          className="inline-flex items-center space-x-2 px-3.5 py-2 bg-[#111624] hover:bg-slate-800 text-slate-300 hover:text-white text-xs font-bold rounded-xl border border-slate-800 transition shadow-sm cursor-pointer group"
+          className="inline-flex items-center space-x-2 px-3.5 py-2 bg-white hover:bg-slate-50 text-slate-700 hover:text-slate-900 text-xs font-bold rounded-xl border border-slate-200 transition shadow-xs cursor-pointer group"
           title="Return to previous screen"
         >
           <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform text-red-400" />
@@ -222,7 +222,7 @@ export const DriverDashboard: React.FC<DriverDashboardProps> = ({ onNavigate }) 
           {isAdminOrOwner && (
             <button
               onClick={() => onNavigate('admin')}
-              className="flex items-center space-x-1.5 px-3 py-1.5 bg-red-950/40 hover:bg-red-900/60 text-red-300 hover:text-white text-xs font-semibold rounded-xl border border-red-500/30 transition cursor-pointer"
+              className="flex items-center space-x-1.5 px-3 py-1.5 bg-red-50 hover:bg-red-100 text-red-700 text-xs font-semibold rounded-xl border border-red-200 transition cursor-pointer"
             >
               <Shield className="w-3.5 h-3.5 text-red-400 shrink-0" />
               <span>Admin Operations</span>
@@ -234,7 +234,7 @@ export const DriverDashboard: React.FC<DriverDashboardProps> = ({ onNavigate }) 
               store.logout();
               onNavigate('login');
             }}
-            className="flex items-center space-x-1.5 px-3 py-1.5 bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white text-xs font-semibold rounded-xl border border-slate-700 transition cursor-pointer"
+            className="flex items-center space-x-1.5 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 hover:text-slate-900 text-xs font-semibold rounded-xl border border-slate-200 transition cursor-pointer"
             title="Sign Out"
           >
             <LogOut className="w-3.5 h-3.5" />
@@ -244,26 +244,26 @@ export const DriverDashboard: React.FC<DriverDashboardProps> = ({ onNavigate }) 
       </div>
 
       {/* Staff / Driver Profile Information Card */}
-      <div className="bg-gradient-to-br from-[#111624] via-[#0E1320] to-[#0A0D15] border border-slate-800 rounded-3xl p-6 shadow-2xl space-y-6">
+      <div className="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm space-y-6">
         {/* Profile Header */}
-        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 border-b border-slate-800/80 pb-5">
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 border-b border-slate-100 pb-5">
           <div className="flex items-center space-x-4">
             <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-red-600 to-red-800 flex items-center justify-center text-white font-black text-2xl shadow-lg shadow-red-950/50">
               {activeName.charAt(0).toUpperCase()}
             </div>
             <div>
               <div className="flex flex-wrap items-center gap-2.5">
-                <h1 className="text-2xl font-black text-white font-['Outfit'] tracking-tight">
+                <h1 className="text-2xl font-black text-slate-900 font-['Outfit'] tracking-tight">
                   {activeName}
                 </h1>
-                <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-300 bg-emerald-950/80 border border-emerald-500/40 px-2.5 py-0.5 rounded-full flex items-center">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse mr-1.5" />
+                <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full flex items-center">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-pulse mr-1.5" />
                   On Duty &bull; Active Shift
                 </span>
               </div>
               <div className="flex flex-wrap items-center gap-2 text-xs text-slate-400 mt-1">
-                <span className="text-red-300 font-semibold flex items-center">
-                  <BadgeCheck className="w-3.5 h-3.5 mr-1 text-red-400" />
+                <span className="text-red-600 font-semibold flex items-center">
+                  <BadgeCheck className="w-3.5 h-3.5 mr-1 text-red-600" />
                   {activeRole === 'dispatcher'
                     ? 'Operations Dispatcher'
                     : activeRole === 'admin'
@@ -278,12 +278,12 @@ export const DriverDashboard: React.FC<DriverDashboardProps> = ({ onNavigate }) 
 
           {/* Admin Fleet Switcher (Only visible to Admin / Owner inspecting the fleet) */}
           {isAdminOrOwner && (
-            <div className="bg-slate-900/90 border border-slate-700/80 rounded-2xl p-2.5 flex items-center space-x-2 text-xs">
+            <div className="bg-slate-50 border border-slate-200 rounded-2xl p-2.5 flex items-center space-x-2 text-xs">
               <span className="text-slate-400 text-[11px] font-semibold pl-1">Admin Preview:</span>
               <select
                 value={activeId}
                 onChange={(e) => setSelectedDriverId(e.target.value)}
-                className="bg-[#0A0D14] border border-slate-700 text-white text-xs rounded-xl px-2.5 py-1.5 focus:ring-1 focus:ring-red-500 focus:outline-none cursor-pointer"
+                className="bg-white border border-slate-300 text-slate-900 text-xs rounded-xl px-2.5 py-1.5 focus:ring-1 focus:ring-red-500 focus:outline-none cursor-pointer"
               >
                 {drivers.map((drv: Driver) => (
                   <option key={drv.id} value={drv.id}>
@@ -298,57 +298,57 @@ export const DriverDashboard: React.FC<DriverDashboardProps> = ({ onNavigate }) 
         {/* 4-Panel Profile Details Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-xs">
           {/* Email */}
-          <div className="bg-[#07090E]/90 border border-slate-800 rounded-2xl p-4 space-y-1.5 shadow-sm">
+          <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-1.5 shadow-xs">
             <span className="text-slate-400 block text-[10px] uppercase font-bold tracking-wider flex items-center">
               <Mail className="w-3 h-3 text-red-400 mr-1.5" />
               Staff Login Email
             </span>
-            <span className="text-white font-semibold text-xs break-all block">
+            <span className="text-slate-900 font-semibold text-xs break-all block">
               {activeEmail || 'staff@flashdropexpress.com'}
             </span>
             <span className="text-[10px] text-slate-500 block">Personal secure login ID</span>
           </div>
 
           {/* Phone */}
-          <div className="bg-[#07090E]/90 border border-slate-800 rounded-2xl p-4 space-y-1.5 shadow-sm">
+          <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-1.5 shadow-xs">
             <span className="text-slate-400 block text-[10px] uppercase font-bold tracking-wider flex items-center">
               <Phone className="w-3 h-3 text-emerald-400 mr-1.5" />
               Direct Phone
             </span>
-            <span className="text-white font-semibold text-xs block">
+            <span className="text-slate-900 font-semibold text-xs block">
               {activePhone}
             </span>
             <span className="text-[10px] text-slate-500 block">Dispatch contact number</span>
           </div>
 
           {/* Assigned Vehicle & Plate */}
-          <div className="bg-[#07090E]/90 border border-slate-800 rounded-2xl p-4 space-y-1.5 shadow-sm">
+          <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-1.5 shadow-xs">
             <span className="text-slate-400 block text-[10px] uppercase font-bold tracking-wider flex items-center">
               <Car className="w-3 h-3 text-red-400 mr-1.5" />
               Assigned Vehicle & Plate
             </span>
-            <span className="text-white font-semibold text-xs block truncate">
+            <span className="text-slate-900 font-semibold text-xs block truncate">
               {activeVehicle}
             </span>
-            <span className="text-[11px] font-mono text-amber-300 font-bold bg-amber-950/50 px-2 py-0.5 rounded border border-amber-500/20 inline-block">
+            <span className="text-[11px] font-mono text-amber-800 font-bold bg-amber-50 px-2 py-0.5 rounded border border-amber-300 inline-block">
               {activePlate}
             </span>
           </div>
 
           {/* Run Activity Counter */}
-          <div className="bg-[#07090E]/90 border border-slate-800 rounded-2xl p-4 space-y-1.5 shadow-sm">
+          <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-1.5 shadow-xs">
             <span className="text-slate-400 block text-[10px] uppercase font-bold tracking-wider flex items-center">
               <Clock className="w-3 h-3 text-emerald-400 mr-1.5" />
               My Assigned Deliveries
             </span>
             <div className="flex items-center space-x-3 pt-1">
               <div>
-                <span className="text-xl font-black text-white">{activeDeliveries.length}</span>
+                <span className="text-xl font-black text-slate-900">{activeDeliveries.length}</span>
                 <span className="text-[10px] text-slate-400 block font-medium">In Transit / Assigned</span>
               </div>
-              <span className="text-slate-700 text-lg">/</span>
+              <span className="text-slate-300 text-lg">/</span>
               <div>
-                <span className="text-xl font-black text-emerald-400">{completedDeliveries.length}</span>
+                <span className="text-xl font-black text-emerald-600">{completedDeliveries.length}</span>
                 <span className="text-[10px] text-slate-400 block font-medium">Completed POD</span>
               </div>
             </div>
@@ -359,8 +359,8 @@ export const DriverDashboard: React.FC<DriverDashboardProps> = ({ onNavigate }) 
       {/* Active Assigned Deliveries (Strictly filtered for this driver) */}
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <h2 className="text-lg font-bold text-white font-['Outfit'] flex items-center space-x-2">
-            <Clock className="w-5 h-5 text-red-400" />
+          <h2 className="text-lg font-bold text-slate-900 font-['Outfit'] flex items-center space-x-2">
+            <Clock className="w-5 h-5 text-red-600" />
             <span>Active Deliveries Assigned to You ({activeDeliveries.length})</span>
           </h2>
           <span className="text-xs text-slate-400">
@@ -369,9 +369,9 @@ export const DriverDashboard: React.FC<DriverDashboardProps> = ({ onNavigate }) 
         </div>
 
         {activeDeliveries.length === 0 ? (
-          <div className="bg-[#111624] border border-slate-800 rounded-2xl p-10 text-center space-y-2 text-slate-400">
+          <div className="bg-white border border-slate-200 rounded-2xl p-10 text-center space-y-2 text-slate-600 shadow-xs">
             <CheckCircle2 className="w-8 h-8 text-emerald-400 mx-auto opacity-70" />
-            <div className="text-white font-bold text-sm">No Pending Runs Assigned</div>
+            <div className="text-slate-900 font-bold text-sm">No Pending Runs Assigned</div>
             <p className="text-xs max-w-md mx-auto">
               You currently have no outstanding pickups or deliveries. When the dispatch desk assigns your next run, it will appear here automatically.
             </p>
@@ -385,34 +385,34 @@ export const DriverDashboard: React.FC<DriverDashboardProps> = ({ onNavigate }) 
               return (
                 <div
                   key={ord.id}
-                  className="bg-gradient-to-br from-[#111624] via-[#0D121F] to-[#0A0D15] border border-slate-800 rounded-3xl p-6 shadow-2xl space-y-6 hover:border-slate-700/90 transition"
+                  className="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm space-y-6 hover:border-slate-300 transition"
                 >
                   {/* Top Bar: Order ID, Status, Schedule Window & Big Total Amount */}
-                  <div className="flex flex-col lg:flex-row lg:items-center justify-between border-b border-slate-800/80 pb-5 gap-4">
+                  <div className="flex flex-col lg:flex-row lg:items-center justify-between border-b border-slate-100 pb-5 gap-4">
                     <div className="space-y-1.5">
                       <div className="flex flex-wrap items-center gap-2.5">
-                        <span className="text-2xl font-black text-white font-mono tracking-tight">
+                        <span className="text-2xl font-black text-slate-900 font-mono tracking-tight">
                           #{ord.order_number}
                         </span>
                         <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider border ${
                           ord.order_status === 'assigned'
-                            ? 'bg-blue-950 text-blue-400 border-blue-500/30'
+                            ? 'bg-blue-50 text-blue-700 border-blue-200'
                             : ord.order_status === 'en_route_pickup'
-                            ? 'bg-amber-950 text-amber-400 border-amber-500/30'
+                            ? 'bg-amber-50 text-amber-800 border-amber-300'
                             : ord.order_status === 'picked_up'
-                            ? 'bg-purple-950 text-purple-400 border-purple-500/30'
+                            ? 'bg-purple-50 text-purple-800 border-purple-200'
                             : ord.order_status === 'in_transit'
-                            ? 'bg-indigo-950 text-indigo-400 border-indigo-500/30 animate-pulse'
-                            : 'bg-slate-900 text-slate-300 border-slate-700'
+                            ? 'bg-indigo-50 text-indigo-700 border-indigo-200 animate-pulse'
+                            : 'bg-slate-100 text-slate-700 border-slate-200'
                         }`}>
                           {ord.order_status.replace(/_/g, ' ')}
                         </span>
                         <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold border ${
                           ord.delivery_time_option === 'urgent' || ord.delivery_time_option === 'asap' || ord.delivery_time_option === '1-2h'
-                            ? 'bg-red-950/80 text-red-300 border-red-500/50 animate-pulse'
+                            ? 'bg-red-50 text-red-700 border-red-200 animate-pulse'
                             : ord.delivery_time_option === 'direct' || ord.delivery_time_option === '2-3h'
-                            ? 'bg-amber-950/80 text-amber-300 border-amber-500/50'
-                            : 'bg-blue-950/80 text-blue-300 border-blue-500/50'
+                            ? 'bg-amber-50 text-amber-800 border-amber-200'
+                            : 'bg-blue-50 text-blue-700 border-blue-200'
                         }`}>
                           {ord.delivery_time_option === 'urgent' || ord.delivery_time_option === 'asap' || ord.delivery_time_option === '1-2h'
                             ? '3) URGENT / ASAP'
@@ -422,50 +422,50 @@ export const DriverDashboard: React.FC<DriverDashboardProps> = ({ onNavigate }) 
                         </span>
                         <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold border ${
                           ord.payment_status === 'paid'
-                            ? 'bg-emerald-950/80 text-emerald-300 border-emerald-500/40'
-                            : 'bg-amber-950/60 text-amber-300 border-amber-500/30'
+                            ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                            : 'bg-amber-50 text-amber-800 border-amber-200'
                         }`}>
                           {ord.payment_status === 'paid' ? 'PAID ONLINE (CARD)' : 'PAY ON DELIVERY / NET 30'}
                         </span>
                       </div>
                       <div className="flex items-center space-x-2 text-xs text-slate-400">
                         <Calendar className="w-3.5 h-3.5 text-red-400" />
-                        <span>Scheduled: <strong className="text-white">{ord.pickup_date} at {ord.pickup_time}</strong></span>
+                        <span>Scheduled: <strong className="text-slate-900">{ord.pickup_date} at {ord.pickup_time}</strong></span>
                         <span>&bull;</span>
-                        <span>Area: <strong className="text-slate-300">{ord.service_area}</strong></span>
+                        <span>Area: <strong className="text-slate-700">{ord.service_area}</strong></span>
                         <span>&bull;</span>
-                        <span>Distance: <strong className="text-slate-300">{ord.distance_km} km</strong></span>
+                        <span>Distance: <strong className="text-slate-700">{ord.distance_km} km</strong></span>
                       </div>
                     </div>
 
                     {/* Total Amount Callout */}
-                    <div className="bg-[#07090E]/90 border border-slate-800 px-5 py-3 rounded-2xl flex items-center justify-between lg:justify-end space-x-4 shrink-0 shadow-inner">
+                    <div className="bg-emerald-50/70 border border-emerald-200 px-5 py-3 rounded-2xl flex items-center justify-between lg:justify-end space-x-4 shrink-0 shadow-xs">
                       <div>
-                        <div className="text-[10px] uppercase font-bold tracking-wider text-slate-400">Total Order Value</div>
-                        <div className="text-2xl font-black text-emerald-400 font-['Outfit']">
+                        <div className="text-[10px] uppercase font-bold tracking-wider text-emerald-800">Total Order Value</div>
+                        <div className="text-2xl font-black text-emerald-700 font-['Outfit']">
                           ${ord.total_price.toFixed(2)} <span className="text-xs font-semibold text-emerald-500">CAD</span>
                         </div>
                       </div>
-                      <div className="w-10 h-10 rounded-xl bg-emerald-950/50 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
+                      <div className="w-10 h-10 rounded-xl bg-emerald-100 border border-emerald-300 flex items-center justify-center text-emerald-700">
                         <DollarSign className="w-5 h-5" />
                       </div>
                     </div>
                   </div>
 
                   {/* Section 1: Customer & Account Contact Information */}
-                  <div className="bg-[#07090E]/80 border border-slate-800/90 rounded-2xl p-4.5 space-y-2.5">
-                    <div className="flex items-center space-x-2 text-slate-300 font-bold uppercase text-[11px] tracking-wider border-b border-slate-800/80 pb-2">
+                  <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4.5 space-y-2.5">
+                    <div className="flex items-center space-x-2 text-slate-800 font-bold uppercase text-[11px] tracking-wider border-b border-slate-200 pb-2">
                       <User className="w-3.5 h-3.5 text-red-400" />
                       <span>Customer & Account Information</span>
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
                       <div>
                         <span className="text-slate-500 block text-[10px] uppercase font-bold">Contact Name</span>
-                        <span className="text-white font-bold text-sm">{ord.customer_name}</span>
+                        <span className="text-slate-900 font-bold text-sm">{ord.customer_name}</span>
                       </div>
                       <div>
                         <span className="text-slate-500 block text-[10px] uppercase font-bold">Company / Account</span>
-                        <span className="text-slate-200 font-semibold flex items-center">
+                        <span className="text-slate-800 font-semibold flex items-center">
                           <Building className="w-3.5 h-3.5 mr-1 text-slate-400" />
                           {ord.company_name || 'Individual / Commercial Shipper'}
                         </span>
@@ -474,7 +474,7 @@ export const DriverDashboard: React.FC<DriverDashboardProps> = ({ onNavigate }) 
                         <span className="text-slate-500 block text-[10px] uppercase font-bold">Customer Phone</span>
                         <a
                           href={`tel:${ord.customer_phone}`}
-                          className="text-emerald-400 hover:text-emerald-300 font-bold flex items-center space-x-1.5 hover:underline"
+                          className="text-emerald-700 hover:text-emerald-800 font-bold flex items-center space-x-1.5 hover:underline"
                         >
                           <Phone className="w-3.5 h-3.5 shrink-0" />
                           <span>{ord.customer_phone}</span>
@@ -484,7 +484,7 @@ export const DriverDashboard: React.FC<DriverDashboardProps> = ({ onNavigate }) 
                         <span className="text-slate-500 block text-[10px] uppercase font-bold">Customer Email</span>
                         <a
                           href={`mailto:${ord.customer_email}`}
-                          className="text-cyan-400 hover:text-cyan-300 font-semibold flex items-center space-x-1.5 hover:underline truncate"
+                          className="text-sky-700 hover:text-sky-800 font-semibold flex items-center space-x-1.5 hover:underline truncate"
                         >
                           <Mail className="w-3.5 h-3.5 shrink-0" />
                           <span className="truncate">{ord.customer_email}</span>
@@ -496,9 +496,9 @@ export const DriverDashboard: React.FC<DriverDashboardProps> = ({ onNavigate }) 
                   {/* Section 2 & 3: Pickup Site & Delivery Site Side-by-Side */}
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 text-xs">
                     {/* Pickup Location & On-site Contact */}
-                    <div className="bg-[#07090E]/80 border border-slate-800/90 rounded-2xl p-5 space-y-3.5 flex flex-col justify-between">
+                    <div className="bg-slate-50 border border-slate-200 rounded-2xl p-5 space-y-3.5 flex flex-col justify-between">
                       <div className="space-y-3">
-                        <div className="flex items-center justify-between border-b border-slate-800/80 pb-2.5">
+                        <div className="flex items-center justify-between border-b border-slate-200 pb-2.5">
                           <div className="flex items-center space-x-2 text-red-400 font-bold uppercase text-[11px] tracking-wider">
                             <MapPin className="w-4 h-4" />
                             <span>1. Pickup Site & Shipper</span>
@@ -510,7 +510,7 @@ export const DriverDashboard: React.FC<DriverDashboardProps> = ({ onNavigate }) 
 
                         <div>
                           <span className="text-slate-500 block text-[10px] uppercase font-bold">Street Address</span>
-                          <div className="text-white font-bold text-sm mt-0.5">{ord.pickup_address}</div>
+                          <div className="text-slate-900 font-bold text-sm mt-0.5">{ord.pickup_address}</div>
                           {ord.pickup_unit && (
                             <div className="text-amber-300 font-medium mt-1 bg-amber-950/40 border border-amber-500/20 px-2 py-0.5 rounded text-[11px] inline-block">
                               Dock / Unit / Bay: {ord.pickup_unit}
@@ -518,10 +518,10 @@ export const DriverDashboard: React.FC<DriverDashboardProps> = ({ onNavigate }) 
                           )}
                         </div>
 
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1 border-t border-slate-800/60">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1 border-t border-slate-200">
                           <div>
                             <span className="text-slate-500 block text-[10px] uppercase font-bold">On-Site Contact</span>
-                            <span className="text-slate-200 font-semibold">
+                            <span className="text-slate-800 font-semibold">
                               {ord.pickup_contact_name || ord.customer_name}
                             </span>
                           </div>
@@ -538,7 +538,7 @@ export const DriverDashboard: React.FC<DriverDashboardProps> = ({ onNavigate }) 
                         </div>
 
                         {ord.pickup_notes && (
-                          <div className="p-2.5 bg-slate-900/80 border border-slate-800 rounded-xl text-slate-300 text-[11px]">
+                          <div className="p-2.5 bg-white border border-slate-200 rounded-xl text-slate-700 text-[11px]">
                             <strong className="text-slate-400 block text-[10px] uppercase">Shipper Gate / Dock Notes:</strong>
                             {ord.pickup_notes}
                           </div>
@@ -546,12 +546,12 @@ export const DriverDashboard: React.FC<DriverDashboardProps> = ({ onNavigate }) 
                       </div>
 
                       {/* Pickup Navigation Link */}
-                      <div className="pt-2 border-t border-slate-800/60">
+                      <div className="pt-2 border-t border-slate-200">
                         <a
                           href={pickupNavUrl}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="w-full inline-flex items-center justify-center space-x-2 px-4 py-2.5 bg-red-950/70 hover:bg-red-900 text-red-200 hover:text-white font-bold rounded-xl border border-red-500/40 transition shadow cursor-pointer text-xs"
+                          className="w-full inline-flex items-center justify-center space-x-2 px-4 py-2.5 bg-red-50 hover:bg-red-100 text-red-700 hover:text-red-800 font-bold rounded-xl border border-red-200 transition shadow-xs cursor-pointer text-xs"
                         >
                           <Navigation className="w-3.5 h-3.5 text-red-400" />
                           <span>Navigate to Pickup in Google Maps</span>
@@ -561,9 +561,9 @@ export const DriverDashboard: React.FC<DriverDashboardProps> = ({ onNavigate }) 
                     </div>
 
                     {/* Delivery Destination & Receiving Contact */}
-                    <div className="bg-[#07090E]/80 border border-slate-800/90 rounded-2xl p-5 space-y-3.5 flex flex-col justify-between">
+                    <div className="bg-slate-50 border border-slate-200 rounded-2xl p-5 space-y-3.5 flex flex-col justify-between">
                       <div className="space-y-3">
-                        <div className="flex items-center justify-between border-b border-slate-800/80 pb-2.5">
+                        <div className="flex items-center justify-between border-b border-slate-200 pb-2.5">
                           <div className="flex items-center space-x-2 text-emerald-400 font-bold uppercase text-[11px] tracking-wider">
                             <MapPin className="w-4 h-4" />
                             <span>2. Drop-Off Destination & Receiver</span>
@@ -575,7 +575,7 @@ export const DriverDashboard: React.FC<DriverDashboardProps> = ({ onNavigate }) 
 
                         <div>
                           <span className="text-slate-500 block text-[10px] uppercase font-bold">Delivery Address</span>
-                          <div className="text-white font-bold text-sm mt-0.5">{ord.delivery_address}</div>
+                          <div className="text-slate-900 font-bold text-sm mt-0.5">{ord.delivery_address}</div>
                           {ord.delivery_unit && (
                             <div className="text-cyan-300 font-medium mt-1 bg-cyan-950/40 border border-cyan-500/20 px-2 py-0.5 rounded text-[11px] inline-block">
                               Unit / Suite / Buzzer: {ord.delivery_unit}
@@ -583,10 +583,10 @@ export const DriverDashboard: React.FC<DriverDashboardProps> = ({ onNavigate }) 
                           )}
                         </div>
 
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1 border-t border-slate-800/60">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1 border-t border-slate-200">
                           <div>
                             <span className="text-slate-500 block text-[10px] uppercase font-bold">Receiving Contact</span>
-                            <span className="text-slate-200 font-semibold">
+                            <span className="text-slate-800 font-semibold">
                               {ord.delivery_contact_name || ord.customer_name}
                             </span>
                           </div>
@@ -603,7 +603,7 @@ export const DriverDashboard: React.FC<DriverDashboardProps> = ({ onNavigate }) 
                         </div>
 
                         {ord.delivery_notes && (
-                          <div className="p-2.5 bg-slate-900/80 border border-slate-800 rounded-xl text-slate-300 text-[11px]">
+                          <div className="p-2.5 bg-white border border-slate-200 rounded-xl text-slate-700 text-[11px]">
                             <strong className="text-slate-400 block text-[10px] uppercase">Receiver Drop-off Notes:</strong>
                             {ord.delivery_notes}
                           </div>
@@ -611,12 +611,12 @@ export const DriverDashboard: React.FC<DriverDashboardProps> = ({ onNavigate }) 
                       </div>
 
                       {/* Drop-off Navigation Link */}
-                      <div className="pt-2 border-t border-slate-800/60">
+                      <div className="pt-2 border-t border-slate-200">
                         <a
                           href={deliveryNavUrl}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="w-full inline-flex items-center justify-center space-x-2 px-4 py-2.5 bg-emerald-950/70 hover:bg-emerald-900 text-emerald-200 hover:text-white font-bold rounded-xl border border-emerald-500/40 transition shadow cursor-pointer text-xs"
+                          className="w-full inline-flex items-center justify-center space-x-2 px-4 py-2.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 hover:text-emerald-900 font-bold rounded-xl border border-emerald-200 transition shadow-xs cursor-pointer text-xs"
                         >
                           <Navigation className="w-3.5 h-3.5 text-emerald-400" />
                           <span>Navigate to Drop-Off in Google Maps</span>
@@ -627,38 +627,38 @@ export const DriverDashboard: React.FC<DriverDashboardProps> = ({ onNavigate }) 
                   </div>
 
                   {/* Section 4: Cargo Manifest & Fleet Specifications */}
-                  <div className="bg-[#07090E]/80 border border-slate-800/90 rounded-2xl p-5 space-y-3 text-xs">
-                    <div className="flex items-center space-x-2 text-slate-300 font-bold uppercase text-[11px] tracking-wider border-b border-slate-800/80 pb-2">
+                  <div className="bg-slate-50 border border-slate-200 rounded-2xl p-5 space-y-3 text-xs">
+                    <div className="flex items-center space-x-2 text-slate-800 font-bold uppercase text-[11px] tracking-wider border-b border-slate-200 pb-2">
                       <Package className="w-3.5 h-3.5 text-red-400" />
                       <span>Cargo Manifest & Vehicle Specifications</span>
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                      <div className="bg-slate-900/60 border border-slate-800 p-3 rounded-xl">
+                      <div className="bg-white border border-slate-200 p-3 rounded-xl">
                         <span className="text-slate-400 block text-[10px] uppercase font-bold">Assigned Vehicle</span>
-                        <span className="text-white font-bold text-sm block mt-0.5">{ord.vehicle_name}</span>
+                        <span className="text-slate-900 font-bold text-sm block mt-0.5">{ord.vehicle_name}</span>
                         <span className="text-[10px] text-slate-500">Fleet requirement</span>
                       </div>
 
-                      <div className="bg-slate-900/60 border border-slate-800 p-3 rounded-xl">
+                      <div className="bg-white border border-slate-200 p-3 rounded-xl">
                         <span className="text-slate-400 block text-[10px] uppercase font-bold">Cargo Type</span>
-                        <span className="text-white font-bold text-sm block mt-0.5 capitalize">
+                        <span className="text-slate-900 font-bold text-sm block mt-0.5 capitalize">
                           {ord.item_type.replace(/_/g, ' ')}
                         </span>
                         <span className="text-[10px] text-slate-500">Classification</span>
                       </div>
 
-                      <div className="bg-slate-900/60 border border-slate-800 p-3 rounded-xl">
+                      <div className="bg-white border border-slate-200 p-3 rounded-xl">
                         <span className="text-slate-400 block text-[10px] uppercase font-bold">Weight & Quantity</span>
-                        <span className="text-emerald-400 font-black text-sm block mt-0.5">
+                        <span className="text-emerald-700 font-black text-sm block mt-0.5">
                           {ord.weight_lbs} lbs &bull; {ord.quantity} pails / units
                         </span>
                         <span className="text-[10px] text-slate-500">Payload weight</span>
                       </div>
 
-                      <div className="bg-slate-900/60 border border-slate-800 p-3 rounded-xl">
+                      <div className="bg-white border border-slate-200 p-3 rounded-xl">
                         <span className="text-slate-400 block text-[10px] uppercase font-bold">Cargo Description</span>
-                        <span className="text-slate-200 font-medium text-xs block mt-0.5 truncate">
+                        <span className="text-slate-800 font-medium text-xs block mt-0.5 truncate">
                           {ord.item_description || 'Standard packaged cargo manifest'}
                         </span>
                         <span className="text-[10px] text-slate-500">Item details</span>
@@ -679,7 +679,7 @@ export const DriverDashboard: React.FC<DriverDashboardProps> = ({ onNavigate }) 
                   </div>
 
                   {/* Section 5: Financials & Rate Breakdown */}
-                  <div className="bg-[#07090E]/80 border border-slate-800/90 rounded-2xl p-5 space-y-3 text-xs">
+                  <div className="bg-slate-50 border border-slate-200 rounded-2xl p-5 space-y-3 text-xs">
                     <div className="flex items-center justify-between border-b border-slate-800/80 pb-2">
                       <div className="flex items-center space-x-2 text-slate-300 font-bold uppercase text-[11px] tracking-wider">
                         <DollarSign className="w-3.5 h-3.5 text-emerald-400" />
@@ -691,39 +691,39 @@ export const DriverDashboard: React.FC<DriverDashboardProps> = ({ onNavigate }) 
                     </div>
 
                     <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-                      <div className="bg-slate-900/50 p-2.5 rounded-xl border border-slate-800/80">
+                      <div className="bg-white p-2.5 rounded-xl border border-slate-200">
                         <span className="text-slate-400 block text-[10px]">Base Rate</span>
-                        <span className="text-white font-bold text-xs">${(ord.base_price || 0).toFixed(2)}</span>
+                        <span className="text-slate-900 font-bold text-xs">${(ord.base_price || 0).toFixed(2)}</span>
                       </div>
-                      <div className="bg-slate-900/50 p-2.5 rounded-xl border border-slate-800/80">
+                      <div className="bg-white p-2.5 rounded-xl border border-slate-200">
                         <span className="text-slate-400 block text-[10px]">Excess KM</span>
-                        <span className="text-white font-bold text-xs">${(ord.excess_km_charge || 0).toFixed(2)}</span>
+                        <span className="text-slate-900 font-bold text-xs">${(ord.excess_km_charge || 0).toFixed(2)}</span>
                       </div>
-                      <div className="bg-slate-900/50 p-2.5 rounded-xl border border-slate-800/80">
+                      <div className="bg-white p-2.5 rounded-xl border border-slate-200">
                         <span className="text-slate-400 block text-[10px]">After Hours</span>
-                        <span className="text-white font-bold text-xs">${(ord.after_hours_charge || 0).toFixed(2)}</span>
+                        <span className="text-slate-900 font-bold text-xs">${(ord.after_hours_charge || 0).toFixed(2)}</span>
                       </div>
-                      <div className="bg-slate-900/50 p-2.5 rounded-xl border border-slate-800/80">
+                      <div className="bg-white p-2.5 rounded-xl border border-slate-200">
                         <span className="text-slate-400 block text-[10px]">Waiting / Labor</span>
-                        <span className="text-white font-bold text-xs">
+                        <span className="text-slate-900 font-bold text-xs">
                           ${((ord.waiting_charge || 0) + (ord.labor_charge || 0)).toFixed(2)}
                         </span>
                       </div>
-                      <div className="bg-slate-900/50 p-2.5 rounded-xl border border-slate-800/80">
+                      <div className="bg-white p-2.5 rounded-xl border border-slate-200">
                         <span className="text-slate-400 block text-[10px]">13% HST</span>
-                        <span className="text-white font-bold text-xs">
+                        <span className="text-slate-900 font-bold text-xs">
                           ${(ord.tax_amount || (ord.total_price * 0.13 / 1.13)).toFixed(2)}
                         </span>
                       </div>
-                      <div className="bg-emerald-950/40 p-2.5 rounded-xl border border-emerald-500/30">
-                        <span className="text-emerald-400 block text-[10px] font-bold uppercase">Total Price</span>
-                        <span className="text-emerald-300 font-black text-xs">${ord.total_price.toFixed(2)}</span>
+                      <div className="bg-emerald-50 p-2.5 rounded-xl border border-emerald-200">
+                        <span className="text-emerald-800 block text-[10px] font-bold uppercase">Total Price</span>
+                        <span className="text-emerald-700 font-black text-xs">${ord.total_price.toFixed(2)}</span>
                       </div>
                     </div>
                   </div>
 
                   {/* Driver Action Stepper Buttons */}
-                  <div className="pt-2 flex flex-wrap items-center justify-between gap-3 border-t border-slate-800/80">
+                  <div className="pt-2 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200">
                     <div className="flex flex-wrap items-center gap-3">
                       {ord.order_status === 'assigned' && (
                         <button
@@ -785,7 +785,7 @@ export const DriverDashboard: React.FC<DriverDashboardProps> = ({ onNavigate }) 
         </h2>
 
         {completedDeliveries.length === 0 ? (
-          <div className="bg-[#111624] border border-slate-800 rounded-2xl p-6 text-center text-xs text-slate-500">
+          <div className="bg-white border border-slate-200 rounded-2xl p-6 text-center text-xs text-slate-500 shadow-xs">
             No completed deliveries recorded for this shift yet.
           </div>
         ) : (
@@ -793,11 +793,11 @@ export const DriverDashboard: React.FC<DriverDashboardProps> = ({ onNavigate }) 
             {completedDeliveries.map((ord) => (
               <div
                 key={ord.id}
-                className="bg-[#111624] border border-slate-800/80 rounded-2xl p-5 shadow space-y-2 text-xs opacity-90"
+                className="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs space-y-2 text-xs"
               >
                 <div className="flex items-center justify-between">
                   <span className="font-bold text-white font-mono">{ord.order_number}</span>
-                  <span className="text-emerald-400 font-bold bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-500/20">
+                  <span className="text-emerald-700 font-bold bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
                     Delivered Successfully
                   </span>
                 </div>
@@ -819,11 +819,11 @@ export const DriverDashboard: React.FC<DriverDashboardProps> = ({ onNavigate }) 
 
       {/* Digital POD Capture Modal */}
       {podOrder && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-[#0E1320] border border-slate-800 max-w-lg w-full rounded-2xl p-6 space-y-5 shadow-2xl text-xs max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+        <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white border border-slate-200 max-w-lg w-full rounded-2xl p-6 space-y-5 shadow-2xl text-xs max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <div>
-                <h3 className="text-base font-bold text-white font-['Outfit']">
+                <h3 className="text-base font-bold text-slate-900 font-['Outfit']">
                   Digital Proof of Delivery (POD)
                 </h3>
                 <span className="text-slate-400 font-mono text-[11px]">Order: {podOrder.order_number}</span>
@@ -838,7 +838,7 @@ export const DriverDashboard: React.FC<DriverDashboardProps> = ({ onNavigate }) 
 
             {/* Recipient Name */}
             <div>
-              <label className="block text-slate-300 font-semibold mb-1">
+              <label className="block text-slate-700 font-semibold mb-1">
                 Recipient / Receiver Name *
               </label>
               <input
@@ -846,14 +846,14 @@ export const DriverDashboard: React.FC<DriverDashboardProps> = ({ onNavigate }) 
                 value={recipientName}
                 onChange={(e) => setRecipientName(e.target.value)}
                 placeholder="e.g. John Smith (Warehouse Manager)"
-                className="w-full bg-[#07090E] border border-slate-700 p-2.5 rounded-xl text-white placeholder:text-slate-500 focus:border-red-500 focus:outline-none"
+                className="w-full bg-slate-50 border border-slate-300 p-2.5 rounded-xl text-slate-900 placeholder:text-slate-400 focus:border-red-600 focus:outline-none"
                 required
               />
             </div>
 
             {/* Photo Upload */}
             <div>
-              <label className="block text-slate-300 font-semibold mb-1">
+              <label className="block text-slate-700 font-semibold mb-1">
                 Cargo Delivery Photo (Optional)
               </label>
               <input
@@ -861,7 +861,7 @@ export const DriverDashboard: React.FC<DriverDashboardProps> = ({ onNavigate }) 
                 accept="image/*"
                 capture="environment"
                 onChange={handlePhotoUpload}
-                className="w-full bg-[#07090E] border border-slate-700 p-2 rounded-xl text-slate-400 text-xs file:mr-3 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-red-950 file:text-red-300 hover:file:bg-red-900 cursor-pointer"
+                className="w-full bg-slate-50 border border-slate-300 p-2 rounded-xl text-slate-600 text-xs file:mr-3 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-red-100 file:text-red-700 hover:file:bg-red-200 cursor-pointer"
               />
               {photoUrl && (
                 <div className="mt-2 relative rounded-xl overflow-hidden border border-slate-700 h-32 bg-black flex items-center justify-center">
@@ -873,7 +873,7 @@ export const DriverDashboard: React.FC<DriverDashboardProps> = ({ onNavigate }) 
             {/* Digital Signature Pad */}
             <div>
               <div className="flex items-center justify-between mb-1">
-                <label className="text-slate-300 font-semibold">Receiver Digital Signature</label>
+                <label className="text-slate-700 font-semibold">Receiver Digital Signature</label>
                 <button
                   type="button"
                   onClick={clearSignature}
@@ -882,7 +882,7 @@ export const DriverDashboard: React.FC<DriverDashboardProps> = ({ onNavigate }) 
                   Clear Signature
                 </button>
               </div>
-              <div className="border border-slate-700 rounded-xl bg-[#07090E] overflow-hidden">
+              <div className="border border-slate-300 rounded-xl bg-slate-50 overflow-hidden">
                 <canvas
                   ref={canvasRef}
                   width={440}
@@ -906,7 +906,7 @@ export const DriverDashboard: React.FC<DriverDashboardProps> = ({ onNavigate }) 
 
             {/* Driver Notes */}
             <div>
-              <label className="block text-slate-300 font-semibold mb-1">
+              <label className="block text-slate-700 font-semibold mb-1">
                 Driver Delivery Notes
               </label>
               <textarea
@@ -914,7 +914,7 @@ export const DriverDashboard: React.FC<DriverDashboardProps> = ({ onNavigate }) 
                 onChange={(e) => setDriverNotes(e.target.value)}
                 placeholder="e.g. Left safely inside loading bay door #3."
                 rows={2}
-                className="w-full bg-[#07090E] border border-slate-700 p-2.5 rounded-xl text-white placeholder:text-slate-500 focus:border-red-500 focus:outline-none"
+                className="w-full bg-slate-50 border border-slate-300 p-2.5 rounded-xl text-slate-900 placeholder:text-slate-400 focus:border-red-600 focus:outline-none"
               />
             </div>
 
@@ -923,7 +923,7 @@ export const DriverDashboard: React.FC<DriverDashboardProps> = ({ onNavigate }) 
               <button
                 type="button"
                 onClick={() => setPodOrder(null)}
-                className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-semibold cursor-pointer"
+                className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold cursor-pointer border border-slate-200"
               >
                 Cancel
               </button>

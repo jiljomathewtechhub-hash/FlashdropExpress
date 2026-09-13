@@ -72,7 +72,7 @@ export const ScrollTransitHUD: React.FC<ScrollTransitHUDProps> = ({ onNavigate }
       aria-label="Transit Telemetry"
       className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 w-[92%] max-w-2xl animate-slide-up select-none pointer-events-auto"
     >
-      <div className="glass-panel p-2.5 sm:p-3 rounded-2xl border border-slate-700/60 shadow-2xl backdrop-blur-xl bg-[#080C14]/90 flex flex-col space-y-2">
+      <div className="glass-panel p-2.5 sm:p-3 rounded-2xl border border-slate-200 shadow-xl backdrop-blur-xl bg-white/95 flex flex-col space-y-2">
         {/* Top telemetry bar */}
         <div className="flex items-center justify-between px-1 text-[11px]">
           <div className="flex items-center space-x-2">
@@ -82,31 +82,31 @@ export const ScrollTransitHUD: React.FC<ScrollTransitHUDProps> = ({ onNavigate }
                   ? 'badge-soft-emerald'
                   : scrollDirection === 'reverse'
                   ? 'badge-soft-rose animate-pulse'
-                  : 'bg-slate-800/80 text-slate-300 border border-slate-700/60'
+                  : 'bg-slate-100 text-slate-700 border border-slate-200'
               }`}
             >
               {scrollDirection === 'forward' ? 'FORWARD [D]' : scrollDirection === 'reverse' ? 'REVERSE [R]' : 'PARK [P]'}
             </span>
 
-            <span className="text-white font-bold font-['Outfit'] hidden sm:inline">
+            <span className="text-slate-900 font-bold font-['Outfit'] hidden sm:inline">
               {zoneName}
             </span>
-            <span className="text-slate-500 hidden sm:inline">•</span>
-            <span className="text-slate-400 font-mono text-[10px]">{zoneEta}</span>
+            <span className="text-slate-300 hidden sm:inline">•</span>
+            <span className="text-slate-500 font-mono text-[10px]">{zoneEta}</span>
           </div>
 
           <div className="flex items-center space-x-3">
             <div className="flex items-baseline space-x-1">
-              <span className="font-mono font-black text-white text-xs sm:text-sm">
+              <span className="font-mono font-black text-slate-900 text-xs sm:text-sm">
                 {speedKmh}
               </span>
-              <span className="text-[9px] text-red-300/80 font-bold uppercase">km/h</span>
+              <span className="text-[9px] text-red-600 font-bold uppercase">km/h</span>
             </div>
 
             <button
               type="button"
               onClick={() => onNavigate('order')}
-              className="px-3.5 py-1 btn-gradient-primary text-white text-[11px] font-bold rounded-lg shadow-md transition flex items-center space-x-1"
+              className="px-3.5 py-1 btn-gradient-primary text-white text-[11px] font-bold rounded-lg shadow-sm transition flex items-center space-x-1 cursor-pointer"
             >
               <span>Book Quote</span>
               <ChevronRight className="w-3 h-3" />
@@ -115,19 +115,19 @@ export const ScrollTransitHUD: React.FC<ScrollTransitHUDProps> = ({ onNavigate }
         </div>
 
         {/* 3D Highway Progress Track */}
-        <div className="relative w-full h-1.5 bg-slate-900 rounded-full overflow-hidden border border-slate-800/80">
+        <div className="relative w-full h-1.5 bg-slate-100 rounded-full overflow-hidden border border-slate-200">
           <div
-            className="absolute inset-0 bg-gradient-to-r from-[#C5161D] via-red-500 to-red-300 transition-all duration-150 rounded-full"
+            className="absolute inset-0 bg-gradient-to-r from-[#C5161D] via-red-500 to-red-400 transition-all duration-150 rounded-full"
             style={{ width: `${scrollProgress}%` }}
           />
         </div>
 
         {/* Micro milestone markers */}
         <div className="flex items-center justify-between text-[9px] text-slate-500 font-mono px-0.5 pt-0.5">
-          <span className={scrollProgress < 25 ? 'text-red-300 font-bold' : ''}>01 Dispatch</span>
-          <span className={scrollProgress >= 25 && scrollProgress < 55 ? 'text-red-300 font-bold' : ''}>02 Transit</span>
-          <span className={scrollProgress >= 55 && scrollProgress < 85 ? 'text-red-300 font-bold' : ''}>03 Radar</span>
-          <span className={scrollProgress >= 85 ? 'text-emerald-300 font-bold' : ''}>04 Digital POD</span>
+          <span className={scrollProgress < 25 ? 'text-red-600 font-bold' : ''}>01 Dispatch</span>
+          <span className={scrollProgress >= 25 && scrollProgress < 55 ? 'text-red-600 font-bold' : ''}>02 Transit</span>
+          <span className={scrollProgress >= 55 && scrollProgress < 85 ? 'text-red-600 font-bold' : ''}>03 Radar</span>
+          <span className={scrollProgress >= 85 ? 'text-emerald-600 font-bold' : ''}>04 Digital POD</span>
         </div>
       </div>
     </aside>

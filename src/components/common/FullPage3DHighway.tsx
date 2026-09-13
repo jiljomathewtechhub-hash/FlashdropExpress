@@ -14,10 +14,10 @@ export const FullPage3DHighway: React.FC = () => {
     let width = window.innerWidth;
     let height = window.innerHeight;
 
-    // 1. Scene & Atmosphere Fog
+    // 1. Scene & Atmosphere Fog (Clean Daylight Theme)
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x07090e);
-    scene.fog = new THREE.FogExp2(0x07090e, 0.014);
+    scene.background = new THREE.Color(0xf8fafc);
+    scene.fog = new THREE.FogExp2(0xf8fafc, 0.008);
 
     // 2. Camera
     const camera = new THREE.PerspectiveCamera(46, width / height, 0.1, 450);
@@ -33,47 +33,47 @@ export const FullPage3DHighway: React.FC = () => {
     renderer.setSize(width, height);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.15;
+    renderer.toneMappingExposure = 1.05;
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
-    // 4. Lighting
-    const ambientLight = new THREE.AmbientLight(0x1a2436, 1.6);
+    // 4. Lighting (Warm Natural Daylight)
+    const ambientLight = new THREE.AmbientLight(0xffffff, 1.9);
     scene.add(ambientLight);
 
-    const moonLight = new THREE.DirectionalLight(0x94b4e8, 1.5);
-    moonLight.position.set(20, 30, 15);
-    moonLight.castShadow = true;
-    scene.add(moonLight);
+    const sunLight = new THREE.DirectionalLight(0xfffbeb, 2.2);
+    sunLight.position.set(20, 30, 15);
+    sunLight.castShadow = true;
+    scene.add(sunLight);
 
-    const redGlow = new THREE.PointLight(0xf43f5e, 1.8, 25);
+    const redGlow = new THREE.PointLight(0xc5161d, 1.2, 25);
     redGlow.position.set(0, 2, 7);
     scene.add(redGlow);
 
-    // 5. Procedural 3D Commercial Express Vehicle
+    // 5. Procedural 3D Commercial Express Vehicle (Signature FlashDrop Red)
     const vehicleGroup = new THREE.Group();
     scene.add(vehicleGroup);
 
     const bodyMat = new THREE.MeshStandardMaterial({
-      color: 0x111624,
+      color: 0xc5161d,
       roughness: 0.25,
-      metalness: 0.85,
+      metalness: 0.6,
     });
 
     const stripeMat = new THREE.MeshStandardMaterial({
-      color: 0xf43f5e,
-      roughness: 0.35,
-      metalness: 0.3,
-      emissive: 0xf43f5e,
-      emissiveIntensity: 0.25,
+      color: 0xffffff,
+      roughness: 0.3,
+      metalness: 0.2,
+      emissive: 0xffffff,
+      emissiveIntensity: 0.1,
     });
 
     const glassMat = new THREE.MeshPhysicalMaterial({
-      color: 0x050912,
-      roughness: 0.05,
-      metalness: 0.95,
+      color: 0x1e293b,
+      roughness: 0.08,
+      metalness: 0.8,
       transparent: true,
-      opacity: 0.9,
+      opacity: 0.85,
     });
 
     const tireMat = new THREE.MeshStandardMaterial({
@@ -217,9 +217,9 @@ export const FullPage3DHighway: React.FC = () => {
     roadGeo.rotateX(-Math.PI / 2);
 
     const roadMat = new THREE.MeshStandardMaterial({
-      color: 0x0a0e18,
-      roughness: 0.28,
-      metalness: 0.55,
+      color: 0xdde5ed,
+      roughness: 0.45,
+      metalness: 0.2,
     });
     const road = new THREE.Mesh(roadGeo, roadMat);
     road.position.set(0, 0, 0);
@@ -234,7 +234,7 @@ export const FullPage3DHighway: React.FC = () => {
     const stripeUnit = stripeLength + stripeGap;
 
     const laneMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
-    const shoulderMat = new THREE.MeshBasicMaterial({ color: 0xf43f5e });
+    const shoulderMat = new THREE.MeshBasicMaterial({ color: 0xc5161d });
 
     for (let i = 0; i < stripeCount; i++) {
       const zPos = (i - stripeCount / 2) * stripeUnit;
@@ -475,9 +475,9 @@ export const FullPage3DHighway: React.FC = () => {
       aria-hidden="true"
     >
       <canvas ref={canvasRef} className="w-full h-full block" />
-      {/* Precision Contrast Gradients for Content Legibility & 3D Depth */}
-      <div className="absolute inset-0 bg-gradient-to-r from-[#07090E]/85 via-[#07090E]/40 to-[#07090E]/50 pointer-events-none" />
-      <div className="absolute inset-0 bg-gradient-to-b from-[#07090E]/80 via-transparent to-[#07090E]/90 pointer-events-none" />
+      {/* Precision Contrast Gradients for Content Legibility & 3D Depth in Light Theme */}
+      <div className="absolute inset-0 bg-gradient-to-r from-[#F8FAFC]/94 via-[#F8FAFC]/65 to-[#F8FAFC]/82 pointer-events-none" />
+      <div className="absolute inset-0 bg-gradient-to-b from-[#F8FAFC]/92 via-transparent to-[#F8FAFC]/94 pointer-events-none" />
     </div>
   );
 };

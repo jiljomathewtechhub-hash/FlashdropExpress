@@ -115,21 +115,21 @@ export const CustomerPortal: React.FC<CustomerPortalProps> = ({ onNavigate }) =>
   return (
     <div className="py-10 px-4 sm:px-6 max-w-7xl mx-auto space-y-8">
       {/* Top Banner / User Header */}
-      <div className="bg-[#111624] border border-slate-800 rounded-2xl p-6 sm:p-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-6 shadow-2xl">
+      <div className="bg-white border border-slate-200 rounded-2xl p-6 sm:p-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-6 shadow-sm">
         <div className="flex items-center space-x-4">
           <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-red-600 to-red-700 flex items-center justify-center text-white font-black text-2xl shadow-lg shadow-red-600/30">
             {user ? user.name.charAt(0).toUpperCase() : 'C'}
           </div>
           <div>
             <div className="flex items-center space-x-2">
-              <h1 className="text-2xl font-black text-white font-['Outfit']">
+              <h1 className="text-2xl font-black text-slate-900 font-['Outfit']">
                 {user ? user.name : 'Customer Portal'}
               </h1>
-              <span className="text-[11px] font-bold text-red-400 bg-red-950/60 border border-red-500/30 px-2.5 py-0.5 rounded-full">
+              <span className="text-[11px] font-bold text-red-600 bg-red-50 border border-red-200 px-2.5 py-0.5 rounded-full">
                 Verified Account
               </span>
             </div>
-            <p className="text-xs text-slate-400 mt-0.5">
+            <p className="text-xs text-slate-600 mt-0.5">
               {user?.email || 'customer@company.com'} • Commercial Delivery Management
             </p>
           </div>
@@ -149,7 +149,7 @@ export const CustomerPortal: React.FC<CustomerPortalProps> = ({ onNavigate }) =>
               store.logout();
               onNavigate('login');
             }}
-            className="flex items-center space-x-1.5 px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-xs font-semibold rounded-xl border border-slate-700 transition"
+            className="flex items-center space-x-1.5 px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 hover:text-slate-900 text-xs font-semibold rounded-xl border border-slate-200 transition cursor-pointer"
           >
             <LogOut className="w-3.5 h-3.5" />
             <span>Sign Out</span>
@@ -163,10 +163,10 @@ export const CustomerPortal: React.FC<CustomerPortalProps> = ({ onNavigate }) =>
         <div className="lg:col-span-8 space-y-6">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div>
-              <h2 className="text-xl font-bold text-white font-['Outfit']">
+              <h2 className="text-xl font-bold text-slate-900 font-['Outfit']">
                 Your Delivery Orders
               </h2>
-              <p className="text-xs text-slate-400">
+              <p className="text-xs text-slate-600">
                 Live statuses, tracking links, and instant commercial PDF invoices.
               </p>
             </div>
@@ -179,7 +179,7 @@ export const CustomerPortal: React.FC<CustomerPortalProps> = ({ onNavigate }) =>
                 value={searchFilter}
                 onChange={(e) => setSearchFilter(e.target.value)}
                 placeholder="Search by order #, address..."
-                className="w-full bg-[#111624] border border-slate-700 pl-9 pr-3 py-1.5 text-xs text-white rounded-xl focus:border-red-500 focus:outline-none placeholder:text-slate-500"
+                className="w-full bg-white border border-slate-300 pl-9 pr-3 py-1.5 text-xs text-slate-900 rounded-xl focus:border-red-600 focus:outline-none placeholder:text-slate-400 shadow-xs"
               />
             </div>
           </div>
@@ -192,61 +192,61 @@ export const CustomerPortal: React.FC<CustomerPortalProps> = ({ onNavigate }) =>
             </h3>
 
             {activeOrders.length === 0 ? (
-              <div className="bg-[#111624] border border-slate-800 rounded-2xl p-8 text-center text-xs text-slate-400">
+              <div className="bg-white border border-slate-200 rounded-2xl p-8 text-center text-xs text-slate-600 shadow-xs">
                 No active orders at this moment. Click &quot;New Delivery Order&quot; to book a courier.
               </div>
             ) : (
               activeOrders.map((ord) => (
                 <div
                   key={ord.id}
-                  className="bg-[#111624] hover:bg-[#151C2E] border border-slate-800 hover:border-slate-700 rounded-2xl p-5 transition shadow-lg space-y-3"
+                  className="bg-white hover:bg-slate-50 border border-slate-200 hover:border-slate-300 rounded-2xl p-5 transition shadow-sm space-y-3"
                 >
-                  <div className="flex items-center justify-between border-b border-slate-800/80 pb-3">
+                  <div className="flex items-center justify-between border-b border-slate-100 pb-3">
                     <div className="flex items-center space-x-3">
-                      <span className="text-base font-black text-white font-mono">
+                      <span className="text-base font-black text-slate-900 font-mono">
                         {ord.order_number}
                       </span>
                       <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
                         ord.order_status === 'submitted'
-                          ? 'bg-amber-950 text-amber-300 border border-amber-500/40'
+                          ? 'bg-amber-50 text-amber-800 border border-amber-300'
                           : ord.order_status === 'quote_sent'
-                          ? 'bg-purple-950 text-purple-300 border border-purple-500/40'
-                          : 'bg-red-950 text-red-400 border border-red-500/30'
+                          ? 'bg-purple-50 text-purple-800 border border-purple-300'
+                          : 'bg-red-50 text-red-700 border border-red-200'
                       }`}>
                         {ord.order_status === 'submitted' ? 'Quote Requested' : ord.order_status === 'quote_sent' ? 'Quote Ready' : ord.order_status.replace(/_/g, ' ')}
                       </span>
                     </div>
                     {ord.order_status === 'submitted' ? (
-                      <span className="text-xs font-bold text-amber-400 bg-amber-950/40 px-3 py-1 rounded-lg border border-amber-500/30 font-['Outfit']">
+                      <span className="text-xs font-bold text-amber-800 bg-amber-50 px-3 py-1 rounded-lg border border-amber-300 font-['Outfit']">
                         Quotation In Review
                       </span>
                     ) : (
-                      <span className="text-sm font-black text-white font-['Outfit']">
+                      <span className="text-sm font-black text-slate-900 font-['Outfit']">
                         ${ord.total_price.toFixed(2)} CAD
                       </span>
                     )}
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-slate-400">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-slate-600">
                     <div>
                       <span className="text-slate-500 font-semibold block text-[10px]">PICKUP:</span>
-                      <span className="text-white font-medium truncate block">{ord.pickup_address}</span>
+                      <span className="text-slate-800 font-medium truncate block">{ord.pickup_address}</span>
                     </div>
                     <div>
                       <span className="text-slate-500 font-semibold block text-[10px]">DESTINATION:</span>
-                      <span className="text-white font-medium truncate block">{ord.delivery_address}</span>
+                      <span className="text-slate-800 font-medium truncate block">{ord.delivery_address}</span>
                     </div>
                   </div>
 
-                  <div className="flex flex-wrap items-center justify-between pt-2 border-t border-slate-800/60 text-xs">
-                    <div className="text-slate-400 text-[11px]">
-                      Vehicle: <strong className="text-white">{ord.vehicle_name}</strong> • {ord.distance_km} km
+                  <div className="flex flex-wrap items-center justify-between pt-2 border-t border-slate-100 text-xs">
+                    <div className="text-slate-600 text-[11px]">
+                      Vehicle: <strong className="text-slate-900">{ord.vehicle_name}</strong> • {ord.distance_km} km
                     </div>
 
                     <div className="flex items-center space-x-2 mt-2 sm:mt-0">
                       <button
                         onClick={() => onNavigate('tracking', ord.order_number)}
-                        className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-white rounded-lg text-xs font-semibold transition"
+                        className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-lg text-xs font-semibold transition border border-slate-200 cursor-pointer"
                       >
                         Track Live
                       </button>
@@ -254,7 +254,7 @@ export const CustomerPortal: React.FC<CustomerPortalProps> = ({ onNavigate }) =>
                       {ord.order_status !== 'submitted' && (
                         <button
                           onClick={() => generateOrderPdf(ord, store.getSettings())}
-                          className="p-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-lg transition"
+                          className="p-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 hover:text-slate-900 rounded-lg transition border border-slate-200 cursor-pointer"
                           title="Download PDF"
                         >
                           <FileDown className="w-4 h-4 text-red-500" />
@@ -263,14 +263,14 @@ export const CustomerPortal: React.FC<CustomerPortalProps> = ({ onNavigate }) =>
 
                       <button
                         onClick={() => handleOpenRequest(ord, 'change')}
-                        className="px-2.5 py-1.5 bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-white rounded-lg text-xs transition"
+                        className="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 hover:text-slate-900 rounded-lg text-xs transition border border-slate-200 cursor-pointer"
                       >
                         Change
                       </button>
 
                       <button
                         onClick={() => handleOpenRequest(ord, 'cancel')}
-                        className="px-2.5 py-1.5 bg-red-950/40 hover:bg-red-900/60 text-red-400 rounded-lg text-xs transition"
+                        className="px-2.5 py-1.5 bg-red-50 hover:bg-red-100 text-red-700 rounded-lg text-xs transition border border-red-200 cursor-pointer"
                       >
                         Cancel
                       </button>
@@ -283,7 +283,7 @@ export const CustomerPortal: React.FC<CustomerPortalProps> = ({ onNavigate }) =>
 
           {/* Past Orders List */}
           <div className="space-y-4 pt-4">
-            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center space-x-1.5">
+            <h3 className="text-xs font-bold text-slate-600 uppercase tracking-wider flex items-center space-x-1.5">
               <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
               <span>Past Delivered & Completed ({pastOrders.length})</span>
             </h3>
@@ -291,27 +291,27 @@ export const CustomerPortal: React.FC<CustomerPortalProps> = ({ onNavigate }) =>
             {pastOrders.map((ord) => (
               <div
                 key={ord.id}
-                className="bg-[#111624] border border-slate-800/80 rounded-2xl p-5 transition shadow space-y-3 opacity-90"
+                className="bg-white border border-slate-200 rounded-2xl p-5 transition shadow-sm space-y-3"
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-3">
-                    <span className="text-sm font-bold text-white font-mono">{ord.order_number}</span>
-                    <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-950 text-emerald-400 border border-emerald-500/20">
+                    <span className="text-sm font-bold text-slate-900 font-mono">{ord.order_number}</span>
+                    <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-300">
                       {ord.order_status}
                     </span>
                   </div>
                   <div className="flex items-center space-x-3">
-                    <span className="text-xs font-bold text-slate-300">${ord.total_price.toFixed(2)} CAD</span>
+                    <span className="text-xs font-bold text-slate-800">${ord.total_price.toFixed(2)} CAD</span>
                     <button
                       onClick={() => generateOrderPdf(ord, store.getSettings())}
-                      className="flex items-center space-x-1 px-3 py-1 bg-slate-800 hover:bg-slate-700 text-white rounded-lg text-xs transition"
+                      className="flex items-center space-x-1 px-3 py-1 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-lg text-xs transition border border-slate-200 cursor-pointer"
                     >
                       <FileDown className="w-3.5 h-3.5 text-red-500" />
                       <span>Invoice PDF</span>
                     </button>
                   </div>
                 </div>
-                <div className="text-xs text-slate-400 truncate">
+                <div className="text-xs text-slate-600 truncate">
                   {ord.pickup_address} &rarr; {ord.delivery_address}
                 </div>
               </div>
@@ -322,17 +322,17 @@ export const CustomerPortal: React.FC<CustomerPortalProps> = ({ onNavigate }) =>
         {/* Right Column: Address Book & Quick Info */}
         <div className="lg:col-span-4 space-y-6">
           {/* Saved Addresses Card */}
-          <div className="bg-[#111624] border border-slate-800 rounded-2xl p-6 shadow-xl space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+          <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <div className="flex items-center space-x-2">
                 <MapPin className="w-4 h-4 text-red-400" />
-                <h3 className="text-sm font-bold text-white font-['Outfit'] uppercase tracking-wider">
+                <h3 className="text-sm font-bold text-slate-900 font-['Outfit'] uppercase tracking-wider">
                   Saved Address Book
                 </h3>
               </div>
               <button
                 onClick={() => setShowAddAddress(!showAddAddress)}
-                className="text-xs text-red-400 hover:text-white font-bold transition"
+                className="text-xs text-red-600 hover:text-red-700 font-bold transition cursor-pointer"
               >
                 {showAddAddress ? 'Cancel' : '+ Add'}
               </button>
@@ -340,13 +340,13 @@ export const CustomerPortal: React.FC<CustomerPortalProps> = ({ onNavigate }) =>
 
             {/* Add Address Form */}
             {showAddAddress && (
-              <form onSubmit={handleAddAddress} className="bg-slate-900/80 p-3 rounded-xl border border-slate-700 space-y-2 text-xs">
+              <form onSubmit={handleAddAddress} className="bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-2 text-xs">
                 <input
                   type="text"
                   value={newAddrLabel}
                   onChange={(e) => setNewAddrLabel(e.target.value)}
                   placeholder="e.g. Warehouse Bay 4 / Jobsite #3"
-                  className="w-full bg-[#0A0D14] border border-slate-700 px-3 py-1.5 rounded-lg text-white placeholder:text-slate-500 focus:border-red-500 focus:outline-none"
+                  className="w-full bg-white border border-slate-300 px-3 py-1.5 rounded-lg text-slate-900 placeholder:text-slate-400 focus:border-red-600 focus:outline-none"
                   required
                 />
                 <input
@@ -354,7 +354,7 @@ export const CustomerPortal: React.FC<CustomerPortalProps> = ({ onNavigate }) =>
                   value={newAddrText}
                   onChange={(e) => setNewAddrText(e.target.value)}
                   placeholder="e.g. 100 King St W, Toronto, ON"
-                  className="w-full bg-[#0A0D14] border border-slate-700 px-3 py-1.5 rounded-lg text-white placeholder:text-slate-500 focus:border-red-500 focus:outline-none"
+                  className="w-full bg-white border border-slate-300 px-3 py-1.5 rounded-lg text-slate-900 placeholder:text-slate-400 focus:border-red-600 focus:outline-none"
                   required
                 />
                 <button
@@ -368,17 +368,17 @@ export const CustomerPortal: React.FC<CustomerPortalProps> = ({ onNavigate }) =>
 
             <div className="space-y-2 text-xs">
               {savedAddresses.length === 0 ? (
-                <div className="p-4 text-center text-slate-500 text-xs border border-dashed border-slate-800 rounded-xl">
+                <div className="p-4 text-center text-slate-500 text-xs border border-dashed border-slate-300 rounded-xl">
                   No saved addresses yet. Click "+ Add" to save frequent delivery locations.
                 </div>
               ) : (
                 savedAddresses.map((addr) => (
                   <div
                     key={addr.id}
-                    className="p-3 rounded-xl bg-slate-900/50 border border-slate-800 hover:border-slate-700 transition"
+                    className="p-3 rounded-xl bg-slate-50 border border-slate-200 hover:border-slate-300 transition"
                   >
-                    <div className="font-bold text-white mb-0.5">{addr.label}</div>
-                    <div className="text-slate-400 text-[11px] leading-relaxed">{addr.address}</div>
+                    <div className="font-bold text-slate-900 mb-0.5">{addr.label}</div>
+                    <div className="text-slate-600 text-[11px] leading-relaxed">{addr.address}</div>
                   </div>
                 ))
               )}
@@ -386,17 +386,17 @@ export const CustomerPortal: React.FC<CustomerPortalProps> = ({ onNavigate }) =>
           </div>
 
           {/* Business Support Card */}
-          <div className="bg-[#111624] border border-slate-800 rounded-2xl p-6 shadow-xl space-y-3 text-xs">
-            <div className="text-sm font-bold text-white font-['Outfit']">
+          <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-3 text-xs">
+            <div className="text-sm font-bold text-slate-900 font-['Outfit']">
               Dedicated Commercial Support
             </div>
-            <p className="text-slate-400 leading-relaxed">
+            <p className="text-slate-600 leading-relaxed">
               Need immediate dispatch updates or recurring freight setup? Call our operations desk directly:
             </p>
             <div className="space-y-1.5 pt-1">
               <a
                 href="tel:+16478049775"
-                className="block text-white font-bold hover:text-red-400 transition"
+                className="block text-slate-900 font-bold hover:text-red-600 transition"
               >
                 +1 (647) 804-9775 (Direct Dispatch)
               </a>
@@ -413,13 +413,13 @@ export const CustomerPortal: React.FC<CustomerPortalProps> = ({ onNavigate }) =>
 
       {/* Change / Cancel Request Modal */}
       {modalType && modalOrder && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-[#111624] border border-slate-700 rounded-2xl p-6 max-w-md w-full shadow-2xl space-y-4">
-            <h3 className="text-lg font-bold text-white font-['Outfit']">
+        <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white border border-slate-200 rounded-2xl p-6 max-w-md w-full shadow-xl space-y-4">
+            <h3 className="text-lg font-bold text-slate-900 font-['Outfit']">
               {modalType === 'cancel' ? 'Request Cancellation' : 'Request Order Modification'}
             </h3>
-            <p className="text-xs text-slate-400">
-              Order: <strong className="text-white font-mono">{modalOrder.order_number}</strong>
+            <p className="text-xs text-slate-600">
+              Order: <strong className="text-slate-900 font-mono">{modalOrder.order_number}</strong>
             </p>
 
             <form onSubmit={handleSubmitRequest} className="space-y-4">
@@ -432,7 +432,7 @@ export const CustomerPortal: React.FC<CustomerPortalProps> = ({ onNavigate }) =>
                     : 'Enter changes (e.g. change delivery address, adjust pickup time)...'
                 }
                 rows={3}
-                className="w-full bg-[#0A0D14] border border-slate-700 p-3 text-xs text-white rounded-xl focus:border-red-500 focus:outline-none"
+                className="w-full bg-slate-50 border border-slate-300 p-3 text-xs text-slate-900 rounded-xl focus:border-red-600 focus:outline-none"
                 required
               />
 
@@ -445,7 +445,7 @@ export const CustomerPortal: React.FC<CustomerPortalProps> = ({ onNavigate }) =>
                   <button
                     type="button"
                     onClick={() => setModalType(null)}
-                    className="px-4 py-2 bg-slate-800 text-slate-300 rounded-xl text-xs font-semibold hover:bg-slate-700"
+                    className="px-4 py-2 bg-slate-100 text-slate-700 rounded-xl text-xs font-semibold hover:bg-slate-200 cursor-pointer border border-slate-200"
                   >
                     Cancel
                   </button>

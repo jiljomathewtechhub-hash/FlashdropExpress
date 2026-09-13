@@ -22,7 +22,7 @@ export const BrandLogo: React.FC<BrandLogoProps> = ({
     <div className={`flex items-center space-x-3 select-none ${className}`}>
       {/* Recreated FD Speed Logo Emblem */}
       <div
-        className={`${iconSizes[size]} relative rounded-xl bg-white p-1 flex items-center justify-center shadow-lg shadow-red-950/30 border border-slate-700/60 group-hover:scale-105 transition-transform duration-200 overflow-hidden flex-shrink-0`}
+        className={`${iconSizes[size]} relative rounded-xl bg-white p-1 flex items-center justify-center shadow-md border border-slate-200 group-hover:scale-105 transition-transform duration-200 overflow-hidden flex-shrink-0`}
       >
         <img
           src="/images/fd-favicon.jpg"
@@ -34,18 +34,18 @@ export const BrandLogo: React.FC<BrandLogoProps> = ({
       {showText && (
         <div>
           <div className="flex items-center space-x-1.5 leading-none">
-            <span className="font-extrabold text-xl sm:text-2xl tracking-tight text-white font-['Outfit']">
+            <span className="font-extrabold text-xl sm:text-2xl tracking-tight text-slate-900 font-['Outfit']">
               FLASHDROP
             </span>
-            <span className="font-extrabold text-xl sm:text-2xl tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-red-400 via-red-500 to-[#C5161D] font-['Outfit']">
+            <span className="font-extrabold text-xl sm:text-2xl tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-red-600 via-red-500 to-[#C5161D] font-['Outfit']">
               EXPRESS
             </span>
           </div>
-          <div className="text-[10px] tracking-widest uppercase font-semibold text-slate-400 mt-1 flex items-center space-x-1.5">
+          <div className="text-[10px] tracking-widest uppercase font-semibold text-slate-500 mt-1 flex items-center space-x-1.5">
             <span>FAST</span>
-            <span className="text-red-300">•</span>
+            <span className="text-red-600">•</span>
             <span>RELIABLE</span>
-            <span className="text-red-300">•</span>
+            <span className="text-red-600">•</span>
             <span>DELIVERED</span>
           </div>
         </div>

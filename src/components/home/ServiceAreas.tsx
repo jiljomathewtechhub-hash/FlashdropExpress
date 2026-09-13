@@ -197,7 +197,7 @@ export const ServiceAreas: React.FC<ServiceAreasProps> = ({ onNavigate }) => {
   ];
 
   return (
-    <section id="service-areas" className="py-20 lg:py-28 bg-[#07090E]/50 backdrop-blur-[1px] border-t border-slate-800/40 relative overflow-hidden">
+    <section id="service-areas" className="py-20 lg:py-28 bg-white border-t border-slate-200 relative overflow-hidden">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 relative z-10">
         {/* Section Header */}
         <div className="text-center max-w-xl mx-auto mb-14 space-y-2">
@@ -205,21 +205,21 @@ export const ServiceAreas: React.FC<ServiceAreasProps> = ({ onNavigate }) => {
             <Sparkles className="w-3 h-3" />
             <span>Coverage Areas</span>
           </div>
-          <h2 className="text-3xl sm:text-4xl font-black text-white font-['Outfit']">
+          <h2 className="text-3xl sm:text-4xl font-black text-slate-900 font-['Outfit']">
             GTA & Regional Ontario Dispatch
           </h2>
-          <p className="text-sm text-slate-300">
+          <p className="text-sm text-slate-600">
             Daily courier corridors across Greater Toronto and direct regional routes.
           </p>
 
-          {/* Minimalist Area Switcher with Soft Gradient (Accessible 44px Touch Target) */}
-          <div className="inline-flex p-1 rounded-xl bg-white/[0.05] border border-white/10 shadow-inner mt-3">
+          {/* Area Switcher (Accessible 44px Touch Target) */}
+          <div className="inline-flex p-1 rounded-xl bg-slate-100 border border-slate-200 shadow-inner mt-3">
             <button
               onClick={() => setActiveTab('gta')}
               className={`min-h-[44px] px-5 py-2 rounded-lg text-xs font-bold transition-smooth cursor-pointer ${
                 activeTab === 'gta'
-                  ? 'btn-gradient-primary text-white shadow-md'
-                  : 'text-slate-300 hover:text-white'
+                  ? 'btn-gradient-primary text-white shadow-sm'
+                  : 'text-slate-600 hover:text-slate-900'
               }`}
             >
               GTA Core Hubs
@@ -228,8 +228,8 @@ export const ServiceAreas: React.FC<ServiceAreasProps> = ({ onNavigate }) => {
               onClick={() => setActiveTab('outside')}
               className={`min-h-[44px] px-5 py-2 rounded-lg text-xs font-bold transition-smooth cursor-pointer ${
                 activeTab === 'outside'
-                  ? 'btn-gradient-primary text-white shadow-md'
-                  : 'text-slate-300 hover:text-white'
+                  ? 'btn-gradient-primary text-white shadow-sm'
+                  : 'text-slate-600 hover:text-slate-900'
               }`}
             >
               Extended Ontario
@@ -239,43 +239,43 @@ export const ServiceAreas: React.FC<ServiceAreasProps> = ({ onNavigate }) => {
 
         {/* Map Visualization & Zone Cards */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
-          {/* Animated Radar Vector Map - Steady Container (No 3D Tilt) */}
+          {/* Animated Radar Vector Map */}
           <div className="lg:col-span-6">
-            <div className="bg-gradient-to-b from-red-500/[0.08] via-white/[0.04] to-transparent backdrop-blur-xl p-5 sm:p-6 rounded-2xl border border-red-500/20 shadow-xl relative overflow-hidden">
-              <div className="flex items-center justify-between border-b border-white/10 pb-2.5 mb-3">
+            <div className="bg-slate-50 border border-slate-200 p-5 sm:p-6 rounded-2xl shadow-xs relative overflow-hidden">
+              <div className="flex items-center justify-between border-b border-slate-200 pb-2.5 mb-3">
                 <div className="flex items-center space-x-2">
-                  <Compass className="w-4 h-4 text-red-400" />
-                  <span className="text-xs font-bold text-slate-200 font-['Outfit'] uppercase tracking-wider">
+                  <Compass className="w-4 h-4 text-red-600" />
+                  <span className="text-xs font-bold text-slate-900 font-['Outfit'] uppercase tracking-wider">
                     Logistics Radar
                   </span>
                 </div>
-                <span className="text-[11px] text-slate-400">
+                <span className="text-[11px] text-slate-500 font-medium">
                   {activeTab === 'gta' ? 'GTA Core Zone (0–40+ km)' : 'Extended Regional Network'}
                 </span>
               </div>
 
               {/* Vector Map Canvas with Rotating Radar Scanner */}
-              <div className="relative h-60 sm:h-64 rounded-xl bg-[#080B12] border border-white/10 overflow-hidden flex items-center justify-center">
+              <div className="relative h-60 sm:h-64 rounded-xl bg-slate-100 border border-slate-200 overflow-hidden flex items-center justify-center">
                 {/* Concentric Radar Rings */}
-                <div className="absolute w-60 h-60 border border-red-300/10 rounded-full" />
-                <div className="absolute w-40 h-40 border border-red-300/15 rounded-full" />
-                <div className="absolute w-20 h-20 border border-red-300/20 rounded-full" />
+                <div className="absolute w-60 h-60 border border-slate-300/60 rounded-full" />
+                <div className="absolute w-40 h-40 border border-slate-300/70 rounded-full" />
+                <div className="absolute w-20 h-20 border border-slate-300/80 rounded-full" />
 
-                {/* Sweeping Radar Beam with Soft Pastel Rose Gradient */}
+                {/* Sweeping Radar Beam */}
                 <div
                   className="absolute w-60 h-60 rounded-full pointer-events-none animate-radar"
                   style={{
-                    background: 'conic-gradient(from 0deg, transparent 0deg, transparent 270deg, rgba(253, 164, 175, 0.14) 360deg)',
+                    background: 'conic-gradient(from 0deg, transparent 0deg, transparent 270deg, rgba(239, 68, 68, 0.12) 360deg)',
                   }}
                 />
 
                 {/* Center Hub Indicator (Toronto Logistics Core) */}
                 <div className="relative z-10 flex flex-col items-center">
-                  <div className="w-4 h-4 rounded-full bg-red-300/30 border border-red-300 flex items-center justify-center animate-ping absolute" />
-                  <div className="w-3.5 h-3.5 rounded-full bg-red-400 border border-white flex items-center justify-center relative z-10 shadow-md">
+                  <div className="w-4 h-4 rounded-full bg-red-500/20 border border-red-500 flex items-center justify-center animate-ping absolute" />
+                  <div className="w-3.5 h-3.5 rounded-full bg-red-600 border-2 border-white flex items-center justify-center relative z-10 shadow-sm">
                     <span className="w-1 h-1 bg-white rounded-full" />
                   </div>
-                  <span className="text-[10px] font-bold text-white mt-1 bg-slate-900/90 px-2 py-0.5 rounded-full border border-white/10 shadow">
+                  <span className="text-[10px] font-bold text-white mt-1 bg-slate-900 px-2 py-0.5 rounded-full shadow">
                     Toronto Core
                   </span>
                 </div>
@@ -284,59 +284,59 @@ export const ServiceAreas: React.FC<ServiceAreasProps> = ({ onNavigate }) => {
                 {activeTab === 'gta' ? (
                   <>
                     <div className="absolute top-[35%] left-[28%] flex flex-col items-center">
-                      <span className="w-2.5 h-2.5 rounded-full bg-red-400/80 border border-white" />
-                      <span className="text-[9px] text-slate-300 font-semibold mt-0.5">Mississauga</span>
+                      <span className="w-2.5 h-2.5 rounded-full bg-red-600 border border-white shadow-xs" />
+                      <span className="text-[9px] text-slate-700 font-bold mt-0.5">Mississauga</span>
                     </div>
 
                     <div className="absolute top-[24%] left-[32%] flex flex-col items-center">
-                      <span className="w-2.5 h-2.5 rounded-full bg-red-400/80 border border-white" />
-                      <span className="text-[9px] text-slate-300 font-semibold mt-0.5">Brampton</span>
+                      <span className="w-2.5 h-2.5 rounded-full bg-red-600 border border-white shadow-xs" />
+                      <span className="text-[9px] text-slate-700 font-bold mt-0.5">Brampton</span>
                     </div>
 
                     <div className="absolute top-[20%] left-[58%] flex flex-col items-center">
-                      <span className="w-2.5 h-2.5 rounded-full bg-red-400/80 border border-white" />
-                      <span className="text-[9px] text-slate-300 font-semibold mt-0.5">Markham</span>
+                      <span className="w-2.5 h-2.5 rounded-full bg-red-600 border border-white shadow-xs" />
+                      <span className="text-[9px] text-slate-700 font-bold mt-0.5">Markham</span>
                     </div>
 
                     <div className="absolute top-[18%] left-[45%] flex flex-col items-center">
-                      <span className="w-2.5 h-2.5 rounded-full bg-red-400/80 border border-white" />
-                      <span className="text-[9px] text-slate-300 font-semibold mt-0.5">Vaughan</span>
+                      <span className="w-2.5 h-2.5 rounded-full bg-red-600 border border-white shadow-xs" />
+                      <span className="text-[9px] text-slate-700 font-bold mt-0.5">Vaughan</span>
                     </div>
 
                     <div className="absolute top-[68%] left-[20%] flex flex-col items-center">
-                      <span className="w-2.5 h-2.5 rounded-full bg-red-400/80 border border-white" />
-                      <span className="text-[9px] text-slate-300 font-semibold mt-0.5">Oakville</span>
+                      <span className="w-2.5 h-2.5 rounded-full bg-red-600 border border-white shadow-xs" />
+                      <span className="text-[9px] text-slate-700 font-bold mt-0.5">Oakville</span>
                     </div>
 
                     <div className="absolute top-[38%] right-[18%] flex flex-col items-center">
-                      <span className="w-2.5 h-2.5 rounded-full bg-red-400/80 border border-white" />
-                      <span className="text-[9px] text-slate-300 font-semibold mt-0.5">Oshawa</span>
+                      <span className="w-2.5 h-2.5 rounded-full bg-red-600 border border-white shadow-xs" />
+                      <span className="text-[9px] text-slate-700 font-bold mt-0.5">Oshawa</span>
                     </div>
                   </>
                 ) : (
                   <>
                     <div className="absolute top-[70%] left-[26%] flex flex-col items-center">
-                      <span className="w-3 h-3 rounded-full bg-amber-400 border border-white animate-pulse" />
-                      <span className="text-[10px] text-amber-200 font-bold mt-0.5 bg-slate-900/90 px-1.5 py-0.5 rounded border border-white/10">
+                      <span className="w-3 h-3 rounded-full bg-amber-500 border border-white shadow-xs animate-pulse" />
+                      <span className="text-[10px] text-amber-900 font-bold mt-0.5 bg-white px-1.5 py-0.5 rounded border border-amber-300 shadow-xs">
                         Hamilton
                       </span>
                     </div>
 
                     <div className="absolute top-[52%] left-[16%] flex flex-col items-center">
-                      <span className="w-2.5 h-2.5 rounded-full bg-amber-400 border border-white" />
-                      <span className="text-[9px] text-slate-300 font-semibold mt-0.5">Kitchener / Guelph</span>
+                      <span className="w-2.5 h-2.5 rounded-full bg-amber-500 border border-white shadow-xs" />
+                      <span className="text-[9px] text-slate-700 font-bold mt-0.5">Kitchener / Guelph</span>
                     </div>
 
                     <div className="absolute top-[20%] left-[50%] flex flex-col items-center">
-                      <span className="w-2.5 h-2.5 rounded-full bg-amber-400 border border-white" />
-                      <span className="text-[9px] text-slate-300 font-semibold mt-0.5">Barrie</span>
+                      <span className="w-2.5 h-2.5 rounded-full bg-amber-500 border border-white shadow-xs" />
+                      <span className="text-[9px] text-slate-700 font-bold mt-0.5">Barrie</span>
                     </div>
                   </>
                 )}
               </div>
 
               {/* Minimalist Address Classification Tester with Autocomplete Suggestions Dropdown */}
-              <div className="mt-3.5 pt-2.5 border-t border-white/10">
+              <div className="mt-3.5 pt-2.5 border-t border-slate-200">
                 <form onSubmit={handleTestAddress} className="flex items-center space-x-2">
                   <div ref={dropdownRef} className="relative flex-1">
                     <input
@@ -348,13 +348,13 @@ export const ServiceAreas: React.FC<ServiceAreasProps> = ({ onNavigate }) => {
                       }}
                       onFocus={() => setShowSuggestions(true)}
                       placeholder="Check city or postal code (e.g. Brampton, L6T, Hamilton)"
-                      className="w-full bg-white/[0.05] border border-white/10 px-3 py-2 text-xs text-white placeholder:text-slate-500 rounded-xl focus:outline-none focus:border-red-400/50 focus:bg-white/[0.08] transition-smooth"
+                      className="w-full bg-white border border-slate-300 px-3 py-2 text-xs text-slate-900 placeholder:text-slate-400 rounded-xl focus:outline-none focus:border-red-500 transition-smooth shadow-xs"
                       autoComplete="off"
                     />
 
                     {/* Autocomplete Dropdown Menu */}
                     {showSuggestions && filteredSuggestions.length > 0 && (
-                      <div className="absolute left-0 right-0 top-full mt-1.5 z-50 max-h-56 overflow-y-auto rounded-xl bg-[#0D111A] border border-white/15 backdrop-blur-2xl shadow-2xl py-1 text-xs divide-y divide-white/[0.05]">
+                      <div className="absolute left-0 right-0 top-full mt-1.5 z-50 max-h-56 overflow-y-auto rounded-xl bg-white border border-slate-200 shadow-2xl py-1 text-xs divide-y divide-slate-100">
                         {filteredSuggestions.map((item) => (
                           <button
                             key={item.name}
@@ -363,26 +363,26 @@ export const ServiceAreas: React.FC<ServiceAreasProps> = ({ onNavigate }) => {
                               e.preventDefault();
                               handleSelectSuggestion(item.name);
                             }}
-                            className="w-full px-3 py-2 text-left hover:bg-red-500/15 flex items-center justify-between group transition cursor-pointer"
+                            className="w-full px-3 py-2 text-left hover:bg-slate-50 flex items-center justify-between group transition cursor-pointer"
                           >
                             <div className="flex items-center space-x-2 min-w-0">
-                              <MapPin className="w-3.5 h-3.5 text-red-400 shrink-0 group-hover:scale-110 transition-transform" />
+                              <MapPin className="w-3.5 h-3.5 text-red-600 shrink-0 group-hover:scale-110 transition-transform" />
                               <div className="truncate">
-                                <span className="font-semibold text-white group-hover:text-red-200 transition-colors">
+                                <span className="font-semibold text-slate-900 group-hover:text-red-700 transition-colors">
                                   {item.name}
                                 </span>
-                                <span className="text-[10px] text-slate-400 ml-1.5">({item.region})</span>
+                                <span className="text-[10px] text-slate-500 ml-1.5">({item.region})</span>
                               </div>
                             </div>
                             <div className="flex items-center space-x-1.5 shrink-0 ml-2">
-                              <span className="text-[10px] font-mono text-slate-400 hidden sm:inline">
+                              <span className="text-[10px] font-mono text-slate-500 hidden sm:inline">
                                 {item.postalPrefix.split(' / ')[0]}
                               </span>
                               <span
                                 className={`text-[9px] px-1.5 py-0.5 rounded font-bold uppercase tracking-wider ${
                                   item.category === 'Core GTA'
-                                    ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
-                                    : 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
+                                    ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                                    : 'bg-amber-50 text-amber-700 border border-amber-200'
                                 }`}
                               >
                                 {item.category === 'Core GTA' ? 'GTA' : 'Ext'}
@@ -396,7 +396,7 @@ export const ServiceAreas: React.FC<ServiceAreasProps> = ({ onNavigate }) => {
 
                   <button
                     type="submit"
-                    className="px-4 py-2 btn-gradient-primary text-white text-xs font-bold rounded-xl transition shrink-0 cursor-pointer shadow-md flex items-center space-x-1"
+                    className="px-4 py-2 btn-gradient-primary text-white text-xs font-bold rounded-xl transition shrink-0 cursor-pointer shadow-sm flex items-center space-x-1"
                   >
                     <span>Check</span>
                   </button>
@@ -404,7 +404,7 @@ export const ServiceAreas: React.FC<ServiceAreasProps> = ({ onNavigate }) => {
 
                 {/* Quick 1-Tap Sample Pills */}
                 <div className="mt-2 flex flex-wrap items-center gap-1.5 text-[10px]">
-                  <span className="text-slate-400 font-medium">Quick check:</span>
+                  <span className="text-slate-500 font-medium">Quick check:</span>
                   {['Brampton', 'Toronto', 'Hamilton', 'Vaughan', 'Kitchener', 'M5V'].map((pill) => (
                     <button
                       key={pill}
@@ -413,7 +413,7 @@ export const ServiceAreas: React.FC<ServiceAreasProps> = ({ onNavigate }) => {
                         setTestAddress(pill);
                         handleTestAddress(undefined, pill);
                       }}
-                      className="px-2 py-0.5 rounded-md bg-white/[0.05] hover:bg-white/[0.12] text-slate-300 hover:text-white border border-white/10 transition-smooth cursor-pointer"
+                      className="px-2 py-0.5 rounded-md bg-slate-100 hover:bg-slate-200 text-slate-700 hover:text-slate-900 border border-slate-200 transition-smooth cursor-pointer font-medium"
                     >
                       {pill}
                     </button>
@@ -422,7 +422,7 @@ export const ServiceAreas: React.FC<ServiceAreasProps> = ({ onNavigate }) => {
 
                 {/* Rich Real-Time Result Card */}
                 {testResult && testResult.checked && (
-                  <div className="mt-3 p-3.5 rounded-xl bg-white/[0.04] border border-white/10 backdrop-blur-md space-y-2.5 shadow-lg animate-fade-in">
+                  <div className="mt-3 p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-2.5 shadow-sm animate-fade-in">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-2">
                         <span
@@ -440,7 +440,7 @@ export const ServiceAreas: React.FC<ServiceAreasProps> = ({ onNavigate }) => {
                             ? 'Extended Ontario Run'
                             : 'Custom Long-Haul Route'}
                         </span>
-                        <span className="text-xs font-bold text-white font-['Outfit']">
+                        <span className="text-xs font-bold text-slate-900 font-['Outfit']">
                           {testResult.regionName}
                         </span>
                       </div>
@@ -450,24 +450,24 @@ export const ServiceAreas: React.FC<ServiceAreasProps> = ({ onNavigate }) => {
                           setTestResult(null);
                           setTestAddress('');
                         }}
-                        className="text-[10px] text-slate-400 hover:text-white transition cursor-pointer"
+                        className="text-[10px] text-slate-400 hover:text-slate-700 transition cursor-pointer font-medium"
                         title="Clear check"
                       >
                         Reset
                       </button>
                     </div>
 
-                    <div className="text-xs text-slate-300 flex flex-col sm:flex-row sm:items-center justify-between gap-1 pt-1.5 border-t border-white/[0.06]">
-                      <span className="flex items-center text-emerald-400 font-semibold text-[11px]">
-                        <Clock className="w-3.5 h-3.5 mr-1 text-emerald-400 shrink-0" />
+                    <div className="text-xs text-slate-600 flex flex-col sm:flex-row sm:items-center justify-between gap-1 pt-1.5 border-t border-slate-200">
+                      <span className="flex items-center text-emerald-600 font-semibold text-[11px]">
+                        <Clock className="w-3.5 h-3.5 mr-1 text-emerald-600 shrink-0" />
                         {testResult.transitSpeed}
                       </span>
-                      <span className="text-slate-400 text-[11px]">
+                      <span className="text-slate-500 text-[11px]">
                         {testResult.pricingType}
                       </span>
                     </div>
 
-                    <p className="text-[11px] text-slate-300 leading-relaxed">
+                    <p className="text-[11px] text-slate-600 leading-relaxed">
                       {testResult.description}
                     </p>
 
@@ -475,15 +475,15 @@ export const ServiceAreas: React.FC<ServiceAreasProps> = ({ onNavigate }) => {
                       <button
                         type="button"
                         onClick={() => onNavigate('pricing')}
-                        className="flex-1 py-2 px-3 rounded-lg bg-white/[0.08] hover:bg-white/[0.14] border border-white/15 text-white text-xs font-bold transition flex items-center justify-center space-x-1.5 cursor-pointer"
+                        className="flex-1 py-2 px-3 rounded-lg bg-white hover:bg-slate-100 border border-slate-300 text-slate-800 text-xs font-bold transition flex items-center justify-center space-x-1.5 cursor-pointer shadow-xs"
                       >
-                        <Calculator className="w-3.5 h-3.5 text-amber-200" />
+                        <Calculator className="w-3.5 h-3.5 text-amber-600" />
                         <span>Instant Rate</span>
                       </button>
                       <button
                         type="button"
                         onClick={() => onNavigate('order', { destinationCity: testResult.matchedName })}
-                        className="flex-1 py-2 px-3 rounded-lg btn-gradient-primary text-white text-xs font-bold transition flex items-center justify-center space-x-1.5 shadow-md cursor-pointer"
+                        className="flex-1 py-2 px-3 rounded-lg btn-gradient-primary text-white text-xs font-bold transition flex items-center justify-center space-x-1.5 shadow-sm cursor-pointer"
                       >
                         <Truck className="w-3.5 h-3.5" />
                         <span>Book Delivery</span>
@@ -507,25 +507,25 @@ export const ServiceAreas: React.FC<ServiceAreasProps> = ({ onNavigate }) => {
               return (
                 <div
                   key={idx}
-                  className={`bg-gradient-to-b from-red-500/[0.05] via-white/[0.03] to-transparent backdrop-blur-xl border border-red-500/15 hover:border-red-400/35 p-4 rounded-xl flex items-center justify-between transition-all duration-200 shadow-sm ${
+                  className={`bg-white border p-4 rounded-xl flex items-center justify-between transition-all duration-200 shadow-xs ${
                     isMatched
-                      ? 'border-red-300/60 bg-red-400/[0.08] ring-1 ring-red-300/30 shadow-lg shadow-red-950/20'
-                      : 'border-white/10 hover:border-red-300/30'
+                      ? 'border-red-500 bg-red-50/70 ring-1 ring-red-300 shadow-sm'
+                      : 'border-slate-200 hover:border-slate-300 hover:shadow-sm'
                   }`}
                 >
                   <div className="flex items-center space-x-3.5">
                     <div
                       className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 border ${
                         isMatched
-                          ? 'bg-red-400/20 border-red-300/40 text-red-200'
-                          : 'bg-white/[0.06] border-white/10 text-red-300'
+                          ? 'bg-red-100 border-red-200 text-red-600'
+                          : 'bg-slate-100 border-slate-200 text-red-600'
                       }`}
                     >
                       <MapPin className="w-4 h-4" />
                     </div>
                     <div>
                       <div className="flex items-center space-x-2">
-                        <span className="text-sm font-bold text-white font-['Outfit']">
+                        <span className="text-sm font-bold text-slate-900 font-['Outfit']">
                           {zone.name}
                         </span>
                         {isMatched && (
@@ -534,10 +534,10 @@ export const ServiceAreas: React.FC<ServiceAreasProps> = ({ onNavigate }) => {
                           </span>
                         )}
                       </div>
-                      <div className="text-xs text-slate-300 mt-0.5">{zone.areas}</div>
+                      <div className="text-xs text-slate-600 mt-0.5">{zone.areas}</div>
                     </div>
                   </div>
-                  <span className="text-[11px] font-semibold text-slate-200 bg-white/[0.06] px-2.5 py-1 rounded-lg border border-white/10 shrink-0">
+                  <span className="text-[11px] font-semibold text-slate-700 bg-slate-100 px-2.5 py-1 rounded-lg border border-slate-200 shrink-0">
                     {zone.transit}
                   </span>
                 </div>
@@ -547,7 +547,7 @@ export const ServiceAreas: React.FC<ServiceAreasProps> = ({ onNavigate }) => {
             <div className="pt-3">
               <button
                 onClick={() => onNavigate('order')}
-                className="w-full sm:w-auto min-h-[48px] px-6 py-3 btn-gradient-primary text-white font-bold text-sm rounded-xl transition-smooth shadow-lg flex items-center justify-center space-x-2 cursor-pointer"
+                className="w-full sm:w-auto min-h-[48px] px-6 py-3 btn-gradient-primary text-white font-bold text-sm rounded-xl transition-smooth shadow-sm flex items-center justify-center space-x-2 cursor-pointer"
               >
                 <span>Calculate Exact Route & Book</span>
                 <ArrowRight className="w-4 h-4" />

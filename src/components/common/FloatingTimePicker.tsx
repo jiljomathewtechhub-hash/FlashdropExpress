@@ -171,14 +171,14 @@ export const FloatingTimePicker: React.FC<FloatingTimePickerProps> = ({
 
   return (
     <div className="relative" ref={containerRef}>
-      {/* Label & Indicator */}
+      {/* Field Label & Indicators */}
       <div className="flex items-center justify-between mb-1.5">
-        <label className="block text-xs font-semibold text-slate-300">
+        <label className="block text-xs font-semibold text-slate-700">
           {label}
         </label>
         {isAfterHours ? (
-          <span className="flex items-center space-x-1 text-[10px] text-amber-300 font-bold bg-amber-950/50 border border-amber-500/30 px-2 py-0.5 rounded">
-            <Zap className="w-2.5 h-2.5 text-amber-400" />
+          <span className="flex items-center space-x-1 text-[10px] text-amber-800 font-bold bg-amber-50 border border-amber-200 px-2 py-0.5 rounded">
+            <Zap className="w-2.5 h-2.5 text-amber-600" />
             <span>After-Hours (1.5×)</span>
           </span>
         ) : (
@@ -192,81 +192,81 @@ export const FloatingTimePicker: React.FC<FloatingTimePickerProps> = ({
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className={`w-full bg-[#0A0D14] border px-4 py-3 text-sm text-left rounded-xl transition-all flex items-center justify-between group ${
+        className={`w-full bg-slate-50 border px-4 py-3 text-sm text-left rounded-xl transition-all flex items-center justify-between group shadow-xs ${
           isOpen
-            ? 'border-red-500 ring-2 ring-red-500/20 shadow-lg shadow-red-950/20'
-            : 'border-slate-700 hover:border-slate-600 hover:bg-[#0e121c]'
+            ? 'border-red-500 ring-2 ring-red-500/20 shadow-sm bg-white'
+            : 'border-slate-300 hover:border-slate-400 hover:bg-white'
         }`}
       >
         <div className="flex items-center space-x-3 min-w-0">
-          <div className="w-8 h-8 rounded-lg bg-red-950/60 border border-red-500/30 flex items-center justify-center text-red-400 flex-shrink-0 group-hover:scale-105 transition-transform">
+          <div className="w-8 h-8 rounded-lg bg-red-50 border border-red-200 flex items-center justify-center text-red-600 flex-shrink-0 group-hover:scale-105 transition-transform">
             <Clock className="w-4 h-4" />
           </div>
           <div className="min-w-0">
-            <div className="text-xs font-bold text-white flex items-center space-x-2 truncate">
+            <div className="text-xs font-bold text-slate-900 flex items-center space-x-2 truncate">
               <span>{formatTimeDisplay(value)}</span>
               {isAfterHours && (
-                <span className="text-[9px] font-bold text-amber-400 bg-amber-950/60 border border-amber-500/30 px-1.5 py-0.2 rounded">
+                <span className="text-[9px] font-bold text-amber-800 bg-amber-100 border border-amber-300 px-1.5 py-0.2 rounded">
                   1.5× Surcharge
                 </span>
               )}
             </div>
-            <div className="text-[10px] text-slate-400 truncate">
+            <div className="text-[10px] text-slate-500 truncate">
               Click to select target dispatch time
             </div>
           </div>
         </div>
 
-        <span className="text-[10px] font-bold text-red-400 bg-red-950/60 border border-red-500/30 px-2.5 py-1 rounded-lg flex-shrink-0">
+        <span className="text-[10px] font-bold text-red-600 bg-red-50 border border-red-200 px-2.5 py-1 rounded-lg flex-shrink-0">
           Change
         </span>
       </button>
 
       {/* Floating Interactive Time Picker Pop-up */}
       {isOpen && (
-        <div className="absolute z-50 right-0 sm:left-0 mt-2 w-80 sm:w-96 bg-[#0B0F17]/95 backdrop-blur-xl border border-slate-700/80 rounded-2xl shadow-2xl shadow-black/90 p-4 animate-in fade-in zoom-in-95 duration-150">
+        <div className="absolute z-50 right-0 sm:left-0 mt-2 w-80 sm:w-96 bg-white border border-slate-200 rounded-2xl shadow-2xl p-4 animate-in fade-in zoom-in-95 duration-150">
           
           {/* Quick Presets Row */}
-          <div className="flex items-center gap-1.5 pb-3 mb-3 border-b border-slate-800">
+          <div className="flex items-center gap-1.5 pb-3 mb-3 border-b border-slate-100">
             <button
               type="button"
               onClick={selectReadyNow}
-              className="flex-1 py-1.5 px-2 bg-slate-900 hover:bg-slate-800 border border-slate-800 hover:border-slate-700 text-white rounded-lg text-[10px] font-semibold transition"
+              className="flex-1 py-1.5 px-2 bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-800 rounded-lg text-[10px] font-semibold transition"
             >
               ⚡ Ready Now
             </button>
             <button
               type="button"
               onClick={selectInOneHour}
-              className="flex-1 py-1.5 px-2 bg-slate-900 hover:bg-slate-800 border border-slate-800 hover:border-slate-700 text-white rounded-lg text-[10px] font-semibold transition"
+              className="flex-1 py-1.5 px-2 bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-800 rounded-lg text-[10px] font-semibold transition"
             >
               +1 Hour
             </button>
             <button
               type="button"
               onClick={() => handleSelectSlot('09:00')}
-              className="flex-1 py-1.5 px-2 bg-slate-900 hover:bg-slate-800 border border-slate-800 hover:border-slate-700 text-white rounded-lg text-[10px] font-semibold transition"
+              className="flex-1 py-1.5 px-2 bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-800 rounded-lg text-[10px] font-semibold transition"
             >
               9:00 AM
             </button>
             <button
               type="button"
               onClick={() => handleSelectSlot('13:00')}
-              className="flex-1 py-1.5 px-2 bg-slate-900 hover:bg-slate-800 border border-slate-800 hover:border-slate-700 text-white rounded-lg text-[10px] font-semibold transition"
+              className="flex-1 py-1.5 px-2 bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-800 rounded-lg text-[10px] font-semibold transition"
             >
               1:00 PM
             </button>
           </div>
 
           {/* Mode Switcher Tabs */}
-          <div className="flex rounded-xl bg-slate-900/90 p-1 border border-slate-800 mb-3 text-xs">
+          <div className="flex rounded-xl bg-slate-100 p-1 border border-slate-200 mb-3 text-xs">
             <button
               type="button"
               onClick={() => setActiveTab('standard')}
               className={`flex-1 py-1.5 rounded-lg font-bold transition text-[11px] ${
                 activeTab === 'standard'
-                  ? 'bg-red-950/60 text-white border border-red-500/40 shadow-sm'
-                  : 'text-slate-400 hover:text-slate-200'
+                  ? 'bg-white text-slate-900 border border-slate-300 shadow-xs'
+                  : 'text-slate-600 hover:text-slate-900'
               }`}
             >
               Standard (8 AM–5 PM)
@@ -276,20 +276,20 @@ export const FloatingTimePicker: React.FC<FloatingTimePickerProps> = ({
               onClick={() => setActiveTab('afterHours')}
               className={`flex-1 py-1.5 rounded-lg font-bold transition text-[11px] flex items-center justify-center space-x-1 ${
                 activeTab === 'afterHours'
-                  ? 'bg-amber-950/60 text-amber-300 border border-amber-500/40 shadow-sm'
-                  : 'text-slate-400 hover:text-slate-200'
+                  ? 'bg-amber-100 text-amber-900 border border-amber-300 shadow-xs'
+                  : 'text-slate-600 hover:text-slate-900'
               }`}
             >
               <span>After-Hours</span>
-              <span className="text-[9px] px-1 bg-amber-500/20 text-amber-400 rounded">1.5×</span>
+              <span className="text-[9px] px-1 bg-amber-200 text-amber-900 rounded font-bold">1.5×</span>
             </button>
             <button
               type="button"
               onClick={() => setActiveTab('custom')}
               className={`flex-1 py-1.5 rounded-lg font-bold transition text-[11px] ${
                 activeTab === 'custom'
-                  ? 'bg-slate-800 text-white border border-slate-700 shadow-sm'
-                  : 'text-slate-400 hover:text-slate-200'
+                  ? 'bg-white text-slate-900 border border-slate-300 shadow-xs'
+                  : 'text-slate-600 hover:text-slate-900'
               }`}
             >
               Custom Dial
@@ -308,8 +308,8 @@ export const FloatingTimePicker: React.FC<FloatingTimePickerProps> = ({
                     onClick={() => handleSelectSlot(slot.time24)}
                     className={`py-2 px-2 rounded-xl text-xs font-semibold border transition flex items-center justify-between ${
                       isSelected
-                        ? 'btn-gradient-primary text-white font-bold border-red-500 shadow-md shadow-red-950/40 ring-1 ring-red-400/40'
-                        : 'bg-slate-900/60 border-slate-800/80 text-slate-300 hover:border-slate-700 hover:bg-slate-800 hover:text-white'
+                        ? 'btn-gradient-primary text-white font-bold border-red-500 shadow-sm'
+                        : 'bg-slate-50 border-slate-200 text-slate-700 hover:border-slate-300 hover:bg-white hover:text-slate-900'
                     }`}
                   >
                     <span>{slot.label}</span>
@@ -323,7 +323,7 @@ export const FloatingTimePicker: React.FC<FloatingTimePickerProps> = ({
           {/* TAB 2: AFTER-HOURS SLOTS */}
           {activeTab === 'afterHours' && (
             <div className="space-y-2">
-              <div className="p-2 rounded-xl bg-amber-950/30 border border-amber-500/20 text-[10px] text-amber-300 leading-tight">
+              <div className="p-2 rounded-xl bg-amber-50 border border-amber-200 text-[10px] text-amber-800 leading-tight">
                 ⚡ Courier deliveries requested before 8:00 AM or after 5:00 PM qualify for 1.5× priority evening/night dispatch.
               </div>
               <div className="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto pr-1">
@@ -336,17 +336,17 @@ export const FloatingTimePicker: React.FC<FloatingTimePickerProps> = ({
                       onClick={() => handleSelectSlot(slot.time24)}
                       className={`p-2.5 rounded-xl text-left border transition ${
                         isSelected
-                          ? 'bg-amber-950/50 border-amber-500 text-white shadow-md shadow-amber-950/40 ring-1 ring-amber-400/40'
-                          : 'bg-slate-900/60 border-slate-800 text-slate-300 hover:border-slate-700 hover:bg-slate-800'
+                          ? 'bg-amber-50 border-amber-400 text-amber-900 shadow-sm ring-1 ring-amber-300'
+                          : 'bg-slate-50 border-slate-200 text-slate-700 hover:border-slate-300 hover:bg-white'
                       }`}
                     >
                       <div className="font-bold text-xs flex items-center justify-between">
                         <span>{slot.label}</span>
-                        <span className="text-[9px] text-amber-400 font-bold bg-amber-950/60 px-1 rounded">
+                        <span className="text-[9px] text-amber-900 font-bold bg-amber-200 px-1 rounded">
                           1.5×
                         </span>
                       </div>
-                      <div className="text-[10px] text-slate-400 mt-0.5">{slot.tag}</div>
+                      <div className="text-[10px] text-slate-500 mt-0.5">{slot.tag}</div>
                     </button>
                   );
                 })}
@@ -360,52 +360,52 @@ export const FloatingTimePicker: React.FC<FloatingTimePickerProps> = ({
               <div className="flex items-center justify-center space-x-3">
                 {/* Hours Column */}
                 <div className="flex flex-col items-center">
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">
+                  <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">
                     Hour
                   </span>
-                  <div className="flex items-center space-x-1 bg-slate-900 border border-slate-800 rounded-xl p-1.5">
+                  <div className="flex items-center space-x-1 bg-slate-50 border border-slate-200 rounded-xl p-1.5">
                     <button
                       type="button"
                       onClick={() => setHour12(currentHour12 === 1 ? 12 : currentHour12 - 1)}
-                      className="w-7 h-7 rounded-lg bg-slate-800 hover:bg-slate-700 text-white font-bold flex items-center justify-center"
+                      className="w-7 h-7 rounded-lg bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 font-bold flex items-center justify-center shadow-xs"
                     >
                       <ArrowDown className="w-3.5 h-3.5" />
                     </button>
-                    <span className="w-10 text-center font-black text-lg text-white font-['Outfit']">
+                    <span className="w-10 text-center font-black text-lg text-slate-900 font-['Outfit']">
                       {String(currentHour12).padStart(2, '0')}
                     </span>
                     <button
                       type="button"
                       onClick={() => setHour12(currentHour12 === 12 ? 1 : currentHour12 + 1)}
-                      className="w-7 h-7 rounded-lg bg-slate-800 hover:bg-slate-700 text-white font-bold flex items-center justify-center"
+                      className="w-7 h-7 rounded-lg bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 font-bold flex items-center justify-center shadow-xs"
                     >
                       <ArrowUp className="w-3.5 h-3.5" />
                     </button>
                   </div>
                 </div>
 
-                <span className="text-xl font-bold text-slate-500 pt-4">:</span>
+                <span className="text-xl font-bold text-slate-400 pt-4">:</span>
 
                 {/* Minutes Column */}
                 <div className="flex flex-col items-center">
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">
+                  <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">
                     Minute
                   </span>
-                  <div className="flex items-center space-x-1 bg-slate-900 border border-slate-800 rounded-xl p-1.5">
+                  <div className="flex items-center space-x-1 bg-slate-50 border border-slate-200 rounded-xl p-1.5">
                     <button
                       type="button"
                       onClick={() => setMinute((currentMinute + 45) % 60)}
-                      className="w-7 h-7 rounded-lg bg-slate-800 hover:bg-slate-700 text-white font-bold flex items-center justify-center"
+                      className="w-7 h-7 rounded-lg bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 font-bold flex items-center justify-center shadow-xs"
                     >
                       <ArrowDown className="w-3.5 h-3.5" />
                     </button>
-                    <span className="w-10 text-center font-black text-lg text-white font-['Outfit']">
+                    <span className="w-10 text-center font-black text-lg text-slate-900 font-['Outfit']">
                       {String(currentMinute).padStart(2, '0')}
                     </span>
                     <button
                       type="button"
                       onClick={() => setMinute((currentMinute + 15) % 60)}
-                      className="w-7 h-7 rounded-lg bg-slate-800 hover:bg-slate-700 text-white font-bold flex items-center justify-center"
+                      className="w-7 h-7 rounded-lg bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 font-bold flex items-center justify-center shadow-xs"
                     >
                       <ArrowUp className="w-3.5 h-3.5" />
                     </button>
@@ -414,13 +414,13 @@ export const FloatingTimePicker: React.FC<FloatingTimePickerProps> = ({
 
                 {/* AM/PM Toggle */}
                 <div className="flex flex-col items-center">
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">
+                  <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">
                     Period
                   </span>
                   <button
                     type="button"
                     onClick={togglePeriod}
-                    className="h-10 px-3 rounded-xl btn-gradient-primary text-white font-black text-xs shadow-md"
+                    className="h-10 px-3 rounded-xl btn-gradient-primary text-white font-black text-xs shadow-xs"
                   >
                     {currentPeriod}
                   </button>
@@ -430,7 +430,7 @@ export const FloatingTimePicker: React.FC<FloatingTimePickerProps> = ({
               <button
                 type="button"
                 onClick={() => setIsOpen(false)}
-                className="w-full py-2 bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs rounded-xl transition"
+                className="w-full py-2 bg-slate-100 hover:bg-slate-200 border border-slate-300 text-slate-800 font-bold text-xs rounded-xl transition"
               >
                 Set Custom Time ({formatTimeDisplay(value)})
               </button>
@@ -438,12 +438,12 @@ export const FloatingTimePicker: React.FC<FloatingTimePickerProps> = ({
           )}
 
           {/* Footer note */}
-          <div className="mt-3 pt-2.5 border-t border-slate-800/80 flex items-center justify-between text-[10px] text-slate-400 px-1">
-            <span>Selected: <strong className="text-white">{formatTimeDisplay(value)}</strong></span>
+          <div className="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between text-[10px] text-slate-500 px-1">
+            <span>Selected: <strong className="text-slate-900">{formatTimeDisplay(value)}</strong></span>
             <button
               type="button"
               onClick={() => setIsOpen(false)}
-              className="text-red-400 hover:text-red-300 font-bold"
+              className="text-red-600 hover:text-red-700 font-bold"
             >
               Done
             </button>

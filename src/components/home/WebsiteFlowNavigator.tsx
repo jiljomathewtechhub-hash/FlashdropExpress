@@ -24,8 +24,8 @@ export const WebsiteFlowNavigator: React.FC<WebsiteFlowNavigatorProps> = ({ onNa
       tab: 'order',
       btnLabel: 'Request Quote',
       icon: Calculator,
-      accent: 'text-amber-200',
-      borderAccent: 'hover:border-amber-400/30',
+      accent: 'text-amber-600',
+      borderAccent: 'hover:border-amber-400',
       badgeClass: 'badge-soft-amber',
     },
     {
@@ -36,8 +36,8 @@ export const WebsiteFlowNavigator: React.FC<WebsiteFlowNavigatorProps> = ({ onNa
       tab: 'order',
       btnLabel: 'Book Now',
       icon: Truck,
-      accent: 'text-red-200',
-      borderAccent: 'hover:border-red-400/30',
+      accent: 'text-red-600',
+      borderAccent: 'hover:border-red-400',
       badgeClass: 'badge-soft-rose',
     },
     {
@@ -48,8 +48,8 @@ export const WebsiteFlowNavigator: React.FC<WebsiteFlowNavigatorProps> = ({ onNa
       tab: 'tracking',
       btnLabel: 'Track Delivery',
       icon: Search,
-      accent: 'text-sky-200',
-      borderAccent: 'hover:border-sky-400/30',
+      accent: 'text-sky-600',
+      borderAccent: 'hover:border-sky-400',
       badgeClass: 'badge-soft-sky',
     },
     {
@@ -61,14 +61,14 @@ export const WebsiteFlowNavigator: React.FC<WebsiteFlowNavigatorProps> = ({ onNa
       param: 'FD-883192',
       btnLabel: 'View Sample POD',
       icon: FileCheck2,
-      accent: 'text-emerald-200',
-      borderAccent: 'hover:border-emerald-400/30',
+      accent: 'text-emerald-600',
+      borderAccent: 'hover:border-emerald-400',
       badgeClass: 'badge-soft-emerald',
     },
   ];
 
   return (
-    <section className="py-20 lg:py-24 bg-[#07090E]/45 backdrop-blur-[1px] border-y border-white/10 relative">
+    <section className="py-20 lg:py-24 bg-white border-y border-slate-200 relative">
       <div className="max-w-7xl mx-auto px-4 sm:px-6">
         {/* Minimalist Section Header */}
         <div className="text-center max-w-xl mx-auto mb-12 space-y-2">
@@ -76,15 +76,15 @@ export const WebsiteFlowNavigator: React.FC<WebsiteFlowNavigatorProps> = ({ onNa
             <Sparkles className="w-3 h-3" />
             <span>How It Works</span>
           </div>
-          <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black text-white font-['Outfit']">
+          <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black text-slate-900 font-['Outfit']">
             Simple 4-Step Logistics
           </h2>
-          <p className="text-sm text-slate-300">
+          <p className="text-sm text-slate-600">
             From instant rate quote to digital proof of delivery in minutes.
           </p>
         </div>
 
-        {/* 4 Interactive Step Cards with Soft Pastel Frosted Gradients */}
+        {/* 4 Interactive Step Cards with Clean Light Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 relative">
           {steps.map((s) => {
             const Icon = s.icon;
@@ -93,39 +93,39 @@ export const WebsiteFlowNavigator: React.FC<WebsiteFlowNavigatorProps> = ({ onNa
                 key={s.num}
                 maxTilt={6}
                 scale={1.015}
-                className={`bg-gradient-to-b from-red-500/[0.08] via-white/[0.04] to-transparent backdrop-blur-xl border border-red-500/20 hover:border-red-400/40 p-6 rounded-2xl flex flex-col justify-between transition-all duration-300 hover:-translate-y-1 group shadow-xl relative overflow-hidden`}
+                className="bg-white border border-slate-200 hover:border-red-300 p-6 rounded-2xl flex flex-col justify-between transition-all duration-300 hover:-translate-y-1 group shadow-xs hover:shadow-md relative overflow-hidden"
               >
                 <div>
                   {/* Top Bar with Icon & Step Watermark */}
                   <div className="flex items-center justify-between mb-4">
-                    <div className={`w-11 h-11 rounded-xl ${s.badgeClass} flex items-center justify-center ${s.accent} transition-transform group-hover:scale-105 shadow-sm`}>
+                    <div className={`w-11 h-11 rounded-xl ${s.badgeClass} flex items-center justify-center ${s.accent} transition-transform group-hover:scale-105 shadow-xs`}>
                       <Icon className="w-5 h-5" />
                     </div>
-                    <span className="text-xs font-mono font-bold px-2 py-0.5 rounded-md bg-white/[0.06] border border-white/10 text-slate-400 group-hover:text-white group-hover:border-red-400/40 transition-colors select-none">STEP {s.num}</span>
+                    <span className="text-xs font-mono font-bold px-2 py-0.5 rounded-md bg-slate-100 border border-slate-200 text-slate-500 group-hover:text-slate-800 transition-colors select-none">STEP {s.num}</span>
                   </div>
 
                   {/* Title & Tagline */}
-                  <h3 className="text-base font-bold text-white font-['Outfit'] group-hover:text-red-200 transition-colors">
+                  <h3 className="text-base font-bold text-slate-900 font-['Outfit'] group-hover:text-red-600 transition-colors">
                     {s.title}
                   </h3>
-                  <div className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mt-0.5 mb-2">
+                  <div className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider mt-0.5 mb-2">
                     {s.tagline}
                   </div>
 
                   {/* 1-Sentence Crisp Description (High Contrast WCAG AA) */}
-                  <p className="text-xs text-slate-300 leading-relaxed">
+                  <p className="text-xs text-slate-600 leading-relaxed">
                     {s.desc}
                   </p>
                 </div>
 
                 {/* Bottom Action Trigger (Accessible 44px Touch Target) */}
-                <div className="mt-5 pt-3.5 border-t border-white/10">
+                <div className="mt-5 pt-3.5 border-t border-slate-100">
                   <button
                     onClick={() => onNavigate(s.tab, s.param)}
-                    className="w-full min-h-[44px] flex items-center justify-between text-xs font-bold text-slate-200 hover:text-white px-4 py-2.5 bg-white/[0.04] hover:bg-red-500/15 border border-white/10 hover:border-red-400/40 rounded-xl transition-all duration-200 group/btn cursor-pointer"
+                    className="w-full min-h-[44px] flex items-center justify-between text-xs font-bold text-slate-700 hover:text-red-700 px-4 py-2.5 bg-slate-50 hover:bg-red-50/50 border border-slate-200 hover:border-red-200 rounded-xl transition-all duration-200 group/btn cursor-pointer"
                   >
                     <span>{s.btnLabel}</span>
-                    <ChevronRight className="w-4 h-4 text-red-300 transition-transform group-hover/btn:translate-x-1" />
+                    <ChevronRight className="w-4 h-4 text-red-600 transition-transform group-hover/btn:translate-x-1" />
                   </button>
                 </div>
               </TiltCard>

@@ -136,7 +136,7 @@ export default function App() {
   }, [currentTab, currentUser]);
 
   return (
-    <div className="min-h-screen bg-[#07090E] text-slate-100 flex flex-col justify-between selection:bg-red-500 selection:text-white relative">
+    <div className="min-h-screen bg-[#F8FAFC] text-slate-800 flex flex-col justify-between selection:bg-red-500 selection:text-white relative">
       {/* Full-Website Moving Highway & Vehicle Experience */}
       <FullPage3DHighway />
 
@@ -170,19 +170,19 @@ export default function App() {
 
       {/* Floating Bottom Quick Action Dock for Mobile (Thumb-Friendly WCAG 48px) */}
       <div className="fixed bottom-3 left-3 right-3 z-40 sm:hidden mobile-safe-dock">
-        <div className="bg-[#0A0D14]/95 backdrop-blur-xl border border-white/15 rounded-2xl p-1.5 shadow-2xl flex items-center justify-between">
+        <div className="bg-white/95 backdrop-blur-xl border border-slate-200 rounded-2xl p-1.5 shadow-xl shadow-slate-900/10 flex items-center justify-between">
           <a
             href="tel:+16478049775"
-            className="min-h-[48px] min-w-[72px] flex flex-col items-center justify-center px-2 py-1 text-slate-300 hover:text-white transition-smooth rounded-xl hover:bg-white/5 active:bg-white/10"
+            className="min-h-[48px] min-w-[72px] flex flex-col items-center justify-center px-2 py-1 text-slate-600 hover:text-slate-900 transition-smooth rounded-xl hover:bg-slate-100 active:bg-slate-200"
             aria-label="Call Dispatch Desk at +1 (647) 804-9775"
           >
-            <Phone className="w-4 h-4 text-red-400" />
+            <Phone className="w-4 h-4 text-red-600" />
             <span className="text-[10px] font-bold mt-0.5 tracking-tight">Call Desk</span>
           </a>
 
           <button
             onClick={() => handleNavigate('order')}
-            className="flex-1 mx-1.5 min-h-[48px] py-3 btn-gradient-primary text-white font-bold text-xs rounded-xl shadow-lg shadow-red-950/50 flex items-center justify-center space-x-1.5 transition-smooth active:scale-[0.98] cursor-pointer"
+            className="flex-1 mx-1.5 min-h-[48px] py-3 btn-gradient-primary text-white font-bold text-xs rounded-xl shadow-md shadow-red-600/20 flex items-center justify-center space-x-1.5 transition-smooth active:scale-[0.98] cursor-pointer"
           >
             <Truck className="w-4 h-4 shrink-0" />
             <span className="tracking-wide">Order Delivery</span>
@@ -190,10 +190,10 @@ export default function App() {
 
           <button
             onClick={() => handleNavigate('tracking')}
-            className="min-h-[48px] min-w-[62px] flex flex-col items-center justify-center px-2 py-1 text-slate-300 hover:text-white transition-smooth rounded-xl hover:bg-white/5 active:bg-white/10 cursor-pointer"
+            className="min-h-[48px] min-w-[62px] flex flex-col items-center justify-center px-2 py-1 text-slate-600 hover:text-slate-900 transition-smooth rounded-xl hover:bg-slate-100 active:bg-slate-200 cursor-pointer"
             aria-label="Track Order with FD code"
           >
-            <Search className="w-4 h-4 text-sky-300" />
+            <Search className="w-4 h-4 text-sky-600" />
             <span className="text-[10px] font-bold mt-0.5 tracking-tight">Track</span>
           </button>
         </div>

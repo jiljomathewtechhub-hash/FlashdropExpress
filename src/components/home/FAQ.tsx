@@ -58,41 +58,41 @@ export const FAQ: React.FC<FAQProps> = ({ onNavigate }) => {
   };
 
   return (
-    <section id="faq" className="py-20 lg:py-24 bg-[#080B11]/90 relative overflow-hidden border-t border-slate-800/60">
+    <section id="faq" className="py-20 lg:py-24 bg-slate-50/50 relative overflow-hidden border-t border-slate-200">
       <div className="max-w-3xl mx-auto px-4 sm:px-6 relative z-10">
         {/* Minimalist Section Header */}
         <div className="text-center mb-12 space-y-2.5">
           <span className="badge-soft-rose px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider inline-block">
             FAQ
           </span>
-          <h2 className="text-3xl sm:text-4xl font-black text-white font-['Outfit'] tracking-tight">
+          <h2 className="text-3xl sm:text-4xl font-black text-slate-900 font-['Outfit'] tracking-tight">
             Frequently Asked Questions
           </h2>
-          <p className="text-sm text-slate-400 max-w-lg mx-auto font-normal leading-relaxed">
+          <p className="text-sm text-slate-600 max-w-lg mx-auto font-normal leading-relaxed">
             Clear answers regarding our GTA rush courier, flexible payment terms, and dedicated cargo handling.
           </p>
         </div>
 
         {/* Minimalist Accordion List */}
-        <div className="divide-y divide-slate-800/80 border-y border-slate-800/80">
+        <div className="space-y-3">
           {FAQ_ITEMS.map((item) => {
             const isOpen = openId === item.id;
             return (
-              <div key={item.id} className="py-4 px-4 my-2.5 rounded-2xl bg-gradient-to-b from-red-500/[0.05] via-white/[0.03] to-transparent backdrop-blur-xl border border-red-500/15 hover:border-red-400/35 transition-all duration-200 shadow-sm">
+              <div key={item.id} className="py-4 px-5 rounded-2xl bg-white border border-slate-200 hover:border-slate-300 transition-all duration-200 shadow-xs">
                 <button
                   type="button"
                   onClick={() => toggleItem(item.id)}
                   aria-expanded={isOpen}
                   className="w-full flex items-center justify-between text-left py-1 group focus:outline-none cursor-pointer"
                 >
-                  <span className="text-sm sm:text-base font-semibold text-white group-hover:text-red-200 transition-colors font-['Outfit'] pr-4">
+                  <span className="text-sm sm:text-base font-semibold text-slate-900 group-hover:text-red-600 transition-colors font-['Outfit'] pr-4">
                     {item.question}
                   </span>
                   <div
                     className={`p-1.5 rounded-lg border transition-transform duration-300 shrink-0 ${
                       isOpen
-                        ? 'rotate-180 bg-red-500/15 border-red-400/30 text-red-200'
-                        : 'bg-white/[0.03] border-white/10 text-slate-400 group-hover:text-white'
+                        ? 'rotate-180 bg-red-50 border-red-200 text-red-600'
+                        : 'bg-slate-100 border-slate-200 text-slate-500 group-hover:text-slate-800'
                     }`}
                   >
                     <ChevronDown className="w-4 h-4" />
@@ -101,7 +101,7 @@ export const FAQ: React.FC<FAQProps> = ({ onNavigate }) => {
 
                 {isOpen && (
                   <div className="pt-2 pb-2 pr-6 animate-fade-in">
-                    <p className="text-xs sm:text-sm text-slate-300 font-normal leading-relaxed">
+                    <p className="text-xs sm:text-sm text-slate-600 font-normal leading-relaxed">
                       {item.answer}
                     </p>
                   </div>
@@ -112,12 +112,12 @@ export const FAQ: React.FC<FAQProps> = ({ onNavigate }) => {
         </div>
 
         {/* Clean, Understated Bottom Contact Bar */}
-        <div className="mt-10 pt-6 border-t border-slate-800/60 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-400 text-center sm:text-left">
+        <div className="mt-10 pt-6 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-600 text-center sm:text-left">
           <div>
             <span>Have a custom delivery requirement? </span>
             <a
               href="tel:+16478049775"
-              className="text-white hover:text-red-300 font-semibold underline underline-offset-4 transition-colors"
+              className="text-slate-900 hover:text-red-600 font-semibold underline underline-offset-4 transition-colors"
             >
               Call dispatch at +1 (647) 804-9775
             </a>
@@ -127,15 +127,15 @@ export const FAQ: React.FC<FAQProps> = ({ onNavigate }) => {
             <button
               type="button"
               onClick={() => onNavigate('pricing')}
-              className="px-3.5 py-1.5 rounded-lg bg-white/[0.05] hover:bg-white/[0.1] border border-white/10 text-white font-medium text-xs transition-colors cursor-pointer flex items-center space-x-1.5"
+              className="px-3.5 py-1.5 rounded-lg bg-white hover:bg-slate-100 border border-slate-200 text-slate-800 font-medium text-xs transition-colors cursor-pointer flex items-center space-x-1.5 shadow-xs"
             >
-              <Calculator className="w-3.5 h-3.5 text-amber-300" />
+              <Calculator className="w-3.5 h-3.5 text-amber-600" />
               <span>Rate Calculator</span>
             </button>
             <button
               type="button"
               onClick={() => onNavigate('order')}
-              className="px-3.5 py-1.5 rounded-lg btn-gradient-primary text-white font-semibold text-xs shadow-sm hover:shadow-red-900/40 transition-colors cursor-pointer flex items-center space-x-1.5"
+              className="px-3.5 py-1.5 rounded-lg btn-gradient-primary text-white font-semibold text-xs shadow-sm transition-colors cursor-pointer flex items-center space-x-1.5"
             >
               <span>Book Now</span>
               <ArrowRight className="w-3.5 h-3.5" />

@@ -37,10 +37,10 @@ export const ContactPage: React.FC<ContactPageProps> = ({ onNavigate }) => {
         <span className="badge-soft-rose px-3.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider inline-block">
           Direct Operations
         </span>
-        <h1 className="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-white via-red-100 to-red-300 font-['Outfit'] tracking-tight">
+        <h1 className="text-4xl font-black text-slate-900 font-['Outfit'] tracking-tight">
           Contact FlashDrop Express
         </h1>
-        <p className="text-slate-400 text-sm">
+        <p className="text-slate-600 text-sm">
           Live GTA dispatch coordinator for immediate pickup or commercial account setup.
         </p>
       </div>
@@ -49,39 +49,39 @@ export const ContactPage: React.FC<ContactPageProps> = ({ onNavigate }) => {
         {/* Left Column: 3D Contact Cards */}
         <div className="lg:col-span-5 space-y-6">
           <TiltCard maxTilt={6}>
-            <div className="bg-[#111624]/90 backdrop-blur-md border border-slate-800/80 rounded-2xl p-6 space-y-5 shadow-xl">
-              <h2 className="text-lg font-bold text-white font-['Outfit'] border-b border-slate-800 pb-3">
+            <div className="bg-white border border-slate-200 rounded-2xl p-6 space-y-5 shadow-sm">
+              <h2 className="text-lg font-bold text-slate-900 font-['Outfit'] border-b border-slate-100 pb-3">
                 Commercial Dispatch Desk
               </h2>
 
               <div className="space-y-4 text-xs">
                 {/* Phone */}
                 <div className="flex items-start space-x-3.5">
-                  <div className="p-2.5 rounded-xl bg-red-500/10 border border-red-500/20 text-red-300 flex-shrink-0">
+                  <div className="p-2.5 rounded-xl bg-red-50 border border-red-200 text-red-600 flex-shrink-0">
                     <Phone className="w-4 h-4" />
                   </div>
                   <div>
-                    <span className="text-slate-400 block text-[11px] uppercase font-bold">Dispatch Direct Line</span>
+                    <span className="text-slate-500 block text-[11px] uppercase font-bold">Dispatch Direct Line</span>
                     <a
                       href="tel:+16478049775"
-                      className="text-lg font-black text-white hover:text-red-300 transition font-['Outfit'] tracking-wide"
+                      className="text-lg font-black text-slate-900 hover:text-red-600 transition font-['Outfit'] tracking-wide"
                     >
                       +1 (647) 804-9775
                     </a>
-                    <span className="text-emerald-400 text-[11px] block mt-0.5">● Live Dispatch Active</span>
+                    <span className="text-emerald-700 text-[11px] block mt-0.5">● Live Dispatch Active</span>
                   </div>
                 </div>
 
                 {/* Email */}
                 <div className="flex items-start space-x-3.5">
-                  <div className="p-2.5 rounded-xl bg-red-500/10 border border-red-500/20 text-red-300 flex-shrink-0">
+                  <div className="p-2.5 rounded-xl bg-red-50 border border-red-200 text-red-600 flex-shrink-0">
                     <Mail className="w-4 h-4" />
                   </div>
                   <div>
-                    <span className="text-slate-400 block text-[11px] uppercase font-bold">Electronic Billing & Support</span>
+                    <span className="text-slate-500 block text-[11px] uppercase font-bold">Electronic Billing & Support</span>
                     <a
                       href="mailto:support@flashdropexpress.com"
-                      className="text-white hover:text-red-300 transition font-medium text-xs"
+                      className="text-slate-800 hover:text-red-600 transition font-medium text-xs"
                     >
                       support@flashdropexpress.com
                     </a>
@@ -90,15 +90,15 @@ export const ContactPage: React.FC<ContactPageProps> = ({ onNavigate }) => {
 
                 {/* Operating Hours */}
                 <div className="flex items-start space-x-3.5">
-                  <div className="p-2.5 rounded-xl bg-red-500/10 border border-red-500/20 text-red-300 flex-shrink-0">
+                  <div className="p-2.5 rounded-xl bg-red-50 border border-red-200 text-red-600 flex-shrink-0">
                     <Clock className="w-4 h-4" />
                   </div>
                   <div>
-                    <span className="text-slate-400 block text-[11px] uppercase font-bold">Standard & After-Hours</span>
-                    <span className="text-white font-medium block">
+                    <span className="text-slate-500 block text-[11px] uppercase font-bold">Standard & After-Hours</span>
+                    <span className="text-slate-800 font-medium block">
                       {settings.operating_hours_start} – {settings.operating_hours_end} (Mon–Sat)
                     </span>
-                    <span className="text-red-300 font-semibold block mt-0.5">
+                    <span className="text-red-700 font-semibold block mt-0.5">
                       24/7 On-Call Emergency Service Available
                     </span>
                   </div>
@@ -106,12 +106,12 @@ export const ContactPage: React.FC<ContactPageProps> = ({ onNavigate }) => {
 
                 {/* Service Region */}
                 <div className="flex items-start space-x-3.5">
-                  <div className="p-2.5 rounded-xl bg-red-500/10 border border-red-500/20 text-red-300 flex-shrink-0">
+                  <div className="p-2.5 rounded-xl bg-red-50 border border-red-200 text-red-600 flex-shrink-0">
                     <MapPin className="w-4 h-4" />
                   </div>
                   <div>
-                    <span className="text-slate-400 block text-[11px] uppercase font-bold">Primary Hub</span>
-                    <span className="text-white font-medium">
+                    <span className="text-slate-500 block text-[11px] uppercase font-bold">Primary Hub</span>
+                    <span className="text-slate-800 font-medium">
                       Toronto & Greater Toronto Area, Ontario
                     </span>
                   </div>
@@ -121,7 +121,7 @@ export const ContactPage: React.FC<ContactPageProps> = ({ onNavigate }) => {
           </TiltCard>
 
           {/* Official Brand Identity Card */}
-          <div className="rounded-2xl bg-white/95 border border-slate-700/50 p-5 shadow-xl flex items-center justify-center space-x-4">
+          <div className="rounded-2xl bg-white border border-slate-200 p-5 shadow-xs flex items-center justify-center space-x-4">
             <img
               src="/images/flashdrop-logo.jpg"
               alt="FlashDrop Express"
@@ -140,13 +140,13 @@ export const ContactPage: React.FC<ContactPageProps> = ({ onNavigate }) => {
 
         {/* Right Column: Inquiry Form */}
         <div className="lg:col-span-7">
-          <div className="bg-[#111624]/90 backdrop-blur-md border border-slate-800 rounded-2xl p-6 sm:p-8 shadow-xl space-y-6">
-            <div className="flex items-center justify-between border-b border-slate-800 pb-4">
+          <div className="bg-white border border-slate-200 rounded-2xl p-6 sm:p-8 shadow-sm space-y-6">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-4">
               <div>
-                <h2 className="text-lg font-bold text-white font-['Outfit']">
+                <h2 className="text-lg font-bold text-slate-900 font-['Outfit']">
                   Send Dispatch Message
                 </h2>
-                <p className="text-xs text-slate-400 mt-0.5">
+                <p className="text-xs text-slate-600 mt-0.5">
                   Quick response guaranteed for commercial quotes and immediate pickups.
                 </p>
               </div>
@@ -156,55 +156,55 @@ export const ContactPage: React.FC<ContactPageProps> = ({ onNavigate }) => {
             <form onSubmit={handleSubmit} className="space-y-4 text-xs">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-slate-300 font-semibold mb-1">Name / Business *</label>
+                  <label className="block text-slate-700 font-semibold mb-1">Name / Business *</label>
                   <input
                     type="text"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     placeholder="e.g. Acme Industrial Supplies Ltd. / John Doe"
-                    className="w-full bg-[#0A0D14] border border-slate-700/80 p-2.5 rounded-xl text-white placeholder:text-slate-500 focus:border-red-400 focus:outline-none"
+                    className="w-full bg-slate-50 border border-slate-300 p-2.5 rounded-xl text-slate-900 placeholder:text-slate-400 focus:bg-white focus:border-red-500 focus:outline-none shadow-xs"
                     required
                   />
                 </div>
                 <div>
-                  <label className="block text-slate-300 font-semibold mb-1">Phone Number *</label>
+                  <label className="block text-slate-700 font-semibold mb-1">Phone Number *</label>
                   <input
                     type="tel"
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
                     placeholder="e.g. +1 (647) 555-0199"
-                    className="w-full bg-[#0A0D14] border border-slate-700/80 p-2.5 rounded-xl text-white placeholder:text-slate-500 focus:border-red-400 focus:outline-none"
+                    className="w-full bg-slate-50 border border-slate-300 p-2.5 rounded-xl text-slate-900 placeholder:text-slate-400 focus:bg-white focus:border-red-500 focus:outline-none shadow-xs"
                     required
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-slate-300 font-semibold mb-1">Email Address *</label>
+                <label className="block text-slate-700 font-semibold mb-1">Email Address *</label>
                 <input
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="e.g. logistics@company.com"
-                  className="w-full bg-[#0A0D14] border border-slate-700/80 p-2.5 rounded-xl text-white placeholder:text-slate-500 focus:border-red-400 focus:outline-none"
+                  className="w-full bg-slate-50 border border-slate-300 p-2.5 rounded-xl text-slate-900 placeholder:text-slate-400 focus:bg-white focus:border-red-500 focus:outline-none shadow-xs"
                   required
                 />
               </div>
 
               <div>
-                <label className="block text-slate-300 font-semibold mb-1">Freight or Service Requirements *</label>
+                <label className="block text-slate-700 font-semibold mb-1">Freight or Service Requirements *</label>
                 <textarea
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
                   placeholder="e.g. Need daily pallet transfers between Mississauga and Markham, approx 800 lbs per load..."
                   rows={4}
-                  className="w-full bg-[#0A0D14] border border-slate-700/80 p-2.5 rounded-xl text-white placeholder:text-slate-500 focus:border-red-400 focus:outline-none"
+                  className="w-full bg-slate-50 border border-slate-300 p-2.5 rounded-xl text-slate-900 placeholder:text-slate-400 focus:bg-white focus:border-red-500 focus:outline-none shadow-xs"
                   required
                 />
               </div>
 
               {sent ? (
-                <div className="p-3.5 rounded-xl bg-emerald-950/80 border border-emerald-500/30 text-emerald-300 font-bold text-center flex items-center justify-center space-x-2">
+                <div className="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 font-bold text-center flex items-center justify-center space-x-2">
                   <CheckCircle2 className="w-5 h-5 text-emerald-400" />
                   <span>Message dispatched to support@flashdropexpress.com! We will reach out shortly.</span>
                 </div>

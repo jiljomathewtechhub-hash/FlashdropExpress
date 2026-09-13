@@ -12,10 +12,10 @@ export const ServiceAreasPage: React.FC<ServiceAreasPageProps> = ({ onNavigate }
         <span className="badge-soft-rose px-3.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider inline-block">
           Coverage Corridors
         </span>
-        <h1 className="text-4xl sm:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-white via-red-100 to-red-300 font-['Outfit'] tracking-tight">
+        <h1 className="text-4xl sm:text-5xl font-black text-slate-900 font-['Outfit'] tracking-tight">
           GTA & Regional Delivery Corridors
         </h1>
-        <p className="text-slate-400 text-sm sm:text-base">
+        <p className="text-slate-600 text-sm sm:text-base">
           Direct courier routes covering Toronto, Peel, York, Halton, Durham, and Southern Ontario.
         </p>
       </div>

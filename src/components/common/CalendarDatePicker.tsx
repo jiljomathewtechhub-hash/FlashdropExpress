@@ -203,7 +203,7 @@ export const CalendarDatePicker: React.FC<CalendarDatePickerProps> = ({
     <div className="relative" ref={containerRef}>
       {/* Label */}
       <div className="flex items-center justify-between mb-1.5">
-        <label className="block text-xs font-semibold text-slate-300">
+        <label className="block text-xs font-semibold text-slate-700">
           {label}
         </label>
         <span className="text-[10px] text-slate-500 font-medium">
@@ -215,55 +215,55 @@ export const CalendarDatePicker: React.FC<CalendarDatePickerProps> = ({
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className={`w-full bg-[#0A0D14] border px-4 py-3 text-sm text-left rounded-xl transition-all flex items-center justify-between group ${
+        className={`w-full bg-slate-50 border px-4 py-3 text-sm text-left rounded-xl transition-all flex items-center justify-between group shadow-xs ${
           isOpen
-            ? 'border-red-500 ring-2 ring-red-500/20 shadow-lg shadow-red-950/20'
-            : 'border-slate-700 hover:border-slate-600 hover:bg-[#0e121c]'
+            ? 'border-red-500 ring-2 ring-red-500/20 shadow-sm bg-white'
+            : 'border-slate-300 hover:border-slate-400 hover:bg-white'
         }`}
       >
         <div className="flex items-center space-x-3 min-w-0">
-          <div className="w-8 h-8 rounded-lg bg-red-950/60 border border-red-500/30 flex items-center justify-center text-red-400 flex-shrink-0 group-hover:scale-105 transition-transform">
+          <div className="w-8 h-8 rounded-lg bg-red-50 border border-red-200 flex items-center justify-center text-red-600 flex-shrink-0 group-hover:scale-105 transition-transform">
             <CalendarIcon className="w-4 h-4" />
           </div>
           <div className="min-w-0">
-            <div className="text-xs font-bold text-white truncate">
+            <div className="text-xs font-bold text-slate-900 truncate">
               {formattedDisplay}
             </div>
-            <div className="text-[10px] text-slate-400 truncate">
+            <div className="text-[10px] text-slate-500 truncate">
               Click to open interactive calendar
             </div>
           </div>
         </div>
 
-        <span className="text-[10px] font-bold text-red-400 bg-red-950/60 border border-red-500/30 px-2.5 py-1 rounded-lg flex-shrink-0">
+        <span className="text-[10px] font-bold text-red-600 bg-red-50 border border-red-200 px-2.5 py-1 rounded-lg flex-shrink-0">
           Change
         </span>
       </button>
 
       {/* Floating Interactive Calendar Pop-up */}
       {isOpen && (
-        <div className="absolute z-50 left-0 mt-2 w-80 sm:w-88 bg-[#0B0F17]/95 backdrop-blur-xl border border-slate-700/80 rounded-2xl shadow-2xl shadow-black/90 p-4 animate-in fade-in zoom-in-95 duration-150">
+        <div className="absolute z-50 left-0 mt-2 w-80 sm:w-88 bg-white border border-slate-200 rounded-2xl shadow-2xl p-4 animate-in fade-in zoom-in-95 duration-150">
           
           {/* Quick Preset Buttons */}
-          <div className="flex items-center gap-1.5 pb-3 mb-3 border-b border-slate-800">
+          <div className="flex items-center gap-1.5 pb-3 mb-3 border-b border-slate-100">
             <button
               type="button"
               onClick={() => selectQuickPreset(0)}
-              className="flex-1 py-1.5 px-2 bg-slate-900 hover:bg-slate-800 border border-slate-800 hover:border-slate-700 text-white rounded-lg text-[10px] font-semibold transition"
+              className="flex-1 py-1.5 px-2 bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-800 rounded-lg text-[10px] font-semibold transition"
             >
               Today
             </button>
             <button
               type="button"
               onClick={() => selectQuickPreset(1)}
-              className="flex-1 py-1.5 px-2 bg-slate-900 hover:bg-slate-800 border border-slate-800 hover:border-slate-700 text-white rounded-lg text-[10px] font-semibold transition"
+              className="flex-1 py-1.5 px-2 bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-800 rounded-lg text-[10px] font-semibold transition"
             >
               Tomorrow
             </button>
             <button
               type="button"
               onClick={selectNextMonday}
-              className="flex-1 py-1.5 px-2 bg-slate-900 hover:bg-slate-800 border border-slate-800 hover:border-slate-700 text-white rounded-lg text-[10px] font-semibold transition"
+              className="flex-1 py-1.5 px-2 bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-800 rounded-lg text-[10px] font-semibold transition"
             >
               Next Mon
             </button>
@@ -274,20 +274,20 @@ export const CalendarDatePicker: React.FC<CalendarDatePickerProps> = ({
             <button
               type="button"
               onClick={handlePrevMonth}
-              className="w-8 h-8 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 flex items-center justify-center text-slate-300 hover:text-white transition"
+              className="w-8 h-8 rounded-lg bg-slate-100 hover:bg-slate-200 border border-slate-200 flex items-center justify-center text-slate-700 hover:text-slate-900 transition"
               title="Previous month"
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
 
-            <span className="text-xs font-black text-white font-['Outfit'] tracking-wide">
+            <span className="text-xs font-black text-slate-900 font-['Outfit'] tracking-wide">
               {monthNames[viewMonth]} {viewYear}
             </span>
 
             <button
               type="button"
               onClick={handleNextMonth}
-              className="w-8 h-8 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 flex items-center justify-center text-slate-300 hover:text-white transition"
+              className="w-8 h-8 rounded-lg bg-slate-100 hover:bg-slate-200 border border-slate-200 flex items-center justify-center text-slate-700 hover:text-slate-900 transition"
               title="Next month"
             >
               <ChevronRight className="w-4 h-4" />
@@ -312,7 +312,7 @@ export const CalendarDatePicker: React.FC<CalendarDatePickerProps> = ({
             {prevMonthDays.map((day, i) => (
               <span
                 key={`prev-${i}`}
-                className="h-8 flex items-center justify-center text-slate-600 text-xs rounded-lg select-none opacity-40"
+                className="h-8 flex items-center justify-center text-slate-300 text-xs rounded-lg select-none opacity-60"
               >
                 {day}
               </span>
@@ -332,17 +332,17 @@ export const CalendarDatePicker: React.FC<CalendarDatePickerProps> = ({
                   onClick={() => handleSelectDay(day)}
                   className={`h-8 rounded-lg text-xs font-semibold flex items-center justify-center transition-all relative ${
                     selected
-                      ? 'btn-gradient-primary text-white font-black shadow-md shadow-red-950/50 scale-105'
+                      ? 'btn-gradient-primary text-white font-black shadow-sm scale-105'
                       : past
-                      ? 'text-slate-600 opacity-30 cursor-not-allowed pointer-events-none'
+                      ? 'text-slate-300 opacity-40 cursor-not-allowed pointer-events-none'
                       : today
-                      ? 'bg-slate-900 border border-emerald-500/50 text-emerald-400 font-bold hover:bg-slate-800'
-                      : 'text-slate-200 hover:bg-slate-800 hover:text-white'
+                      ? 'bg-emerald-50 border border-emerald-300 text-emerald-700 font-bold hover:bg-emerald-100'
+                      : 'text-slate-700 hover:bg-slate-100 hover:text-slate-900'
                   }`}
                 >
                   <span>{day}</span>
                   {today && !selected && (
-                    <span className="w-1 h-1 rounded-full bg-emerald-400 absolute bottom-1" />
+                    <span className="w-1 h-1 rounded-full bg-emerald-600 absolute bottom-1" />
                   )}
                 </button>
               );
@@ -352,7 +352,7 @@ export const CalendarDatePicker: React.FC<CalendarDatePickerProps> = ({
             {nextMonthDays.map((day, i) => (
               <span
                 key={`next-${i}`}
-                className="h-8 flex items-center justify-center text-slate-600 text-xs rounded-lg select-none opacity-40"
+                className="h-8 flex items-center justify-center text-slate-300 text-xs rounded-lg select-none opacity-60"
               >
                 {day}
               </span>
@@ -360,12 +360,12 @@ export const CalendarDatePicker: React.FC<CalendarDatePickerProps> = ({
           </div>
 
           {/* Footer note */}
-          <div className="mt-3 pt-2.5 border-t border-slate-800/80 flex items-center justify-between text-[10px] text-slate-400 px-1">
+          <div className="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between text-[10px] text-slate-500 px-1">
             <span className="flex items-center space-x-1">
-              <span className="w-2 h-2 rounded-full bg-emerald-400" />
+              <span className="w-2 h-2 rounded-full bg-emerald-600" />
               <span>Green dot = Today</span>
             </span>
-            <span className="text-slate-500">Same-Day & Scheduled</span>
+            <span className="text-slate-400">Same-Day & Scheduled</span>
           </div>
         </div>
       )}

@@ -136,10 +136,10 @@ export const OrderTracker: React.FC<OrderTrackerProps> = ({ initialOrderNumber, 
         <span className="badge-soft-rose px-3.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider inline-block">
           Live Radar
         </span>
-        <h1 className="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-white via-red-100 to-red-300 font-['Outfit']">
+        <h1 className="text-3xl font-black text-slate-900 font-['Outfit']">
           Track Your Delivery Order
         </h1>
-        <p className="text-xs text-slate-400">
+        <p className="text-xs text-slate-600">
           Enter your <strong>FD-XXXXXX</strong> tracking number to view real-time transit checkpoints.
         </p>
       </div>
@@ -148,7 +148,7 @@ export const OrderTracker: React.FC<OrderTrackerProps> = ({ initialOrderNumber, 
       <div className="max-w-xl mx-auto">
         <form
           onSubmit={handleSearchSubmit}
-          className="flex items-center bg-[#111624] border border-slate-700/80 rounded-2xl p-2 shadow-xl focus-within:border-red-400 transition"
+          className="flex items-center bg-white border border-slate-300 rounded-2xl p-2 shadow-xs focus-within:border-red-500 focus-within:ring-2 focus-within:ring-red-500/20 transition"
         >
           <div className="pl-3 text-slate-400">
             <Search className="w-5 h-5 text-red-400" />
@@ -158,7 +158,7 @@ export const OrderTracker: React.FC<OrderTrackerProps> = ({ initialOrderNumber, 
             value={searchNumber}
             onChange={(e) => setSearchNumber(e.target.value)}
             placeholder="e.g. FD-849201"
-            className="w-full bg-transparent px-4 py-2.5 text-sm text-white font-mono placeholder:text-slate-500 focus:outline-none"
+            className="w-full bg-transparent px-4 py-2.5 text-sm text-slate-900 font-mono placeholder:text-slate-400 focus:outline-none"
           />
           <button
             type="submit"
@@ -179,7 +179,7 @@ export const OrderTracker: React.FC<OrderTrackerProps> = ({ initialOrderNumber, 
                   setSearchNumber(o.order_number);
                   handleLookup(o.order_number);
                 }}
-                className="text-red-300 hover:underline font-mono bg-slate-900/60 border border-slate-800 px-2 py-0.5 rounded cursor-pointer"
+                className="text-red-700 hover:underline font-mono bg-slate-100 border border-slate-200 px-2 py-0.5 rounded cursor-pointer font-medium"
               >
                 {o.order_number}
               </button>
@@ -194,27 +194,27 @@ export const OrderTracker: React.FC<OrderTrackerProps> = ({ initialOrderNumber, 
 
       {/* Initial Clean State when no order searched yet */}
       {!order && !notFound && (
-        <div className="bg-[#111624]/60 border border-slate-800/80 rounded-2xl p-8 text-center max-w-xl mx-auto space-y-4 shadow-xl animate-fade-in">
-          <div className="w-12 h-12 rounded-2xl bg-red-950/50 border border-red-500/30 text-red-400 flex items-center justify-center mx-auto">
+        <div className="bg-white border border-slate-200 rounded-2xl p-8 text-center max-w-xl mx-auto space-y-4 shadow-xs animate-fade-in">
+          <div className="w-12 h-12 rounded-2xl bg-red-50 border border-red-200 text-red-600 flex items-center justify-center mx-auto">
             <Truck className="w-6 h-6" />
           </div>
-          <h3 className="text-base font-bold text-white font-['Outfit']">
+          <h3 className="text-base font-bold text-slate-900 font-['Outfit']">
             Real-Time Dispatch Tracking
           </h3>
-          <p className="text-xs text-slate-400 leading-relaxed max-w-md mx-auto">
+          <p className="text-xs text-slate-600 leading-relaxed max-w-md mx-auto">
             All FlashDrop deliveries include real-time checkpoint timestamps, assigned driver details, route telemetry, and electronic proof of delivery (POD) with digital signatures.
           </p>
-          <div className="grid grid-cols-3 gap-3 pt-2 text-[11px] text-slate-300">
-            <div className="p-3 bg-slate-900/60 border border-slate-800 rounded-xl">
-              <span className="font-bold text-red-400 block mb-0.5">1. Order ID</span>
+          <div className="grid grid-cols-3 gap-3 pt-2 text-[11px] text-slate-700">
+            <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl">
+              <span className="font-bold text-red-600 block mb-0.5">1. Order ID</span>
               <span className="text-slate-400">6-character code</span>
             </div>
-            <div className="p-3 bg-slate-900/60 border border-slate-800 rounded-xl">
-              <span className="font-bold text-emerald-400 block mb-0.5">2. Live Status</span>
+            <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl">
+              <span className="font-bold text-emerald-600 block mb-0.5">2. Live Status</span>
               <span className="text-slate-400">En route updates</span>
             </div>
-            <div className="p-3 bg-slate-900/60 border border-slate-800 rounded-xl">
-              <span className="font-bold text-amber-400 block mb-0.5">3. Sign & POD</span>
+            <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl">
+              <span className="font-bold text-amber-600 block mb-0.5">3. Sign & POD</span>
               <span className="text-slate-400">Instant PDF download</span>
             </div>
           </div>
@@ -223,10 +223,10 @@ export const OrderTracker: React.FC<OrderTrackerProps> = ({ initialOrderNumber, 
 
       {/* Not Found Alert */}
       {notFound && (
-        <div className="bg-amber-950/40 border border-amber-500/30 rounded-2xl p-6 text-center max-w-lg mx-auto text-xs text-amber-200">
+        <div className="bg-amber-50 border border-amber-300 rounded-2xl p-6 text-center max-w-lg mx-auto text-xs text-amber-800">
           <AlertCircle className="w-8 h-8 text-amber-400 mx-auto mb-2" />
-          <p className="font-bold text-sm text-white">Order Not Found</p>
-          <p className="mt-1 text-slate-300">
+          <p className="font-bold text-sm text-slate-900">Order Not Found</p>
+          <p className="mt-1 text-slate-600">
             No active order exists with number <strong>{searchNumber}</strong>. Please verify the code on your confirmation email or PDF receipt.
           </p>
         </div>
@@ -235,25 +235,25 @@ export const OrderTracker: React.FC<OrderTrackerProps> = ({ initialOrderNumber, 
       {/* Order Details Display */}
       {order && (
         <TiltCard maxTilt={4} className="w-full">
-          <div className="bg-[#111624]/90 backdrop-blur-md border border-slate-800 rounded-2xl shadow-2xl p-6 sm:p-8 space-y-8 relative overflow-hidden">
+          <div className="bg-white border border-slate-200 rounded-2xl shadow-sm p-6 sm:p-8 space-y-8 relative overflow-hidden">
             {/* Ambient Transit Pulse if In Transit */}
             {order.order_status === 'in_transit' && (
               <div className="absolute top-0 right-0 w-64 h-64 bg-red-500/10 rounded-full blur-3xl pointer-events-none animate-pulse" />
             )}
 
             {/* Top Bar with Number & Badge */}
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between border-b border-slate-800 pb-5 gap-4">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between border-b border-slate-100 pb-5 gap-4">
               <div>
                 <div className="flex items-center space-x-3">
-                  <h2 className="text-2xl font-black text-white font-['Outfit'] tracking-wide font-mono">
+                  <h2 className="text-2xl font-black text-slate-900 font-['Outfit'] tracking-wide font-mono">
                     {order.order_number}
                   </h2>
                 <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${
                   order.order_status === 'submitted'
-                    ? 'bg-amber-950 text-amber-300 border border-amber-500/40'
+                    ? 'bg-amber-50 text-amber-800 border border-amber-200'
                     : order.order_status === 'quote_sent'
-                    ? 'bg-purple-950 text-purple-300 border border-purple-500/40'
-                    : 'bg-red-950 text-red-400 border border-red-500/30'
+                    ? 'bg-purple-50 text-purple-800 border border-purple-200'
+                    : 'bg-red-50 text-red-700 border border-red-200'
                 }`}>
                   {order.order_status === 'submitted' ? 'Quote Requested' : order.order_status === 'quote_sent' ? 'Quote Ready' : order.order_status.replace(/_/g, ' ')}
                 </span>
@@ -267,7 +267,7 @@ export const OrderTracker: React.FC<OrderTrackerProps> = ({ initialOrderNumber, 
               {order.order_status !== 'submitted' && (
                 <button
                   onClick={() => generateOrderPdf(order, store.getSettings())}
-                  className="flex items-center space-x-1.5 px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs rounded-xl border border-slate-700 transition"
+                  className="flex items-center space-x-1.5 px-3.5 py-2 bg-white hover:bg-slate-50 text-slate-800 font-bold text-xs rounded-xl border border-slate-300 transition shadow-xs"
                 >
                   <FileDown className="w-3.5 h-3.5 text-red-400" />
                   <span>PDF Invoice</span>
@@ -278,13 +278,13 @@ export const OrderTracker: React.FC<OrderTrackerProps> = ({ initialOrderNumber, 
                 <>
                   <button
                     onClick={() => setShowRequestModal('change')}
-                    className="px-3 py-2 bg-slate-900 hover:bg-slate-800 text-slate-300 text-xs font-semibold rounded-xl border border-slate-800 transition"
+                    className="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-xl border border-slate-200 transition"
                   >
                     Request Change
                   </button>
                   <button
                     onClick={() => setShowRequestModal('cancel')}
-                    className="px-3 py-2 bg-red-950/30 hover:bg-red-900/40 text-red-300 text-xs font-semibold rounded-xl border border-red-500/20 transition"
+                    className="px-3 py-2 bg-red-50 hover:bg-red-100 text-red-700 text-xs font-semibold rounded-xl border border-red-200 transition"
                   >
                     Cancel Order
                   </button>
@@ -296,7 +296,7 @@ export const OrderTracker: React.FC<OrderTrackerProps> = ({ initialOrderNumber, 
           {/* Stepper Pipeline */}
           {!isSpecialStatus ? (
             <div className="space-y-4">
-              <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider font-['Outfit']">
+              <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider font-['Outfit']">
                 Delivery Checkpoints
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-7 gap-3">
@@ -308,10 +308,10 @@ export const OrderTracker: React.FC<OrderTrackerProps> = ({ initialOrderNumber, 
                       key={step.status}
                       className={`p-3 rounded-xl border text-center relative flex flex-col justify-between ${
                         isCurrent
-                          ? 'bg-red-950/40 border-red-500/60 shadow-lg shadow-red-950/30'
+                          ? 'bg-red-50 border-red-500 shadow-sm ring-1 ring-red-300'
                           : isCompleted
-                          ? 'bg-slate-900/90 border-emerald-500/30'
-                          : 'bg-slate-900/30 border-slate-800/60 opacity-40'
+                          ? 'bg-emerald-50 border-emerald-300'
+                          : 'bg-slate-50 border-slate-200 opacity-60'
                       }`}
                     >
                       <div className="flex items-center justify-center mb-2">
@@ -320,11 +320,11 @@ export const OrderTracker: React.FC<OrderTrackerProps> = ({ initialOrderNumber, 
                             <Truck className="w-3.5 h-3.5" />
                           </span>
                         ) : isCompleted ? (
-                          <span className="w-6 h-6 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-xs font-bold">
+                          <span className="w-6 h-6 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center text-xs font-bold">
                             <CheckCircle2 className="w-4 h-4" />
                           </span>
                         ) : (
-                          <span className="w-6 h-6 rounded-full bg-slate-800 text-slate-500 flex items-center justify-center text-xs font-bold">
+                          <span className="w-6 h-6 rounded-full bg-slate-200 text-slate-600 flex items-center justify-center text-xs font-bold">
                             {idx + 1}
                           </span>
                         )}
@@ -332,7 +332,7 @@ export const OrderTracker: React.FC<OrderTrackerProps> = ({ initialOrderNumber, 
                       <div>
                         <div
                           className={`text-xs font-bold ${
-                            isCurrent ? 'text-white' : isCompleted ? 'text-emerald-300' : 'text-slate-500'
+                            isCurrent ? 'text-slate-900' : isCompleted ? 'text-emerald-800' : 'text-slate-500'
                           }`}
                         >
                           {step.label}
@@ -358,84 +358,84 @@ export const OrderTracker: React.FC<OrderTrackerProps> = ({ initialOrderNumber, 
           {/* Detailed Info Grid */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-xs">
             {/* Pickup & Destination */}
-            <div className="bg-[#0A0D14] border border-slate-800 rounded-xl p-4 space-y-3">
-              <span className="font-bold text-white uppercase text-[11px] block border-b border-slate-800 pb-1 flex items-center space-x-1.5">
+            <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-3 shadow-xs">
+              <span className="font-bold text-slate-900 uppercase text-[11px] block border-b border-slate-200 pb-1 flex items-center space-x-1.5">
                 <MapPin className="w-3.5 h-3.5 text-red-400" />
                 <span>Routing Addresses</span>
               </span>
               <div>
                 <span className="text-slate-500 block text-[10px] uppercase font-semibold">Pickup:</span>
-                <span className="text-white font-medium">{order.pickup_address}</span>
+                <span className="text-slate-900 font-medium">{order.pickup_address}</span>
                 {order.pickup_unit && <span className="text-slate-400 block">Unit: {order.pickup_unit}</span>}
               </div>
               <div>
                 <span className="text-slate-500 block text-[10px] uppercase font-semibold">Dropoff:</span>
-                <span className="text-white font-medium">{order.delivery_address}</span>
+                <span className="text-slate-900 font-medium">{order.delivery_address}</span>
                 {order.delivery_unit && <span className="text-slate-400 block">Unit: {order.delivery_unit}</span>}
               </div>
               <div className="pt-1 text-slate-400">
-                Route Distance: <strong className="text-white">{order.distance_km} km</strong>
+                Route Distance: <strong className="text-slate-900">{order.distance_km} km</strong>
               </div>
             </div>
 
             {/* Cargo & Driver Assigned */}
-            <div className="bg-[#0A0D14] border border-slate-800 rounded-xl p-4 space-y-3">
-              <span className="font-bold text-white uppercase text-[11px] block border-b border-slate-800 pb-1 flex items-center space-x-1.5">
+            <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-3 shadow-xs">
+              <span className="font-bold text-slate-900 uppercase text-[11px] block border-b border-slate-200 pb-1 flex items-center space-x-1.5">
                 <Truck className="w-3.5 h-3.5 text-red-400" />
                 <span>Cargo & Driver</span>
               </span>
               <div>
                 <span className="text-slate-500 block text-[10px] uppercase font-semibold">Vehicle:</span>
-                <span className="text-white font-medium">{order.vehicle_name}</span>
+                <span className="text-slate-900 font-medium">{order.vehicle_name}</span>
               </div>
               <div>
                 <span className="text-slate-500 block text-[10px] uppercase font-semibold">Freight Load:</span>
-                <span className="text-white font-medium">
+                <span className="text-slate-900 font-medium">
                   {order.item_description || order.item_type} ({order.quantity} units, {order.weight_lbs} lbs)
                 </span>
               </div>
               <div>
                 <span className="text-slate-500 block text-[10px] uppercase font-semibold">Assigned Driver:</span>
-                <span className="text-emerald-400 font-bold">
+                <span className="text-emerald-700 font-bold">
                   {order.assigned_driver_name || 'Dispatch Allocating...'}
                 </span>
               </div>
             </div>
 
             {/* Billing & Invoice */}
-            <div className="bg-[#0A0D14] border border-slate-800 rounded-xl p-4 space-y-3 flex flex-col justify-between">
+            <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-3 shadow-xs flex flex-col justify-between">
               {order.order_status === 'submitted' ? (
                 <div className="space-y-2 py-1">
-                  <span className="font-bold text-amber-400 uppercase text-[11px] block border-b border-slate-800 pb-1 flex items-center space-x-1.5">
+                  <span className="font-bold text-amber-800 uppercase text-[11px] block border-b border-amber-200 pb-1 flex items-center space-x-1.5">
                     <Clock className="w-3.5 h-3.5 text-amber-400" />
                     <span>Quotation Review In Progress</span>
                   </span>
-                  <p className="text-xs text-slate-300 leading-relaxed">
+                  <p className="text-xs text-slate-600 leading-relaxed">
                     Our operations dispatch team is currently reviewing your route specifications and cargo requirements.
                   </p>
-                  <p className="text-[11px] text-slate-400 leading-relaxed">
-                    An official itemized price quote will be sent directly to <strong className="text-white font-mono">{order.customer_email}</strong> shortly.
+                  <p className="text-[11px] text-slate-600 leading-relaxed">
+                    An official itemized price quote will be sent directly to <strong className="text-slate-900 font-mono">{order.customer_email}</strong> shortly.
                   </p>
-                  <div className="bg-amber-950/30 border border-amber-500/30 rounded-lg p-2.5 text-[10px] text-amber-300 font-semibold">
+                  <div className="bg-amber-100 border border-amber-300 rounded-lg p-2.5 text-[10px] text-amber-900 font-semibold">
                     Review turnaround: within 15–30 minutes during active dispatch hours.
                   </div>
                 </div>
               ) : (
                 <>
                   <div>
-                    <span className="font-bold text-white uppercase text-[11px] block border-b border-slate-800 pb-1 flex items-center space-x-1.5">
+                    <span className="font-bold text-slate-900 uppercase text-[11px] block border-b border-slate-200 pb-1 flex items-center space-x-1.5">
                       <FileText className="w-3.5 h-3.5 text-red-400" />
                       <span>Financial Breakdown</span>
                     </span>
                     <div className="space-y-1 mt-2 text-slate-400">
                       <div className="flex justify-between">
                         <span>Base Freight:</span>
-                        <span className="text-white">${order.base_price.toFixed(2)}</span>
+                        <span className="text-slate-900">${order.base_price.toFixed(2)}</span>
                       </div>
                       {order.excess_km_charge > 0 && (
                         <div className="flex justify-between">
                           <span>Excess Km:</span>
-                          <span className="text-white">+${order.excess_km_charge.toFixed(2)}</span>
+                          <span className="text-slate-900">+${order.excess_km_charge.toFixed(2)}</span>
                         </div>
                       )}
                       {order.after_hours_charge > 0 && (
@@ -447,15 +447,15 @@ export const OrderTracker: React.FC<OrderTrackerProps> = ({ initialOrderNumber, 
                       {order.tax_amount > 0 && (
                         <div className="flex justify-between">
                           <span>HST (13%):</span>
-                          <span className="text-white">${order.tax_amount.toFixed(2)}</span>
+                          <span className="text-slate-900">${order.tax_amount.toFixed(2)}</span>
                         </div>
                       )}
                     </div>
                   </div>
 
-                  <div className="border-t border-slate-800 pt-2 flex justify-between items-center">
+                  <div className="border-t border-slate-200 pt-2 flex justify-between items-center">
                     <span className="text-slate-300 font-bold">Total CAD:</span>
-                    <span className="text-xl font-black text-white font-['Outfit']">
+                    <span className="text-xl font-black text-slate-900 font-['Outfit']">
                       ${order.total_price.toFixed(2)}
                     </span>
                   </div>
@@ -466,8 +466,8 @@ export const OrderTracker: React.FC<OrderTrackerProps> = ({ initialOrderNumber, 
 
           {/* PROOF OF DELIVERY (POD) IF DELIVERED */}
           {order.proof_of_delivery && (
-            <div className="bg-emerald-950/20 border border-emerald-500/30 rounded-2xl p-6 space-y-4">
-              <div className="flex items-center space-x-2 text-emerald-400 font-bold text-sm font-['Outfit']">
+            <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-6 space-y-4">
+              <div className="flex items-center space-x-2 text-emerald-800 font-bold text-sm font-['Outfit']">
                 <CheckCircle2 className="w-5 h-5" />
                 <span>Official Proof of Delivery (POD)</span>
               </div>
@@ -475,22 +475,22 @@ export const OrderTracker: React.FC<OrderTrackerProps> = ({ initialOrderNumber, 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
                 <div>
                   <span className="text-slate-400 block text-[10px] uppercase">Delivered Timestamp:</span>
-                  <span className="text-white font-medium">
+                  <span className="text-slate-900 font-medium">
                     {new Date(order.proof_of_delivery.delivered_at).toLocaleString()}
                   </span>
                 </div>
                 <div>
                   <span className="text-slate-400 block text-[10px] uppercase">Delivered By:</span>
-                  <span className="text-white font-medium">{order.proof_of_delivery.driver_name}</span>
+                  <span className="text-slate-900 font-medium">{order.proof_of_delivery.driver_name}</span>
                 </div>
                 <div>
                   <span className="text-slate-400 block text-[10px] uppercase">Recipient Signed:</span>
-                  <span className="text-white font-medium">{order.proof_of_delivery.recipient_name || 'On file'}</span>
+                  <span className="text-slate-900 font-medium">{order.proof_of_delivery.recipient_name || 'On file'}</span>
                 </div>
               </div>
 
               {order.proof_of_delivery.driver_notes && (
-                <div className="text-xs bg-slate-900/60 p-3 rounded-lg border border-slate-800 text-slate-300">
+                <div className="text-xs bg-white p-3 rounded-lg border border-slate-200 text-slate-700 shadow-xs">
                   <strong className="text-emerald-400 block mb-0.5">Driver Remarks:</strong>
                   {order.proof_of_delivery.driver_notes}
                 </div>
@@ -500,7 +500,7 @@ export const OrderTracker: React.FC<OrderTrackerProps> = ({ initialOrderNumber, 
 
           {/* Audit History Log */}
           {order.status_history && order.status_history.length > 0 && (
-            <div className="pt-4 border-t border-slate-800">
+            <div className="pt-4 border-t border-slate-200">
               <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">
                 Audit Timeline History
               </h4>
@@ -508,11 +508,11 @@ export const OrderTracker: React.FC<OrderTrackerProps> = ({ initialOrderNumber, 
                 {order.status_history.map((hist) => (
                   <div
                     key={hist.id}
-                    className="flex items-center justify-between py-1.5 border-b border-slate-800/60 text-slate-400"
+                    className="flex items-center justify-between py-1.5 border-b border-slate-100 text-slate-600"
                   >
                     <div className="flex items-center space-x-2">
                       <span className="w-2 h-2 rounded-full bg-red-500"></span>
-                      <span className="font-semibold text-white capitalize">
+                      <span className="font-semibold text-slate-900 capitalize">
                         {hist.status.replace(/_/g, ' ')}
                       </span>
                       {hist.notes && <span className="text-slate-400">— {hist.notes}</span>}
@@ -531,9 +531,9 @@ export const OrderTracker: React.FC<OrderTrackerProps> = ({ initialOrderNumber, 
 
       {/* Cancellation / Change Request Modal */}
       {showRequestModal && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-[#111624] border border-slate-700 rounded-2xl p-6 max-w-md w-full shadow-2xl space-y-4">
-            <h3 className="text-lg font-bold text-white font-['Outfit']">
+        <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white border border-slate-200 rounded-2xl p-6 max-w-md w-full shadow-2xl space-y-4">
+            <h3 className="text-lg font-bold text-slate-900 font-['Outfit']">
               {showRequestModal === 'cancel' ? 'Request Order Cancellation' : 'Request Order Changes'}
             </h3>
             <p className="text-xs text-slate-400">
@@ -548,7 +548,7 @@ export const OrderTracker: React.FC<OrderTrackerProps> = ({ initialOrderNumber, 
                 onChange={(e) => setRequestText(e.target.value)}
                 placeholder="e.g. Please update delivery suite number to #405 and call site receiver upon arrival..."
                 rows={3}
-                className="w-full bg-[#0A0D14] border border-slate-700 p-3 text-xs text-white rounded-xl focus:border-red-500 focus:outline-none placeholder:text-slate-500"
+                className="w-full bg-slate-50 border border-slate-300 p-3 text-xs text-slate-900 rounded-xl focus:border-red-500 focus:bg-white focus:outline-none placeholder:text-slate-400 shadow-xs"
                 required
               />
 
@@ -561,7 +561,7 @@ export const OrderTracker: React.FC<OrderTrackerProps> = ({ initialOrderNumber, 
                   <button
                     type="button"
                     onClick={() => setShowRequestModal(null)}
-                    className="px-4 py-2 bg-slate-800 text-slate-300 rounded-xl text-xs font-semibold hover:bg-slate-700"
+                    className="px-4 py-2 bg-slate-100 text-slate-700 rounded-xl text-xs font-semibold hover:bg-slate-200 border border-slate-200"
                   >
                     Close
                   </button>

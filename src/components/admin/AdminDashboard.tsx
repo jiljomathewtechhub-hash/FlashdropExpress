@@ -510,21 +510,21 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
   return (
     <div className="py-8 px-4 sm:px-6 max-w-7xl mx-auto space-y-7 animate-fade-in">
       {/* Top Banner */}
-      <div className="bg-[#111726] border border-slate-800 rounded-2xl p-5 sm:p-7 flex flex-col md:flex-row items-start md:items-center justify-between gap-5 shadow-xl">
+      <div className="bg-white border border-slate-200 rounded-2xl p-5 sm:p-7 flex flex-col md:flex-row items-start md:items-center justify-between gap-5 shadow-xl">
         <div className="flex items-center space-x-4">
           <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#C5161D] to-[#99141A] flex items-center justify-center text-white shadow-md">
             <Shield className="w-6 h-6" />
           </div>
           <div>
             <div className="flex items-center space-x-2">
-              <h1 className="text-xl sm:text-2xl font-black text-white font-['Outfit']">
+              <h1 className="text-xl sm:text-2xl font-black text-slate-900 font-['Outfit']">
                 FlashDrop Admin Panel
               </h1>
-              <span className="text-[10px] font-bold text-red-400 bg-red-950/60 border border-red-500/30 px-2 py-0.5 rounded-full">
+              <span className="text-[10px] font-bold text-red-400 bg-red-50 border border-red-200 px-2 py-0.5 rounded-full">
                 Operations & Dispatch
               </span>
             </div>
-            <p className="text-xs text-slate-400 mt-0.5">
+            <p className="text-xs text-slate-600 mt-0.5">
               Live dispatches, fleet allocations, pricing rules engine, and customer requests.
             </p>
           </div>
@@ -533,7 +533,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
         <div className="flex items-center space-x-2.5">
           <button
             onClick={() => onNavigate('home')}
-            className="flex items-center space-x-1.5 px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-xs font-semibold rounded-xl border border-slate-700 transition cursor-pointer"
+            className="flex items-center space-x-1.5 px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 hover:text-slate-900 border border-slate-200 text-xs font-semibold rounded-xl border border-slate-300 transition cursor-pointer"
             title="Go to customer-facing website"
           >
             <Home className="w-3.5 h-3.5 text-slate-400" />
@@ -551,7 +551,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
               store.logout();
               onNavigate('login');
             }}
-            className="flex items-center space-x-1.5 px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-xs font-semibold rounded-xl border border-slate-700 transition cursor-pointer"
+            className="flex items-center space-x-1.5 px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 hover:text-slate-900 border border-slate-200 text-xs font-semibold rounded-xl border border-slate-300 transition cursor-pointer"
           >
             <LogOut className="w-3.5 h-3.5" />
             <span>Sign Out</span>
@@ -561,32 +561,32 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
 
       {/* Overview Metrics Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3.5">
-        <div className="bg-[#111726] border border-slate-800 rounded-xl p-4">
-          <div className="text-[11px] font-semibold text-slate-400">Total Orders</div>
-          <div className="text-xl sm:text-2xl font-black text-white font-['Outfit'] mt-1">{orders.length}</div>
+        <div className="bg-white border border-slate-200 rounded-xl p-4">
+          <div className="text-[11px] font-semibold text-slate-600">Total Orders</div>
+          <div className="text-xl sm:text-2xl font-black text-slate-900 font-['Outfit'] mt-1">{orders.length}</div>
         </div>
-        <div className="bg-[#111726] border border-slate-800 rounded-xl p-4">
-          <div className="text-[11px] font-semibold text-slate-400">Pending Dispatch</div>
+        <div className="bg-white border border-slate-200 rounded-xl p-4">
+          <div className="text-[11px] font-semibold text-slate-600">Pending Dispatch</div>
           <div className="text-xl sm:text-2xl font-black text-amber-400 font-['Outfit'] mt-1">{pendingOrders}</div>
         </div>
-        <div className="bg-[#111726] border border-slate-800 rounded-xl p-4">
-          <div className="text-[11px] font-semibold text-slate-400">Active In-Transit</div>
+        <div className="bg-white border border-slate-200 rounded-xl p-4">
+          <div className="text-[11px] font-semibold text-slate-600">Active In-Transit</div>
           <div className="text-xl sm:text-2xl font-black text-cyan-400 font-['Outfit'] mt-1">{inTransitOrders}</div>
         </div>
-        <div className="bg-[#111726] border border-slate-800 rounded-xl p-4">
-          <div className="text-[11px] font-semibold text-slate-400">Completed Delivered</div>
+        <div className="bg-white border border-slate-200 rounded-xl p-4">
+          <div className="text-[11px] font-semibold text-slate-600">Completed Delivered</div>
           <div className="text-xl sm:text-2xl font-black text-emerald-400 font-['Outfit'] mt-1">{deliveredOrders}</div>
         </div>
-        <div className="bg-[#111726] border border-slate-800 rounded-xl p-4">
-          <div className="text-[11px] font-semibold text-slate-400">Total Revenue</div>
-          <div className="text-xl sm:text-2xl font-black text-white font-['Outfit'] mt-1">
+        <div className="bg-white border border-slate-200 rounded-xl p-4">
+          <div className="text-[11px] font-semibold text-slate-600">Total Revenue</div>
+          <div className="text-xl sm:text-2xl font-black text-slate-900 font-['Outfit'] mt-1">
             ${totalRevenue.toFixed(0)} <span className="text-[10px] font-normal text-slate-400">CAD</span>
           </div>
         </div>
       </div>
 
       {/* Tabs Navigation */}
-      <div className="flex border-b border-slate-800/80 overflow-x-auto gap-2 pb-2">
+      <div className="flex border-b border-slate-200 overflow-x-auto gap-2 pb-2">
         {[
           { id: 'orders', label: `Orders Queue (${orders.length})`, icon: Package },
           { id: 'drivers', label: `Staff & Drivers (${drivers.length})`, icon: Users },
@@ -604,7 +604,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
               className={`flex items-center space-x-2 px-3.5 py-2 rounded-xl text-xs font-bold transition flex-shrink-0 ${
                 isActive
                   ? 'bg-[#C5161D] text-white shadow-sm'
-                  : 'bg-slate-900/60 text-slate-400 hover:text-white hover:bg-slate-800/80'
+                  : 'bg-slate-100 text-slate-400 hover:text-white hover:bg-slate-100/80'
               }`}
             >
               <Icon className="w-3.5 h-3.5" />
@@ -625,16 +625,16 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Filter by FD #, customer, address..."
-                className="w-full bg-[#111726] border border-slate-700/80 pl-9 pr-3 py-2 text-xs text-white rounded-xl focus:border-red-500/60 focus:outline-none font-mono placeholder:text-slate-500"
+                className="w-full bg-white border border-slate-300 pl-9 pr-3 py-2 text-xs text-slate-900 rounded-xl focus:border-red-600 focus:outline-none font-mono placeholder:text-slate-400"
               />
             </div>
 
             <div className="flex items-center space-x-2 w-full sm:w-auto">
-              <span className="text-xs text-slate-400 font-semibold">Status:</span>
+              <span className="text-xs text-slate-600 font-semibold">Status:</span>
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
-                className="bg-[#111726] border border-slate-700/80 text-white text-xs rounded-xl px-3 py-2"
+                className="bg-white border border-slate-300 text-slate-900 text-xs rounded-xl px-3 py-2"
               >
                 <option value="all">All Statuses</option>
                 <option value="submitted">Quote Requested (Submitted)</option>
@@ -649,10 +649,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
             </div>
           </div>
 
-          <div className="bg-[#111726] border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
+          <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-xl">
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs text-slate-300">
-                <thead className="bg-[#0B0F17] text-slate-400 uppercase text-[10px] font-bold border-b border-slate-800">
+                <thead className="bg-slate-100 text-slate-700 uppercase text-[10px] font-bold border-b border-slate-200">
                   <tr>
                     <th className="py-3 px-4">Order #</th>
                     <th className="py-3 px-4">Customer</th>
@@ -664,7 +664,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
                     <th className="py-3 px-4 text-right">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-800/60">
+                <tbody className="divide-y divide-slate-200/60">
                   {filteredOrders.length === 0 ? (
                     <tr>
                       <td colSpan={8} className="py-8 text-center text-slate-500">
@@ -673,8 +673,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
                     </tr>
                   ) : (
                     filteredOrders.map((ord) => (
-                      <tr key={ord.id} className="hover:bg-slate-900/40 transition">
-                        <td className="py-3 px-4 font-mono font-bold text-white">
+                      <tr key={ord.id} className="hover:bg-slate-100/40 transition">
+                        <td className="py-3 px-4 font-mono font-bold text-slate-900">
                           {ord.order_number}
                         </td>
                         <td className="py-3 px-4">
@@ -687,7 +687,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
                           <span className="text-[10px] text-red-400 font-bold">{ord.distance_km} km ({ord.service_area})</span>
                         </td>
                         <td className="py-3 px-4">
-                          <span className="font-medium text-white">{ord.vehicle_name}</span>
+                          <span className="font-medium text-slate-900">{ord.vehicle_name}</span>
                           <div className="text-[10px] text-slate-400">{ord.weight_lbs} lbs ({ord.quantity} pails/units)</div>
                         </td>
                         <td className="py-3 px-4">
@@ -702,7 +702,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
                               <span>Quote Sent</span>
                             </span>
                           ) : (
-                            <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-slate-900 text-slate-300 border border-slate-700">
+                            <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-slate-100 text-slate-300 border border-slate-300">
                               {ord.order_status.replace(/_/g, ' ')}
                             </span>
                           )}
@@ -753,7 +753,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
                               className={`p-1.5 rounded-lg transition border flex items-center space-x-1 ${
                                 ord.order_status === 'submitted'
                                   ? 'bg-amber-500/20 text-amber-300 border-amber-500/40 hover:bg-amber-500 hover:text-white'
-                                  : 'bg-slate-800 hover:bg-slate-700 text-emerald-400 hover:text-white border-slate-700'
+                                  : 'bg-slate-800 hover:bg-slate-700 text-emerald-400 hover:text-white border-slate-300'
                               }`}
                               title="Review Route & Specs, Adjust Pricing, and Send Quote"
                             >
@@ -761,7 +761,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
                             </button>
                             <button
                               onClick={() => onNavigate('tracking', ord.order_number)}
-                              className="p-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-lg transition"
+                              className="p-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 hover:text-slate-900 border border-slate-200 rounded-lg transition"
                               title="Inspect Live Tracking"
                             >
                               <Search className="w-3.5 h-3.5" />
@@ -834,14 +834,14 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
               <div className="flex items-center space-x-2">
-                <h2 className="text-lg font-bold text-white font-['Outfit']">
+                <h2 className="text-lg font-bold text-slate-900 font-['Outfit']">
                   Staff, Dispatch & Fleet Team
                 </h2>
                 <span className="text-[10px] font-bold text-cyan-400 bg-cyan-950/60 border border-cyan-500/30 px-2 py-0.5 rounded-full">
                   Internal Provisioning
                 </span>
               </div>
-              <p className="text-xs text-slate-400 mt-0.5">
+              <p className="text-xs text-slate-600 mt-0.5">
                 Manage and provision login accounts for courier drivers, operations dispatchers, and administrators.
               </p>
             </div>
@@ -866,7 +866,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
                     <h3 className="font-bold text-white text-sm font-['Outfit']">
                       Account Provisioned Successfully!
                     </h3>
-                    <p className="text-[11px] text-slate-400">
+                    <p className="text-[11px] text-slate-600">
                       Copy these login credentials and send them securely to your employee.
                     </p>
                   </div>
@@ -880,7 +880,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
                 </button>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 bg-[#0B0F17]/80 rounded-xl p-3.5 border border-slate-800 text-xs">
+              <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 bg-slate-50/80 rounded-xl p-3.5 border border-slate-200 text-xs">
                 <div>
                   <span className="text-[10px] uppercase font-bold text-slate-500 block">Staff Name</span>
                   <span className="font-bold text-white">{createdCredentials.name}</span>
@@ -902,7 +902,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
               </div>
 
               <div className="flex items-center justify-between pt-1">
-                <span className="text-[11px] text-slate-400">
+                <span className="text-[11px] text-slate-600">
                   Staff Portal login is ready immediately at <strong className="text-slate-300">Staff / Employee Login</strong>.
                 </span>
                 <button
@@ -918,17 +918,17 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
 
           {/* Provision Staff / Driver Modal Form */}
           {showAddStaffModal && (
-            <div className="bg-[#111726] border border-red-500/30 rounded-2xl p-6 space-y-5 shadow-2xl animate-fade-in">
-              <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+            <div className="bg-white border border-red-500/30 rounded-2xl p-6 space-y-5 shadow-2xl animate-fade-in">
+              <div className="flex items-center justify-between border-b border-slate-200 pb-3">
                 <div className="flex items-center space-x-2.5">
-                  <div className="w-7 h-7 rounded-lg bg-red-950/60 border border-red-500/40 flex items-center justify-center text-red-400">
+                  <div className="w-7 h-7 rounded-lg bg-red-50 border border-red-200 flex items-center justify-center text-red-400">
                     <UserPlus className="w-4 h-4" />
                   </div>
                   <div>
-                    <h3 className="font-bold text-white text-base font-['Outfit']">
+                    <h3 className="font-bold text-slate-900 text-base font-['Outfit']">
                       Provision Employee or Driver Account
                     </h3>
-                    <p className="text-[11px] text-slate-400">
+                    <p className="text-[11px] text-slate-600">
                       Create internal credentials with role-specific access permissions.
                     </p>
                   </div>
@@ -985,7 +985,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
                           className={`p-3 rounded-xl border text-left transition flex items-start space-x-3 cursor-pointer ${
                             isSelected
                               ? 'bg-red-950/40 border-red-500/50 text-white ring-1 ring-red-500/40'
-                              : 'bg-[#0B0F17] border-slate-800 text-slate-400 hover:text-white hover:bg-slate-800/60'
+                              : 'bg-slate-50 border-slate-200 text-slate-400 hover:text-white hover:bg-slate-50'
                           }`}
                         >
                           <Icon className={`w-5 h-5 shrink-0 mt-0.5 ${isSelected ? 'text-red-400' : 'text-slate-500'}`} />
@@ -1011,7 +1011,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
                       onChange={(e) => setNewStaffName(e.target.value)}
                       placeholder="e.g. Marcus Vance"
                       required
-                      className="w-full bg-[#0B0F17] border border-slate-700 px-3 py-2 rounded-xl text-white placeholder:text-slate-500 focus:outline-none focus:border-red-500"
+                      className="w-full bg-slate-50 border border-slate-300 px-3 py-2 rounded-xl text-white placeholder:text-slate-400 focus:outline-none focus:border-red-500"
                     />
                   </div>
 
@@ -1025,7 +1025,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
                       onChange={(e) => setNewStaffEmail(e.target.value)}
                       placeholder="e.g. staff.member@example.com"
                       required
-                      className="w-full bg-[#0B0F17] border border-slate-700 px-3 py-2 rounded-xl text-white placeholder:text-slate-500 focus:outline-none focus:border-red-500"
+                      className="w-full bg-slate-50 border border-slate-300 px-3 py-2 rounded-xl text-white placeholder:text-slate-400 focus:outline-none focus:border-red-500"
                     />
                   </div>
 
@@ -1038,7 +1038,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
                       value={newStaffPhone}
                       onChange={(e) => setNewStaffPhone(e.target.value)}
                       placeholder="e.g. +1 (647) 555-0182"
-                      className="w-full bg-[#0B0F17] border border-slate-700 px-3 py-2 rounded-xl text-white placeholder:text-slate-500 focus:outline-none focus:border-red-500"
+                      className="w-full bg-slate-50 border border-slate-300 px-3 py-2 rounded-xl text-white placeholder:text-slate-400 focus:outline-none focus:border-red-500"
                     />
                   </div>
 
@@ -1050,7 +1050,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
                       <select
                         value={newStaffVehicle}
                         onChange={(e) => setNewStaffVehicle(e.target.value)}
-                        className="w-full bg-[#0B0F17] border border-slate-700 px-3 py-2 rounded-xl text-white focus:outline-none focus:border-red-500"
+                        className="w-full bg-slate-50 border border-slate-300 px-3 py-2 rounded-xl text-slate-900 focus:outline-none focus:border-red-500"
                       >
                         <option value="Cargo Van (High-Roof)">Cargo Van (High-Roof)</option>
                         <option value="Van / SUV">Van / SUV</option>
@@ -1067,7 +1067,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
                         type="text"
                         disabled
                         value="Operations Desk / Dispatch Office"
-                        className="w-full bg-slate-900/60 border border-slate-800 px-3 py-2 rounded-xl text-slate-400 cursor-not-allowed"
+                        className="w-full bg-slate-100 border border-slate-200 px-3 py-2 rounded-xl text-slate-400 cursor-not-allowed"
                       />
                     </div>
                   )}
@@ -1082,7 +1082,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
                         value={newStaffPlate}
                         onChange={(e) => setNewStaffPlate(e.target.value)}
                         placeholder="e.g. ON-FD491"
-                        className="w-full bg-[#0B0F17] border border-slate-700 px-3 py-2 rounded-xl text-white placeholder:text-slate-500 focus:outline-none focus:border-red-500 font-mono"
+                        className="w-full bg-slate-50 border border-slate-300 px-3 py-2 rounded-xl text-white placeholder:text-slate-400 focus:outline-none focus:border-red-500 font-mono"
                       />
                     </div>
                   )}
@@ -1108,7 +1108,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
                         onChange={(e) => setNewStaffPassword(e.target.value)}
                         placeholder="e.g. Flash8391!"
                         required
-                        className="w-full bg-[#0B0F17] border border-slate-700 pl-3 pr-10 py-2 rounded-xl text-white placeholder:text-slate-500 focus:outline-none focus:border-red-500 font-mono"
+                        className="w-full bg-slate-50 border border-slate-300 pl-3 pr-10 py-2 rounded-xl text-white placeholder:text-slate-400 focus:outline-none focus:border-red-500 font-mono"
                       />
                       <button
                         type="button"
@@ -1122,7 +1122,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
                   </div>
                 </div>
 
-                <div className="p-3 bg-slate-900/70 border border-slate-800 rounded-xl flex items-start space-x-2 text-[11px] text-slate-400">
+                <div className="p-3 bg-slate-100/70 border border-slate-200 rounded-xl flex items-start space-x-2 text-[11px] text-slate-600">
                   <Shield className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />
                   <span>
                     <strong>Internal Provisioning Notice:</strong> Employee accounts cannot self-register on the public site. This action will securely create the account in the system, and provide credentials you can hand directly to the staff member.
@@ -1133,7 +1133,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
                   <button
                     type="button"
                     onClick={() => setShowAddStaffModal(false)}
-                    className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-xl font-semibold transition cursor-pointer"
+                    className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 hover:text-slate-900 border border-slate-200 rounded-xl font-semibold transition cursor-pointer"
                   >
                     Cancel
                   </button>
@@ -1160,7 +1160,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
           )}
 
           {/* Staff Roster Filter Pills */}
-          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800/80 pb-3">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-3">
             <div className="flex items-center space-x-2">
               <span className="text-xs font-semibold text-slate-400">Filter Team:</span>
               {[
@@ -1183,8 +1183,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
                   onClick={() => setStaffFilter(pill.id)}
                   className={`px-3 py-1 text-xs font-semibold rounded-lg transition cursor-pointer ${
                     staffFilter === pill.id
-                      ? 'bg-slate-800 text-white border border-slate-700 shadow-sm'
-                      : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/60'
+                      ? 'bg-slate-800 text-white border border-slate-300 shadow-sm'
+                      : 'text-slate-400 hover:text-slate-200 hover:bg-slate-100'
                   }`}
                 >
                   {pill.label}
@@ -1242,23 +1242,23 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
                 return (
                   <div
                     key={drv.id}
-                    className="bg-gradient-to-br from-[#111726] via-[#0E1320] to-[#0A0D15] border border-slate-800 rounded-3xl p-6 space-y-5 shadow-2xl flex flex-col justify-between hover:border-slate-700/80 transition"
+                    className="bg-gradient-to-br from-[#111726] via-[#0E1320] to-[#0A0D15] border border-slate-200 rounded-3xl p-6 space-y-5 shadow-2xl flex flex-col justify-between hover:border-slate-300 transition"
                   >
                     <div className="space-y-4">
                       {/* Top Profile Header */}
-                      <div className="flex items-center justify-between border-b border-slate-800/80 pb-4">
+                      <div className="flex items-center justify-between border-b border-slate-200 pb-4">
                         <div className="flex items-center space-x-3.5">
                           <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-red-600 to-red-800 border border-red-500/30 text-white font-black text-lg flex items-center justify-center font-['Outfit'] shadow-md shadow-red-950/50">
                             {drv.name.charAt(0).toUpperCase()}
                           </div>
                           <div>
                             <div className="flex items-center space-x-2">
-                              <h3 className="font-bold text-white text-base font-['Outfit']">
+                              <h3 className="font-bold text-slate-900 text-base font-['Outfit']">
                                 {drv.name}
                               </h3>
                               {roleBadge}
                             </div>
-                            <div className="flex items-center space-x-2 text-[11px] text-slate-400 mt-0.5">
+                            <div className="flex items-center space-x-2 text-[11px] text-slate-600 mt-0.5">
                               <span>FlashDrop GTA Operations</span>
                               <span>&bull;</span>
                               <span className="font-mono text-slate-500">ID: {drv.id.slice(0, 8)}...</span>
@@ -1271,7 +1271,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
                           className={`text-[10px] font-bold px-2.5 py-1 rounded-full flex items-center space-x-1 ${
                             drv.is_active
                               ? 'bg-emerald-950/80 text-emerald-300 border border-emerald-500/40'
-                              : 'bg-slate-900 text-slate-500 border border-slate-700'
+                              : 'bg-slate-100 text-slate-500 border border-slate-300'
                           }`}
                         >
                           <span className={`w-1.5 h-1.5 rounded-full mr-1.5 ${drv.is_active ? 'bg-emerald-400 animate-pulse' : 'bg-slate-500'}`} />
@@ -1280,7 +1280,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
                       </div>
 
                       {/* Contact & Vehicle Info Bar */}
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-[#07090E]/80 border border-slate-800/80 rounded-2xl p-3.5 text-xs">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-slate-50/80 border border-slate-200 rounded-2xl p-3.5 text-xs">
                         <div className="space-y-1.5">
                           <div className="flex items-center space-x-2 truncate">
                             <Mail className="w-3.5 h-3.5 text-red-400 shrink-0" />
@@ -1304,7 +1304,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
                           </div>
                         </div>
 
-                        <div className="space-y-1.5 border-t sm:border-t-0 sm:border-l border-slate-800/80 pt-2 sm:pt-0 sm:pl-3">
+                        <div className="space-y-1.5 border-t sm:border-t-0 sm:border-l border-slate-200 pt-2 sm:pt-0 sm:pl-3">
                           <div className="flex items-center space-x-2">
                             <Car className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
                             <span className="text-slate-200 font-medium truncate">
@@ -1323,8 +1323,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
                       </div>
 
                       {/* ASSIGNED WORK & DISPATCH STATUS FEED */}
-                      <div className="bg-[#07090E]/90 border border-slate-800/90 rounded-2xl p-4 space-y-3">
-                        <div className="flex items-center justify-between border-b border-slate-800/70 pb-2">
+                      <div className="bg-slate-50/90 border border-slate-200 rounded-2xl p-4 space-y-3">
+                        <div className="flex items-center justify-between border-b border-slate-200/70 pb-2">
                           <div className="flex items-center space-x-2">
                             <Clock className="w-3.5 h-3.5 text-red-400" />
                             <span className="text-xs font-bold text-white uppercase tracking-wider">
@@ -1334,8 +1334,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
                           <div className="flex items-center space-x-2 text-[11px]">
                             <span className={`px-2 py-0.5 rounded-full font-bold ${
                               activeRuns.length > 0
-                                ? 'bg-blue-950 text-blue-300 border border-blue-500/30'
-                                : 'bg-slate-900 text-slate-500 border border-slate-800'
+                                ? 'bg-blue-50 text-blue-800 border border-blue-300'
+                                : 'bg-slate-100 text-slate-500 border border-slate-200'
                             }`}>
                               {activeRuns.length} Active Run{activeRuns.length === 1 ? '' : 's'}
                             </span>
@@ -1347,7 +1347,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
                         </div>
 
                         {activeRuns.length === 0 ? (
-                          <div className="p-4 bg-slate-900/40 border border-slate-800/60 rounded-xl text-center space-y-1">
+                          <div className="p-4 bg-slate-100/40 border border-slate-200 rounded-xl text-center space-y-1">
                             <CheckCircle2 className="w-5 h-5 text-emerald-400/80 mx-auto" />
                             <div className="text-xs font-semibold text-slate-300">
                               No Active Runs Currently Assigned
@@ -1361,11 +1361,11 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
                             {activeRuns.map((run) => (
                               <div
                                 key={run.id}
-                                className="p-3 bg-[#0D121F] border border-slate-800 rounded-xl space-y-2 text-xs hover:border-slate-700 transition"
+                                className="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-2 text-xs hover:border-slate-300 transition"
                               >
                                 <div className="flex items-center justify-between">
                                   <div className="flex items-center space-x-2">
-                                    <span className="font-mono font-bold text-white text-xs">
+                                    <span className="font-mono font-bold text-slate-900 text-xs">
                                       #{run.order_number}
                                     </span>
                                     <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border ${
@@ -1377,7 +1377,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
                                         ? 'bg-purple-950 text-purple-400 border-purple-500/30'
                                         : run.order_status === 'in_transit'
                                         ? 'bg-indigo-950 text-indigo-400 border-indigo-500/30 animate-pulse'
-                                        : 'bg-slate-900 text-slate-300 border-slate-700'
+                                        : 'bg-slate-100 text-slate-300 border-slate-300'
                                     }`}>
                                       {run.order_status.replace(/_/g, ' ')}
                                     </span>
@@ -1387,13 +1387,13 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
                                   </span>
                                 </div>
 
-                                <div className="text-[11px] text-slate-400 leading-relaxed truncate">
+                                <div className="text-[11px] text-slate-600 leading-relaxed truncate">
                                   <span className="text-slate-300 font-medium">Pickup:</span> {run.pickup_address.split(',')[0]}
                                   <span className="text-slate-500 mx-1.5">&rarr;</span>
                                   <span className="text-slate-300 font-medium">Drop:</span> {run.delivery_address.split(',')[0]}
                                 </div>
 
-                                <div className="flex items-center justify-between text-[10px] text-slate-500 pt-1 border-t border-slate-800/60">
+                                <div className="flex items-center justify-between text-[10px] text-slate-500 pt-1 border-t border-slate-200">
                                   <span>
                                     {run.weight_lbs} lbs ({run.quantity} units) &bull; {run.distance_km} km
                                   </span>
@@ -1428,7 +1428,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
                     </div>
 
                     {/* Bottom Action Footer */}
-                    <div className="pt-4 border-t border-slate-800/80 flex flex-wrap items-center justify-between gap-3 text-xs">
+                    <div className="pt-4 border-t border-slate-200 flex flex-wrap items-center justify-between gap-3 text-xs">
                       <div className="flex items-center space-x-3">
                         <button
                           type="button"
@@ -1499,16 +1499,16 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
       {activeTab === 'requests' && (
         <div className="space-y-6">
           <div>
-            <h2 className="text-lg font-bold text-white font-['Outfit']">
+            <h2 className="text-lg font-bold text-slate-900 font-['Outfit']">
               Customer Modification & Cancellation Requests
             </h2>
-            <p className="text-xs text-slate-400">
+            <p className="text-xs text-slate-600">
               Customer change and cancellation submissions awaiting admin approval.
             </p>
           </div>
 
           {requests.length === 0 ? (
-            <div className="bg-[#111726] border border-slate-800 rounded-2xl p-8 text-center text-xs text-slate-400">
+            <div className="bg-white border border-slate-200 rounded-2xl p-8 text-center text-xs text-slate-600">
               No customer requests in queue.
             </div>
           ) : (
@@ -1516,15 +1516,15 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
               {requests.map((req) => (
                 <div
                   key={req.id}
-                  className="bg-[#111726] border border-slate-800 rounded-2xl p-5 shadow space-y-3"
+                  className="bg-white border border-slate-200 rounded-2xl p-5 shadow space-y-3"
                 >
-                  <div className="flex items-center justify-between border-b border-slate-800/80 pb-3">
+                  <div className="flex items-center justify-between border-b border-slate-200 pb-3">
                     <div className="flex items-center space-x-3">
-                      <span className="font-mono font-bold text-white">{req.order_number}</span>
+                      <span className="font-mono font-bold text-slate-900">{req.order_number}</span>
                       <span
                         className={`text-[10px] font-bold uppercase px-2.5 py-0.5 rounded ${
                           req.type === 'cancellation'
-                            ? 'bg-red-950 text-red-400 border border-red-500/30'
+                            ? 'bg-red-50 text-red-700 border border-red-200'
                             : 'bg-cyan-950 text-cyan-400 border border-cyan-500/30'
                         }`}
                       >
@@ -1547,7 +1547,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
                     </span>
                   </div>
 
-                  <div className="text-xs text-slate-300 bg-[#0B0F17] p-3 rounded-xl border border-slate-800">
+                  <div className="text-xs text-slate-300 bg-slate-50 p-3 rounded-xl border border-slate-200">
                     <strong className="text-slate-400 block text-[10px] uppercase font-bold">
                       Customer Reason / Details:
                     </strong>
@@ -1564,7 +1564,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
                           setReviewRequestId(req.id);
                           setReviewResponse(e.target.value);
                         }}
-                        className="bg-[#0B0F17] border border-slate-700 px-3 py-1.5 text-xs text-white rounded-xl w-full sm:w-80 placeholder:text-slate-500 focus:outline-none focus:border-red-500"
+                        className="bg-slate-50 border border-slate-300 px-3 py-1.5 text-xs text-white rounded-xl w-full sm:w-80 placeholder:text-slate-400 focus:outline-none focus:border-red-500"
                       />
                       <div className="flex space-x-2">
                         <button
@@ -1593,7 +1593,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
       {activeTab === 'notifications' && (
         <div className="space-y-6">
           {/* Top Banner & Actions */}
-          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-gradient-to-r from-[#111726] via-[#0E1320] to-[#0A0D15] border border-slate-800 rounded-3xl p-6 shadow-2xl">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-gradient-to-r from-[#111726] via-[#0E1320] to-[#0A0D15] border border-slate-200 rounded-3xl p-6 shadow-2xl">
             <div className="space-y-1">
               <div className="flex items-center space-x-2.5">
                 <h2 className="text-xl font-black text-white font-['Outfit'] tracking-tight">
@@ -1604,7 +1604,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
                   Live Dispatch Active
                 </span>
               </div>
-              <p className="text-xs text-slate-400 max-w-2xl">
+              <p className="text-xs text-slate-600 max-w-2xl">
                 Automatic multi-channel notification engine. Customers receive instant HTML email confirmations & live status updates. Admins receive real-time email waybills and instant SMS text alerts directly on phone <strong>+1 647 804 9775</strong>.
               </p>
             </div>
@@ -1633,7 +1633,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
                 <button
                   type="button"
                   onClick={handleClearNotifications}
-                  className="px-3.5 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white text-xs font-semibold rounded-xl border border-slate-700 transition cursor-pointer"
+                  className="px-3.5 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white text-xs font-semibold rounded-xl border border-slate-300 transition cursor-pointer"
                   title="Clear log history"
                 >
                   Clear Logs
@@ -1659,8 +1659,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
           {/* 3-Channel Overview Cards */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
             {/* Customer Channel Card */}
-            <div className="bg-[#111726] border border-slate-800 rounded-2xl p-5 space-y-2.5 shadow-lg">
-              <div className="flex items-center justify-between border-b border-slate-800/80 pb-2.5">
+            <div className="bg-white border border-slate-200 rounded-2xl p-5 space-y-2.5 shadow-lg">
+              <div className="flex items-center justify-between border-b border-slate-200 pb-2.5">
                 <span className="font-bold text-white text-sm flex items-center">
                   <Mail className="w-4 h-4 text-cyan-400 mr-2" />
                   Customer Channel
@@ -1672,7 +1672,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
               <p className="text-slate-400 text-[11px]">
                 Sent directly to the customer's provided email address (<code className="text-slate-300">order.customer_email</code>).
               </p>
-              <div className="bg-[#0B0F17] p-2.5 rounded-xl border border-slate-800/80 space-y-1 text-[11px]">
+              <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-200 space-y-1 text-[11px]">
                 <div className="text-slate-300">&bull; <strong>Order Confirmation:</strong> Instant waybill & pricing</div>
                 <div className="text-slate-300">&bull; <strong>Live Status Updates:</strong> Driver assigned, picked up, in transit</div>
                 <div className="text-slate-300">&bull; <strong>POD Delivery Notice:</strong> Verified receiver & timestamp</div>
@@ -1680,8 +1680,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
             </div>
 
             {/* Admin Email Channel Card */}
-            <div className="bg-[#111726] border border-slate-800 rounded-2xl p-5 space-y-2.5 shadow-lg">
-              <div className="flex items-center justify-between border-b border-slate-800/80 pb-2.5">
+            <div className="bg-white border border-slate-200 rounded-2xl p-5 space-y-2.5 shadow-lg">
+              <div className="flex items-center justify-between border-b border-slate-200 pb-2.5">
                 <span className="font-bold text-white text-sm flex items-center">
                   <Mail className="w-4 h-4 text-red-400 mr-2" />
                   Admin Email Channel
@@ -1693,7 +1693,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
               <p className="text-slate-400 text-[11px]">
                 Sent to Admin operations desk (<code className="text-slate-300">{settings.email || 'support@flashdropexpress.com'}</code>).
               </p>
-              <div className="bg-[#0B0F17] p-2.5 rounded-xl border border-slate-800/80 space-y-1 text-[11px]">
+              <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-200 space-y-1 text-[11px]">
                 <div className="text-slate-300">&bull; <strong>Urgent Booking Alerts:</strong> Customer details, phone, route</div>
                 <div className="text-slate-300">&bull; <strong>Cargo & Pricing:</strong> Weight, pails, vehicle, total CAD</div>
                 <div className="text-slate-300">&bull; <strong>1-Click Dispatch Link:</strong> Direct link to Admin portal</div>
@@ -1701,8 +1701,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
             </div>
 
             {/* Admin SMS Channel Card */}
-            <div className="bg-[#111726] border border-slate-800 rounded-2xl p-5 space-y-2.5 shadow-lg">
-              <div className="flex items-center justify-between border-b border-slate-800/80 pb-2.5">
+            <div className="bg-white border border-slate-200 rounded-2xl p-5 space-y-2.5 shadow-lg">
+              <div className="flex items-center justify-between border-b border-slate-200 pb-2.5">
                 <span className="font-bold text-white text-sm flex items-center">
                   <Phone className="w-4 h-4 text-emerald-400 mr-2" />
                   Admin SMS Channel
@@ -1714,7 +1714,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
               <p className="text-slate-400 text-[11px]">
                 Sent directly to Admin mobile: <strong className="text-emerald-400 font-mono">+1 647 804 9775</strong>.
               </p>
-              <div className="bg-[#0B0F17] p-2.5 rounded-xl border border-slate-800/80 space-y-1 text-[11px]">
+              <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-200 space-y-1 text-[11px]">
                 <div className="text-slate-300">&bull; <strong>New Order Alert SMS:</strong> Order #, route, amount, customer</div>
                 <div className="text-slate-300">&bull; <strong>Driver Status SMS:</strong> Road courier transitions</div>
                 <div className="text-slate-300">&bull; <strong>Delivered SMS:</strong> Final receiver POD completion</div>
@@ -1723,21 +1723,21 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
           </div>
 
           {/* Live Delivery Provider Setup (Resend & Canadian SMS Gateway) */}
-          <div className="bg-[#0B0F17] border border-slate-800 rounded-2xl p-5 space-y-4 text-xs shadow-xl">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800/80 pb-3">
+          <div className="bg-slate-50 border border-slate-200 rounded-2xl p-5 space-y-4 text-xs shadow-xl">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-200 pb-3">
               <div>
                 <h3 className="font-bold text-white text-sm flex items-center space-x-2">
                   <Key className="w-4 h-4 text-amber-400" />
                   <span>Real Email & SMS Delivery Provider Setup</span>
                 </h3>
-                <p className="text-[11px] text-slate-400 mt-0.5">
+                <p className="text-[11px] text-slate-600 mt-0.5">
                   Connect your 100% Free Resend API Key (3,000 free emails/mo) so customer & admin emails land in real inboxes.
                 </p>
               </div>
               <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
                 settings.resend_api_key
                   ? 'bg-emerald-950 text-emerald-300 border border-emerald-500/40'
-                  : 'bg-amber-950 text-amber-300 border border-amber-500/30'
+                  : 'bg-amber-50 text-amber-800 border border-amber-300'
               }`}>
                 {settings.resend_api_key ? '✓ Resend API Key Active' : 'Simulation Mode (Awaiting Free Key)'}
               </span>
@@ -1754,7 +1754,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
                     placeholder="e.g. re_123456789abcdef..."
                     value={settings.resend_api_key || ''}
                     onChange={(e) => setSettings({ ...settings, resend_api_key: e.target.value })}
-                    className="w-full bg-[#111726] border border-slate-700 px-3 py-2 rounded-xl text-white font-mono focus:outline-none focus:border-red-500"
+                    className="w-full bg-white border border-slate-300 px-3 py-2 rounded-xl text-slate-900 font-mono focus:outline-none focus:border-red-500"
                   />
                   <button
                     type="button"
@@ -1767,7 +1767,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
                     Save Key
                   </button>
                 </div>
-                <div className="flex items-center space-x-2 text-[11px] text-slate-400 mt-1.5">
+                <div className="flex items-center space-x-2 text-[11px] text-slate-600 mt-1.5">
                   <span>Don't have a free key?</span>
                   <a
                     href="https://resend.com/signup"
@@ -1791,7 +1791,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
                     setSettings(updated);
                     store.updateSettings(updated);
                   }}
-                  className="w-full bg-[#111726] border border-slate-700 px-3 py-2 rounded-xl text-white focus:outline-none focus:border-red-500"
+                  className="w-full bg-white border border-slate-300 px-3 py-2 rounded-xl text-slate-900 focus:outline-none focus:border-red-500"
                 >
                   <option value="rogers">Rogers / Fido (6478049775@pcs.rogers.com)</option>
                   <option value="bell">Bell / Virgin (6478049775@txt.bell.ca)</option>
@@ -1806,7 +1806,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
           </div>
 
           {/* Filter Pills */}
-          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800/80 pb-3">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-3">
             <div className="flex items-center space-x-2">
               <span className="text-xs font-semibold text-slate-400">Filter Feed:</span>
               {[
@@ -1830,8 +1830,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
                   onClick={() => setNotifFilter(pill.id)}
                   className={`px-3 py-1 text-xs font-semibold rounded-lg transition cursor-pointer ${
                     notifFilter === pill.id
-                      ? 'bg-slate-800 text-white border border-slate-700 shadow-sm'
-                      : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/60'
+                      ? 'bg-slate-800 text-white border border-slate-300 shadow-sm'
+                      : 'text-slate-400 hover:text-slate-200 hover:bg-slate-100'
                   }`}
                 >
                   {pill.label}
@@ -1845,10 +1845,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
           </div>
 
           {/* Notification Logs Table */}
-          <div className="bg-[#111726] border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
+          <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-xl">
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs text-slate-300">
-                <thead className="bg-[#0B0F17] text-slate-400 uppercase text-[10px] font-bold border-b border-slate-800">
+                <thead className="bg-slate-100 text-slate-700 uppercase text-[10px] font-bold border-b border-slate-200">
                   <tr>
                     <th className="py-3 px-4">Time</th>
                     <th className="py-3 px-4">Recipient</th>
@@ -1860,7 +1860,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
                     <th className="py-3 px-4 text-right">Action</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-800/60">
+                <tbody className="divide-y divide-slate-200/60">
                   {notifications
                     .filter((n) => {
                       if (notifFilter === 'all') return true;
@@ -1870,8 +1870,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
                       return true;
                     })
                     .map((notif) => (
-                      <tr key={notif.id} className="hover:bg-slate-900/40 transition">
-                        <td className="py-3 px-4 font-mono text-[11px] text-slate-400 whitespace-nowrap">
+                      <tr key={notif.id} className="hover:bg-slate-100/40 transition">
+                        <td className="py-3 px-4 font-mono text-[11px] text-slate-600 whitespace-nowrap">
                           {new Date(notif.sent_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                           <span className="text-[10px] text-slate-500 block">
                             {new Date(notif.sent_at).toLocaleDateString([], { month: 'short', day: 'numeric' })}
@@ -1889,8 +1889,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
                         <td className="py-3 px-4">
                           <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase flex items-center space-x-1 w-max ${
                             notif.channel === 'email'
-                              ? 'bg-cyan-950 text-cyan-300 border border-cyan-500/30'
-                              : 'bg-amber-950 text-amber-300 border border-amber-500/30'
+                              ? 'bg-cyan-50 text-cyan-800 border border-cyan-300'
+                              : 'bg-amber-50 text-amber-800 border border-amber-300'
                           }`}>
                             {notif.channel === 'email' ? (
                               <>
@@ -1916,7 +1916,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
                             </span>
                           )}
                         </td>
-                        <td className="py-3 px-4 font-mono font-bold text-white">
+                        <td className="py-3 px-4 font-mono font-bold text-slate-900">
                           #{notif.order_number}
                         </td>
                         <td className="py-3 px-4">
@@ -1936,7 +1936,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
                           <button
                             type="button"
                             onClick={() => setPreviewNotification(notif)}
-                            className="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-lg transition text-[11px] font-semibold cursor-pointer"
+                            className="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 hover:text-slate-900 border border-slate-200 rounded-lg transition text-[11px] font-semibold cursor-pointer"
                           >
                             Preview
                           </button>
@@ -1961,18 +1961,18 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
       {activeTab === 'pricing' && (
         <div className="space-y-6">
           <div>
-            <h2 className="text-lg font-bold text-white font-['Outfit']">
+            <h2 className="text-lg font-bold text-slate-900 font-['Outfit']">
               Quotation Pricing Matrix & Business Rates
             </h2>
-            <p className="text-xs text-slate-400">
+            <p className="text-xs text-slate-600">
               Live configurable rates. Edits take effect immediately on public quote calculators and order form.
             </p>
           </div>
 
-          <div className="bg-[#111726] border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
+          <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-xl">
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs text-slate-300">
-                <thead className="bg-[#0B0F17] text-slate-400 uppercase text-[10px] font-bold border-b border-slate-800">
+                <thead className="bg-slate-100 text-slate-700 uppercase text-[10px] font-bold border-b border-slate-200">
                   <tr>
                     <th className="py-3 px-4">Vehicle Tier</th>
                     <th className="py-3 px-4">Max Weight</th>
@@ -1983,9 +1983,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
                     <th className="py-3 px-4">Over 40 km ($/km)</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-800/60">
+                <tbody className="divide-y divide-slate-200/60">
                   {pricingTiers.map((tier, idx) => (
-                    <tr key={idx} className="hover:bg-slate-900/40">
+                    <tr key={idx} className="hover:bg-slate-100/40">
                       <td className="py-3 px-4 font-semibold text-white">{tier.tierName}</td>
                       <td className="py-3 px-4">{tier.maxWeightLbs} lbs</td>
                       <td className="py-3 px-4">{tier.maxPails} pails</td>
@@ -1994,7 +1994,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
                           type="number"
                           value={tier.rate0to25}
                           onChange={(e) => handleUpdateTierRate(idx, 'rate0to25', Number(e.target.value))}
-                          className="w-16 bg-[#0B0F17] border border-slate-700 px-2 py-1 rounded text-white text-xs"
+                          className="w-16 bg-slate-50 border border-slate-300 px-2 py-1 rounded text-white text-xs"
                         />
                       </td>
                       <td className="py-3 px-4">
@@ -2002,7 +2002,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
                           type="number"
                           value={tier.rate25to40}
                           onChange={(e) => handleUpdateTierRate(idx, 'rate25to40', Number(e.target.value))}
-                          className="w-16 bg-[#0B0F17] border border-slate-700 px-2 py-1 rounded text-white text-xs"
+                          className="w-16 bg-slate-50 border border-slate-300 px-2 py-1 rounded text-white text-xs"
                         />
                       </td>
                       <td className="py-3 px-4">
@@ -2010,7 +2010,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
                           type="number"
                           value={tier.rate40PlusBase}
                           onChange={(e) => handleUpdateTierRate(idx, 'rate40PlusBase', Number(e.target.value))}
-                          className="w-16 bg-[#0B0F17] border border-slate-700 px-2 py-1 rounded text-white text-xs"
+                          className="w-16 bg-slate-50 border border-slate-300 px-2 py-1 rounded text-white text-xs"
                         />
                       </td>
                       <td className="py-3 px-4">
@@ -2019,7 +2019,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
                           step="0.05"
                           value={tier.ratePerKmOver40}
                           onChange={(e) => handleUpdateTierRate(idx, 'ratePerKmOver40', Number(e.target.value))}
-                          className="w-16 bg-[#0B0F17] border border-slate-700 px-2 py-1 rounded text-white text-xs"
+                          className="w-16 bg-slate-50 border border-slate-300 px-2 py-1 rounded text-white text-xs"
                         />
                       </td>
                     </tr>
@@ -2033,12 +2033,12 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
 
       {/* TAB 5: BUSINESS & OPERATING HOURS SETTINGS */}
       {activeTab === 'settings' && (
-        <form onSubmit={handleSaveSettings} className="bg-[#111726] border border-slate-800 rounded-2xl p-6 sm:p-7 space-y-6 shadow-xl max-w-4xl">
-          <div className="border-b border-slate-800 pb-3">
-            <h2 className="text-lg font-bold text-white font-['Outfit']">
+        <form onSubmit={handleSaveSettings} className="bg-white border border-slate-200 rounded-2xl p-6 sm:p-7 space-y-6 shadow-xl max-w-4xl">
+          <div className="border-b border-slate-200 pb-3">
+            <h2 className="text-lg font-bold text-slate-900 font-['Outfit']">
               Configurable Business Rules & Schedule
             </h2>
-            <p className="text-xs text-slate-400 mt-0.5">
+            <p className="text-xs text-slate-600 mt-0.5">
               Adjust hours, after-hours multipliers, surcharges, and HST settings without touching source code.
             </p>
           </div>
@@ -2052,7 +2052,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
                 type="time"
                 value={settings.operating_hours_start}
                 onChange={(e) => setSettings({ ...settings, operating_hours_start: e.target.value })}
-                className="w-full bg-[#0B0F17] border border-slate-700 p-2.5 rounded-xl text-white"
+                className="w-full bg-slate-50 border border-slate-300 p-2.5 rounded-xl text-white"
               />
             </div>
 
@@ -2064,7 +2064,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
                 type="time"
                 value={settings.operating_hours_end}
                 onChange={(e) => setSettings({ ...settings, operating_hours_end: e.target.value })}
-                className="w-full bg-[#0B0F17] border border-slate-700 p-2.5 rounded-xl text-white"
+                className="w-full bg-slate-50 border border-slate-300 p-2.5 rounded-xl text-white"
               />
               <span className="text-[10px] text-slate-500 mt-1 block">
                 Deliveries outside this window trigger the after-hours premium rate.
@@ -2082,7 +2082,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
                 max="3.0"
                 value={settings.after_hours_multiplier}
                 onChange={(e) => setSettings({ ...settings, after_hours_multiplier: Number(e.target.value) })}
-                className="w-full bg-[#0B0F17] border border-slate-700 p-2.5 rounded-xl text-white"
+                className="w-full bg-slate-50 border border-slate-300 p-2.5 rounded-xl text-white"
               />
             </div>
 
@@ -2097,7 +2097,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
                 max="3.0"
                 value={settings.direct_delivery_multiplier ?? 1.25}
                 onChange={(e) => setSettings({ ...settings, direct_delivery_multiplier: Number(e.target.value) })}
-                className="w-full bg-[#0B0F17] border border-slate-700 p-2.5 rounded-xl text-white"
+                className="w-full bg-slate-50 border border-slate-300 p-2.5 rounded-xl text-white"
               />
             </div>
 
@@ -2112,7 +2112,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
                 max="3.0"
                 value={settings.urgent_delivery_multiplier ?? 1.50}
                 onChange={(e) => setSettings({ ...settings, urgent_delivery_multiplier: Number(e.target.value) })}
-                className="w-full bg-[#0B0F17] border border-slate-700 p-2.5 rounded-xl text-white"
+                className="w-full bg-slate-50 border border-slate-300 p-2.5 rounded-xl text-white"
               />
             </div>
 
@@ -2124,7 +2124,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
                 type="number"
                 value={settings.waiting_rate_hourly}
                 onChange={(e) => setSettings({ ...settings, waiting_rate_hourly: Number(e.target.value) })}
-                className="w-full bg-[#0B0F17] border border-slate-700 p-2.5 rounded-xl text-white"
+                className="w-full bg-slate-50 border border-slate-300 p-2.5 rounded-xl text-white"
               />
             </div>
 
@@ -2136,7 +2136,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
                 type="number"
                 value={settings.labor_rate_hourly}
                 onChange={(e) => setSettings({ ...settings, labor_rate_hourly: Number(e.target.value) })}
-                className="w-full bg-[#0B0F17] border border-slate-700 p-2.5 rounded-xl text-white"
+                className="w-full bg-slate-50 border border-slate-300 p-2.5 rounded-xl text-white"
               />
             </div>
 
@@ -2148,7 +2148,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
                 type="number"
                 value={settings.short_redirect_fee}
                 onChange={(e) => setSettings({ ...settings, short_redirect_fee: Number(e.target.value) })}
-                className="w-full bg-[#0B0F17] border border-slate-700 p-2.5 rounded-xl text-white"
+                className="w-full bg-slate-50 border border-slate-300 p-2.5 rounded-xl text-white"
               />
             </div>
 
@@ -2160,7 +2160,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
                 type="text"
                 value={settings.phone}
                 onChange={(e) => setSettings({ ...settings, phone: e.target.value })}
-                className="w-full bg-[#0B0F17] border border-slate-700 p-2.5 rounded-xl text-white"
+                className="w-full bg-slate-50 border border-slate-300 p-2.5 rounded-xl text-white"
               />
             </div>
 
@@ -2172,16 +2172,16 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
                 type="email"
                 value={settings.email}
                 onChange={(e) => setSettings({ ...settings, email: e.target.value })}
-                className="w-full bg-[#0B0F17] border border-slate-700 p-2.5 rounded-xl text-white"
+                className="w-full bg-slate-50 border border-slate-300 p-2.5 rounded-xl text-white"
               />
             </div>
           </div>
 
-          <div className="pt-4 border-t border-slate-800 flex flex-wrap items-center justify-between gap-4">
+          <div className="pt-4 border-t border-slate-200 flex flex-wrap items-center justify-between gap-4">
             <button
               type="button"
               onClick={() => store.resetToFactorySeed()}
-              className="flex items-center space-x-1.5 text-xs text-slate-400 hover:text-white"
+              className="flex items-center space-x-1.5 text-xs text-slate-600 hover:text-white"
             >
               <RefreshCw className="w-3.5 h-3.5" />
               <span>Reset to Default Quotation Matrix</span>
@@ -2208,20 +2208,20 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
 
       {/* EDIT ORDER MODAL */}
       {editingOrder && (
-        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-[#111726] border border-slate-700 rounded-3xl max-w-4xl w-full max-h-[92vh] overflow-y-auto shadow-2xl space-y-5 p-6 text-xs">
+        <div className="fixed inset-0 z-50 bg-slate-100/40 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white border border-slate-300 rounded-3xl max-w-4xl w-full max-h-[92vh] overflow-y-auto shadow-2xl space-y-5 p-6 text-xs">
             {/* Modal Header */}
-            <div className="flex items-center justify-between border-b border-slate-800 pb-4">
+            <div className="flex items-center justify-between border-b border-slate-200 pb-4">
               <div>
                 <div className="flex items-center space-x-3">
-                  <h3 className="text-lg font-bold text-white font-['Outfit']">
+                  <h3 className="text-lg font-bold text-slate-900 font-['Outfit']">
                     Edit Order #{editingOrder.order_number}
                   </h3>
-                  <span className="px-2.5 py-0.5 rounded text-[10px] font-bold uppercase bg-red-950 text-red-300 border border-red-500/30">
+                  <span className="px-2.5 py-0.5 rounded text-[10px] font-bold uppercase bg-red-50 text-red-700 border border-red-200">
                     Dispatch Admin Override
                   </span>
                 </div>
-                <p className="text-slate-400 text-xs mt-0.5">
+                <p className="text-slate-600 text-xs mt-0.5">
                   Update customer information, addresses, cargo manifest, pricing, assignment, and status.
                 </p>
               </div>
@@ -2236,7 +2236,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
 
             <form onSubmit={handleSaveEditOrderSubmit} className="space-y-6">
               {/* Status & Assignment Section */}
-              <div className="bg-[#0B0F17] p-4 rounded-2xl border border-slate-800 space-y-3">
+              <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-3">
                 <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
                   Status & Fleet Assignment
                 </div>
@@ -2246,7 +2246,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
                     <select
                       value={editFormData.order_status || editingOrder.order_status}
                       onChange={(e) => setEditFormData({ ...editFormData, order_status: e.target.value as OrderStatus })}
-                      className="w-full bg-[#111726] border border-slate-700 px-3 py-2 rounded-xl text-white focus:outline-none focus:border-red-500"
+                      className="w-full bg-white border border-slate-300 px-3 py-2 rounded-xl text-slate-900 focus:outline-none focus:border-red-500"
                     >
                       <option value="submitted">Submitted (Quote Requested)</option>
                       <option value="quote_sent">Quote Sent to Client</option>
@@ -2274,7 +2274,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
                           assigned_driver_name: match ? match.name : null,
                         });
                       }}
-                      className="w-full bg-[#111726] border border-slate-700 px-3 py-2 rounded-xl text-white focus:outline-none focus:border-red-500"
+                      className="w-full bg-white border border-slate-300 px-3 py-2 rounded-xl text-slate-900 focus:outline-none focus:border-red-500"
                     >
                       <option value="">-- Unassigned --</option>
                       {drivers.map((d) => (
@@ -2290,7 +2290,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
                     <select
                       value={editFormData.payment_status || editingOrder.payment_status}
                       onChange={(e) => setEditFormData({ ...editFormData, payment_status: e.target.value as any })}
-                      className="w-full bg-[#111726] border border-slate-700 px-3 py-2 rounded-xl text-white focus:outline-none focus:border-red-500"
+                      className="w-full bg-white border border-slate-300 px-3 py-2 rounded-xl text-slate-900 focus:outline-none focus:border-red-500"
                     >
                       <option value="pay_later">Pay Later on Delivery</option>
                       <option value="paid">Paid (Card Online)</option>
@@ -2303,7 +2303,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
               </div>
 
               {/* Customer Info Section */}
-              <div className="bg-[#0B0F17] p-4 rounded-2xl border border-slate-800 space-y-3">
+              <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-3">
                 <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
                   Customer & Billing Account Details
                 </div>
@@ -2315,7 +2315,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
                       value={editFormData.customer_name ?? editingOrder.customer_name}
                       onChange={(e) => setEditFormData({ ...editFormData, customer_name: e.target.value })}
                       required
-                      className="w-full bg-[#111726] border border-slate-700 px-3 py-2 rounded-xl text-white focus:outline-none focus:border-red-500"
+                      className="w-full bg-white border border-slate-300 px-3 py-2 rounded-xl text-slate-900 focus:outline-none focus:border-red-500"
                     />
                   </div>
                   <div>
@@ -2324,7 +2324,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
                       type="text"
                       value={editFormData.company_name ?? (editingOrder.company_name || '')}
                       onChange={(e) => setEditFormData({ ...editFormData, company_name: e.target.value })}
-                      className="w-full bg-[#111726] border border-slate-700 px-3 py-2 rounded-xl text-white focus:outline-none focus:border-red-500"
+                      className="w-full bg-white border border-slate-300 px-3 py-2 rounded-xl text-slate-900 focus:outline-none focus:border-red-500"
                     />
                   </div>
                   <div>
@@ -2334,7 +2334,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
                       value={editFormData.customer_phone ?? editingOrder.customer_phone}
                       onChange={(e) => setEditFormData({ ...editFormData, customer_phone: e.target.value })}
                       required
-                      className="w-full bg-[#111726] border border-slate-700 px-3 py-2 rounded-xl text-white focus:outline-none focus:border-red-500"
+                      className="w-full bg-white border border-slate-300 px-3 py-2 rounded-xl text-slate-900 focus:outline-none focus:border-red-500"
                     />
                   </div>
                   <div>
@@ -2344,14 +2344,14 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
                       value={editFormData.customer_email ?? editingOrder.customer_email}
                       onChange={(e) => setEditFormData({ ...editFormData, customer_email: e.target.value })}
                       required
-                      className="w-full bg-[#111726] border border-slate-700 px-3 py-2 rounded-xl text-white focus:outline-none focus:border-red-500"
+                      className="w-full bg-white border border-slate-300 px-3 py-2 rounded-xl text-slate-900 focus:outline-none focus:border-red-500"
                     />
                   </div>
                 </div>
               </div>
 
               {/* Pickup Location & Details */}
-              <div className="bg-[#0B0F17] p-4 rounded-2xl border border-slate-800 space-y-3">
+              <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-3">
                 <div className="text-[11px] font-bold uppercase tracking-wider text-red-400 flex items-center space-x-1.5">
                   <MapPin className="w-3.5 h-3.5" />
                   <span>Pickup Location & Shipper Contact</span>
@@ -2364,7 +2364,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
                       value={editFormData.pickup_address ?? editingOrder.pickup_address}
                       onChange={(e) => setEditFormData({ ...editFormData, pickup_address: e.target.value })}
                       required
-                      className="w-full bg-[#111726] border border-slate-700 px-3 py-2 rounded-xl text-white focus:outline-none focus:border-red-500"
+                      className="w-full bg-white border border-slate-300 px-3 py-2 rounded-xl text-slate-900 focus:outline-none focus:border-red-500"
                     />
                   </div>
                   <div>
@@ -2374,7 +2374,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
                       value={editFormData.pickup_unit ?? (editingOrder.pickup_unit || '')}
                       onChange={(e) => setEditFormData({ ...editFormData, pickup_unit: e.target.value })}
                       placeholder="e.g. Dock 4"
-                      className="w-full bg-[#111726] border border-slate-700 px-3 py-2 rounded-xl text-white focus:outline-none focus:border-red-500"
+                      className="w-full bg-white border border-slate-300 px-3 py-2 rounded-xl text-slate-900 focus:outline-none focus:border-red-500"
                     />
                   </div>
                 </div>
@@ -2385,7 +2385,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
                       type="text"
                       value={editFormData.pickup_contact_name ?? (editingOrder.pickup_contact_name || '')}
                       onChange={(e) => setEditFormData({ ...editFormData, pickup_contact_name: e.target.value })}
-                      className="w-full bg-[#111726] border border-slate-700 px-3 py-2 rounded-xl text-white focus:outline-none focus:border-red-500"
+                      className="w-full bg-white border border-slate-300 px-3 py-2 rounded-xl text-slate-900 focus:outline-none focus:border-red-500"
                     />
                   </div>
                   <div>
@@ -2394,7 +2394,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
                       type="tel"
                       value={editFormData.pickup_contact_phone ?? (editingOrder.pickup_contact_phone || '')}
                       onChange={(e) => setEditFormData({ ...editFormData, pickup_contact_phone: e.target.value })}
-                      className="w-full bg-[#111726] border border-slate-700 px-3 py-2 rounded-xl text-white focus:outline-none focus:border-red-500"
+                      className="w-full bg-white border border-slate-300 px-3 py-2 rounded-xl text-slate-900 focus:outline-none focus:border-red-500"
                     />
                   </div>
                   <div>
@@ -2403,7 +2403,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
                       type="date"
                       value={editFormData.pickup_date ?? editingOrder.pickup_date}
                       onChange={(e) => setEditFormData({ ...editFormData, pickup_date: e.target.value })}
-                      className="w-full bg-[#111726] border border-slate-700 px-3 py-2 rounded-xl text-white focus:outline-none focus:border-red-500"
+                      className="w-full bg-white border border-slate-300 px-3 py-2 rounded-xl text-slate-900 focus:outline-none focus:border-red-500"
                     />
                   </div>
                   <div>
@@ -2412,7 +2412,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
                       type="time"
                       value={editFormData.pickup_time ?? editingOrder.pickup_time}
                       onChange={(e) => setEditFormData({ ...editFormData, pickup_time: e.target.value })}
-                      className="w-full bg-[#111726] border border-slate-700 px-3 py-2 rounded-xl text-white focus:outline-none focus:border-red-500"
+                      className="w-full bg-white border border-slate-300 px-3 py-2 rounded-xl text-slate-900 focus:outline-none focus:border-red-500"
                     />
                   </div>
                 </div>
@@ -2423,13 +2423,13 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
                     value={editFormData.pickup_notes ?? (editingOrder.pickup_notes || '')}
                     onChange={(e) => setEditFormData({ ...editFormData, pickup_notes: e.target.value })}
                     placeholder="Gate instructions, buzz codes, or warehouse bay numbers"
-                    className="w-full bg-[#111726] border border-slate-700 px-3 py-2 rounded-xl text-white focus:outline-none focus:border-red-500"
+                    className="w-full bg-white border border-slate-300 px-3 py-2 rounded-xl text-slate-900 focus:outline-none focus:border-red-500"
                   />
                 </div>
               </div>
 
               {/* Delivery Location & Details */}
-              <div className="bg-[#0B0F17] p-4 rounded-2xl border border-slate-800 space-y-3">
+              <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-3">
                 <div className="text-[11px] font-bold uppercase tracking-wider text-emerald-400 flex items-center space-x-1.5">
                   <MapPin className="w-3.5 h-3.5" />
                   <span>Delivery Destination & Consignee Contact</span>
@@ -2442,7 +2442,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
                       value={editFormData.delivery_address ?? editingOrder.delivery_address}
                       onChange={(e) => setEditFormData({ ...editFormData, delivery_address: e.target.value })}
                       required
-                      className="w-full bg-[#111726] border border-slate-700 px-3 py-2 rounded-xl text-white focus:outline-none focus:border-red-500"
+                      className="w-full bg-white border border-slate-300 px-3 py-2 rounded-xl text-slate-900 focus:outline-none focus:border-red-500"
                     />
                   </div>
                   <div>
@@ -2452,7 +2452,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
                       value={editFormData.delivery_unit ?? (editingOrder.delivery_unit || '')}
                       onChange={(e) => setEditFormData({ ...editFormData, delivery_unit: e.target.value })}
                       placeholder="e.g. Suite 204"
-                      className="w-full bg-[#111726] border border-slate-700 px-3 py-2 rounded-xl text-white focus:outline-none focus:border-red-500"
+                      className="w-full bg-white border border-slate-300 px-3 py-2 rounded-xl text-slate-900 focus:outline-none focus:border-red-500"
                     />
                   </div>
                 </div>
@@ -2463,7 +2463,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
                       type="text"
                       value={editFormData.delivery_contact_name ?? (editingOrder.delivery_contact_name || '')}
                       onChange={(e) => setEditFormData({ ...editFormData, delivery_contact_name: e.target.value })}
-                      className="w-full bg-[#111726] border border-slate-700 px-3 py-2 rounded-xl text-white focus:outline-none focus:border-red-500"
+                      className="w-full bg-white border border-slate-300 px-3 py-2 rounded-xl text-slate-900 focus:outline-none focus:border-red-500"
                     />
                   </div>
                   <div>
@@ -2472,7 +2472,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
                       type="tel"
                       value={editFormData.delivery_contact_phone ?? (editingOrder.delivery_contact_phone || '')}
                       onChange={(e) => setEditFormData({ ...editFormData, delivery_contact_phone: e.target.value })}
-                      className="w-full bg-[#111726] border border-slate-700 px-3 py-2 rounded-xl text-white focus:outline-none focus:border-red-500"
+                      className="w-full bg-white border border-slate-300 px-3 py-2 rounded-xl text-slate-900 focus:outline-none focus:border-red-500"
                     />
                   </div>
                   <div>
@@ -2480,7 +2480,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
                     <select
                       value={editFormData.delivery_time_option || editingOrder.delivery_time_option}
                       onChange={(e) => setEditFormData({ ...editFormData, delivery_time_option: e.target.value as any })}
-                      className="w-full bg-[#111726] border border-slate-700 px-3 py-2 rounded-xl text-white focus:outline-none focus:border-red-500"
+                      className="w-full bg-white border border-slate-300 px-3 py-2 rounded-xl text-slate-900 focus:outline-none focus:border-red-500"
                     >
                       <option value="standard">1) Standard / Same day delivery (1.00×)</option>
                       <option value="direct">2) On demand / Direct Delivery (1.25×)</option>
@@ -2500,13 +2500,13 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
                     value={editFormData.delivery_notes ?? (editingOrder.delivery_notes || '')}
                     onChange={(e) => setEditFormData({ ...editFormData, delivery_notes: e.target.value })}
                     placeholder="Specific drop instructions, freight elevator, security desk check-in"
-                    className="w-full bg-[#111726] border border-slate-700 px-3 py-2 rounded-xl text-white focus:outline-none focus:border-red-500"
+                    className="w-full bg-white border border-slate-300 px-3 py-2 rounded-xl text-slate-900 focus:outline-none focus:border-red-500"
                   />
                 </div>
               </div>
 
               {/* Cargo & Fleet Specs */}
-              <div className="bg-[#0B0F17] p-4 rounded-2xl border border-slate-800 space-y-3">
+              <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-3">
                 <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400 flex items-center space-x-1.5">
                   <Package className="w-3.5 h-3.5 text-cyan-400" />
                   <span>Cargo Manifest & Vehicle Specifications</span>
@@ -2518,7 +2518,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
                       type="text"
                       value={editFormData.vehicle_name ?? editingOrder.vehicle_name}
                       onChange={(e) => setEditFormData({ ...editFormData, vehicle_name: e.target.value })}
-                      className="w-full bg-[#111726] border border-slate-700 px-3 py-2 rounded-xl text-white focus:outline-none focus:border-red-500"
+                      className="w-full bg-white border border-slate-300 px-3 py-2 rounded-xl text-slate-900 focus:outline-none focus:border-red-500"
                     />
                   </div>
                   <div>
@@ -2526,7 +2526,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
                     <select
                       value={editFormData.item_type || editingOrder.item_type}
                       onChange={(e) => setEditFormData({ ...editFormData, item_type: e.target.value as any })}
-                      className="w-full bg-[#111726] border border-slate-700 px-3 py-2 rounded-xl text-white focus:outline-none focus:border-red-500"
+                      className="w-full bg-white border border-slate-300 px-3 py-2 rounded-xl text-slate-900 focus:outline-none focus:border-red-500"
                     >
                       <option value="paint_pails">Paint Pails</option>
                       <option value="furniture">Furniture / Bulk</option>
@@ -2542,7 +2542,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
                       type="number"
                       value={editFormData.weight_lbs ?? editingOrder.weight_lbs}
                       onChange={(e) => setEditFormData({ ...editFormData, weight_lbs: Number(e.target.value) })}
-                      className="w-full bg-[#111726] border border-slate-700 px-3 py-2 rounded-xl text-white focus:outline-none focus:border-red-500"
+                      className="w-full bg-white border border-slate-300 px-3 py-2 rounded-xl text-slate-900 focus:outline-none focus:border-red-500"
                     />
                   </div>
                   <div>
@@ -2551,7 +2551,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
                       type="number"
                       value={editFormData.quantity ?? editingOrder.quantity}
                       onChange={(e) => setEditFormData({ ...editFormData, quantity: Number(e.target.value) })}
-                      className="w-full bg-[#111726] border border-slate-700 px-3 py-2 rounded-xl text-white focus:outline-none focus:border-red-500"
+                      className="w-full bg-white border border-slate-300 px-3 py-2 rounded-xl text-slate-900 focus:outline-none focus:border-red-500"
                     />
                   </div>
                 </div>
@@ -2561,7 +2561,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
                     type="text"
                     value={editFormData.item_description ?? (editingOrder.item_description || '')}
                     onChange={(e) => setEditFormData({ ...editFormData, item_description: e.target.value })}
-                    className="w-full bg-[#111726] border border-slate-700 px-3 py-2 rounded-xl text-white focus:outline-none focus:border-red-500"
+                    className="w-full bg-white border border-slate-300 px-3 py-2 rounded-xl text-slate-900 focus:outline-none focus:border-red-500"
                   />
                 </div>
                 <div>
@@ -2570,13 +2570,13 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
                     type="text"
                     value={editFormData.custom_instructions ?? (editingOrder.custom_instructions || '')}
                     onChange={(e) => setEditFormData({ ...editFormData, custom_instructions: e.target.value })}
-                    className="w-full bg-[#111726] border border-slate-700 px-3 py-2 rounded-xl text-white focus:outline-none focus:border-red-500"
+                    className="w-full bg-white border border-slate-300 px-3 py-2 rounded-xl text-slate-900 focus:outline-none focus:border-red-500"
                   />
                 </div>
               </div>
 
               {/* Financials & Price Breakdown */}
-              <div className="bg-[#0B0F17] p-4 rounded-2xl border border-slate-800 space-y-3">
+              <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-3">
                 <div className="text-[11px] font-bold uppercase tracking-wider text-emerald-400 flex items-center space-x-1.5">
                   <DollarSign className="w-3.5 h-3.5" />
                   <span>Financial Breakdown & Pricing (CAD)</span>
@@ -2589,7 +2589,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
                       step="0.01"
                       value={editFormData.base_price ?? editingOrder.base_price}
                       onChange={(e) => setEditFormData({ ...editFormData, base_price: Number(e.target.value) })}
-                      className="w-full bg-[#111726] border border-slate-700 px-3 py-2 rounded-xl text-white focus:outline-none focus:border-red-500"
+                      className="w-full bg-white border border-slate-300 px-3 py-2 rounded-xl text-slate-900 focus:outline-none focus:border-red-500"
                     />
                   </div>
                   <div>
@@ -2599,7 +2599,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
                       step="0.01"
                       value={editFormData.excess_km_charge ?? (editingOrder.excess_km_charge || 0)}
                       onChange={(e) => setEditFormData({ ...editFormData, excess_km_charge: Number(e.target.value) })}
-                      className="w-full bg-[#111726] border border-slate-700 px-3 py-2 rounded-xl text-white focus:outline-none focus:border-red-500"
+                      className="w-full bg-white border border-slate-300 px-3 py-2 rounded-xl text-slate-900 focus:outline-none focus:border-red-500"
                     />
                   </div>
                   <div>
@@ -2609,7 +2609,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
                       step="0.01"
                       value={editFormData.after_hours_charge ?? (editingOrder.after_hours_charge || 0)}
                       onChange={(e) => setEditFormData({ ...editFormData, after_hours_charge: Number(e.target.value) })}
-                      className="w-full bg-[#111726] border border-slate-700 px-3 py-2 rounded-xl text-white focus:outline-none focus:border-red-500"
+                      className="w-full bg-white border border-slate-300 px-3 py-2 rounded-xl text-slate-900 focus:outline-none focus:border-red-500"
                     />
                   </div>
                   <div>
@@ -2637,7 +2637,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
               </div>
 
               {/* Form Buttons */}
-              <div className="pt-2 border-t border-slate-800 flex items-center justify-between">
+              <div className="pt-2 border-t border-slate-200 flex items-center justify-between">
                 <button
                   type="button"
                   onClick={() => {
@@ -2688,18 +2688,18 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
 
       {/* NOTIFICATION PREVIEW MODAL */}
       {previewNotification && (
-        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-[#111726] border border-slate-700 rounded-3xl max-w-2xl w-full max-h-[92vh] overflow-y-auto shadow-2xl p-6 space-y-4 text-xs">
-            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+        <div className="fixed inset-0 z-50 bg-slate-100/40 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white border border-slate-300 rounded-3xl max-w-2xl w-full max-h-[92vh] overflow-y-auto shadow-2xl p-6 space-y-4 text-xs">
+            <div className="flex items-center justify-between border-b border-slate-200 pb-3">
               <div className="flex items-center space-x-3">
                 <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase ${
                   previewNotification.channel === 'email'
-                    ? 'bg-cyan-950 text-cyan-300 border border-cyan-500/30'
-                    : 'bg-amber-950 text-amber-300 border border-amber-500/30'
+                    ? 'bg-cyan-50 text-cyan-800 border border-cyan-300'
+                    : 'bg-amber-50 text-amber-800 border border-amber-300'
                 }`}>
                   {previewNotification.channel.toUpperCase()} DISPATCH
                 </span>
-                <span className="font-mono text-slate-400 text-xs">
+                <span className="font-mono text-slate-600 text-xs">
                   Order #{previewNotification.order_number}
                 </span>
               </div>
@@ -2713,7 +2713,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
             </div>
 
             {/* Notification Meta */}
-            <div className="bg-[#0B0F17] p-3.5 rounded-2xl border border-slate-800 space-y-1.5 text-[11px]">
+            <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-200 space-y-1.5 text-[11px]">
               <div className="flex items-center justify-between">
                 <span className="text-slate-400">Recipient:</span>
                 <span className="text-white font-bold capitalize">{previewNotification.recipient_type}</span>
@@ -2740,7 +2740,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
                 <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
                   Mobile SMS Text Screen (+1 647 804 9775)
                 </span>
-                <div className="bg-[#07090E] border-2 border-emerald-500/40 rounded-2xl p-4 text-emerald-300 font-mono text-xs leading-relaxed shadow-inner">
+                <div className="bg-slate-50 border-2 border-emerald-500/40 rounded-2xl p-4 text-emerald-300 font-mono text-xs leading-relaxed shadow-inner">
                   {previewNotification.message}
                 </div>
               </div>
@@ -2750,13 +2750,13 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
                   HTML Email Render Preview
                 </span>
                 <div
-                  className="bg-[#07090E] border border-slate-800 rounded-2xl p-4 max-h-96 overflow-y-auto"
+                  className="bg-slate-50 border border-slate-200 rounded-2xl p-4 max-h-96 overflow-y-auto"
                   dangerouslySetInnerHTML={{ __html: previewNotification.html_body || previewNotification.message }}
                 />
               </div>
             )}
 
-            <div className="flex justify-end pt-2 border-t border-slate-800">
+            <div className="flex justify-end pt-2 border-t border-slate-200">
               <button
                 type="button"
                 onClick={() => setPreviewNotification(null)}
@@ -2771,18 +2771,18 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
 
       {/* STAFF FULL PROFILE MODAL */}
       {viewingStaffProfile && (
-        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-[#111726] border border-slate-700 rounded-3xl max-w-xl w-full max-h-[90vh] overflow-y-auto shadow-2xl p-6 space-y-6 text-xs">
-            <div className="flex items-center justify-between border-b border-slate-800 pb-4">
+        <div className="fixed inset-0 z-50 bg-slate-100/40 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white border border-slate-300 rounded-3xl max-w-xl w-full max-h-[90vh] overflow-y-auto shadow-2xl p-6 space-y-6 text-xs">
+            <div className="flex items-center justify-between border-b border-slate-200 pb-4">
               <div className="flex items-center space-x-3">
                 <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-red-600 to-red-800 flex items-center justify-center text-white font-black text-xl font-['Outfit']">
                   {viewingStaffProfile.name.charAt(0).toUpperCase()}
                 </div>
                 <div>
-                  <h3 className="text-lg font-bold text-white font-['Outfit']">
+                  <h3 className="text-lg font-bold text-slate-900 font-['Outfit']">
                     {viewingStaffProfile.name}
                   </h3>
-                  <span className="text-[11px] text-slate-400 capitalize">
+                  <span className="text-[11px] text-slate-600 capitalize">
                     {viewingStaffProfile.staff_role === 'admin'
                       ? 'System Administrator'
                       : viewingStaffProfile.staff_role === 'dispatcher'
@@ -2815,15 +2815,15 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
 
                 return (
                   <>
-                    <div className="bg-[#0B0F17] p-3 rounded-xl border border-slate-800">
+                    <div className="bg-slate-50 p-3 rounded-xl border border-slate-200">
                       <span className="text-slate-400 text-[10px] uppercase font-bold block">Total Jobs</span>
                       <span className="text-lg font-black text-white">{myOrders.length}</span>
                     </div>
-                    <div className="bg-[#0B0F17] p-3 rounded-xl border border-slate-800">
+                    <div className="bg-slate-50 p-3 rounded-xl border border-slate-200">
                       <span className="text-blue-400 text-[10px] uppercase font-bold block">Active Runs</span>
                       <span className="text-lg font-black text-blue-400">{active}</span>
                     </div>
-                    <div className="bg-[#0B0F17] p-3 rounded-xl border border-slate-800">
+                    <div className="bg-slate-50 p-3 rounded-xl border border-slate-200">
                       <span className="text-emerald-400 text-[10px] uppercase font-bold block">Delivered</span>
                       <span className="text-lg font-black text-emerald-400">{completed}</span>
                     </div>
@@ -2833,30 +2833,30 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
             </div>
 
             {/* Full Profile Details List */}
-            <div className="bg-[#0B0F17] p-4 rounded-2xl border border-slate-800 space-y-3">
-              <div className="flex items-center justify-between border-b border-slate-800/60 pb-2">
+            <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-3">
+              <div className="flex items-center justify-between border-b border-slate-200 pb-2">
                 <span className="text-slate-400 font-semibold">Login Email</span>
                 <a href={`mailto:${viewingStaffProfile.email}`} className="text-cyan-400 hover:underline font-semibold">
                   {viewingStaffProfile.email}
                 </a>
               </div>
-              <div className="flex items-center justify-between border-b border-slate-800/60 pb-2">
+              <div className="flex items-center justify-between border-b border-slate-200 pb-2">
                 <span className="text-slate-400 font-semibold">Direct Phone</span>
                 <a href={`tel:${viewingStaffProfile.phone}`} className="text-emerald-400 hover:underline font-semibold">
                   {viewingStaffProfile.phone}
                 </a>
               </div>
-              <div className="flex items-center justify-between border-b border-slate-800/60 pb-2">
+              <div className="flex items-center justify-between border-b border-slate-200 pb-2">
                 <span className="text-slate-400 font-semibold">Assigned Vehicle</span>
                 <span className="text-white font-medium">{viewingStaffProfile.vehicle_type}</span>
               </div>
-              <div className="flex items-center justify-between border-b border-slate-800/60 pb-2">
+              <div className="flex items-center justify-between border-b border-slate-200 pb-2">
                 <span className="text-slate-400 font-semibold">License Plate</span>
                 <span className="font-mono text-amber-300 font-bold bg-amber-950/60 px-2 py-0.5 rounded border border-amber-500/20">
                   {viewingStaffProfile.license_plate || 'ON-FLEET'}
                 </span>
               </div>
-              <div className="flex items-center justify-between border-b border-slate-800/60 pb-2">
+              <div className="flex items-center justify-between border-b border-slate-200 pb-2">
                 <span className="text-slate-400 font-semibold">Current Shift Status</span>
                 <span className={`font-bold ${viewingStaffProfile.is_active ? 'text-emerald-400' : 'text-slate-500'}`}>
                   {viewingStaffProfile.is_active ? 'Active & On Duty' : 'Shift Suspended'}
@@ -2870,7 +2870,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
               </div>
             </div>
 
-            <div className="flex justify-end pt-2 border-t border-slate-800">
+            <div className="flex justify-end pt-2 border-t border-slate-200">
               <button
                 type="button"
                 onClick={() => setViewingStaffProfile(null)}
@@ -2885,17 +2885,17 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
 
       {/* REVIEW & SEND PRICE QUOTE MODAL */}
       {reviewingQuoteOrder && (
-        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-[#111726] border border-slate-700 rounded-3xl max-w-3xl w-full max-h-[92vh] overflow-y-auto shadow-2xl space-y-5 p-6 text-xs">
+        <div className="fixed inset-0 z-50 bg-slate-100/40 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white border border-slate-300 rounded-3xl max-w-3xl w-full max-h-[92vh] overflow-y-auto shadow-2xl space-y-5 p-6 text-xs">
             {/* Modal Header */}
-            <div className="flex items-center justify-between border-b border-slate-800 pb-4">
+            <div className="flex items-center justify-between border-b border-slate-200 pb-4">
               <div className="flex items-center space-x-3">
                 <div className="w-10 h-10 rounded-xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400">
                   <DollarSign className="w-5 h-5" />
                 </div>
                 <div>
                   <div className="flex items-center space-x-2.5">
-                    <h3 className="text-lg font-bold text-white font-['Outfit']">
+                    <h3 className="text-lg font-bold text-slate-900 font-['Outfit']">
                       Review & Dispatch Price Quote
                     </h3>
                     <span className="font-mono text-sm font-black text-amber-400">
@@ -2903,15 +2903,15 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
                     </span>
                     <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
                       reviewingQuoteOrder.order_status === 'submitted'
-                        ? 'bg-amber-950 text-amber-300 border border-amber-500/40'
+                        ? 'bg-amber-50 text-amber-800 border border-amber-300'
                         : reviewingQuoteOrder.order_status === 'quote_sent'
-                        ? 'bg-purple-950 text-purple-300 border border-purple-500/40'
-                        : 'bg-slate-800 text-slate-300 border border-slate-700'
+                        ? 'bg-purple-50 text-purple-800 border border-purple-300'
+                        : 'bg-slate-800 text-slate-300 border border-slate-300'
                     }`}>
                       {reviewingQuoteOrder.order_status === 'submitted' ? 'Quote Requested' : reviewingQuoteOrder.order_status.replace(/_/g, ' ')}
                     </span>
                   </div>
-                  <p className="text-slate-400 text-xs mt-0.5">
+                  <p className="text-slate-600 text-xs mt-0.5">
                     Verify route, weight, and vehicle requirements. Adjust rates and dispatch the official binding quote to customer.
                   </p>
                 </div>
@@ -2934,7 +2934,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
             )}
 
             {/* Route & Cargo Specifications Summary */}
-            <div className="bg-[#0B0F17] p-4 rounded-2xl border border-slate-800 space-y-3">
+            <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-3">
               <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400 flex items-center justify-between">
                 <div className="flex items-center space-x-2">
                   <Package className="w-3.5 h-3.5 text-cyan-400" />
@@ -2945,7 +2945,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
                 </span>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs bg-slate-900/50 p-3 rounded-xl border border-slate-800/80">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs bg-slate-100 p-3 rounded-xl border border-slate-200">
                 <div>
                   <span className="text-[10px] uppercase font-bold text-red-400 block mb-0.5">Pickup Location</span>
                   <div className="text-white font-medium">{reviewingQuoteOrder.pickup_address}</div>
@@ -2995,19 +2995,19 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
 
               {/* Cargo & Vehicle Details */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-[11px]">
-                <div className="bg-[#111726] p-2.5 rounded-xl border border-slate-800">
+                <div className="bg-white p-2.5 rounded-xl border border-slate-200">
                   <span className="text-slate-400 block text-[10px]">Vehicle Required</span>
                   <span className="font-bold text-white">{reviewingQuoteOrder.vehicle_name}</span>
                 </div>
-                <div className="bg-[#111726] p-2.5 rounded-xl border border-slate-800">
+                <div className="bg-white p-2.5 rounded-xl border border-slate-200">
                   <span className="text-slate-400 block text-[10px]">Total Weight</span>
                   <span className="font-bold text-white">{reviewingQuoteOrder.weight_lbs} lbs</span>
                 </div>
-                <div className="bg-[#111726] p-2.5 rounded-xl border border-slate-800">
+                <div className="bg-white p-2.5 rounded-xl border border-slate-200">
                   <span className="text-slate-400 block text-[10px]">Units / Pails</span>
                   <span className="font-bold text-white">{reviewingQuoteOrder.quantity} units</span>
                 </div>
-                <div className="bg-[#111726] p-2.5 rounded-xl border border-slate-800">
+                <div className="bg-white p-2.5 rounded-xl border border-slate-200">
                   <span className="text-slate-400 block text-[10px]">Cargo Classification</span>
                   <span className="font-bold text-white">{reviewingQuoteOrder.item_description || reviewingQuoteOrder.item_type}</span>
                 </div>
@@ -3021,7 +3021,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
             </div>
 
             {/* Price Quote Calculation & Adjustment */}
-            <div className="bg-[#0B0F17] p-4 rounded-2xl border border-slate-800 space-y-4">
+            <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-4">
               <div className="text-[11px] font-bold uppercase tracking-wider text-emerald-400 flex items-center justify-between">
                 <div className="flex items-center space-x-2">
                   <DollarSign className="w-3.5 h-3.5 text-emerald-400" />
@@ -3038,7 +3038,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
                     step="0.01"
                     value={quoteFormData.base_price}
                     onChange={(e) => handleRecalculateQuoteTotals({ base_price: Number(e.target.value) })}
-                    className="w-full bg-[#111726] border border-slate-700 px-3 py-2 rounded-xl text-white font-mono focus:outline-none focus:border-red-500"
+                    className="w-full bg-white border border-slate-300 px-3 py-2 rounded-xl text-slate-900 font-mono focus:outline-none focus:border-red-500"
                   />
                   <span className="text-[9px] text-slate-500 block mt-0.5">Base vehicle run fee</span>
                 </div>
@@ -3050,7 +3050,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
                     step="0.01"
                     value={quoteFormData.excess_km_charge}
                     onChange={(e) => handleRecalculateQuoteTotals({ excess_km_charge: Number(e.target.value) })}
-                    className="w-full bg-[#111726] border border-slate-700 px-3 py-2 rounded-xl text-white font-mono focus:outline-none focus:border-red-500"
+                    className="w-full bg-white border border-slate-300 px-3 py-2 rounded-xl text-slate-900 font-mono focus:outline-none focus:border-red-500"
                   />
                   <span className="text-[9px] text-slate-500 block mt-0.5">Kilometer mileage fee</span>
                 </div>
@@ -3062,7 +3062,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
                     step="0.01"
                     value={quoteFormData.urgency_surcharge}
                     onChange={(e) => handleRecalculateQuoteTotals({ urgency_surcharge: Number(e.target.value) })}
-                    className="w-full bg-[#111726] border border-slate-700 px-3 py-2 rounded-xl text-white font-mono focus:outline-none focus:border-red-500"
+                    className="w-full bg-white border border-slate-300 px-3 py-2 rounded-xl text-slate-900 font-mono focus:outline-none focus:border-red-500"
                   />
                   <span className="text-[9px] text-slate-500 block mt-0.5">Direct / ASAP tier fee</span>
                 </div>
@@ -3074,7 +3074,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
                     step="0.01"
                     value={quoteFormData.after_hours_charge}
                     onChange={(e) => handleRecalculateQuoteTotals({ after_hours_charge: Number(e.target.value) })}
-                    className="w-full bg-[#111726] border border-slate-700 px-3 py-2 rounded-xl text-white font-mono focus:outline-none focus:border-red-500"
+                    className="w-full bg-white border border-slate-300 px-3 py-2 rounded-xl text-slate-900 font-mono focus:outline-none focus:border-red-500"
                   />
                   <span className="text-[9px] text-slate-500 block mt-0.5">Special access / off-hours</span>
                 </div>
@@ -3082,14 +3082,14 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
 
               {/* Subtotal, Tax & Total Live Cards */}
               <div className="grid grid-cols-3 gap-3 pt-2">
-                <div className="bg-[#111726] p-3 rounded-xl border border-slate-800 text-center">
+                <div className="bg-white p-3 rounded-xl border border-slate-200 text-center">
                   <span className="text-slate-400 text-[10px] uppercase font-bold block">Subtotal</span>
-                  <span className="text-base font-black text-white font-mono">${quoteFormData.subtotal.toFixed(2)}</span>
+                  <span className="text-base font-black text-slate-900 font-mono">${quoteFormData.subtotal.toFixed(2)}</span>
                 </div>
 
-                <div className="bg-[#111726] p-3 rounded-xl border border-slate-800 text-center">
+                <div className="bg-white p-3 rounded-xl border border-slate-200 text-center">
                   <span className="text-slate-400 text-[10px] uppercase font-bold block">HST (13%)</span>
-                  <span className="text-base font-black text-white font-mono">${quoteFormData.tax_amount.toFixed(2)}</span>
+                  <span className="text-base font-black text-slate-900 font-mono">${quoteFormData.tax_amount.toFixed(2)}</span>
                 </div>
 
                 <div className="bg-emerald-950/40 p-3 rounded-xl border border-emerald-500/50 text-center">
@@ -3108,18 +3108,18 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
                   value={quoteFormData.quote_notes}
                   onChange={(e) => setQuoteFormData({ ...quoteFormData, quote_notes: e.target.value })}
                   placeholder="e.g. Quotation includes dedicated cargo van with tailgate offload. Price valid for 7 calendar days."
-                  className="w-full bg-[#111726] border border-slate-700 p-2.5 rounded-xl text-white focus:outline-none focus:border-red-500 text-xs"
+                  className="w-full bg-white border border-slate-300 p-2.5 rounded-xl text-slate-900 focus:outline-none focus:border-red-500 text-xs"
                 />
               </div>
 
-              <div className="flex items-center justify-between text-[11px] text-slate-400 bg-slate-900/60 p-2.5 rounded-xl border border-slate-800">
+              <div className="flex items-center justify-between text-[11px] text-slate-600 bg-slate-100 p-2.5 rounded-xl border border-slate-200">
                 <span>Quotation email recipient:</span>
                 <strong className="text-white font-mono">{reviewingQuoteOrder.customer_name} &lt;{reviewingQuoteOrder.customer_email}&gt;</strong>
               </div>
             </div>
 
             {/* Modal Actions */}
-            <div className="pt-2 border-t border-slate-800 flex items-center justify-between">
+            <div className="pt-2 border-t border-slate-200 flex items-center justify-between">
               <button
                 type="button"
                 onClick={() => setReviewingQuoteOrder(null)}
@@ -3156,12 +3156,12 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
 
       {/* DRIVER ASSIGNMENT MODAL */}
       {assignModalOrder && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-[#111726] border border-slate-700 rounded-2xl p-6 max-w-md w-full shadow-2xl space-y-4">
-            <h3 className="text-lg font-bold text-white font-['Outfit']">
+        <div className="fixed inset-0 z-50 bg-slate-100/40 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white border border-slate-300 rounded-2xl p-6 max-w-md w-full shadow-2xl space-y-4">
+            <h3 className="text-lg font-bold text-slate-900 font-['Outfit']">
               Assign Driver to Order {assignModalOrder.order_number}
             </h3>
-            <p className="text-xs text-slate-400">
+            <p className="text-xs text-slate-600">
               Vehicle required: <strong className="text-white">{assignModalOrder.vehicle_name}</strong> ({assignModalOrder.weight_lbs} lbs)
             </p>
 
@@ -3177,7 +3177,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
                 <select
                   value={selectedDriverForAssign}
                   onChange={(e) => setSelectedDriverForAssign(e.target.value)}
-                  className="w-full bg-[#0B0F17] border border-slate-700 px-3 py-2 text-xs text-white rounded-xl"
+                  className="w-full bg-slate-50 border border-slate-300 px-3 py-2 text-xs text-white rounded-xl"
                 >
                   {drivers.map((d) => (
                     <option key={d.id} value={d.id}>
@@ -3188,10 +3188,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
               )}
             </div>
 
-            <div className="flex justify-end space-x-3 pt-3 border-t border-slate-800">
+            <div className="flex justify-end space-x-3 pt-3 border-t border-slate-200">
               <button
                 onClick={() => setAssignModalOrder(null)}
-                className="px-4 py-2 bg-slate-800 text-slate-300 rounded-xl text-xs font-semibold hover:bg-slate-700"
+                className="px-4 py-2 bg-slate-100 text-slate-700 rounded-xl text-xs font-semibold hover:bg-slate-200 border border-slate-200"
               >
                 Cancel
               </button>

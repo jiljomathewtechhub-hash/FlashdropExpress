@@ -14,10 +14,10 @@ export const ServicesPage: React.FC<ServicesPageProps> = ({ onNavigate }) => {
         <span className="badge-soft-rose px-3.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider inline-block">
           Commercial Freight Solutions
         </span>
-        <h1 className="text-4xl sm:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-white via-red-100 to-red-300 font-['Outfit'] tracking-tight">
+        <h1 className="text-4xl sm:text-5xl font-black text-slate-900 font-['Outfit'] tracking-tight">
           Delivery & Freight Capabilities
         </h1>
-        <p className="text-slate-400 text-sm">
+        <p className="text-slate-600 text-sm">
           Same-day courier, paint transport, rush hotshots, and dedicated box truck logistics.
         </p>
       </div>
@@ -27,22 +27,22 @@ export const ServicesPage: React.FC<ServicesPageProps> = ({ onNavigate }) => {
       {/* Commercial Freight Guarantee */}
       <div className="max-w-5xl mx-auto px-4 sm:px-6">
         <TiltCard maxTilt={5}>
-          <div className="bg-gradient-to-r from-[#111624] to-[#0A0D14] border border-slate-800/80 rounded-2xl p-8 shadow-2xl flex flex-col md:flex-row items-center justify-between gap-6 relative overflow-hidden">
+          <div className="bg-white border border-slate-200 rounded-2xl p-8 shadow-sm flex flex-col md:flex-row items-center justify-between gap-6 relative overflow-hidden">
             <div className="space-y-1.5 z-10">
-              <div className="flex items-center space-x-2 text-xs font-bold text-red-400 uppercase tracking-wider">
-                <Sparkles className="w-3.5 h-3.5 text-red-400" />
+              <div className="flex items-center space-x-2 text-xs font-bold text-red-600 uppercase tracking-wider">
+                <Sparkles className="w-3.5 h-3.5 text-red-600" />
                 <span>Immediate Dispatch Available</span>
               </div>
-              <h3 className="text-xl sm:text-2xl font-black text-white font-['Outfit']">
+              <h3 className="text-xl sm:text-2xl font-black text-slate-900 font-['Outfit']">
                 Need cargo moved across the GTA today?
               </h3>
-              <p className="text-xs text-slate-400">
+              <p className="text-xs text-slate-600">
                 Transparent distance pricing • $0 upfront deposit • Pay Later on delivery
               </p>
             </div>
             <button
               onClick={() => onNavigate('order')}
-              className="px-6 py-3.5 btn-gradient-primary text-white font-bold text-xs rounded-xl shadow-lg shadow-red-950/40 transition-all flex items-center space-x-2 flex-shrink-0 z-10 group cursor-pointer"
+              className="px-6 py-3.5 btn-gradient-primary text-white font-bold text-xs rounded-xl shadow-sm transition-all flex items-center space-x-2 flex-shrink-0 z-10 group cursor-pointer"
             >
               <span>Book Delivery Now</span>
               <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />

@@ -34,16 +34,16 @@ export const HowItWorks: React.FC<HowItWorksProps> = ({ onNavigate }) => {
   ];
 
   return (
-    <section className="py-20 bg-[#0E131F] border-t border-slate-800">
+    <section className="py-20 bg-white border-t border-slate-200">
       <div className="max-w-7xl mx-auto px-4 sm:px-6">
         <div className="text-center max-w-3xl mx-auto mb-16 space-y-4">
-          <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-red-950/40 border border-red-500/20 text-red-400 text-xs font-bold uppercase tracking-wider">
+          <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full badge-soft-rose text-xs font-bold uppercase tracking-wider">
             Simple 4-Step Process
           </div>
-          <h2 className="text-3xl sm:text-4xl font-black text-white font-['Outfit']">
+          <h2 className="text-3xl sm:text-4xl font-black text-slate-900 font-['Outfit']">
             How FlashDrop Express Works
           </h2>
-          <p className="text-slate-400 text-sm sm:text-base leading-relaxed">
+          <p className="text-slate-600 text-sm sm:text-base leading-relaxed">
             Fast, transparent, and hassle-free courier logistics engineered for modern businesses.
           </p>
         </div>
@@ -54,26 +54,26 @@ export const HowItWorks: React.FC<HowItWorksProps> = ({ onNavigate }) => {
             return (
               <div
                 key={idx}
-                className="bg-[#131A29] border border-slate-800 rounded-2xl p-6 relative overflow-hidden flex flex-col justify-between group hover:border-red-500/50 transition-all duration-300 shadow-xl hover:-translate-y-1"
+                className="bg-slate-50 border border-slate-200 rounded-2xl p-6 relative overflow-hidden flex flex-col justify-between group hover:border-red-300 hover:bg-white transition-all duration-300 shadow-xs hover:shadow-md hover:-translate-y-1"
               >
                 {/* Step Watermark */}
-                <div className="absolute top-2 right-4 text-5xl font-black text-slate-800/40 font-['Outfit'] select-none">
+                <div className="absolute top-2 right-4 text-5xl font-black text-slate-200 font-['Outfit'] select-none">
                   {s.step}
                 </div>
 
                 <div>
-                  <div className="w-12 h-12 rounded-xl bg-red-950/50 border border-red-500/30 flex items-center justify-center text-red-400 mb-5 group-hover:scale-105 transition-transform">
+                  <div className="w-12 h-12 rounded-xl bg-red-50 border border-red-200 flex items-center justify-center text-red-600 mb-5 group-hover:scale-105 transition-transform">
                     <Icon className="w-6 h-6" />
                   </div>
-                  <h3 className="text-lg font-bold text-white mb-2 font-['Outfit']">
+                  <h3 className="text-lg font-bold text-slate-900 mb-2 font-['Outfit']">
                     {s.title}
                   </h3>
-                  <p className="text-xs text-slate-400 leading-relaxed">
+                  <p className="text-xs text-slate-600 leading-relaxed">
                     {s.desc}
                   </p>
                 </div>
 
-                <div className="mt-6 pt-4 border-t border-slate-800/60 flex items-center text-[11px] text-red-400 font-bold uppercase tracking-wider">
+                <div className="mt-6 pt-4 border-t border-slate-200 flex items-center text-[11px] text-red-600 font-bold uppercase tracking-wider">
                   <span>Step {s.step}</span>
                 </div>
               </div>
@@ -84,7 +84,7 @@ export const HowItWorks: React.FC<HowItWorksProps> = ({ onNavigate }) => {
         <div className="mt-14 text-center">
           <button
             onClick={() => onNavigate('order')}
-            className="inline-flex items-center space-x-2 px-8 py-4 bg-[#C5161D] hover:bg-[#A51218] text-white font-bold text-sm rounded-xl shadow-xl shadow-red-950/40 transition transform hover:-translate-y-0.5"
+            className="inline-flex items-center space-x-2 px-8 py-4 btn-gradient-primary text-white font-bold text-sm rounded-xl shadow-md transition transform hover:-translate-y-0.5 cursor-pointer"
           >
             <span>Start Your Delivery Request Now</span>
             <ArrowRight className="w-4 h-4" />
