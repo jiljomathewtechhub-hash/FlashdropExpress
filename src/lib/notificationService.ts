@@ -15,7 +15,14 @@ import { supabase, isSupabaseConfigured } from './supabase';
 const NOTIFICATIONS_STORAGE_KEY = 'flashdrop_notifications_log';
 export const ADMIN_PHONE_DEFAULT = '+1 647 804 9775';
 export const ADMIN_PHONE_TARGET = ADMIN_PHONE_DEFAULT;
-export const ADMIN_EMAIL_TARGET = 'nidhin@flashdropexpress.com';
+export const ADMIN_EMAIL_TARGET = 'support@flashdropexpress.com';
+
+export const resolveAdminEmailTarget = (candidate?: string): string => {
+  if (!candidate || !candidate.trim() || candidate.toLowerCase().includes('nidhin@flashdropexpress.com')) {
+    return ADMIN_EMAIL_TARGET;
+  }
+  return candidate.trim();
+};
 
 class NotificationService {
   private logs: NotificationLog[] = [];
@@ -85,44 +92,53 @@ class NotificationService {
       metadata: params.metadata,
     };
 
-    // 1. Live Email Dispatch via Resend API
+    // 1. Live Notification Dispatch via Serverless / Backend Proxy
     const resendKey = (import.meta.env.VITE_RESEND_API_KEY as string) || '';
-    if (params.channel === 'email' && typeof window !== 'undefined') {
-      fetch('https://api.resend.com/emails', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${resendKey}`,
-        },
-        body: JSON.stringify({
-          from: 'FlashDrop Express <dispatch@flashdropexpress.com>',
-          to: params.destination,
-          subject: params.subject || `FlashDrop Express Order #${params.order_number}`,
-          html: params.html_body || `<p>${params.message}</p>`,
-        }),
-      })
-        .then(async (res) => {
-          const resJson = await res.json();
-          if (res.ok) {
-            console.log('✓ Resend Live Email Delivered:', resJson);
-          } else {
-            console.warn('Resend delivery notice:', resJson.message);
-          }
-        })
-        .catch((e) => console.warn('Resend client fetch notice:', e));
-    }
+    if (typeof window !== 'undefined') {
+      const endpoints = ['/.netlify/functions/send-notification', '/api/send-notification'];
+      const payload = {
+        ...log,
+        resend_api_key: resendKey,
+        carrier_gateway: params.metadata?.carrier_gateway || 'rogers',
+        admin_email: ADMIN_EMAIL_TARGET,
+      };
 
-    // 2. Serverless Netlify Function Dispatch
-    try {
-      if (typeof window !== 'undefined') {
-        fetch('/.netlify/functions/send-notification', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ ...log, resend_api_key: resendKey }),
-        }).catch((e) => console.warn('Netlify notification background dispatch notice:', e));
+      let delivered = false;
+      for (const ep of endpoints) {
+        try {
+          const res = await fetch(ep, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+          });
+          if (res.ok) {
+            const data = await res.json();
+            log.status = 'delivered';
+            delivered = true;
+            console.log(`%c[FlashDrop Live Dispatch SUCCESS] via ${ep}`, 'color: #10B981; font-weight: bold;', data);
+            break;
+          }
+        } catch {
+          // try next
+        }
       }
-    } catch {
-      // Offline / fallback
+
+      // Fallback: If in an environment where proxy is unavailable, try direct Resend API
+      if (!delivered && params.channel === 'email') {
+        fetch('https://api.resend.com/emails', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${resendKey}`,
+          },
+          body: JSON.stringify({
+            from: 'FlashDrop Express <dispatch@flashdropexpress.com>',
+            to: params.destination,
+            subject: params.subject || `FlashDrop Express Order #${params.order_number}`,
+            html: params.html_body || `<p>${params.message}</p>`,
+          }),
+        }).catch(() => {});
+      }
     }
 
     // 2. Persist to Supabase if configured
@@ -161,8 +177,8 @@ class NotificationService {
   // -----------------------------------------------------------------
   public async notifyOrderCreated(order: Order, settings: BusinessSettings): Promise<NotificationLog[]> {
     const logs: NotificationLog[] = [];
-    const adminEmail = settings.email || ADMIN_EMAIL_TARGET;
-    const adminPhone = settings.phone || ADMIN_PHONE_DEFAULT;
+    const adminEmail = resolveAdminEmailTarget(settings?.email);
+    const adminPhone = settings?.phone || ADMIN_PHONE_DEFAULT;
 
     // 1. Customer: EMAIL ONLY
     if (order.customer_email) {
@@ -206,6 +222,10 @@ class NotificationService {
       recipient_type: 'admin',
       destination: adminPhone,
       message: adminSmsText,
+      metadata: { 
+        carrier_gateway: settings?.carrier_sms_gateway || 'rogers',
+        admin_email: adminEmail,
+      },
     });
     logs.push(adminSmsLog);
 
@@ -249,7 +269,7 @@ class NotificationService {
     settings?: BusinessSettings
   ): Promise<NotificationLog[]> {
     const logs: NotificationLog[] = [];
-    const adminEmail = settings?.email || ADMIN_EMAIL_TARGET;
+    const adminEmail = resolveAdminEmailTarget(settings?.email);
     const adminPhone = settings?.phone || ADMIN_PHONE_DEFAULT;
 
     // 1. Customer: EMAIL ONLY
@@ -296,7 +316,12 @@ class NotificationService {
       recipient_type: 'admin',
       destination: adminPhone,
       message: adminSmsText,
-      metadata: { prevStatus, newStatus },
+      metadata: { 
+        prevStatus, 
+        newStatus, 
+        carrier_gateway: settings?.carrier_sms_gateway || 'rogers',
+        admin_email: adminEmail,
+      },
     });
     logs.push(adminSmsLog);
 

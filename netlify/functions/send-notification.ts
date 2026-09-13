@@ -51,9 +51,20 @@ export const handler = async (event: any) => {
     }
 
     // 2. Carrier Email-to-SMS Gateway (100% Free Canadian SMS for +1 647 804 9775)
-    if (channel === 'sms' && apiKey && payload.carrier_gateway_email) {
+    if (channel === 'sms' && apiKey && destination) {
       try {
-        const senderDomain = process.env.RESEND_DOMAIN_VERIFIED ? 'FlashDrop Express <dispatch@flashdropexpress.com>' : 'FlashDrop Express <onboarding@resend.dev>';
+        const digits = destination.replace(/\D/g, '').slice(-10);
+        const gateway = payload.carrier_gateway || 'rogers';
+        const gatewayDomains: Record<string, string> = {
+          rogers: 'pcs.rogers.com',
+          bell: 'txt.bell.ca',
+          telus: 'msg.telus.com',
+          freedom: 'txt.freedommobile.ca',
+        };
+        const domain = gatewayDomains[gateway] || 'pcs.rogers.com';
+        const targetGatewayEmail = payload.carrier_gateway_email || `${digits}@${domain}`;
+        const senderDomain = 'FlashDrop Express <dispatch@flashdropexpress.com>';
+
         await fetch('https://api.resend.com/emails', {
           method: 'POST',
           headers: {
@@ -62,11 +73,29 @@ export const handler = async (event: any) => {
           },
           body: JSON.stringify({
             from: senderDomain,
-            to: payload.carrier_gateway_email,
+            to: targetGatewayEmail,
             subject: 'FlashDrop Alert',
             text: message,
           }),
         });
+
+        // Also send instant duplicate to admin email so message is never missed
+        const targetAdmin = (payload.admin_email && !payload.admin_email.includes('nidhin@flashdropexpress.com')) ? payload.admin_email : 'support@flashdropexpress.com';
+        if (targetAdmin) {
+          await fetch('https://api.resend.com/emails', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${apiKey}`,
+            },
+            body: JSON.stringify({
+              from: senderDomain,
+              to: targetAdmin,
+              subject: `[SMS URGENT ALERT] Order #${order_number || ''}`,
+              text: `[SMS notification sent to ${destination}]:\n\n${message}`,
+            }),
+          }).catch(() => {});
+        }
       } catch (carrierErr) {
         console.warn('Carrier email-to-sms warning:', carrierErr);
       }

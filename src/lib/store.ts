@@ -80,7 +80,7 @@ export const INITIAL_DRIVERS: Driver[] = [
     id: 'd3333333-3333-3333-3333-333333333333',
     name: 'Nidhin (Lead Dispatch Admin)',
     phone: '+1 647 804 9775',
-    email: 'nidhin@flashdropexpress.com',
+    email: 'support@flashdropexpress.com',
     vehicle_type: 'Box Truck / Heavy Freight',
     license_plate: 'ON-FD001',
     is_active: true,
@@ -401,6 +401,14 @@ class FlashDropStore {
 
       const savedSettings = localStorage.getItem(`${STORAGE_KEY_PREFIX}settings`);
       this.settings = savedSettings ? { ...DEFAULT_BUSINESS_SETTINGS, ...JSON.parse(savedSettings) } : DEFAULT_BUSINESS_SETTINGS;
+      if (!this.settings.email || this.settings.email.toLowerCase().includes('nidhin@flashdropexpress.com')) {
+        this.settings.email = 'support@flashdropexpress.com';
+      }
+      this.drivers = this.drivers.map((d) =>
+        d.email && d.email.toLowerCase().includes('nidhin@flashdropexpress.com')
+          ? { ...d, email: 'support@flashdropexpress.com' }
+          : d
+      );
 
       const savedRequests = localStorage.getItem(`${STORAGE_KEY_PREFIX}requests`);
       this.requests = savedRequests ? JSON.parse(savedRequests) : [];

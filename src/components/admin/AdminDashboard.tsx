@@ -1691,7 +1691,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
                 </span>
               </div>
               <p className="text-slate-400 text-[11px]">
-                Sent to Admin operations desk (<code className="text-slate-300">{settings.email || 'nidhin@flashdropexpress.com'}</code>).
+                Sent to Admin operations desk (<code className="text-slate-300">{settings.email || 'support@flashdropexpress.com'}</code>).
               </p>
               <div className="bg-[#0B0F17] p-2.5 rounded-xl border border-slate-800/80 space-y-1 text-[11px]">
                 <div className="text-slate-300">&bull; <strong>Urgent Booking Alerts:</strong> Customer details, phone, route</div>
