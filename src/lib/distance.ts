@@ -25,7 +25,7 @@ export const POPULAR_LOCATIONS: LocationPoint[] = [
     isGta: true,
   },
   {
-    address: '108 Apartment, 3064 Jaguar Valley Dr, Mississauga, ON L5A 2J3',
+    address: 'Suite 108, 3064 Jaguar Valley Dr, Mississauga, ON L5A 2J3',
     city: 'Mississauga',
     postalCode: 'L5A 2J3',
     lat: 43.5855,

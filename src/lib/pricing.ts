@@ -44,7 +44,7 @@ export const DEFAULT_BUSINESS_SETTINGS: BusinessSettings = {
   name: 'FlashDrop Express',
   phone: '+1 647 804 9775',
   email: 'support@flashdropexpress.com',
-  address: '108 Apartment, 3064 Jaguar Valley Dr, Mississauga, ON L5A 2J3, Canada',
+  address: 'Suite 108, 3064 Jaguar Valley Dr, Mississauga, ON L5A 2J3, Canada',
   domain: 'flashdropexpress.com',
   tagline: 'Fast. Reliable. Delivered.',
   operating_hours_start: '08:00',

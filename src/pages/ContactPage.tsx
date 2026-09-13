@@ -117,7 +117,7 @@ export const ContactPage: React.FC<ContactPageProps> = ({ onNavigate }) => {
                       rel="noopener noreferrer"
                       className="text-slate-800 hover:text-red-600 transition font-medium text-xs block leading-relaxed"
                     >
-                      108 Apartment, 3064 Jaguar Valley Dr<br />
+                      Suite 108, 3064 Jaguar Valley Dr<br />
                       Mississauga, ON L5A 2J3, Canada
                     </a>
                     <span className="text-slate-500 text-[11px] block mt-0.5">Commercial Dispatch & Operations Base</span>
@@ -155,7 +155,7 @@ export const ContactPage: React.FC<ContactPageProps> = ({ onNavigate }) => {
                 Ontario Commercial Freight Carrier
               </div>
               <div className="text-[10px] text-slate-500 mt-0.5">
-                108 Apartment, 3064 Jaguar Valley Dr, Mississauga, ON L5A 2J3
+                Suite 108, 3064 Jaguar Valley Dr, Mississauga, ON L5A 2J3
               </div>
             </div>
           </div>

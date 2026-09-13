@@ -112,7 +112,7 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
                   rel="noopener noreferrer"
                   className="hover:text-red-600 transition-smooth"
                 >
-                  108 Apartment, 3064 Jaguar Valley Dr, Mississauga, ON L5A 2J3, Canada
+                  Suite 108, 3064 Jaguar Valley Dr, Mississauga, ON L5A 2J3, Canada
                 </a>
               </div>
             </div>

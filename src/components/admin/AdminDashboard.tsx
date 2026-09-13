@@ -2052,7 +2052,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
                 type="text"
                 value={settings.address || ''}
                 onChange={(e) => setSettings({ ...settings, address: e.target.value })}
-                placeholder="e.g. 108 Apartment, 3064 Jaguar Valley Dr, Mississauga, ON L5A 2J3, Canada"
+                placeholder="e.g. Suite 108, 3064 Jaguar Valley Dr, Mississauga, ON L5A 2J3, Canada"
                 className="w-full bg-slate-50 border border-slate-300 p-2.5 rounded-xl text-slate-900 focus:outline-none focus:border-red-600 shadow-xs"
               />
               <span className="text-[10px] text-slate-500 mt-1 block">
