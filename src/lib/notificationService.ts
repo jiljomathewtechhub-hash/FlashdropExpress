@@ -2,6 +2,7 @@ import { Order, OrderStatus, BusinessSettings } from '../types/order';
 import { NotificationLog, NotificationChannel, NotificationRecipientType, NotificationEvent } from '../types/notification';
 import {
   createCustomerOrderEmail,
+  createCustomerQuoteReadyEmail,
   createCustomerStatusEmail,
   createAdminNewOrderEmail,
   createAdminNewOrderSms,
@@ -207,6 +208,32 @@ class NotificationService {
       message: adminSmsText,
     });
     logs.push(adminSmsLog);
+
+    return logs;
+  }
+
+  // -----------------------------------------------------------------
+  // High-Level Trigger: Official Price Quote Sent to Customer
+  // -----------------------------------------------------------------
+  public async notifyQuoteSent(order: Order, settings: BusinessSettings): Promise<NotificationLog[]> {
+    const logs: NotificationLog[] = [];
+
+    // 1. Customer: Branded Official Quotation Email
+    if (order.customer_email) {
+      const quoteEmail = createCustomerQuoteReadyEmail(order, settings);
+      const custLog = await this.dispatchNotification({
+        order_id: order.id,
+        order_number: order.order_number,
+        event: 'quote_sent' as any,
+        channel: 'email',
+        recipient_type: 'customer',
+        destination: order.customer_email,
+        subject: quoteEmail.subject,
+        message: quoteEmail.plain,
+        html_body: quoteEmail.html,
+      });
+      logs.push(custLog);
+    }
 
     return logs;
   }

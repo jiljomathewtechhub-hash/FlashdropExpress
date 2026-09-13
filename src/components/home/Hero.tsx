@@ -55,7 +55,7 @@ export const Hero: React.FC<HeroProps> = ({ onNavigate }) => {
               On-Demand Freight & Commercial Courier
             </p>
             <p className="text-sm sm:text-base text-slate-300 max-w-2xl mx-auto leading-relaxed font-normal">
-              Direct point-to-point transport across the Greater Toronto Area. Instant distance pricing, live radar tracking, and guaranteed pay upon delivery.
+              Direct point-to-point commercial transport across the Greater Toronto Area. Custom tailored freight quotes, live radar tracking, and dedicated GTA couriers.
             </p>
           </div>
 
@@ -66,16 +66,16 @@ export const Hero: React.FC<HeroProps> = ({ onNavigate }) => {
               className="group relative min-h-[50px] flex items-center space-x-2.5 px-7 py-3.5 btn-gradient-primary text-white font-bold text-sm sm:text-base rounded-xl shadow-lg transition-smooth transform hover:-translate-y-0.5 active:translate-y-0 cursor-pointer"
             >
               <Truck className="w-5 h-5 transition-transform group-hover:translate-x-0.5" />
-              <span>Request Delivery</span>
+              <span>Request a Quote</span>
               <ArrowRight className="w-4 h-4 ml-0.5 transition-transform group-hover:translate-x-1" />
             </button>
 
             <button
-              onClick={() => onNavigate('pricing')}
+              onClick={() => onNavigate('services')}
               className="min-h-[50px] flex items-center space-x-2 px-6 py-3.5 bg-gradient-to-r from-white/[0.08] via-white/[0.04] to-white/[0.02] hover:bg-white/10 border border-white/15 hover:border-red-300/40 text-slate-200 hover:text-white font-semibold text-sm sm:text-base rounded-xl transition-smooth cursor-pointer"
             >
               <Package className="w-5 h-5 text-red-300" />
-              <span>Calculate Rate</span>
+              <span>Explore Services</span>
             </button>
           </div>
 

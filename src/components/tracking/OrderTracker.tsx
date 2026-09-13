@@ -70,8 +70,8 @@ export const OrderTracker: React.FC<OrderTrackerProps> = ({ initialOrderNumber, 
   };
 
   const statusPipeline: { status: OrderStatus; label: string; sub: string }[] = [
-    { status: 'submitted', label: 'Order Submitted', sub: 'Placed via web platform' },
-    { status: 'confirmed', label: 'Confirmed', sub: 'Verified by dispatch' },
+    { status: 'submitted', label: 'Quote Requested', sub: 'Route & cargo submitted' },
+    { status: 'confirmed', label: 'Quote Accepted', sub: 'Verified & rate locked' },
     { status: 'assigned', label: 'Driver Assigned', sub: 'Driver allocated to route' },
     { status: 'en_route_pickup', label: 'En Route to Pickup', sub: 'Driver heading to location' },
     { status: 'picked_up', label: 'Picked Up', sub: 'Cargo loaded into vehicle' },
@@ -82,6 +82,7 @@ export const OrderTracker: React.FC<OrderTrackerProps> = ({ initialOrderNumber, 
   const getStatusIndex = (currentStatus: OrderStatus) => {
     switch (currentStatus) {
       case 'submitted':
+      case 'quote_sent':
         return 0;
       case 'confirmed':
         return 1;
@@ -247,8 +248,14 @@ export const OrderTracker: React.FC<OrderTrackerProps> = ({ initialOrderNumber, 
                   <h2 className="text-2xl font-black text-white font-['Outfit'] tracking-wide font-mono">
                     {order.order_number}
                   </h2>
-                <span className="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-red-950 text-red-400 border border-red-500/30">
-                  {order.order_status.replace(/_/g, ' ')}
+                <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${
+                  order.order_status === 'submitted'
+                    ? 'bg-amber-950 text-amber-300 border border-amber-500/40'
+                    : order.order_status === 'quote_sent'
+                    ? 'bg-purple-950 text-purple-300 border border-purple-500/40'
+                    : 'bg-red-950 text-red-400 border border-red-500/30'
+                }`}>
+                  {order.order_status === 'submitted' ? 'Quote Requested' : order.order_status === 'quote_sent' ? 'Quote Ready' : order.order_status.replace(/_/g, ' ')}
                 </span>
               </div>
               <p className="text-xs text-slate-400 mt-1">
@@ -257,13 +264,15 @@ export const OrderTracker: React.FC<OrderTrackerProps> = ({ initialOrderNumber, 
             </div>
 
             <div className="flex items-center space-x-2.5">
-              <button
-                onClick={() => generateOrderPdf(order, store.getSettings())}
-                className="flex items-center space-x-1.5 px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs rounded-xl border border-slate-700 transition"
-              >
-                <FileDown className="w-3.5 h-3.5 text-red-400" />
-                <span>PDF Invoice</span>
-              </button>
+              {order.order_status !== 'submitted' && (
+                <button
+                  onClick={() => generateOrderPdf(order, store.getSettings())}
+                  className="flex items-center space-x-1.5 px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs rounded-xl border border-slate-700 transition"
+                >
+                  <FileDown className="w-3.5 h-3.5 text-red-400" />
+                  <span>PDF Invoice</span>
+                </button>
+              )}
 
               {order.order_status !== 'delivered' && order.order_status !== 'cancelled' && (
                 <>
@@ -395,43 +404,63 @@ export const OrderTracker: React.FC<OrderTrackerProps> = ({ initialOrderNumber, 
 
             {/* Billing & Invoice */}
             <div className="bg-[#0A0D14] border border-slate-800 rounded-xl p-4 space-y-3 flex flex-col justify-between">
-              <div>
-                <span className="font-bold text-white uppercase text-[11px] block border-b border-slate-800 pb-1 flex items-center space-x-1.5">
-                  <FileText className="w-3.5 h-3.5 text-red-400" />
-                  <span>Financial Breakdown</span>
-                </span>
-                <div className="space-y-1 mt-2 text-slate-400">
-                  <div className="flex justify-between">
-                    <span>Base Freight:</span>
-                    <span className="text-white">${order.base_price.toFixed(2)}</span>
+              {order.order_status === 'submitted' ? (
+                <div className="space-y-2 py-1">
+                  <span className="font-bold text-amber-400 uppercase text-[11px] block border-b border-slate-800 pb-1 flex items-center space-x-1.5">
+                    <Clock className="w-3.5 h-3.5 text-amber-400" />
+                    <span>Quotation Review In Progress</span>
+                  </span>
+                  <p className="text-xs text-slate-300 leading-relaxed">
+                    Our operations dispatch team is currently reviewing your route specifications and cargo requirements.
+                  </p>
+                  <p className="text-[11px] text-slate-400 leading-relaxed">
+                    An official itemized price quote will be sent directly to <strong className="text-white font-mono">{order.customer_email}</strong> shortly.
+                  </p>
+                  <div className="bg-amber-950/30 border border-amber-500/30 rounded-lg p-2.5 text-[10px] text-amber-300 font-semibold">
+                    Review turnaround: within 15–30 minutes during active dispatch hours.
                   </div>
-                  {order.excess_km_charge > 0 && (
-                    <div className="flex justify-between">
-                      <span>Excess Km:</span>
-                      <span className="text-white">+${order.excess_km_charge.toFixed(2)}</span>
-                    </div>
-                  )}
-                  {order.after_hours_charge > 0 && (
-                    <div className="flex justify-between text-red-400">
-                      <span>After-Hours:</span>
-                      <span>+${order.after_hours_charge.toFixed(2)}</span>
-                    </div>
-                  )}
-                  {order.tax_amount > 0 && (
-                    <div className="flex justify-between">
-                      <span>HST (13%):</span>
-                      <span className="text-white">${order.tax_amount.toFixed(2)}</span>
-                    </div>
-                  )}
                 </div>
-              </div>
+              ) : (
+                <>
+                  <div>
+                    <span className="font-bold text-white uppercase text-[11px] block border-b border-slate-800 pb-1 flex items-center space-x-1.5">
+                      <FileText className="w-3.5 h-3.5 text-red-400" />
+                      <span>Financial Breakdown</span>
+                    </span>
+                    <div className="space-y-1 mt-2 text-slate-400">
+                      <div className="flex justify-between">
+                        <span>Base Freight:</span>
+                        <span className="text-white">${order.base_price.toFixed(2)}</span>
+                      </div>
+                      {order.excess_km_charge > 0 && (
+                        <div className="flex justify-between">
+                          <span>Excess Km:</span>
+                          <span className="text-white">+${order.excess_km_charge.toFixed(2)}</span>
+                        </div>
+                      )}
+                      {order.after_hours_charge > 0 && (
+                        <div className="flex justify-between text-red-400">
+                          <span>After-Hours:</span>
+                          <span>+${order.after_hours_charge.toFixed(2)}</span>
+                        </div>
+                      )}
+                      {order.tax_amount > 0 && (
+                        <div className="flex justify-between">
+                          <span>HST (13%):</span>
+                          <span className="text-white">${order.tax_amount.toFixed(2)}</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
 
-              <div className="border-t border-slate-800 pt-2 flex justify-between items-center">
-                <span className="text-slate-300 font-bold">Total CAD:</span>
-                <span className="text-xl font-black text-white font-['Outfit']">
-                  ${order.total_price.toFixed(2)}
-                </span>
-              </div>
+                  <div className="border-t border-slate-800 pt-2 flex justify-between items-center">
+                    <span className="text-slate-300 font-bold">Total CAD:</span>
+                    <span className="text-xl font-black text-white font-['Outfit']">
+                      ${order.total_price.toFixed(2)}
+                    </span>
+                  </div>
+                </>
+              )}
             </div>
           </div>
 

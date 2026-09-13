@@ -45,6 +45,7 @@ import { store, UserSession } from '../../lib/store';
 import { PricingTierRule } from '../../lib/pricing';
 import { generateOrderPdf } from '../../lib/pdf';
 import { supabase, isSupabaseConfigured, createUnpersistedClient } from '../../lib/supabase';
+import { notificationService } from '../../lib/notificationService';
 
 interface AdminDashboardProps {
   onNavigate: (tab: string, param?: any) => void;
@@ -76,6 +77,30 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
 
   // Staff Profile Modal state
   const [viewingStaffProfile, setViewingStaffProfile] = useState<Driver | null>(null);
+
+  // Quote Review & Dispatch state
+  const [reviewingQuoteOrder, setReviewingQuoteOrder] = useState<Order | null>(null);
+  const [quoteFormData, setQuoteFormData] = useState<{
+    base_price: number;
+    excess_km_charge: number;
+    urgency_surcharge: number;
+    after_hours_charge: number;
+    subtotal: number;
+    tax_amount: number;
+    total_price: number;
+    quote_notes: string;
+  }>({
+    base_price: 0,
+    excess_km_charge: 0,
+    urgency_surcharge: 0,
+    after_hours_charge: 0,
+    subtotal: 0,
+    tax_amount: 0,
+    total_price: 0,
+    quote_notes: '',
+  });
+  const [isSendingQuote, setIsSendingQuote] = useState(false);
+  const [quoteSentSuccess, setQuoteSentSuccess] = useState(false);
 
   // Notification Monitor states
   const [notifications, setNotifications] = useState<NotificationLog[]>(() => store.getNotificationLogs());
@@ -317,6 +342,92 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
     setTimeout(() => setCopiedCredentials(false), 2500);
   };
 
+  const handleOpenQuoteReview = (order: Order) => {
+    setReviewingQuoteOrder(order);
+    const base = Number(order.base_price || 0);
+    const excess = Number(order.excess_km_charge || 0);
+    const after = Number(order.after_hours_charge || 0);
+    let urgency = 0;
+    if (order.delivery_time_option === 'direct') {
+      urgency = Number((base * 0.25).toFixed(2));
+    } else if (order.delivery_time_option === 'urgent') {
+      urgency = Number((base * 0.50).toFixed(2));
+    }
+    const sub = order.subtotal > 0 ? Number(order.subtotal) : Number((base + excess + urgency + after).toFixed(2));
+    const tax = order.tax_amount > 0 ? Number(order.tax_amount) : Number((sub * 0.13).toFixed(2));
+    const total = order.total_price > 0 ? Number(order.total_price) : Number((sub + tax).toFixed(2));
+
+    setQuoteFormData({
+      base_price: base,
+      excess_km_charge: excess,
+      urgency_surcharge: urgency,
+      after_hours_charge: after,
+      subtotal: sub,
+      tax_amount: tax,
+      total_price: total,
+      quote_notes: order.quote_notes || 'Custom commercial freight quotation based on verified route specs and cargo dimensions.',
+    });
+    setQuoteSentSuccess(false);
+  };
+
+  const handleRecalculateQuoteTotals = (updates: Partial<typeof quoteFormData>) => {
+    const updated = { ...quoteFormData, ...updates };
+    const sub = Number((
+      Number(updated.base_price || 0) +
+      Number(updated.excess_km_charge || 0) +
+      Number(updated.urgency_surcharge || 0) +
+      Number(updated.after_hours_charge || 0)
+    ).toFixed(2));
+    const tax = Number((sub * 0.13).toFixed(2));
+    const total = Number((sub + tax).toFixed(2));
+    setQuoteFormData({
+      ...updated,
+      subtotal: sub,
+      tax_amount: tax,
+      total_price: total,
+    });
+  };
+
+  const handleSendQuoteSubmit = async (sendEmail: boolean) => {
+    if (!reviewingQuoteOrder) return;
+    setIsSendingQuote(true);
+
+    try {
+      const now = new Date().toISOString();
+      const updatedData: Partial<Order> = {
+        base_price: quoteFormData.base_price,
+        excess_km_charge: quoteFormData.excess_km_charge,
+        after_hours_charge: quoteFormData.after_hours_charge,
+        subtotal: quoteFormData.subtotal,
+        tax_amount: quoteFormData.tax_amount,
+        total_price: quoteFormData.total_price,
+        quote_notes: quoteFormData.quote_notes,
+        order_status: sendEmail ? 'quote_sent' : reviewingQuoteOrder.order_status,
+        quote_sent_at: sendEmail ? now : reviewingQuoteOrder.quote_sent_at,
+      };
+
+      store.updateOrder(reviewingQuoteOrder.id, updatedData);
+      const updatedOrder = { ...reviewingQuoteOrder, ...updatedData } as Order;
+
+      if (sendEmail) {
+        await notificationService.notifyQuoteSent(updatedOrder, settings);
+        setNotifications(store.getNotificationLogs());
+      }
+
+      setOrders(store.getOrders());
+      setQuoteSentSuccess(true);
+      setTimeout(() => {
+        setQuoteSentSuccess(false);
+        setReviewingQuoteOrder(null);
+      }, 1500);
+    } catch (err) {
+      console.error('Failed to dispatch quote:', err);
+      alert('Failed to send quote: ' + String(err));
+    } finally {
+      setIsSendingQuote(false);
+    }
+  };
+
   const handleOpenEditOrder = (order: Order) => {
     setEditingOrder(order);
     setEditFormData({ ...order });
@@ -526,7 +637,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
                 className="bg-[#111726] border border-slate-700/80 text-white text-xs rounded-xl px-3 py-2"
               >
                 <option value="all">All Statuses</option>
-                <option value="submitted">Submitted</option>
+                <option value="submitted">Quote Requested (Submitted)</option>
+                <option value="quote_sent">Quote Sent to Client</option>
                 <option value="confirmed">Confirmed</option>
                 <option value="assigned">Assigned</option>
                 <option value="in_transit">In Transit</option>
@@ -579,9 +691,21 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
                           <div className="text-[10px] text-slate-400">{ord.weight_lbs} lbs ({ord.quantity} pails/units)</div>
                         </td>
                         <td className="py-3 px-4">
-                          <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-slate-900 text-slate-300 border border-slate-700">
-                            {ord.order_status.replace(/_/g, ' ')}
-                          </span>
+                          {ord.order_status === 'submitted' ? (
+                            <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-amber-950/80 text-amber-300 border border-amber-500/40 inline-flex items-center space-x-1">
+                              <Clock className="w-2.5 h-2.5" />
+                              <span>Quote Requested</span>
+                            </span>
+                          ) : ord.order_status === 'quote_sent' ? (
+                            <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-purple-950/80 text-purple-300 border border-purple-500/40 inline-flex items-center space-x-1">
+                              <Send className="w-2.5 h-2.5" />
+                              <span>Quote Sent</span>
+                            </span>
+                          ) : (
+                            <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-slate-900 text-slate-300 border border-slate-700">
+                              {ord.order_status.replace(/_/g, ' ')}
+                            </span>
+                          )}
                         </td>
                         <td className="py-3 px-4">
                           {ord.assigned_driver_name ? (
@@ -610,11 +734,31 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
                             </button>
                           )}
                         </td>
-                        <td className="py-3 px-4 font-bold text-white">
-                          ${ord.total_price.toFixed(2)}
+                        <td className="py-3 px-4">
+                          {ord.order_status === 'submitted' ? (
+                            <span className="text-amber-400 font-semibold text-[11px] block">Quote Pending</span>
+                          ) : (
+                            <div>
+                              <span className="font-bold text-white">${ord.total_price.toFixed(2)}</span>
+                              {ord.order_status === 'quote_sent' && (
+                                <span className="block text-[9px] text-purple-400 font-bold uppercase">Quotation Sent</span>
+                              )}
+                            </div>
+                          )}
                         </td>
                         <td className="py-3 px-4 text-right">
                           <div className="flex items-center justify-end space-x-1">
+                            <button
+                              onClick={() => handleOpenQuoteReview(ord)}
+                              className={`p-1.5 rounded-lg transition border flex items-center space-x-1 ${
+                                ord.order_status === 'submitted'
+                                  ? 'bg-amber-500/20 text-amber-300 border-amber-500/40 hover:bg-amber-500 hover:text-white'
+                                  : 'bg-slate-800 hover:bg-slate-700 text-emerald-400 hover:text-white border-slate-700'
+                              }`}
+                              title="Review Route & Specs, Adjust Pricing, and Send Quote"
+                            >
+                              <DollarSign className="w-3.5 h-3.5" />
+                            </button>
                             <button
                               onClick={() => onNavigate('tracking', ord.order_number)}
                               className="p-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-lg transition"
@@ -2104,7 +2248,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
                       onChange={(e) => setEditFormData({ ...editFormData, order_status: e.target.value as OrderStatus })}
                       className="w-full bg-[#111726] border border-slate-700 px-3 py-2 rounded-xl text-white focus:outline-none focus:border-red-500"
                     >
-                      <option value="submitted">Submitted</option>
+                      <option value="submitted">Submitted (Quote Requested)</option>
+                      <option value="quote_sent">Quote Sent to Client</option>
                       <option value="confirmed">Confirmed</option>
                       <option value="assigned">Assigned</option>
                       <option value="en_route_pickup">En Route to Pickup</option>
@@ -2510,6 +2655,18 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
                 <div className="flex items-center space-x-3">
                   <button
                     type="button"
+                    onClick={() => {
+                      const ord = editingOrder;
+                      setEditingOrder(null);
+                      handleOpenQuoteReview(ord);
+                    }}
+                    className="px-4 py-2.5 bg-amber-500/20 hover:bg-amber-500 text-amber-300 hover:text-white border border-amber-500/40 font-bold rounded-xl text-xs transition flex items-center space-x-1.5 cursor-pointer"
+                  >
+                    <DollarSign className="w-3.5 h-3.5" />
+                    <span>Review & Send Quote</span>
+                  </button>
+                  <button
+                    type="button"
                     onClick={() => setEditingOrder(null)}
                     className="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold rounded-xl text-xs transition cursor-pointer"
                   >
@@ -2721,6 +2878,277 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
               >
                 Close Profile
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* REVIEW & SEND PRICE QUOTE MODAL */}
+      {reviewingQuoteOrder && (
+        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-[#111726] border border-slate-700 rounded-3xl max-w-3xl w-full max-h-[92vh] overflow-y-auto shadow-2xl space-y-5 p-6 text-xs">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between border-b border-slate-800 pb-4">
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 rounded-xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400">
+                  <DollarSign className="w-5 h-5" />
+                </div>
+                <div>
+                  <div className="flex items-center space-x-2.5">
+                    <h3 className="text-lg font-bold text-white font-['Outfit']">
+                      Review & Dispatch Price Quote
+                    </h3>
+                    <span className="font-mono text-sm font-black text-amber-400">
+                      #{reviewingQuoteOrder.order_number}
+                    </span>
+                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
+                      reviewingQuoteOrder.order_status === 'submitted'
+                        ? 'bg-amber-950 text-amber-300 border border-amber-500/40'
+                        : reviewingQuoteOrder.order_status === 'quote_sent'
+                        ? 'bg-purple-950 text-purple-300 border border-purple-500/40'
+                        : 'bg-slate-800 text-slate-300 border border-slate-700'
+                    }`}>
+                      {reviewingQuoteOrder.order_status === 'submitted' ? 'Quote Requested' : reviewingQuoteOrder.order_status.replace(/_/g, ' ')}
+                    </span>
+                  </div>
+                  <p className="text-slate-400 text-xs mt-0.5">
+                    Verify route, weight, and vehicle requirements. Adjust rates and dispatch the official binding quote to customer.
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setReviewingQuoteOrder(null)}
+                className="p-1.5 text-slate-400 hover:text-white rounded-lg bg-slate-800/80 cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Success Alert if Quote Sent */}
+            {quoteSentSuccess && (
+              <div className="p-3.5 bg-emerald-950/70 border border-emerald-500/60 rounded-2xl flex items-center space-x-3 text-emerald-300 font-bold text-xs">
+                <CheckCircle2 className="w-5 h-5 text-emerald-400 flex-shrink-0" />
+                <span>Price quotation saved and official quotation email dispatched to customer successfully!</span>
+              </div>
+            )}
+
+            {/* Route & Cargo Specifications Summary */}
+            <div className="bg-[#0B0F17] p-4 rounded-2xl border border-slate-800 space-y-3">
+              <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400 flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <Package className="w-3.5 h-3.5 text-cyan-400" />
+                  <span>Shipment & Logistics Specifications</span>
+                </div>
+                <span className="text-red-400 font-mono font-bold">
+                  {reviewingQuoteOrder.distance_km} km ({reviewingQuoteOrder.service_area})
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs bg-slate-900/50 p-3 rounded-xl border border-slate-800/80">
+                <div>
+                  <span className="text-[10px] uppercase font-bold text-red-400 block mb-0.5">Pickup Location</span>
+                  <div className="text-white font-medium">{reviewingQuoteOrder.pickup_address}</div>
+                  {reviewingQuoteOrder.pickup_unit && (
+                    <div className="text-slate-400 text-[11px]">Unit/Bay: {reviewingQuoteOrder.pickup_unit}</div>
+                  )}
+                  <div className="text-slate-400 text-[11px] mt-1">
+                    Contact: {reviewingQuoteOrder.pickup_contact_name || reviewingQuoteOrder.customer_name} ({reviewingQuoteOrder.pickup_contact_phone || reviewingQuoteOrder.customer_phone})
+                  </div>
+                  {reviewingQuoteOrder.pickup_date && (
+                    <div className="text-slate-400 text-[11px]">
+                      Scheduled: {reviewingQuoteOrder.pickup_date} at {reviewingQuoteOrder.pickup_time || 'Standard'}
+                    </div>
+                  )}
+                  {reviewingQuoteOrder.pickup_notes && (
+                    <div className="text-amber-300/90 text-[11px] mt-1 italic">
+                      Notes: {reviewingQuoteOrder.pickup_notes}
+                    </div>
+                  )}
+                </div>
+
+                <div>
+                  <span className="text-[10px] uppercase font-bold text-emerald-400 block mb-0.5">Delivery Destination</span>
+                  <div className="text-white font-medium">{reviewingQuoteOrder.delivery_address}</div>
+                  {reviewingQuoteOrder.delivery_unit && (
+                    <div className="text-slate-400 text-[11px]">Unit/Suite: {reviewingQuoteOrder.delivery_unit}</div>
+                  )}
+                  <div className="text-slate-400 text-[11px] mt-1">
+                    Receiving: {reviewingQuoteOrder.delivery_contact_name || 'Designated Consignee'} ({reviewingQuoteOrder.delivery_contact_phone || 'N/A'})
+                  </div>
+                  <div className="text-slate-400 text-[11px]">
+                    Delivery Tier: <strong className="text-cyan-400 capitalize">
+                      {reviewingQuoteOrder.delivery_time_option === 'direct'
+                        ? '2) On Demand / Direct Delivery'
+                        : reviewingQuoteOrder.delivery_time_option === 'urgent'
+                        ? '3) Urgent / ASAP'
+                        : '1) Standard / Same Day'}
+                    </strong>
+                  </div>
+                  {reviewingQuoteOrder.delivery_notes && (
+                    <div className="text-amber-300/90 text-[11px] mt-1 italic">
+                      Notes: {reviewingQuoteOrder.delivery_notes}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Cargo & Vehicle Details */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-[11px]">
+                <div className="bg-[#111726] p-2.5 rounded-xl border border-slate-800">
+                  <span className="text-slate-400 block text-[10px]">Vehicle Required</span>
+                  <span className="font-bold text-white">{reviewingQuoteOrder.vehicle_name}</span>
+                </div>
+                <div className="bg-[#111726] p-2.5 rounded-xl border border-slate-800">
+                  <span className="text-slate-400 block text-[10px]">Total Weight</span>
+                  <span className="font-bold text-white">{reviewingQuoteOrder.weight_lbs} lbs</span>
+                </div>
+                <div className="bg-[#111726] p-2.5 rounded-xl border border-slate-800">
+                  <span className="text-slate-400 block text-[10px]">Units / Pails</span>
+                  <span className="font-bold text-white">{reviewingQuoteOrder.quantity} units</span>
+                </div>
+                <div className="bg-[#111726] p-2.5 rounded-xl border border-slate-800">
+                  <span className="text-slate-400 block text-[10px]">Cargo Classification</span>
+                  <span className="font-bold text-white">{reviewingQuoteOrder.item_description || reviewingQuoteOrder.item_type}</span>
+                </div>
+              </div>
+
+              {reviewingQuoteOrder.custom_instructions && (
+                <div className="bg-amber-950/20 border border-amber-500/30 p-2.5 rounded-xl text-amber-200 text-[11px]">
+                  <strong>Customer Special Instructions:</strong> {reviewingQuoteOrder.custom_instructions}
+                </div>
+              )}
+            </div>
+
+            {/* Price Quote Calculation & Adjustment */}
+            <div className="bg-[#0B0F17] p-4 rounded-2xl border border-slate-800 space-y-4">
+              <div className="text-[11px] font-bold uppercase tracking-wider text-emerald-400 flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <DollarSign className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>Custom Rate Formulation & Surcharges (CAD)</span>
+                </div>
+                <span className="text-slate-400 text-[10px] font-normal lowercase">Adjust any component to set custom price</span>
+              </div>
+
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <div>
+                  <label className="block text-slate-300 mb-1 font-semibold">Base Freight Rate ($)</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={quoteFormData.base_price}
+                    onChange={(e) => handleRecalculateQuoteTotals({ base_price: Number(e.target.value) })}
+                    className="w-full bg-[#111726] border border-slate-700 px-3 py-2 rounded-xl text-white font-mono focus:outline-none focus:border-red-500"
+                  />
+                  <span className="text-[9px] text-slate-500 block mt-0.5">Base vehicle run fee</span>
+                </div>
+
+                <div>
+                  <label className="block text-slate-300 mb-1 font-semibold">Excess Distance ($)</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={quoteFormData.excess_km_charge}
+                    onChange={(e) => handleRecalculateQuoteTotals({ excess_km_charge: Number(e.target.value) })}
+                    className="w-full bg-[#111726] border border-slate-700 px-3 py-2 rounded-xl text-white font-mono focus:outline-none focus:border-red-500"
+                  />
+                  <span className="text-[9px] text-slate-500 block mt-0.5">Kilometer mileage fee</span>
+                </div>
+
+                <div>
+                  <label className="block text-slate-300 mb-1 font-semibold">Urgency / Service Tier ($)</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={quoteFormData.urgency_surcharge}
+                    onChange={(e) => handleRecalculateQuoteTotals({ urgency_surcharge: Number(e.target.value) })}
+                    className="w-full bg-[#111726] border border-slate-700 px-3 py-2 rounded-xl text-white font-mono focus:outline-none focus:border-red-500"
+                  />
+                  <span className="text-[9px] text-slate-500 block mt-0.5">Direct / ASAP tier fee</span>
+                </div>
+
+                <div>
+                  <label className="block text-slate-300 mb-1 font-semibold">After Hours / Tailgate ($)</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={quoteFormData.after_hours_charge}
+                    onChange={(e) => handleRecalculateQuoteTotals({ after_hours_charge: Number(e.target.value) })}
+                    className="w-full bg-[#111726] border border-slate-700 px-3 py-2 rounded-xl text-white font-mono focus:outline-none focus:border-red-500"
+                  />
+                  <span className="text-[9px] text-slate-500 block mt-0.5">Special access / off-hours</span>
+                </div>
+              </div>
+
+              {/* Subtotal, Tax & Total Live Cards */}
+              <div className="grid grid-cols-3 gap-3 pt-2">
+                <div className="bg-[#111726] p-3 rounded-xl border border-slate-800 text-center">
+                  <span className="text-slate-400 text-[10px] uppercase font-bold block">Subtotal</span>
+                  <span className="text-base font-black text-white font-mono">${quoteFormData.subtotal.toFixed(2)}</span>
+                </div>
+
+                <div className="bg-[#111726] p-3 rounded-xl border border-slate-800 text-center">
+                  <span className="text-slate-400 text-[10px] uppercase font-bold block">HST (13%)</span>
+                  <span className="text-base font-black text-white font-mono">${quoteFormData.tax_amount.toFixed(2)}</span>
+                </div>
+
+                <div className="bg-emerald-950/40 p-3 rounded-xl border border-emerald-500/50 text-center">
+                  <span className="text-emerald-400 text-[10px] uppercase font-bold block">Total Quoted CAD</span>
+                  <span className="text-xl font-black text-emerald-300 font-mono">${quoteFormData.total_price.toFixed(2)}</span>
+                </div>
+              </div>
+
+              {/* Quote Dispatch Notes to Customer */}
+              <div>
+                <label className="block text-slate-300 mb-1 font-semibold">
+                  Quotation Notes / Terms Included in Email to Customer
+                </label>
+                <textarea
+                  rows={2}
+                  value={quoteFormData.quote_notes}
+                  onChange={(e) => setQuoteFormData({ ...quoteFormData, quote_notes: e.target.value })}
+                  placeholder="e.g. Quotation includes dedicated cargo van with tailgate offload. Price valid for 7 calendar days."
+                  className="w-full bg-[#111726] border border-slate-700 p-2.5 rounded-xl text-white focus:outline-none focus:border-red-500 text-xs"
+                />
+              </div>
+
+              <div className="flex items-center justify-between text-[11px] text-slate-400 bg-slate-900/60 p-2.5 rounded-xl border border-slate-800">
+                <span>Quotation email recipient:</span>
+                <strong className="text-white font-mono">{reviewingQuoteOrder.customer_name} &lt;{reviewingQuoteOrder.customer_email}&gt;</strong>
+              </div>
+            </div>
+
+            {/* Modal Actions */}
+            <div className="pt-2 border-t border-slate-800 flex items-center justify-between">
+              <button
+                type="button"
+                onClick={() => setReviewingQuoteOrder(null)}
+                className="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold rounded-xl text-xs transition cursor-pointer"
+              >
+                Cancel
+              </button>
+
+              <div className="flex items-center space-x-3">
+                <button
+                  type="button"
+                  onClick={() => handleSendQuoteSubmit(false)}
+                  disabled={isSendingQuote}
+                  className="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold rounded-xl text-xs transition flex items-center space-x-1.5 cursor-pointer disabled:opacity-50"
+                >
+                  <Save className="w-3.5 h-3.5" />
+                  <span>Save Price Only</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => handleSendQuoteSubmit(true)}
+                  disabled={isSendingQuote}
+                  className="px-6 py-2.5 bg-gradient-to-r from-red-600 to-amber-600 hover:from-red-500 hover:to-amber-500 text-white font-bold rounded-xl text-xs transition shadow-lg shadow-red-950/50 flex items-center space-x-2 cursor-pointer disabled:opacity-50"
+                >
+                  <Send className="w-3.5 h-3.5" />
+                  <span>{isSendingQuote ? 'Sending Quotation...' : 'Save & Dispatch Quote to Customer'}</span>
+                </button>
+              </div>
             </div>
           </div>
         </div>

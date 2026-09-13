@@ -206,13 +206,25 @@ export const CustomerPortal: React.FC<CustomerPortalProps> = ({ onNavigate }) =>
                       <span className="text-base font-black text-white font-mono">
                         {ord.order_number}
                       </span>
-                      <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-red-950 text-red-400 border border-red-500/30">
-                        {ord.order_status.replace(/_/g, ' ')}
+                      <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
+                        ord.order_status === 'submitted'
+                          ? 'bg-amber-950 text-amber-300 border border-amber-500/40'
+                          : ord.order_status === 'quote_sent'
+                          ? 'bg-purple-950 text-purple-300 border border-purple-500/40'
+                          : 'bg-red-950 text-red-400 border border-red-500/30'
+                      }`}>
+                        {ord.order_status === 'submitted' ? 'Quote Requested' : ord.order_status === 'quote_sent' ? 'Quote Ready' : ord.order_status.replace(/_/g, ' ')}
                       </span>
                     </div>
-                    <span className="text-sm font-black text-white font-['Outfit']">
-                      ${ord.total_price.toFixed(2)} CAD
-                    </span>
+                    {ord.order_status === 'submitted' ? (
+                      <span className="text-xs font-bold text-amber-400 bg-amber-950/40 px-3 py-1 rounded-lg border border-amber-500/30 font-['Outfit']">
+                        Quotation In Review
+                      </span>
+                    ) : (
+                      <span className="text-sm font-black text-white font-['Outfit']">
+                        ${ord.total_price.toFixed(2)} CAD
+                      </span>
+                    )}
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-slate-400">
@@ -239,13 +251,15 @@ export const CustomerPortal: React.FC<CustomerPortalProps> = ({ onNavigate }) =>
                         Track Live
                       </button>
 
-                      <button
-                        onClick={() => generateOrderPdf(ord, store.getSettings())}
-                        className="p-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-lg transition"
-                        title="Download PDF"
-                      >
-                        <FileDown className="w-4 h-4 text-red-500" />
-                      </button>
+                      {ord.order_status !== 'submitted' && (
+                        <button
+                          onClick={() => generateOrderPdf(ord, store.getSettings())}
+                          className="p-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-lg transition"
+                          title="Download PDF"
+                        >
+                          <FileDown className="w-4 h-4 text-red-500" />
+                        </button>
+                      )}
 
                       <button
                         onClick={() => handleOpenRequest(ord, 'change')}

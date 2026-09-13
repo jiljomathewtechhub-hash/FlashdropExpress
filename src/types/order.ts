@@ -2,6 +2,7 @@ export type UserRole = 'customer' | 'driver' | 'admin' | 'owner' | 'dispatcher';
 
 export type OrderStatus =
   | 'submitted'
+  | 'quote_sent'
   | 'confirmed'
   | 'assigned'
   | 'en_route_pickup'
@@ -136,6 +137,10 @@ export interface Order {
   // Proof of delivery if completed
   proof_of_delivery?: ProofOfDelivery;
   status_history?: StatusHistoryItem[];
+
+  // Custom Quotation & Review
+  quote_notes?: string;
+  quote_sent_at?: string;
 }
 
 export interface StatusHistoryItem {

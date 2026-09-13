@@ -26,6 +26,7 @@ import {
   ChevronRight,
   Loader2,
   Navigation,
+  FileText,
 } from 'lucide-react';
 import {
   VehicleSlug,
@@ -118,6 +119,7 @@ export const OrderWizard: React.FC<OrderWizardProps> = ({ initialData, onNavigat
   const settings = store.getSettings();
   const pricingTiers = store.getPricingTiers();
   const vehicles = store.getVehicles();
+  const selectedVeh = useMemo(() => vehicles.find((v) => v.slug === vehicleSlug) || vehicles[0], [vehicles, vehicleSlug]);
 
   // Dynamic Open-Source OSRM Driving Distance Hook
   const {
@@ -317,7 +319,7 @@ export const OrderWizard: React.FC<OrderWizardProps> = ({ initialData, onNavigat
   const stepsList = [
     { num: 1, label: 'Route & Schedule', desc: 'Locations & Timing' },
     { num: 2, label: 'Cargo & Vehicle', desc: 'Freight & Fleet' },
-    { num: 3, label: 'Contact & Review', desc: 'Quote & Dispatch' },
+    { num: 3, label: 'Contact & Review', desc: 'Submit Quote Request' },
   ];
 
   return (
@@ -326,15 +328,15 @@ export const OrderWizard: React.FC<OrderWizardProps> = ({ initialData, onNavigat
       <div className="mb-8">
         <div className="text-center mb-6">
           <span className="badge-soft-rose px-3.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider inline-block">
-            Fast 3-Step Dispatch
+            Commercial Freight Quotation
           </span>
           <h1 className="text-2xl sm:text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-white via-red-100 to-red-300 font-['Outfit'] mt-2">
-            {step === 4 ? 'Delivery Request Confirmed!' : 'Request a Delivery Service'}
+            {step === 4 ? 'Quote Request Received!' : 'Request a Delivery Quote'}
           </h1>
           <p className="text-xs sm:text-sm text-slate-400 mt-1 max-w-xl mx-auto">
             {step === 4
-              ? `Your delivery request is registered under ${createdOrder?.order_number}. Our dispatch desk is processing your order.`
-              : 'Enter pickup & delivery locations with live OpenStreetMap autocomplete, match fleet capacity, and dispatch in minutes.'}
+              ? `Your quote request is registered under ${createdOrder?.order_number}. Our GTA dispatch desk is reviewing your specifications.`
+              : 'Enter pickup & delivery route, cargo specifications, and vehicle type. Our operations desk will review and email your tailored quote.'}
           </p>
         </div>
 
@@ -1207,103 +1209,73 @@ export const OrderWizard: React.FC<OrderWizardProps> = ({ initialData, onNavigat
               </div>
             </div>
 
-            {/* Itemized Price Calculation Invoice Card */}
+            {/* Custom Quotation & Logistics Specifications Summary Card */}
             <div className="bg-[#0A0D14] border border-slate-800 rounded-2xl p-5 sm:p-6 space-y-4">
               <div className="flex items-center justify-between border-b border-slate-800 pb-3 text-xs">
                 <span className="font-bold text-white uppercase tracking-wider flex items-center space-x-2">
-                  <DollarSign className="w-4 h-4 text-red-400" />
-                  <span>Itemized Quotation Breakdown</span>
+                  <FileText className="w-4 h-4 text-red-400" />
+                  <span>Logistics Specifications Summary</span>
                 </span>
                 <span className="font-bold text-red-300 bg-red-950/60 border border-red-500/30 px-3 py-1 rounded-lg">
-                  {breakdown.tierName}
+                  {selectedVeh.name}
                 </span>
               </div>
 
-              <div className="space-y-2.5 text-xs">
-                <div className="flex justify-between text-slate-400">
-                  <span>Base Distance Rate ({distanceKm} km):</span>
-                  <span className="text-white font-medium">${breakdown.baseDistanceCharge.toFixed(2)}</span>
-                </div>
-
-                {breakdown.excessKmCharge > 0 && (
-                  <div className="flex justify-between text-slate-400">
-                    <span>
-                      Excess Distance (&gt;40 km: {breakdown.excessKm} km @ ${breakdown.excessKmRate.toFixed(2)}/km):
-                    </span>
-                    <span className="text-white font-medium">${breakdown.excessKmCharge.toFixed(2)}</span>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                <div className="space-y-2.5 text-slate-400">
+                  <div className="flex justify-between">
+                    <span>Route Distance:</span>
+                    <strong className="text-white">{distanceKm} km ({serviceArea})</strong>
                   </div>
-                )}
-
-                {breakdown.deliveryTypeCharge > 0 ? (
-                  <div className="flex justify-between text-amber-400">
-                    <span>
-                      {breakdown.deliveryType === 'urgent'
-                        ? '3) Urgent / ASAP Rush Dispatch Premium (1.50×):'
-                        : '2) On-Demand / Direct Delivery Premium (1.25×):'}
-                    </span>
-                    <span className="font-bold">+${breakdown.deliveryTypeCharge.toFixed(2)}</span>
+                  <div className="flex justify-between">
+                    <span>Pickup Window:</span>
+                    <strong className="text-white">{pickupDate} at {pickupTime}</strong>
                   </div>
-                ) : (
-                  <div className="flex justify-between text-slate-400">
+                  <div className="flex justify-between">
                     <span>Type of Delivery:</span>
-                    <span className="text-emerald-400 font-medium">1) Standard / Same-Day (Base Rate Included)</span>
+                    <strong className="text-emerald-400 font-bold">
+                      {deliveryTimeOption === 'urgent' || deliveryTimeOption === 'asap' || deliveryTimeOption === '1-2h'
+                        ? '3) Urgent / ASAP Priority'
+                        : deliveryTimeOption === 'direct' || deliveryTimeOption === '2-3h'
+                        ? '2) On Demand / Direct'
+                        : '1) Standard / Same-Day'}
+                    </strong>
                   </div>
-                )}
-
-                {breakdown.afterHoursCharge > 0 && (
-                  <div className="flex justify-between text-red-400">
-                    <span>After-Hours Premium Surcharge (1.5×):</span>
-                    <span className="font-bold">+${breakdown.afterHoursCharge.toFixed(2)}</span>
-                  </div>
-                )}
-
-                {waitingHours > 0 && (
-                  <div className="flex justify-between text-slate-400">
-                    <span>Waiting Time ({waitingHours} hrs):</span>
-                    <span className="text-white font-medium">+${breakdown.waitingCharge.toFixed(2)}</span>
-                  </div>
-                )}
-
-                {laborHours > 0 && (
-                  <div className="flex justify-between text-slate-400">
-                    <span>Labor Helper ({laborHours} hrs):</span>
-                    <span className="text-white font-medium">+${breakdown.laborCharge.toFixed(2)}</span>
-                  </div>
-                )}
-
-                {serviceArea === 'Outside GTA' && (
-                  <div className="flex justify-between text-slate-400">
-                    <span>Outside GTA Remote Handling Surcharge:</span>
-                    <span className="text-white font-medium">+$25.00</span>
-                  </div>
-                )}
-
-                <div className="pt-2.5 border-t border-slate-800 flex justify-between text-slate-300 font-semibold">
-                  <span>Subtotal:</span>
-                  <span>${breakdown.subtotal.toFixed(2)} CAD</span>
                 </div>
 
-                <div className="flex justify-between text-slate-400">
-                  <span>Ontario HST (13%):</span>
-                  <span className="text-white font-medium">${breakdown.taxAmount.toFixed(2)}</span>
+                <div className="space-y-2.5 text-slate-400">
+                  <div className="flex justify-between">
+                    <span>Cargo Weight:</span>
+                    <strong className="text-white">{weightLbs} lbs ({quantity} units)</strong>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Payment Terms:</span>
+                    <strong className="text-emerald-400">Pay Later (Due on Delivery)</strong>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Fuel Surcharges:</span>
+                    <strong className="text-white">Zero Hidden Surcharges</strong>
+                  </div>
                 </div>
               </div>
 
-              {/* Total Card */}
-              <div className="mt-4 pt-4 border-t border-slate-800 bg-red-950/20 border border-red-500/20 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                <div>
-                  <div className="text-xs font-black text-white uppercase tracking-wider">Total Guaranteed Price (CAD)</div>
-                  <div className="text-[11px] text-slate-400 mt-0.5">Payment Terms: Pay Later (Pay upon delivery arrival)</div>
-                </div>
-                <div className="text-3xl sm:text-4xl font-black text-red-400 font-['Outfit']">
-                  ${breakdown.totalPrice.toFixed(2)}
+              {/* Confidential Quotation Notice Box */}
+              <div className="mt-4 pt-4 border-t border-slate-800 bg-gradient-to-r from-red-950/25 via-[#111624] to-red-950/20 border border-red-500/20 rounded-xl p-4 flex items-start space-x-3 text-xs">
+                <ShieldCheck className="w-5 h-5 text-red-400 shrink-0 mt-0.5" />
+                <div className="space-y-1">
+                  <div className="font-bold text-white uppercase tracking-wider text-[11px]">
+                    Confidential Custom Rate Review
+                  </div>
+                  <p className="text-slate-300 leading-relaxed text-[11px]">
+                    To protect commercial client privacy and provide customized contract rates, our GTA dispatch desk manually reviews your route distance and payload specs. You will receive an official price quote by email at <strong>{customerEmail || 'your email'}</strong> immediately after submission.
+                  </p>
                 </div>
               </div>
             </div>
 
-            {/* Terms Acceptance Notice */}
+            {/* Submission Notice */}
             <div className="p-4 rounded-xl bg-slate-900/60 border border-slate-800 text-[11px] text-slate-400 leading-relaxed">
-              By clicking <strong>&quot;Confirm & Dispatch Delivery&quot;</strong>, your delivery request is directly transmitted to the FlashDrop dispatch desk. An official <strong>FD-XXXXXX</strong> tracking reference and downloadable PDF invoice will be generated immediately.
+              By clicking <strong>&quot;Submit Quote Request&quot;</strong>, your delivery specifications are transmitted directly to the FlashDrop GTA operations desk. An official reference code <strong>#FD-XXXXXX</strong> will be generated for tracking your request.
             </div>
           </div>
         )}
@@ -1319,13 +1291,13 @@ export const OrderWizard: React.FC<OrderWizardProps> = ({ initialData, onNavigat
 
             <div>
               <span className="text-xs font-bold text-emerald-400 uppercase tracking-wider bg-emerald-950/50 border border-emerald-500/20 px-3 py-1 rounded-full inline-block">
-                Successfully Dispatched
+                Quote Request Submitted
               </span>
               <h2 className="text-3xl sm:text-4xl font-black text-white font-['Outfit'] mt-2">
-                Order #{createdOrder.order_number}
+                Quote Reference #{createdOrder.order_number}
               </h2>
               <p className="text-xs sm:text-sm text-slate-400 mt-2 max-w-md mx-auto">
-                Thank you, <strong>{createdOrder.customer_name}</strong>! Your delivery request is active in the dispatch queue.
+                Thank you, <strong>{createdOrder.customer_name}</strong>! Your delivery specifications have been received. An acknowledgement email has been sent to <strong>{createdOrder.customer_email}</strong>. Our dispatch team is reviewing your route and will email your official price quotation shortly.
               </p>
             </div>
 
@@ -1333,20 +1305,11 @@ export const OrderWizard: React.FC<OrderWizardProps> = ({ initialData, onNavigat
             <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
               <button
                 type="button"
-                onClick={() => generateOrderPdf(createdOrder, settings)}
+                onClick={() => onNavigate('tracking', createdOrder.order_number)}
                 className="flex items-center space-x-2 px-6 py-3.5 btn-gradient-primary text-white font-bold text-xs sm:text-sm rounded-xl shadow-lg shadow-red-950/40 transition hover:opacity-95"
               >
-                <FileDown className="w-4 h-4" />
-                <span>Download PDF Invoice / Receipt</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => onNavigate('tracking', createdOrder.order_number)}
-                className="flex items-center space-x-2 px-6 py-3.5 bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white font-bold text-xs sm:text-sm rounded-xl border border-slate-700 transition"
-              >
-                <Search className="w-4 h-4 text-red-400" />
-                <span>Track Live Status</span>
+                <Search className="w-4 h-4" />
+                <span>Track Quote Status</span>
               </button>
 
               <button
@@ -1361,7 +1324,7 @@ export const OrderWizard: React.FC<OrderWizardProps> = ({ initialData, onNavigat
             {/* Summary Card */}
             <div className="bg-[#0A0D14] border border-slate-800 rounded-xl p-5 max-w-lg mx-auto text-left text-xs space-y-2 mt-6">
               <div className="flex justify-between border-b border-slate-800 pb-2 font-bold text-white">
-                <span>Order Reference:</span>
+                <span>Quote Reference:</span>
                 <span className="font-mono text-red-400 font-bold">{createdOrder.order_number}</span>
               </div>
               <div className="flex justify-between text-slate-400">
@@ -1387,8 +1350,8 @@ export const OrderWizard: React.FC<OrderWizardProps> = ({ initialData, onNavigat
                 </span>
               </div>
               <div className="flex justify-between border-t border-slate-800 pt-2 font-bold text-white text-sm">
-                <span>Total Amount (CAD):</span>
-                <span className="text-red-400">${createdOrder.total_price.toFixed(2)} (Pay Later)</span>
+                <span>Quotation Status:</span>
+                <span className="text-amber-400">Under Review by Dispatch (Pending Quote)</span>
               </div>
             </div>
           </div>
@@ -1442,8 +1405,8 @@ export const OrderWizard: React.FC<OrderWizardProps> = ({ initialData, onNavigat
                 onClick={handleSubmitOrder}
                 className="flex items-center space-x-2 px-8 py-3.5 btn-gradient-primary text-white font-black text-xs sm:text-sm rounded-xl shadow-xl shadow-red-950/40 transition transform hover:-translate-y-0.5 min-h-[44px]"
               >
-                <span>Confirm & Dispatch Delivery</span>
-                <CheckCircle2 className="w-4 h-4" />
+                <span>Submit Quote Request</span>
+                <ArrowRight className="w-4 h-4" />
               </button>
             )}
           </div>

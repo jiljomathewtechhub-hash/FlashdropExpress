@@ -74,34 +74,34 @@ const wrapHtmlEmail = (title: string, preheader: string, contentHtml: string): s
 };
 
 // -------------------------------------------------------------
-// 1. CUSTOMER: New Order Confirmation Email
+// 1. CUSTOMER: Quote Request Received Email (NO PRICES)
 // -------------------------------------------------------------
 export const createCustomerOrderEmail = (order: Order, settings: BusinessSettings) => {
   const origin = getOrigin();
   const trackUrl = `${origin}/?track=${order.order_number}`;
 
-  const subject = `Order Confirmed: #${order.order_number} - FlashDrop Express`;
-  const preheader = `Your delivery order #${order.order_number} has been received and scheduled for dispatch.`;
+  const subject = `Quote Request Received: #${order.order_number} - FlashDrop Express`;
+  const preheader = `We have received your delivery specifications. Our dispatch desk is calculating your custom rate quotation.`;
 
   const contentHtml = `
     <div style="text-align: center; margin-bottom: 24px;">
-      <span class="badge badge-green">Order Confirmed & Scheduled</span>
+      <span class="badge badge-blue">Quote Request Under Review</span>
       <h2 style="color: #FFFFFF; font-size: 22px; font-weight: 900; margin: 12px 0 4px 0;">
         Thank You, ${order.customer_name}!
       </h2>
       <p style="color: #94A3B8; font-size: 13px; margin: 0;">
-        Your commercial delivery has been logged with FlashDrop Express GTA dispatch desk.
+        Your delivery specifications have been received by the FlashDrop Express GTA operations desk.
       </p>
     </div>
 
     <!-- Order Header Card -->
     <div class="card">
       <div class="row">
-        <span class="row-label">Order Reference</span>
+        <span class="row-label">Quote Reference</span>
         <span class="row-value" style="font-family: monospace; color: #38BDF8; font-size: 14px;">#${order.order_number}</span>
       </div>
       <div class="row">
-        <span class="row-label">Scheduled Pickup</span>
+        <span class="row-label">Requested Pickup</span>
         <span class="row-value">${order.pickup_date} at ${order.pickup_time}</span>
       </div>
       <div class="row">
@@ -109,7 +109,7 @@ export const createCustomerOrderEmail = (order: Order, settings: BusinessSetting
         <span class="row-value" style="color: #F8FAFC; font-weight: 700;">${formatDeliveryType(order.delivery_time_option)}</span>
       </div>
       <div class="row">
-        <span class="row-label">Assigned Fleet Vehicle</span>
+        <span class="row-label">Selected Fleet Vehicle</span>
         <span class="row-value">${order.vehicle_name}</span>
       </div>
     </div>
@@ -135,7 +135,7 @@ export const createCustomerOrderEmail = (order: Order, settings: BusinessSetting
       </div>
     </div>
 
-    <!-- Cargo & Payment Summary -->
+    <!-- Cargo Manifest -->
     <div class="card">
       <div class="row">
         <span class="row-label">Cargo Manifest</span>
@@ -145,30 +145,26 @@ export const createCustomerOrderEmail = (order: Order, settings: BusinessSetting
         <span class="row-label">Estimated Distance</span>
         <span class="row-value">${order.distance_km} km (${order.service_area})</span>
       </div>
-      <div class="divider"></div>
-      <div class="row">
-        <span class="row-label">Base Freight</span>
-        <span class="row-value">$${(order.base_price || 0).toFixed(2)} CAD</span>
+    </div>
+
+    <!-- Confidential Quotation Status Card (NO PUBLIC PRICES) -->
+    <div class="card" style="border-left: 4px solid #C5161D;">
+      <div style="font-size: 11px; font-weight: 700; color: #F87171; text-transform: uppercase; margin-bottom: 6px;">
+        ⏳ Rate Quotation Under Review
       </div>
-      <div class="row">
-        <span class="row-label">HST (13%)</span>
-        <span class="row-value">$${(order.tax_amount || (order.total_price * 0.13 / 1.13)).toFixed(2)} CAD</span>
-      </div>
-      <div class="row" style="font-size: 15px; margin-top: 6px;">
-        <span class="row-label" style="color: #FFFFFF; font-weight: 800;">Total Amount</span>
-        <span class="row-value" style="color: #34D399; font-weight: 900; font-size: 16px;">$${order.total_price.toFixed(2)} CAD</span>
-      </div>
-      <div class="row" style="margin-top: 4px;">
-        <span class="row-label">Payment Terms</span>
-        <span class="row-value">${order.payment_status === 'paid' ? 'Paid in Full (Card Online)' : 'Pay on Delivery / Net 30'}</span>
+      <p style="color: #CBD5E1; font-size: 12px; line-height: 1.5; margin: 0 0 8px 0;">
+        Our GTA dispatch operations team is calculating your customized rate based on exact route mileage, vehicle allocation, and priority timing.
+      </p>
+      <div style="font-size: 12px; color: #34D399; font-weight: 700;">
+        Your official price quotation will be delivered directly to this email shortly.
       </div>
     </div>
 
     <!-- CTA Tracking Button -->
     <div style="text-align: center; margin: 28px 0;">
-      <a href="${trackUrl}" class="button">Track Your Courier in Real-Time &rarr;</a>
+      <a href="${trackUrl}" class="button">Track Quote Request Status &rarr;</a>
       <p style="color: #64748B; font-size: 11px; margin-top: 10px;">
-        Track live driver dispatch, GPS route progression, and digital proof of delivery.
+        Track live dispatch review, fleet allocation, and status checkpoints.
       </p>
     </div>
   `;
@@ -176,7 +172,142 @@ export const createCustomerOrderEmail = (order: Order, settings: BusinessSetting
   return {
     subject,
     html: wrapHtmlEmail(subject, preheader, contentHtml),
-    plain: `FlashDrop Express: Order Confirmed #${order.order_number}! Scheduled for ${order.pickup_date} at ${order.pickup_time}. Total: $${order.total_price.toFixed(2)} CAD. Track live: ${trackUrl}`,
+    plain: `FlashDrop Express: Quote Request #${order.order_number} Received! Pickup scheduled for ${order.pickup_date} at ${order.pickup_time}. Our dispatch team is reviewing your specifications and will email your price quote shortly. Track request: ${trackUrl}`,
+  };
+};
+
+// -------------------------------------------------------------
+// 1B. CUSTOMER: Official Price Quotation Email (Sent by Admin)
+// -------------------------------------------------------------
+export const createCustomerQuoteReadyEmail = (order: Order, settings: BusinessSettings) => {
+  const origin = getOrigin();
+  const trackUrl = `${origin}/?track=${order.order_number}`;
+
+  const subject = `Official Delivery Quotation: #${order.order_number} - FlashDrop Express`;
+  const preheader = `Your customized price quotation for order #${order.order_number} is ready. Total: $${order.total_price.toFixed(2)} CAD.`;
+
+  const contentHtml = `
+    <div style="text-align: center; margin-bottom: 24px;">
+      <span class="badge badge-green">Official Price Quote Approved</span>
+      <h2 style="color: #FFFFFF; font-size: 22px; font-weight: 900; margin: 12px 0 4px 0;">
+        Your Custom Quote is Ready!
+      </h2>
+      <p style="color: #94A3B8; font-size: 13px; margin: 0;">
+        FlashDrop Express dispatch has reviewed and confirmed your delivery rate.
+      </p>
+    </div>
+
+    <!-- Order Header Card -->
+    <div class="card">
+      <div class="row">
+        <span class="row-label">Quote Reference</span>
+        <span class="row-value" style="font-family: monospace; color: #38BDF8; font-size: 14px;">#${order.order_number}</span>
+      </div>
+      <div class="row">
+        <span class="row-label">Scheduled Pickup</span>
+        <span class="row-value">${order.pickup_date} at ${order.pickup_time}</span>
+      </div>
+      <div class="row">
+        <span class="row-label">Type of Delivery</span>
+        <span class="row-value" style="color: #F8FAFC; font-weight: 700;">${formatDeliveryType(order.delivery_time_option)}</span>
+      </div>
+      <div class="row">
+        <span class="row-label">Assigned Vehicle</span>
+        <span class="row-value">${order.vehicle_name}</span>
+      </div>
+    </div>
+
+    <!-- Route Card -->
+    <div class="card">
+      <div style="margin-bottom: 14px;">
+        <div style="font-size: 11px; font-weight: 700; color: #F87171; text-transform: uppercase; margin-bottom: 4px;">
+          📍 Pickup Location
+        </div>
+        <div style="color: #FFFFFF; font-weight: 700; font-size: 13px;">${order.pickup_address}</div>
+        ${order.pickup_unit ? `<div style="color: #FCD34D; font-size: 11px; margin-top: 2px;">Dock/Unit: ${order.pickup_unit}</div>` : ''}
+      </div>
+      <div class="divider"></div>
+      <div>
+        <div style="font-size: 11px; font-weight: 700; color: #34D399; text-transform: uppercase; margin-bottom: 4px;">
+          🏁 Drop-Off Destination
+        </div>
+        <div style="color: #FFFFFF; font-weight: 700; font-size: 13px;">${order.delivery_address}</div>
+        ${order.delivery_unit ? `<div style="color: #67E8F9; font-size: 11px; margin-top: 2px;">Unit/Buzzer: ${order.delivery_unit}</div>` : ''}
+      </div>
+    </div>
+
+    <!-- Approved Itemized Quotation Breakdown -->
+    <div class="card" style="border: 1px solid #10B981;">
+      <div style="font-size: 12px; font-weight: 700; color: #34D399; text-transform: uppercase; margin-bottom: 12px; letter-spacing: 0.5px;">
+        Confirmed Quotation Breakdown (CAD)
+      </div>
+      <div class="row">
+        <span class="row-label">Base Transport Rate</span>
+        <span class="row-value">$${(order.base_price || 0).toFixed(2)} CAD</span>
+      </div>
+      ${order.excess_km_charge > 0 ? `
+      <div class="row">
+        <span class="row-label">Excess Distance Charge</span>
+        <span class="row-value">+$${order.excess_km_charge.toFixed(2)} CAD</span>
+      </div>` : ''}
+      ${(order.delivery_type_charge && order.delivery_type_charge > 0) ? `
+      <div class="row">
+        <span class="row-label">Delivery Urgency Surcharge</span>
+        <span class="row-value">+$${order.delivery_type_charge.toFixed(2)} CAD</span>
+      </div>` : ''}
+      ${order.after_hours_charge > 0 ? `
+      <div class="row">
+        <span class="row-label">After-Hours Service</span>
+        <span class="row-value">+$${order.after_hours_charge.toFixed(2)} CAD</span>
+      </div>` : ''}
+      ${order.waiting_charge > 0 ? `
+      <div class="row">
+        <span class="row-label">Waiting Time</span>
+        <span class="row-value">+$${order.waiting_charge.toFixed(2)} CAD</span>
+      </div>` : ''}
+      ${order.labor_charge > 0 ? `
+      <div class="row">
+        <span class="row-label">Additional Labor Helper</span>
+        <span class="row-value">+$${order.labor_charge.toFixed(2)} CAD</span>
+      </div>` : ''}
+      <div class="divider"></div>
+      <div class="row">
+        <span class="row-label">Subtotal</span>
+        <span class="row-value">$${(order.subtotal || (order.total_price / 1.13)).toFixed(2)} CAD</span>
+      </div>
+      <div class="row">
+        <span class="row-label">Ontario HST (13%)</span>
+        <span class="row-value">$${(order.tax_amount || (order.total_price - (order.total_price / 1.13))).toFixed(2)} CAD</span>
+      </div>
+      <div class="row" style="font-size: 16px; margin-top: 8px; padding-top: 8px; border-top: 1px solid #1E293B;">
+        <span class="row-label" style="color: #FFFFFF; font-weight: 800;">Total Confirmed Price</span>
+        <span class="row-value" style="color: #34D399; font-weight: 900; font-size: 18px;">$${order.total_price.toFixed(2)} CAD</span>
+      </div>
+      <div class="row" style="margin-top: 4px;">
+        <span class="row-label">Payment Terms</span>
+        <span class="row-value" style="color: #FCD34D;">Pay Later (Pay Upon Delivery)</span>
+      </div>
+      ${order.quote_notes ? `
+      <div style="margin-top: 10px; padding: 8px 12px; background-color: #111827; border-radius: 8px; font-size: 11px; color: #94A3B8;">
+        <strong style="color: #E2E8F0;">Dispatch Notes:</strong> ${order.quote_notes}
+      </div>` : ''}
+    </div>
+
+    <!-- CTA Confirm Delivery Button -->
+    <div style="text-align: center; margin: 28px 0;">
+      <a href="${trackUrl}" class="button" style="background-color: #059669; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.35);">
+        View & Confirm Quotation &rarr;
+      </a>
+      <p style="color: #64748B; font-size: 11px; margin-top: 10px;">
+        Need to make changes? Reply to this email or call dispatch at ${settings.phone || '+1 647 804 9775'}.
+      </p>
+    </div>
+  `;
+
+  return {
+    subject,
+    html: wrapHtmlEmail(subject, preheader, contentHtml),
+    plain: `FlashDrop Express: Official Delivery Quotation #${order.order_number} is ready! Total: $${order.total_price.toFixed(2)} CAD. View & confirm your rate: ${trackUrl}`,
   };
 };
 
@@ -189,6 +320,7 @@ export const createCustomerStatusEmail = (order: Order, prevStatus: OrderStatus,
 
   const statusTitles: Record<OrderStatus, string> = {
     submitted: 'Order Submitted to Queue',
+    quote_sent: 'Official Price Quotation Sent',
     confirmed: 'Order Confirmed by Dispatch',
     assigned: 'Driver Assigned & Scheduled',
     en_route_pickup: 'Driver En Route to Pickup Site',
@@ -202,6 +334,7 @@ export const createCustomerStatusEmail = (order: Order, prevStatus: OrderStatus,
 
   const statusMessages: Record<OrderStatus, string> = {
     submitted: 'Your order is currently queued for operational review.',
+    quote_sent: 'An official itemized price quote for your delivery has been prepared and sent to your email.',
     confirmed: 'Your order has been officially verified and accepted for delivery.',
     assigned: `A fleet courier (${order.assigned_driver_name || 'Assigned Driver'}) has been dispatched to your order.`,
     en_route_pickup: 'The assigned driver is driving toward the designated pickup site.',

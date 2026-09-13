@@ -18,11 +18,11 @@ export const WebsiteFlowNavigator: React.FC<WebsiteFlowNavigatorProps> = ({ onNa
   const steps = [
     {
       num: '01',
-      title: 'Instant Quote',
-      tagline: 'Distance & Rates',
-      desc: 'Select your vehicle and mileage for an instant guaranteed rate.',
-      tab: 'pricing',
-      btnLabel: 'Calculate Rate',
+      title: 'Request a Quote',
+      tagline: 'Tailored Freight Rates',
+      desc: 'Submit route specifications for a custom commercial quotation.',
+      tab: 'order',
+      btnLabel: 'Request Quote',
       icon: Calculator,
       accent: 'text-amber-200',
       borderAccent: 'hover:border-amber-400/30',

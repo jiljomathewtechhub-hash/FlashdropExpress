@@ -50,7 +50,7 @@ export const Navbar: React.FC<NavbarProps> = ({ currentTab, onNavigate }) => {
     { id: 'services', label: 'Services' },
     { id: 'service-areas', label: 'Coverage Area' },
     { id: 'vehicles', label: 'Fleet & Cargo' },
-    { id: 'pricing', label: 'Pricing' },
+    { id: 'order', label: 'Request a Quote' },
     { id: 'tracking', label: 'Track Order' },
     { id: 'contact', label: 'Contact' },
   ];
@@ -171,7 +171,7 @@ export const Navbar: React.FC<NavbarProps> = ({ currentTab, onNavigate }) => {
               className="flex items-center space-x-1.5 px-3.5 py-1.5 text-xs font-bold text-white btn-gradient-primary rounded-lg shadow-md transition-smooth group cursor-pointer"
             >
               <Truck className="w-3.5 h-3.5" />
-              <span>Request Delivery</span>
+              <span>Request a Quote</span>
               <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
             </button>
           </div>
@@ -182,7 +182,7 @@ export const Navbar: React.FC<NavbarProps> = ({ currentTab, onNavigate }) => {
               onClick={() => onNavigate('order')}
               className="min-h-[38px] px-3 py-1.5 text-xs font-bold text-white btn-gradient-primary rounded-lg shadow-sm transition-smooth flex items-center justify-center cursor-pointer"
             >
-              Order Now
+              Request a Quote
             </button>
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}

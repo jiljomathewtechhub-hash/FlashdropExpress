@@ -5,7 +5,6 @@ import { WhyFlashDrop } from '../components/home/WhyFlashDrop';
 import { Services } from '../components/home/Services';
 import { ServiceAreas } from '../components/home/ServiceAreas';
 import { VehicleFleet } from '../components/home/VehicleFleet';
-import { PriceCalculator } from '../components/home/PriceCalculator';
 import { FAQ } from '../components/home/FAQ';
 
 interface HomePageProps {
@@ -21,7 +20,6 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
       <Services onNavigate={onNavigate} />
       <ServiceAreas onNavigate={onNavigate} />
       <VehicleFleet onNavigate={onNavigate} />
-      <PriceCalculator onNavigate={onNavigate} />
       <FAQ onNavigate={onNavigate} />
     </div>
   );
