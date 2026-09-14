@@ -109,14 +109,54 @@ export const INITIAL_DRIVERS: Driver[] = [
 // Starts completely clean from empty for production live operations
 export const INITIAL_ORDERS: Order[] = [];
 
-// Helper to generate unique non-sequential FD-XXXXXX order number
-export function generateOrderNumber(): string {
-  const chars = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
-  let randomStr = '';
-  for (let i = 0; i < 6; i++) {
-    randomStr += chars.charAt(Math.floor(Math.random() * chars.length));
+// Helper to generate sequential order number starting from FD-1001 onwards
+const ORDER_COUNTER_KEY = 'flashdrop_order_counter_seq';
+
+export function generateOrderNumber(existingOrders: Order[] = []): string {
+  let maxNumber = 1000;
+
+  // 1. Scan any existing numerical order numbers in memory/storage
+  if (Array.isArray(existingOrders)) {
+    for (const ord of existingOrders) {
+      if (ord?.order_number) {
+        const match = ord.order_number.match(/^FD-(\d+)$/i);
+        if (match) {
+          const val = parseInt(match[1], 10);
+          if (!isNaN(val) && val > maxNumber) {
+            maxNumber = val;
+          }
+        }
+      }
+    }
   }
-  return `FD-${randomStr}`;
+
+  // 2. Also check persistent counter stored in localStorage
+  if (typeof window !== 'undefined') {
+    try {
+      const stored = localStorage.getItem(ORDER_COUNTER_KEY);
+      if (stored) {
+        const val = parseInt(stored, 10);
+        if (!isNaN(val) && val > maxNumber) {
+          maxNumber = val - 1;
+        }
+      }
+    } catch {
+      // ignore localStorage errors
+    }
+  }
+
+  const nextNumber = maxNumber + 1;
+
+  // Save the next counter so subsequent orders advance
+  if (typeof window !== 'undefined') {
+    try {
+      localStorage.setItem(ORDER_COUNTER_KEY, String(nextNumber + 1));
+    } catch {
+      // ignore
+    }
+  }
+
+  return `FD-${nextNumber}`;
 }
 
 class FlashDropStore {
@@ -510,7 +550,7 @@ class FlashDropStore {
     const newOrder: Order = {
       ...orderInput,
       id: `ord-${Date.now()}`,
-      order_number: generateOrderNumber(),
+      order_number: generateOrderNumber(this.orders),
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
       status_history: [

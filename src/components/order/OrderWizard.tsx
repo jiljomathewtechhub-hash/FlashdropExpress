@@ -1381,7 +1381,7 @@ export const OrderWizard: React.FC<OrderWizardProps> = ({ initialData, onNavigat
 
             {/* Submission Notice */}
             <div className="p-4 rounded-xl bg-slate-100 border border-slate-200 text-[11px] text-slate-600 leading-relaxed">
-              By clicking <strong>&quot;Submit Quote Request&quot;</strong>, your delivery specifications are transmitted directly to the FlashDrop GTA operations desk. An official reference code <strong>#FD-XXXXXX</strong> will be generated for tracking your request.
+              By clicking <strong>&quot;Submit Quote Request&quot;</strong>, your delivery specifications are transmitted directly to the FlashDrop GTA operations desk. An official reference code starting from <strong>#FD-1001</strong> will be generated for tracking your request.
             </div>
           </div>
         )}

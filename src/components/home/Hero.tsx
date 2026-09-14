@@ -92,7 +92,7 @@ export const Hero: React.FC<HeroProps> = ({ onNavigate }) => {
                 type="text"
                 value={trackNumber}
                 onChange={(e) => setTrackNumber(e.target.value)}
-                placeholder="Track Order # (e.g. FD-849201)"
+                placeholder="Track Order # (e.g. FD-1001)"
                 className="w-full bg-transparent px-3 py-2 text-xs sm:text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none font-mono"
               />
               <button

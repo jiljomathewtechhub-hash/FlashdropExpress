@@ -215,7 +215,7 @@ export const OrderTracker: React.FC<OrderTrackerProps> = ({ initialOrderNumber, 
           Track Your Delivery Order
         </h1>
         <p className="text-xs text-slate-600">
-          Enter your <strong>FD-XXXXXX</strong> tracking number to view real-time transit checkpoints.
+          Enter your <strong>FD-1001</strong> tracking number to view real-time transit checkpoints.
         </p>
       </div>
 
@@ -232,7 +232,7 @@ export const OrderTracker: React.FC<OrderTrackerProps> = ({ initialOrderNumber, 
             type="text"
             value={searchNumber}
             onChange={(e) => setSearchNumber(e.target.value)}
-            placeholder="e.g. FD-849201"
+            placeholder="e.g. FD-1001"
             className="w-full bg-transparent px-4 py-2.5 text-sm text-slate-900 font-mono placeholder:text-slate-400 focus:outline-none"
           />
           <button
@@ -262,7 +262,7 @@ export const OrderTracker: React.FC<OrderTrackerProps> = ({ initialOrderNumber, 
           </div>
         ) : (
           <p className="text-center text-xs text-slate-500 mt-2.5">
-            Enter your 6-character order code (e.g. FD-849201) from your receipt or confirmation email.
+            Enter your order tracking code (e.g. FD-1001) from your receipt or confirmation email.
           </p>
         )}
       </div>
