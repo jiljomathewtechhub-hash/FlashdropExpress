@@ -15,6 +15,7 @@ import {
   Trash2,
   ChevronRight,
   Shield,
+  EyeOff,
 } from 'lucide-react';
 import { inAppNotificationService, InAppNotification } from '../../lib/inAppNotificationService';
 import { store, UserSession } from '../../lib/store';
@@ -82,7 +83,7 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({
   }, [isOpen]);
 
   // Don't render for guests / non-staff / non-admin
-  if (!user || (user.role !== 'admin' && user.role !== 'owner' && user.role !== 'driver')) {
+  if (!user || (user.role !== 'admin' && user.role !== 'owner' && user.role !== 'driver' && user.role !== 'dispatcher')) {
     return null;
   }
 
@@ -332,28 +333,56 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({
                       </p>
 
                       {/* Footer Metadata & Status Badges */}
-                      <div className="flex items-center justify-between pt-0.5 text-[10px]">
-                        <div className="flex items-center space-x-2">
+                      <div className="flex items-center justify-between pt-1 text-[10px] gap-2">
+                        <div className="flex items-center space-x-1.5 flex-wrap gap-y-1">
                           {notif.order_number && (
                             <span className="font-mono font-bold text-red-700 bg-red-100/80 px-1.5 py-0.5 rounded border border-red-200">
                               #{notif.order_number}
                             </span>
                           )}
 
+                          {/* Opened vs Unopened Distinction Pill */}
                           {isUnread ? (
-                            <span className="text-red-700 font-semibold flex items-center">
+                            <span className="text-red-700 font-extrabold flex items-center bg-red-100/70 border border-red-300 px-1.5 py-0.5 rounded shadow-2xs">
                               <span className="w-1.5 h-1.5 rounded-full bg-red-600 animate-pulse mr-1" />
                               Unopened
                             </span>
                           ) : (
-                            <span className="text-slate-400 flex items-center">
-                              <CheckCheck className="w-3 h-3 text-slate-400 mr-0.5" />
+                            <span className="text-slate-500 font-medium flex items-center bg-slate-100 border border-slate-200 px-1.5 py-0.5 rounded">
+                              <CheckCheck className="w-3 h-3 text-emerald-600 mr-1" />
                               Opened {notif.read_at ? formatTime(notif.read_at) : ''}
                             </span>
                           )}
+
+                          {/* Inline Direct Toggle Button */}
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              inAppNotificationService.toggleReadStatus(notif.id);
+                            }}
+                            className={`px-2 py-0.5 rounded-md text-[10px] font-bold transition flex items-center space-x-1 cursor-pointer border ${
+                              isUnread
+                                ? 'bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border-emerald-300 shadow-xs'
+                                : 'bg-white hover:bg-red-50 text-slate-600 hover:text-red-700 border-slate-200 shadow-2xs'
+                            }`}
+                            title={isUnread ? 'Mark as Opened' : 'Mark as Unopened'}
+                          >
+                            {isUnread ? (
+                              <>
+                                <CheckCheck className="w-3 h-3 text-emerald-600" />
+                                <span>Mark Opened</span>
+                              </>
+                            ) : (
+                              <>
+                                <EyeOff className="w-3 h-3 text-slate-400" />
+                                <span>Mark Unread</span>
+                              </>
+                            )}
+                          </button>
                         </div>
 
-                        <span className="text-slate-700 group-hover:text-red-600 opacity-0 group-hover:opacity-100 transition flex items-center font-bold text-[10px]">
+                        <span className="text-slate-700 group-hover:text-red-600 transition flex items-center font-bold text-[10px] shrink-0">
                           Pop Window <ChevronRight className="w-3 h-3 ml-0.5" />
                         </span>
                       </div>

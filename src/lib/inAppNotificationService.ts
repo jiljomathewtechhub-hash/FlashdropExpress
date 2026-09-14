@@ -43,31 +43,68 @@ class InAppNotificationService {
     }
   }
 
+  private getDefaultSeedNotifications(): InAppNotification[] {
+    const now = Date.now();
+    return [
+      {
+        id: 'notif-seed-1',
+        title: 'New Priority Order Placed: #FD-8821',
+        message: 'A-1 Paint & Drywall placed an order for 24 Industrial Paint Cans (1,200 lbs) from Mississauga to Downtown Toronto.',
+        type: 'order_created',
+        order_number: 'FD-8821',
+        recipient_role: 'admin',
+        created_at: new Date(now - 1000 * 60 * 8).toISOString(),
+        is_read: false,
+      },
+      {
+        id: 'notif-seed-2',
+        title: 'Courier Assigned: #FD-8819',
+        message: 'Marcus Vance assigned to High-Roof Cargo Van delivery in Vaughan / Brampton.',
+        type: 'order_assigned',
+        order_number: 'FD-8819',
+        assigned_driver_name: 'Marcus Vance',
+        recipient_role: 'admin',
+        created_at: new Date(now - 1000 * 60 * 35).toISOString(),
+        is_read: false,
+      },
+      {
+        id: 'notif-seed-3',
+        title: 'GTA Dispatch Command Online',
+        message: 'Real-time dispatch activity monitoring and live audio alerts are initialized.',
+        type: 'system',
+        recipient_role: 'all',
+        created_at: new Date(now - 1000 * 60 * 120).toISOString(),
+        is_read: true,
+        read_at: new Date(now - 1000 * 60 * 60).toISOString(),
+      },
+    ];
+  }
+
   private loadFromStorage() {
     if (typeof window === 'undefined') return;
     try {
       const stored = localStorage.getItem(STORAGE_KEY);
       if (stored) {
-        this.notifications = JSON.parse(stored);
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          // If stored only contains the old single-item opened seed, upgrade to rich seed with unopened items
+          if (parsed.length === 1 && parsed[0].id === 'notif-init-1') {
+            this.notifications = this.getDefaultSeedNotifications();
+            this.saveToStorage();
+          } else {
+            this.notifications = parsed;
+          }
+        } else {
+          this.notifications = this.getDefaultSeedNotifications();
+          this.saveToStorage();
+        }
       } else {
-        // Initial sample activity if empty so admin/staff see live historical items
-        this.notifications = [
-          {
-            id: 'notif-init-1',
-            title: 'GTA Dispatch Command Online',
-            message: 'Real-time dispatch activity monitoring and live audio alerts are initialized.',
-            type: 'system',
-            recipient_role: 'all',
-            created_at: new Date(Date.now() - 3600000 * 2).toISOString(),
-            is_read: true,
-            read_at: new Date(Date.now() - 3600000).toISOString(),
-          },
-        ];
+        this.notifications = this.getDefaultSeedNotifications();
         this.saveToStorage();
       }
     } catch (e) {
       console.warn('Failed to load in-app notifications from storage:', e);
-      this.notifications = [];
+      this.notifications = this.getDefaultSeedNotifications();
     }
   }
 
@@ -181,20 +218,38 @@ class InAppNotificationService {
     return newNotif;
   }
 
-  // --- Role-based Filtering ---
-  public getNotificationsForUser(user: UserSession | null, drivers: Array<{ id: string; user_id?: string; email?: string; name: string }> = []): InAppNotification[] {
-    if (!user) return [];
+  private getStoredCurrentUser(): UserSession | null {
+    if (typeof window === 'undefined') return null;
+    try {
+      const saved = localStorage.getItem('flashdrop_current_user');
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
+  }
 
-    // Admin & Owner see everything
-    if (user.role === 'admin' || user.role === 'owner') {
+  // --- Role-based Filtering ---
+  public getNotificationsForUser(
+    user: UserSession | null,
+    drivers: Array<{ id: string; user_id?: string; email?: string; name: string }> = []
+  ): InAppNotification[] {
+    const activeUser = user || this.getStoredCurrentUser();
+
+    // Fallback: If in admin demo or no explicit session, return all notifications
+    if (!activeUser) {
+      return [...this.notifications];
+    }
+
+    // Admin, Owner & Dispatcher see everything
+    if (activeUser.role === 'admin' || activeUser.role === 'owner' || activeUser.role === 'dispatcher') {
       return [...this.notifications];
     }
 
     // Driver / Staff sees only related notifications
-    if (user.role === 'driver') {
-      const userEmail = (user.email || '').toLowerCase();
-      const userName = (user.name || '').toLowerCase();
-      const userDriverId = user.driverId || '';
+    if (activeUser.role === 'driver') {
+      const userEmail = (activeUser.email || '').toLowerCase();
+      const userName = (activeUser.name || '').toLowerCase();
+      const userDriverId = activeUser.driverId || '';
 
       // Match driver by id, email, or name
       const matchingDriver = drivers.find(
@@ -230,46 +285,53 @@ class InAppNotificationService {
     return [];
   }
 
-  public getUnreadCount(user: UserSession | null, drivers: Array<{ id: string; user_id?: string; email?: string; name: string }> = []): number {
+  public getUnreadCount(
+    user: UserSession | null,
+    drivers: Array<{ id: string; user_id?: string; email?: string; name: string }> = []
+  ): number {
     const list = this.getNotificationsForUser(user, drivers);
     return list.filter((n) => !n.is_read).length;
   }
 
   // --- Mark as Opened / Read ---
-  public markAsRead(id: string) {
-    let changed = false;
+  public markAsRead(id: string): boolean {
     const nowIso = new Date().toISOString();
+    let found = false;
+
     this.notifications = this.notifications.map((n) => {
-      if (n.id === id && !n.is_read) {
-        changed = true;
+      if (n.id === id) {
+        found = true;
         return {
           ...n,
           is_read: true,
-          read_at: nowIso,
+          read_at: n.read_at || nowIso,
         };
       }
       return n;
     });
 
-    if (changed) {
+    if (found) {
       this.saveToStorage();
       this.notify();
       if (this.activeModalNotification?.id === id) {
         this.activeModalNotification = {
           ...this.activeModalNotification,
           is_read: true,
-          read_at: nowIso,
+          read_at: this.activeModalNotification.read_at || nowIso,
         };
         this.modalListeners.forEach((fn) => fn(this.activeModalNotification));
       }
     }
+    return found;
   }
 
-  public markAsUnread(id: string) {
-    let changed = false;
+  // --- Mark as Unopened / Unread ---
+  public markAsUnread(id: string): boolean {
+    let found = false;
+
     this.notifications = this.notifications.map((n) => {
-      if (n.id === id && n.is_read) {
-        changed = true;
+      if (n.id === id) {
+        found = true;
         return {
           ...n,
           is_read: false,
@@ -279,7 +341,7 @@ class InAppNotificationService {
       return n;
     });
 
-    if (changed) {
+    if (found) {
       this.saveToStorage();
       this.notify();
       if (this.activeModalNotification?.id === id) {
@@ -290,19 +352,39 @@ class InAppNotificationService {
         };
         this.modalListeners.forEach((fn) => fn(this.activeModalNotification));
       }
+    }
+    return found;
+  }
+
+  // --- Toggle Opened / Unopened Status ---
+  public toggleReadStatus(id: string): boolean {
+    const target = this.notifications.find((n) => n.id === id);
+    if (!target) return false;
+
+    if (target.is_read) {
+      this.markAsUnread(id);
+      return false;
+    } else {
+      this.markAsRead(id);
+      return true;
     }
   }
 
   // --- Modal Pop Window Management ---
-  public openModal(notification: InAppNotification) {
-    // Automatically mark as opened
-    this.markAsRead(notification.id);
+  public openModal(notification: InAppNotification, autoMarkRead: boolean = true) {
+    const nowIso = new Date().toISOString();
+
+    if (autoMarkRead) {
+      this.markAsRead(notification.id);
+    }
+
     const resolved = this.notifications.find((n) => n.id === notification.id) || {
       ...notification,
-      is_read: true,
-      read_at: new Date().toISOString(),
+      is_read: autoMarkRead ? true : notification.is_read,
+      read_at: autoMarkRead ? (notification.read_at || nowIso) : notification.read_at,
     };
-    this.activeModalNotification = resolved;
+
+    this.activeModalNotification = { ...resolved };
     this.modalListeners.forEach((fn) => fn(this.activeModalNotification));
   }
 

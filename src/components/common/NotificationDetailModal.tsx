@@ -71,11 +71,18 @@ export const NotificationDetailModal: React.FC<NotificationDetailModalProps> = (
   };
 
   const handleToggleUnread = () => {
-    if (notification.is_read) {
-      inAppNotificationService.markAsUnread(notification.id);
-    } else {
-      inAppNotificationService.markAsRead(notification.id);
-    }
+    const nextIsRead = !notification.is_read;
+    const nowIso = new Date().toISOString();
+
+    // 1. Instant local state update for zero-latency UI reactivity
+    setNotification({
+      ...notification,
+      is_read: nextIsRead,
+      read_at: nextIsRead ? (notification.read_at || nowIso) : undefined,
+    });
+
+    // 2. Global store synchronization and persistence
+    inAppNotificationService.toggleReadStatus(notification.id);
   };
 
   const handleGoToOrder = () => {
@@ -146,6 +153,8 @@ export const NotificationDetailModal: React.FC<NotificationDetailModalProps> = (
       })
     : 'Just now';
 
+  const isUnopened = !notification.is_read;
+
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in"
@@ -155,29 +164,41 @@ export const NotificationDetailModal: React.FC<NotificationDetailModalProps> = (
         className="bg-white rounded-3xl shadow-2xl border border-slate-200 max-w-xl w-full overflow-hidden animate-scale-up"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Modal Top Header */}
-        <div className="p-6 border-b border-slate-100 flex items-start justify-between gap-4 bg-slate-50/70">
+        {/* Modal Top Header with Dynamic Opened / Unopened Accent */}
+        <div
+          className={`p-6 border-b flex items-start justify-between gap-4 transition-all duration-300 ${
+            isUnopened
+              ? 'bg-gradient-to-r from-red-50/95 via-red-50/60 to-white border-b-2 border-red-200'
+              : 'bg-slate-50/80 border-slate-200'
+          }`}
+        >
           <div className="flex items-start space-x-3.5">
-            <div className="w-12 h-12 rounded-2xl bg-white border border-slate-200 flex items-center justify-center shrink-0 shadow-sm">
+            <div
+              className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 shadow-sm border ${
+                isUnopened
+                  ? 'bg-red-100/80 border-red-200 ring-2 ring-red-500/20'
+                  : 'bg-white border-slate-200'
+              }`}
+            >
               {getEventIcon(notification.type)}
             </div>
             <div className="space-y-1">
               <div className="flex flex-wrap items-center gap-2">
-                {/* Visual Opened Status Indicator */}
+                {/* Visual Opened vs Unopened Distinction Badge */}
                 {notification.is_read ? (
-                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 shadow-xs">
+                  <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 shadow-xs">
                     <CheckCheck className="w-3.5 h-3.5 mr-1 text-emerald-600" />
                     ✓ Opened {openedTime}
                   </span>
                 ) : (
-                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-extrabold bg-red-600 text-white shadow-xs">
-                    <span className="w-1.5 h-1.5 rounded-full bg-white animate-ping mr-1.5" />
-                    ● Unopened (New)
+                  <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-extrabold bg-red-600 text-white shadow-xs">
+                    <span className="w-2 h-2 rounded-full bg-white animate-ping mr-1.5" />
+                    ● Unopened (New Alert)
                   </span>
                 )}
 
                 {notification.order_number && (
-                  <span className="font-mono text-xs font-black text-slate-800 bg-white px-2.5 py-0.5 rounded-md border border-slate-200">
+                  <span className="font-mono text-xs font-black text-slate-800 bg-white px-2.5 py-1 rounded-md border border-slate-200 shadow-xs">
                     #{notification.order_number}
                   </span>
                 )}
@@ -202,7 +223,13 @@ export const NotificationDetailModal: React.FC<NotificationDetailModalProps> = (
         {/* Modal Body */}
         <div className="p-6 space-y-5 max-h-[75vh] overflow-y-auto">
           {/* Main Message Box */}
-          <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-4.5 space-y-2">
+          <div
+            className={`border rounded-2xl p-4.5 space-y-2 transition-colors ${
+              isUnopened
+                ? 'bg-red-50/40 border-red-200 ring-1 ring-red-500/10'
+                : 'bg-slate-50 border-slate-200/80'
+            }`}
+          >
             <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">
               Activity Message
             </span>
@@ -213,7 +240,7 @@ export const NotificationDetailModal: React.FC<NotificationDetailModalProps> = (
 
           {/* Timestamp & Timing Details */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-            <div className="bg-white border border-slate-200 rounded-xl p-3 space-y-1">
+            <div className="bg-white border border-slate-200 rounded-xl p-3 space-y-1 shadow-xs">
               <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
                 Activity Logged
               </span>
@@ -224,18 +251,41 @@ export const NotificationDetailModal: React.FC<NotificationDetailModalProps> = (
               <span className="text-[11px] text-slate-500 block">{fullDateTime}</span>
             </div>
 
-            <div className="bg-white border border-slate-200 rounded-xl p-3 space-y-1">
-              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+            {/* Dynamic Status In System Box */}
+            <div
+              className={`rounded-xl p-3 space-y-1 border shadow-xs transition-colors ${
+                notification.is_read
+                  ? 'bg-emerald-50/40 border-emerald-200'
+                  : 'bg-red-50/50 border-red-200'
+              }`}
+            >
+              <span
+                className={`text-[10px] font-bold uppercase tracking-wider block ${
+                  notification.is_read ? 'text-emerald-700' : 'text-red-600'
+                }`}
+              >
                 Status In System
               </span>
-              <div className="font-bold text-emerald-700 flex items-center">
-                <CheckCheck className="w-3.5 h-3.5 mr-1.5 text-emerald-600" />
-                <span>{notification.is_read ? 'Opened & Reviewed' : 'Unopened (New)'}</span>
+              <div
+                className={`font-bold flex items-center ${
+                  notification.is_read ? 'text-emerald-700' : 'text-red-700'
+                }`}
+              >
+                {notification.is_read ? (
+                  <CheckCheck className="w-3.5 h-3.5 mr-1.5 text-emerald-600" />
+                ) : (
+                  <AlertCircle className="w-3.5 h-3.5 mr-1.5 text-red-600 animate-pulse" />
+                )}
+                <span>{notification.is_read ? 'Opened & Reviewed' : 'Unopened (New Alert)'}</span>
               </div>
-              <span className="text-[11px] text-slate-500 block">
+              <span
+                className={`text-[11px] block ${
+                  notification.is_read ? 'text-slate-600' : 'text-red-600 font-medium'
+                }`}
+              >
                 {notification.is_read
                   ? `Marked opened at ${openedTime}`
-                  : 'Unopened alert awaiting review'}
+                  : 'Unopened alert awaiting dispatch review'}
               </span>
             </div>
           </div>
@@ -326,16 +376,20 @@ export const NotificationDetailModal: React.FC<NotificationDetailModalProps> = (
           <button
             type="button"
             onClick={handleToggleUnread}
-            className="flex items-center space-x-1.5 px-3 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-200/80 transition cursor-pointer"
+            className={`flex items-center space-x-1.5 px-3.5 py-2 rounded-xl text-xs font-bold transition cursor-pointer shadow-xs ${
+              notification.is_read
+                ? 'bg-white hover:bg-red-50 text-slate-700 hover:text-red-700 border border-slate-300'
+                : 'bg-emerald-600 hover:bg-emerald-700 text-white'
+            }`}
           >
             {notification.is_read ? (
               <>
-                <EyeOff className="w-3.5 h-3.5" />
+                <EyeOff className="w-3.5 h-3.5 text-slate-500" />
                 <span>Mark as Unopened</span>
               </>
             ) : (
               <>
-                <CheckCheck className="w-3.5 h-3.5" />
+                <CheckCheck className="w-3.5 h-3.5 text-white" />
                 <span>Mark as Opened</span>
               </>
             )}

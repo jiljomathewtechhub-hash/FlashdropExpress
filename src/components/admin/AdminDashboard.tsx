@@ -2045,13 +2045,14 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
                                   onClick={() => {
                                     inAppNotificationService.markAsRead(notif.id);
                                     setInAppNotifications(
-                                      inAppNotificationService.getNotificationsForUser(user, drivers)
+                                      inAppNotificationService.getNotificationsForUser(store.getCurrentUser(), store.getDrivers())
                                     );
                                   }}
-                                  className="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl border border-slate-300 transition cursor-pointer"
+                                  className="flex items-center space-x-1 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow-xs transition cursor-pointer"
                                   title="Mark as Opened"
                                 >
-                                  Mark Opened
+                                  <CheckCheck className="w-3.5 h-3.5" />
+                                  <span>Mark Opened</span>
                                 </button>
                               ) : (
                                 <button
@@ -2059,13 +2060,14 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
                                   onClick={() => {
                                     inAppNotificationService.markAsUnread(notif.id);
                                     setInAppNotifications(
-                                      inAppNotificationService.getNotificationsForUser(user, drivers)
+                                      inAppNotificationService.getNotificationsForUser(store.getCurrentUser(), store.getDrivers())
                                     );
                                   }}
-                                  className="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-semibold rounded-xl border border-slate-300 transition cursor-pointer"
+                                  className="flex items-center space-x-1 px-3 py-1.5 bg-white hover:bg-red-50 text-slate-700 hover:text-red-700 text-xs font-bold rounded-xl border border-slate-300 transition cursor-pointer shadow-2xs"
                                   title="Mark as Unopened (New)"
                                 >
-                                  Mark Unread
+                                  <EyeOff className="w-3.5 h-3.5 text-slate-400" />
+                                  <span>Mark Unread</span>
                                 </button>
                               )}
 
