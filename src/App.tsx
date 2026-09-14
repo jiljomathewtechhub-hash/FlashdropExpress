@@ -39,15 +39,29 @@ const VALID_TABS = [
 const getTabFromHash = (): string => {
   if (typeof window === 'undefined') return 'home';
   const rawHash = window.location.hash.replace(/^#\/?/, '').trim();
+  const search = window.location.search;
+
   if (
     rawHash.includes('type=recovery') ||
     rawHash.includes('reset-password') ||
     rawHash.includes('access_token=') ||
-    (typeof window !== 'undefined' && window.location.search.includes('type=recovery'))
+    search.includes('type=recovery')
   ) {
     return 'login';
   }
+
+  // Detect quotation confirmation or tracking in search or hash
+  if (
+    search.includes('confirm_quote=') ||
+    search.includes('track=') ||
+    rawHash.startsWith('track') ||
+    rawHash.includes('action=confirm')
+  ) {
+    return 'tracking';
+  }
+
   const cleanHash = rawHash.split('?')[0].split('&')[0];
+  if (cleanHash === 'track') return 'tracking';
   return VALID_TABS.includes(cleanHash) ? cleanHash : 'home';
 };
 
@@ -63,11 +77,12 @@ export default function App() {
     });
   }, []);
 
-  // Check on initial load if user landed from a password recovery link
+  // Check on initial load if user landed from a quote confirmation, tracking, or password recovery link
   useEffect(() => {
     if (typeof window === 'undefined') return;
     const rawHash = window.location.hash;
     const search = window.location.search;
+
     if (
       rawHash.includes('type=recovery') ||
       rawHash.includes('reset-password') ||
@@ -76,6 +91,34 @@ export default function App() {
     ) {
       setCurrentTab('login');
       setNavParam({ mode: 'reset' });
+      return;
+    }
+
+    // Inspect URL parameters for direct quote confirmation or order tracking
+    const searchParams = new URLSearchParams(search);
+    const hashQueryIndex = rawHash.indexOf('?');
+    const hashParams = hashQueryIndex !== -1 ? new URLSearchParams(rawHash.slice(hashQueryIndex)) : new URLSearchParams();
+
+    const confirmQuoteParam = searchParams.get('confirm_quote') || hashParams.get('confirm_quote');
+    const trackParam = searchParams.get('track') || hashParams.get('track') || searchParams.get('order') || hashParams.get('order');
+    const actionParam = searchParams.get('action') || hashParams.get('action');
+    const confirmFlag = searchParams.get('confirm') || hashParams.get('confirm');
+
+    const shouldAutoConfirm = Boolean(
+      confirmQuoteParam ||
+      actionParam === 'confirm_quote' ||
+      actionParam === 'confirm' ||
+      confirmFlag === '1' ||
+      confirmFlag === 'true'
+    );
+    const targetOrderNumber = (confirmQuoteParam || trackParam || '').trim();
+
+    if (targetOrderNumber) {
+      setCurrentTab('tracking');
+      setNavParam({
+        orderNumber: targetOrderNumber,
+        autoConfirm: shouldAutoConfirm,
+      });
     }
   }, []);
 
@@ -161,7 +204,16 @@ export default function App() {
         {currentTab === 'order' && <OrderWizard initialData={navParam} onNavigate={handleNavigate} />}
         {currentTab === 'tracking' && (
           <OrderTracker
-            initialOrderNumber={typeof navParam === 'string' ? navParam : undefined}
+            initialOrderNumber={
+              typeof navParam === 'string'
+                ? navParam
+                : navParam?.orderNumber || undefined
+            }
+            autoConfirm={
+              typeof navParam === 'object' && navParam !== null
+                ? !!navParam.autoConfirm
+                : false
+            }
             onNavigate={handleNavigate}
           />
         )}

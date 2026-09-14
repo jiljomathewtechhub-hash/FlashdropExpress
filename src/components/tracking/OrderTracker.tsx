@@ -19,13 +19,19 @@ import { TiltCard } from '../common/TiltCard';
 
 interface OrderTrackerProps {
   initialOrderNumber?: string;
+  autoConfirm?: boolean;
   onNavigate: (tab: string, param?: any) => void;
 }
 
-export const OrderTracker: React.FC<OrderTrackerProps> = ({ initialOrderNumber, onNavigate }) => {
+export const OrderTracker: React.FC<OrderTrackerProps> = ({ initialOrderNumber, autoConfirm, onNavigate }) => {
   const [searchNumber, setSearchNumber] = useState(initialOrderNumber || '');
   const [order, setOrder] = useState<Order | null>(null);
   const [notFound, setNotFound] = useState(false);
+
+  // Quote confirmation states
+  const [isConfirmingQuote, setIsConfirmingQuote] = useState(false);
+  const [quoteConfirmedCelebration, setQuoteConfirmedCelebration] = useState(false);
+  const autoConfirmedRef = React.useRef(false);
 
   // Cancellation or change request modal state
   const [showRequestModal, setShowRequestModal] = useState<'cancel' | 'change' | null>(null);
@@ -36,6 +42,15 @@ export const OrderTracker: React.FC<OrderTrackerProps> = ({ initialOrderNumber, 
     if (initialOrderNumber && initialOrderNumber.trim()) {
       setSearchNumber(initialOrderNumber.trim());
       handleLookup(initialOrderNumber.trim());
+    } else if (typeof window !== 'undefined') {
+      const searchParams = new URLSearchParams(window.location.search);
+      const hashQueryIndex = window.location.hash.indexOf('?');
+      const hashParams = hashQueryIndex !== -1 ? new URLSearchParams(window.location.hash.slice(hashQueryIndex)) : new URLSearchParams();
+      const code = searchParams.get('confirm_quote') || hashParams.get('confirm_quote') || searchParams.get('track') || hashParams.get('track') || searchParams.get('order') || hashParams.get('order');
+      if (code && code.trim()) {
+        setSearchNumber(code.trim());
+        handleLookup(code.trim());
+      }
     }
   }, [initialOrderNumber]);
 
@@ -68,6 +83,63 @@ export const OrderTracker: React.FC<OrderTrackerProps> = ({ initialOrderNumber, 
     e.preventDefault();
     handleLookup(searchNumber);
   };
+
+  const handleConfirmQuote = (targetOrder?: Order) => {
+    const ord = targetOrder || order;
+    if (!ord) return;
+
+    if (ord.order_status !== 'quote_sent' && ord.order_status !== 'submitted') {
+      setQuoteConfirmedCelebration(true);
+      return;
+    }
+
+    setIsConfirmingQuote(true);
+    try {
+      const updated = store.updateOrderStatus(
+        ord.id,
+        'confirmed',
+        'Quotation officially accepted and locked in by customer via confirmation portal',
+        'customer'
+      );
+      if (updated) {
+        setOrder(updated);
+        setQuoteConfirmedCelebration(true);
+      }
+    } catch (err) {
+      console.error('Failed to confirm quotation:', err);
+    } finally {
+      setIsConfirmingQuote(false);
+    }
+  };
+
+  // Auto-confirm effect on landing with confirmation intent
+  useEffect(() => {
+    if (order && !autoConfirmedRef.current) {
+      let hasConfirmIntent = !!autoConfirm;
+      if (!hasConfirmIntent && typeof window !== 'undefined') {
+        const searchParams = new URLSearchParams(window.location.search);
+        const hashQueryIndex = window.location.hash.indexOf('?');
+        const hashParams = hashQueryIndex !== -1 ? new URLSearchParams(window.location.hash.slice(hashQueryIndex)) : new URLSearchParams();
+        hasConfirmIntent = Boolean(
+          searchParams.get('confirm_quote') ||
+          hashParams.get('confirm_quote') ||
+          searchParams.get('action') === 'confirm_quote' ||
+          hashParams.get('action') === 'confirm_quote' ||
+          searchParams.get('confirm') === '1' ||
+          hashParams.get('confirm') === 'true'
+        );
+      }
+
+      if (hasConfirmIntent) {
+        autoConfirmedRef.current = true;
+        if (order.order_status === 'quote_sent' || order.order_status === 'submitted') {
+          handleConfirmQuote(order);
+        } else {
+          setQuoteConfirmedCelebration(true);
+        }
+      }
+    }
+  }, [order, autoConfirm]);
 
   const statusPipeline: { status: OrderStatus; label: string; sub: string }[] = [
     { status: 'submitted', label: 'Quote Requested', sub: 'Route & cargo submitted' },
@@ -232,6 +304,58 @@ export const OrderTracker: React.FC<OrderTrackerProps> = ({ initialOrderNumber, 
         </div>
       )}
 
+      {/* Quotation Confirmed Celebration Banner */}
+      {quoteConfirmedCelebration && order && (
+        <div className="bg-emerald-50 border-2 border-emerald-500/80 rounded-2xl p-6 sm:p-7 shadow-lg shadow-emerald-500/10 animate-fade-in relative overflow-hidden">
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex items-start space-x-4">
+              <div className="w-12 h-12 rounded-2xl bg-emerald-600 text-white flex items-center justify-center flex-shrink-0 shadow-md shadow-emerald-700/30">
+                <CheckCircle2 className="w-7 h-7" />
+              </div>
+              <div className="space-y-1.5">
+                <div className="flex items-center space-x-2">
+                  <span className="bg-emerald-600 text-white text-[10px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full">
+                    Order Confirmed
+                  </span>
+                  <span className="text-xs font-mono font-bold text-emerald-800">
+                    #{order.order_number}
+                  </span>
+                </div>
+                <h3 className="text-xl sm:text-2xl font-black text-slate-900 font-['Outfit']">
+                  Quotation Accepted &amp; Delivery Locked In!
+                </h3>
+                <p className="text-xs sm:text-sm text-slate-700 leading-relaxed max-w-2xl">
+                  Thank you! Your delivery order has been officially confirmed at <strong className="text-emerald-900 font-bold">${order.total_price.toFixed(2)} CAD</strong>. 
+                  A confirmation receipt has been emailed to <strong className="text-slate-900 font-mono">{order.customer_email}</strong>, and our GTA dispatch desk has been alerted for courier allocation.
+                </p>
+                <div className="pt-2 flex flex-wrap items-center gap-3 text-xs text-slate-600">
+                  <div className="flex items-center space-x-1 font-semibold text-emerald-800">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                    <span>Customer &amp; Dispatcher Emailed</span>
+                  </div>
+                  <div className="flex items-center space-x-1 font-semibold text-emerald-800">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                    <span>Admin SMS Dispatched (+1 647 804 9775)</span>
+                  </div>
+                  <div className="flex items-center space-x-1 font-semibold text-emerald-800">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                    <span>Live Dispatch Radar Active</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => setQuoteConfirmedCelebration(false)}
+              className="text-slate-400 hover:text-slate-700 text-xs font-bold px-2.5 py-1 rounded-lg hover:bg-emerald-100 transition cursor-pointer"
+              aria-label="Dismiss banner"
+            >
+              ✕ Dismiss
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Order Details Display */}
       {order && (
         <TiltCard maxTilt={4} className="w-full">
@@ -264,6 +388,18 @@ export const OrderTracker: React.FC<OrderTrackerProps> = ({ initialOrderNumber, 
             </div>
 
             <div className="flex items-center space-x-2.5">
+              {(order.order_status === 'submitted' || order.order_status === 'quote_sent') && (
+                <button
+                  type="button"
+                  onClick={() => handleConfirmQuote(order)}
+                  disabled={isConfirmingQuote}
+                  className="flex items-center space-x-1.5 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white font-bold text-xs rounded-xl shadow-md shadow-emerald-700/25 transition cursor-pointer disabled:opacity-50"
+                >
+                  <CheckCircle2 className="w-3.5 h-3.5 text-white" />
+                  <span>{isConfirmingQuote ? 'Confirming...' : 'Accept & Confirm Order'}</span>
+                </button>
+              )}
+
               {order.order_status !== 'submitted' && (
                 <button
                   onClick={() => generateOrderPdf(order, store.getSettings())}
@@ -292,6 +428,85 @@ export const OrderTracker: React.FC<OrderTrackerProps> = ({ initialOrderNumber, 
               )}
             </div>
           </div>
+
+          {/* Quote Review & Confirmation Action Card (When status is submitted or quote_sent) */}
+          {(order.order_status === 'submitted' || order.order_status === 'quote_sent') && (
+            <div className="bg-gradient-to-br from-emerald-50/90 via-white to-sky-50/50 border-2 border-emerald-500 rounded-2xl p-6 sm:p-7 shadow-md space-y-5 animate-fade-in">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-emerald-200/70 pb-4">
+                <div className="flex items-center space-x-3">
+                  <div className="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center flex-shrink-0 shadow-sm">
+                    <CheckCircle2 className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <span className="text-[10px] font-black uppercase tracking-wider text-emerald-800 bg-emerald-100 border border-emerald-300 px-2.5 py-0.5 rounded-full inline-block mb-1">
+                      {order.order_status === 'quote_sent' ? 'Official Quotation Ready' : 'Delivery Rate Ready for Confirmation'}
+                    </span>
+                    <h3 className="text-lg sm:text-xl font-black text-slate-900 font-['Outfit']">
+                      {order.order_status === 'quote_sent' ? 'Review & Accept Official Quotation' : 'Review & Confirm Delivery Order'}
+                    </h3>
+                  </div>
+                </div>
+
+                <div className="text-left sm:text-right">
+                  <span className="text-[11px] text-slate-500 block uppercase font-semibold">
+                    {order.order_status === 'quote_sent' ? 'Confirmed Quotation Rate' : 'Total Quoted Delivery Rate'}
+                  </span>
+                  <span className="text-2xl sm:text-3xl font-black text-emerald-700 font-['Outfit']">
+                    ${(order.total_price || 0).toFixed(2)} CAD
+                  </span>
+                </div>
+              </div>
+
+              {/* Summary details */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+                <div className="p-3.5 bg-white border border-slate-200 rounded-xl space-y-1 shadow-xs">
+                  <span className="text-slate-500 block text-[10px] uppercase font-bold">Scheduled Pickup</span>
+                  <span className="text-slate-900 font-bold block">{order.pickup_date} at {order.pickup_time}</span>
+                  <span className="text-slate-500 text-[11px] block">{order.service_area} Region • {order.vehicle_name}</span>
+                </div>
+
+                <div className="p-3.5 bg-white border border-slate-200 rounded-xl space-y-1 shadow-xs">
+                  <span className="text-slate-500 block text-[10px] uppercase font-bold">Freight Specifications</span>
+                  <span className="text-slate-900 font-bold block truncate">{order.item_description || order.item_type}</span>
+                  <span className="text-slate-500 text-[11px] block">{order.quantity} units • {order.weight_lbs} lbs • {order.distance_km} km</span>
+                </div>
+
+                <div className="p-3.5 bg-white border border-slate-200 rounded-xl space-y-1 shadow-xs">
+                  <span className="text-slate-500 block text-[10px] uppercase font-bold">Payment Terms</span>
+                  <span className="text-amber-800 font-bold block">Pay Later (Upon Delivery)</span>
+                  <span className="text-slate-500 text-[11px] block">Includes Ontario HST (13%)</span>
+                </div>
+              </div>
+
+              {order.quote_notes && (
+                <div className="p-3.5 bg-white border border-emerald-200 rounded-xl text-xs text-slate-700 shadow-xs">
+                  <strong className="text-emerald-800 font-bold block mb-1">Dispatch Review Notes:</strong>
+                  {order.quote_notes}
+                </div>
+              )}
+
+              {/* Accept & Confirm CTA Button */}
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-2">
+                <p className="text-xs text-slate-600 leading-normal max-w-lg">
+                  Clicking <strong>&ldquo;Accept &amp; Confirm Order&rdquo;</strong> locks in your delivery rate, immediately notifies our dispatch team, sends confirmation emails, and prepares driver allocation for your route.
+                </p>
+
+                <button
+                  type="button"
+                  onClick={() => handleConfirmQuote(order)}
+                  disabled={isConfirmingQuote}
+                  className="w-full sm:w-auto px-7 py-3.5 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white font-black text-sm rounded-xl shadow-lg shadow-emerald-700/25 transition-all flex items-center justify-center space-x-2 cursor-pointer disabled:opacity-50 flex-shrink-0"
+                >
+                  <CheckCircle2 className="w-5 h-5 text-white" />
+                  <span>
+                    {isConfirmingQuote
+                      ? 'Confirming Order...'
+                      : `Accept & Confirm Order ($${(order.total_price || 0).toFixed(2)} CAD)`}
+                  </span>
+                </button>
+              </div>
+            </div>
+          )}
 
           {/* Stepper Pipeline */}
           {!isSpecialStatus ? (
@@ -404,7 +619,7 @@ export const OrderTracker: React.FC<OrderTrackerProps> = ({ initialOrderNumber, 
 
             {/* Billing & Invoice */}
             <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-3 shadow-xs flex flex-col justify-between">
-              {order.order_status === 'submitted' ? (
+              {order.order_status === 'submitted' && (!order.total_price || order.total_price <= 0) ? (
                 <div className="space-y-2 py-1">
                   <span className="font-bold text-amber-800 uppercase text-[11px] block border-b border-amber-200 pb-1 flex items-center space-x-1.5">
                     <Clock className="w-3.5 h-3.5 text-amber-400" />
@@ -419,6 +634,15 @@ export const OrderTracker: React.FC<OrderTrackerProps> = ({ initialOrderNumber, 
                   <div className="bg-amber-100 border border-amber-300 rounded-lg p-2.5 text-[10px] text-amber-900 font-semibold">
                     Review turnaround: within 15–30 minutes during active dispatch hours.
                   </div>
+                  <button
+                    type="button"
+                    onClick={() => handleConfirmQuote(order)}
+                    disabled={isConfirmingQuote}
+                    className="mt-2 w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white font-bold text-xs rounded-xl shadow-md transition flex items-center justify-center space-x-1.5 cursor-pointer disabled:opacity-50"
+                  >
+                    <CheckCircle2 className="w-4 h-4 text-white" />
+                    <span>{isConfirmingQuote ? 'Confirming...' : 'Lock In Priority Dispatch'}</span>
+                  </button>
                 </div>
               ) : (
                 <>
@@ -430,7 +654,7 @@ export const OrderTracker: React.FC<OrderTrackerProps> = ({ initialOrderNumber, 
                     <div className="space-y-1 mt-2 text-slate-400">
                       <div className="flex justify-between">
                         <span>Base Freight:</span>
-                        <span className="text-slate-900">${order.base_price.toFixed(2)}</span>
+                        <span className="text-slate-900">${(order.base_price || 0).toFixed(2)}</span>
                       </div>
                       {order.excess_km_charge > 0 && (
                         <div className="flex justify-between">
@@ -456,9 +680,21 @@ export const OrderTracker: React.FC<OrderTrackerProps> = ({ initialOrderNumber, 
                   <div className="border-t border-slate-200 pt-2 flex justify-between items-center">
                     <span className="text-slate-700 font-bold">Total CAD:</span>
                     <span className="text-xl font-black text-slate-900 font-['Outfit']">
-                      ${order.total_price.toFixed(2)}
+                      ${(order.total_price || 0).toFixed(2)}
                     </span>
                   </div>
+
+                  {(order.order_status === 'submitted' || order.order_status === 'quote_sent') && (
+                    <button
+                      type="button"
+                      onClick={() => handleConfirmQuote(order)}
+                      disabled={isConfirmingQuote}
+                      className="mt-2.5 w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white font-bold text-xs rounded-xl shadow-md shadow-emerald-700/20 transition flex items-center justify-center space-x-1.5 cursor-pointer disabled:opacity-50"
+                    >
+                      <CheckCircle2 className="w-4 h-4 text-white" />
+                      <span>{isConfirmingQuote ? 'Confirming...' : `Accept & Confirm Order ($${(order.total_price || 0).toFixed(2)})`}</span>
+                    </button>
+                  )}
                 </>
               )}
             </div>

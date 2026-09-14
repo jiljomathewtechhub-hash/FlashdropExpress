@@ -96,6 +96,16 @@ export const CustomerPortal: React.FC<CustomerPortalProps> = ({ onNavigate }) =>
     }, 1500);
   };
 
+  const handleAcceptQuoteFromPortal = (ord: Order) => {
+    store.updateOrderStatus(
+      ord.id,
+      'confirmed',
+      'Quotation officially accepted and confirmed by customer via Customer Portal',
+      'customer'
+    );
+    onNavigate('tracking', { orderNumber: ord.order_number, autoConfirm: true });
+  };
+
   const handleAddAddress = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newAddrLabel.trim() || !newAddrText.trim()) return;
@@ -251,6 +261,16 @@ export const CustomerPortal: React.FC<CustomerPortalProps> = ({ onNavigate }) =>
                     </div>
 
                     <div className="flex items-center space-x-2 mt-2 sm:mt-0">
+                      {(ord.order_status === 'submitted' || ord.order_status === 'quote_sent') && (
+                        <button
+                          onClick={() => handleAcceptQuoteFromPortal(ord)}
+                          className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white rounded-lg text-xs font-bold transition shadow-xs flex items-center space-x-1 cursor-pointer"
+                        >
+                          <CheckCircle2 className="w-3.5 h-3.5 text-white" />
+                          <span>Accept &amp; Confirm</span>
+                        </button>
+                      )}
+
                       <button
                         onClick={() => onNavigate('tracking', ord.order_number)}
                         className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-lg text-xs font-semibold transition border border-slate-200 cursor-pointer"
