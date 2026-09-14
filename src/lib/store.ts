@@ -21,6 +21,9 @@ export interface UserSession {
   name: string;
   driverId?: string;
   phone?: string;
+  accountType?: 'personal' | 'commercial';
+  hstNumber?: string;
+  companyName?: string;
 }
 
 // Initial vehicles matching blueprint

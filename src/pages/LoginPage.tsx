@@ -63,7 +63,9 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate, initialParams 
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [fullName, setFullName] = useState('');
+  const [accountType, setAccountType] = useState<'commercial' | 'personal'>('commercial');
   const [companyName, setCompanyName] = useState('');
+  const [hstNumber, setHstNumber] = useState('');
   const [phone, setPhone] = useState('');
   const [address, setAddress] = useState('');
   
@@ -345,18 +347,23 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate, initialParams 
     }
 
     try {
-      // Commercial Registration Flow
+      // Registration Flow (Commercial or Personal Customer)
       if (mode === 'register') {
         if (selectedRole !== 'customer') {
-          throw new Error('Registration is strictly restricted to commercial customer accounts. Staff accounts must be provisioned by the Administrator.');
+          throw new Error('Registration is strictly for customer accounts. Staff accounts must be provisioned by the Administrator.');
         }
 
-        if (!fullName.trim()) throw new Error('Full Name of the contact person is required.');
-        if (!companyName.trim()) throw new Error('Company or Business Name is required for commercial registration.');
-        if (!phone.trim()) throw new Error('Business Phone Number is required for delivery coordination.');
-        if (!address.trim()) throw new Error('Business Delivery Address is required.');
+        if (!fullName.trim()) throw new Error('Full Name is required.');
+        if (accountType === 'commercial') {
+          if (!companyName.trim()) throw new Error('Company or Business Name is required for commercial registration.');
+          if (!hstNumber.trim()) throw new Error('HST / Business Number is mandatory for commercial accounts (e.g. 12345 6789 RT0001).');
+        }
+        if (!phone.trim()) throw new Error('Phone Number is required for delivery coordination.');
+        if (!address.trim()) throw new Error('Street / Delivery Address is required.');
         if (passwordTrimmed.length < 6) throw new Error('Password must be at least 6 characters.');
         if (passwordTrimmed !== confirmPassword.trim()) throw new Error('Passwords do not match. Please re-enter your password.');
+
+        const resolvedCompany = accountType === 'commercial' ? companyName.trim() : (companyName.trim() || 'Personal Account');
 
         const { data, error } = await supabase.auth.signUp({
           email: emailTrimmed,
@@ -364,10 +371,12 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate, initialParams 
           options: {
             data: {
               role: 'customer',
+              account_type: accountType,
               full_name: fullName.trim(),
-              company_name: companyName.trim(),
+              company_name: resolvedCompany,
               phone: phone.trim(),
               address: address.trim(),
+              hst_number: hstNumber.trim(),
             },
           },
         });
@@ -380,25 +389,48 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate, initialParams 
           throw new Error('Registration failed. Please try again.');
         }
 
-        await supabase.from('profiles').upsert([
-          {
-            id: data.user.id,
-            email: emailTrimmed,
-            role: 'customer',
-            full_name: fullName.trim(),
-            company_name: companyName.trim(),
+        try {
+          await supabase.from('profiles').upsert([
+            {
+              id: data.user.id,
+              email: emailTrimmed,
+              role: 'customer',
+              full_name: fullName.trim(),
+              company_name: resolvedCompany,
+              phone: phone.trim(),
+            },
+          ]);
+        } catch (profileErr) {
+          console.warn('Profile upsert warning:', profileErr);
+        }
+
+        // Cache customer profile locally
+        try {
+          localStorage.setItem(`flashdrop_profile_${emailTrimmed}`, JSON.stringify({
+            accountType,
+            hstNumber: hstNumber.trim(),
+            companyName: resolvedCompany,
+            fullName: fullName.trim(),
             phone: phone.trim(),
-          },
-        ]);
+            address: address.trim(),
+          }));
+        } catch {}
 
         store.setCurrentUser({
           role: 'customer',
           email: emailTrimmed,
           name: fullName.trim(),
           phone: phone.trim(),
+          accountType,
+          hstNumber: hstNumber.trim(),
+          companyName: resolvedCompany,
         });
 
-        setSuccessMessage('Commercial account created successfully! Redirecting to Customer Portal...');
+        setSuccessMessage(
+          accountType === 'commercial'
+            ? 'Commercial business account created successfully! Redirecting to Customer Portal...'
+            : 'Personal customer account created successfully! Redirecting to Customer Portal...'
+        );
         setTimeout(() => {
           onNavigate('customer');
         }, 800);
@@ -501,11 +533,38 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate, initialParams 
       }
 
       // 3. Customer Portal
+      let cachedProf: any = null;
+      try {
+        const stored = localStorage.getItem(`flashdrop_profile_${userEmail}`);
+        if (stored) cachedProf = JSON.parse(stored);
+      } catch {}
+
+      const userAccountType =
+        authData.user.user_metadata?.account_type ||
+        profile?.account_type ||
+        cachedProf?.accountType ||
+        (profile?.company_name && profile.company_name !== 'Personal Account' ? 'commercial' : 'personal');
+
+      const userHstNumber =
+        authData.user.user_metadata?.hst_number ||
+        profile?.hst_number ||
+        cachedProf?.hstNumber ||
+        '';
+
+      const userCompanyName =
+        profile?.company_name ||
+        authData.user.user_metadata?.company_name ||
+        cachedProf?.companyName ||
+        '';
+
       store.setCurrentUser({
         role: (profile?.role as UserRole) || 'customer',
         email: userEmail,
-        name: profile?.full_name || profile?.company_name || authData.user.user_metadata?.full_name || 'Customer',
+        name: profile?.full_name || userCompanyName || authData.user.user_metadata?.full_name || 'Customer',
         phone: profile?.phone || authData.user.user_metadata?.phone || '',
+        accountType: userAccountType,
+        hstNumber: userHstNumber,
+        companyName: userCompanyName,
       });
 
       setSuccessMessage('Welcome back! Loading Customer Portal...');
@@ -849,9 +908,48 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate, initialParams 
           <form onSubmit={handleLoginSubmit} className="space-y-4 text-xs">
             {mode === 'register' && selectedRole === 'customer' && (
               <>
+                {/* Account Classification: Commercial vs Personal */}
+                <div>
+                  <label className="block text-slate-700 font-semibold mb-1.5">
+                    Account Classification <span className="text-red-500">*</span>
+                  </label>
+                  <div className="grid grid-cols-2 gap-2.5">
+                    <button
+                      type="button"
+                      onClick={() => setAccountType('commercial')}
+                      className={`py-2.5 px-3 rounded-xl border font-bold text-xs flex items-center justify-center space-x-2 transition cursor-pointer ${
+                        accountType === 'commercial'
+                          ? 'bg-red-50 border-red-600 text-red-700 shadow-xs ring-1 ring-red-600/30'
+                          : 'bg-white border-slate-300 text-slate-700 hover:bg-slate-50'
+                      }`}
+                    >
+                      <Building2 className="w-4 h-4 text-red-600" />
+                      <span>Commercial / Business</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setAccountType('personal')}
+                      className={`py-2.5 px-3 rounded-xl border font-bold text-xs flex items-center justify-center space-x-2 transition cursor-pointer ${
+                        accountType === 'personal'
+                          ? 'bg-red-50 border-red-600 text-red-700 shadow-xs ring-1 ring-red-600/30'
+                          : 'bg-white border-slate-300 text-slate-700 hover:bg-slate-50'
+                      }`}
+                    >
+                      <User className="w-4 h-4 text-red-600" />
+                      <span>Personal / Individual</span>
+                    </button>
+                  </div>
+                  <p className="text-[10px] text-slate-500 mt-1">
+                    {accountType === 'commercial'
+                      ? 'For corporations, contractors, wholesalers & businesses. Business HST registration is mandatory.'
+                      : 'For private individuals & residential senders. HST registration is optional.'}
+                  </p>
+                </div>
+
                 <div>
                   <label className="block text-slate-700 font-semibold mb-1">
-                    Contact Person Full Name <span className="text-red-400">*</span>
+                    {accountType === 'commercial' ? 'Contact Person Full Name' : 'Full Name'}{' '}
+                    <span className="text-red-500">*</span>
                   </label>
                   <div className="relative">
                     <User className="w-4 h-4 text-slate-500 absolute left-3.5 top-3" />
@@ -866,26 +964,79 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate, initialParams 
                   </div>
                 </div>
 
+                {accountType === 'commercial' ? (
+                  <div>
+                    <label className="block text-slate-700 font-semibold mb-1">
+                      Company / Business Name <span className="text-red-500">*</span>
+                    </label>
+                    <div className="relative">
+                      <Building2 className="w-4 h-4 text-slate-500 absolute left-3.5 top-3" />
+                      <input
+                        type="text"
+                        value={companyName}
+                        onChange={(e) => setCompanyName(e.target.value)}
+                        placeholder="e.g. Apex Coatings & Construction Inc."
+                        className="w-full bg-slate-50 border border-slate-300 pl-10 pr-3 py-2.5 rounded-xl text-slate-900 placeholder:text-slate-400 focus:bg-white focus:border-red-500 focus:outline-none shadow-xs"
+                        required
+                      />
+                    </div>
+                  </div>
+                ) : (
+                  <div>
+                    <label className="block text-slate-700 font-semibold mb-1">
+                      Company / Organization <span className="text-slate-400 font-normal">(Optional)</span>
+                    </label>
+                    <div className="relative">
+                      <Building2 className="w-4 h-4 text-slate-500 absolute left-3.5 top-3" />
+                      <input
+                        type="text"
+                        value={companyName}
+                        onChange={(e) => setCompanyName(e.target.value)}
+                        placeholder="Optional (if booking on behalf of an organization)"
+                        className="w-full bg-slate-50 border border-slate-300 pl-10 pr-3 py-2.5 rounded-xl text-slate-900 placeholder:text-slate-400 focus:bg-white focus:border-red-500 focus:outline-none shadow-xs"
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {/* HST / Business Number */}
                 <div>
-                  <label className="block text-slate-700 font-semibold mb-1">
-                    Company / Business Name <span className="text-red-400">*</span>
-                  </label>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="block text-slate-700 font-semibold">
+                      HST / Business Number (GST/HST #){' '}
+                      {accountType === 'commercial' ? (
+                        <span className="text-red-600 font-bold">* (Mandatory)</span>
+                      ) : (
+                        <span className="text-slate-400 font-normal">(Optional)</span>
+                      )}
+                    </label>
+                  </div>
                   <div className="relative">
-                    <Building2 className="w-4 h-4 text-slate-500 absolute left-3.5 top-3" />
+                    <Shield className="w-4 h-4 text-slate-500 absolute left-3.5 top-3" />
                     <input
                       type="text"
-                      value={companyName}
-                      onChange={(e) => setCompanyName(e.target.value)}
-                      placeholder="e.g. Apex Coatings & Construction Inc."
+                      value={hstNumber}
+                      onChange={(e) => setHstNumber(e.target.value)}
+                      placeholder={
+                        accountType === 'commercial'
+                          ? 'e.g. 12345 6789 RT0001 (Required)'
+                          : 'e.g. 12345 6789 RT0001 (Optional)'
+                      }
                       className="w-full bg-slate-50 border border-slate-300 pl-10 pr-3 py-2.5 rounded-xl text-slate-900 placeholder:text-slate-400 focus:bg-white focus:border-red-500 focus:outline-none shadow-xs"
-                      required
+                      required={accountType === 'commercial'}
                     />
                   </div>
+                  <p className="text-[10px] text-slate-500 mt-1">
+                    {accountType === 'commercial'
+                      ? 'Required for commercial accounts to generate CRA-compliant input tax credit invoices.'
+                      : 'Optional: Enter your GST/HST or tax exemption number if claiming business deductions.'}
+                  </p>
                 </div>
 
                 <div>
                   <label className="block text-slate-700 font-semibold mb-1">
-                    Business Phone Number <span className="text-red-400">*</span>
+                    {accountType === 'commercial' ? 'Business Phone Number' : 'Phone Number'}{' '}
+                    <span className="text-red-500">*</span>
                   </label>
                   <div className="relative">
                     <Phone className="w-4 h-4 text-slate-500 absolute left-3.5 top-3" />
@@ -902,7 +1053,8 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate, initialParams 
 
                 <div>
                   <label className="block text-slate-700 font-semibold mb-1">
-                    Business / Delivery Address <span className="text-red-400">*</span>
+                    {accountType === 'commercial' ? 'Business / Delivery Address' : 'Delivery / Street Address'}{' '}
+                    <span className="text-red-500">*</span>
                   </label>
                   <div className="relative">
                     <MapPin className="w-4 h-4 text-slate-500 absolute left-3.5 top-3" />
@@ -1013,7 +1165,9 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate, initialParams 
                 <>
                   <span>
                     {mode === 'register'
-                      ? 'Register Commercial Account'
+                      ? accountType === 'commercial'
+                        ? 'Register Commercial Account'
+                        : 'Register Personal Account'
                       : selectedRole === 'admin'
                       ? 'Sign In as Administrator'
                       : selectedRole === 'driver'
@@ -1037,11 +1191,11 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate, initialParams 
                 setErrorMessage(null);
                 setSuccessMessage(null);
               }}
-              className="text-red-400 hover:text-red-300 hover:underline cursor-pointer font-medium"
+              className="text-red-600 hover:text-red-700 hover:underline cursor-pointer font-medium"
             >
               {mode === 'register'
-                ? 'Already have a commercial customer account? Sign In here'
-                : 'Need a new commercial account? Register your business'}
+                ? 'Already have an account? Sign In here'
+                : 'Need a new customer account? Register as Commercial or Personal'}
             </button>
           </div>
         )}

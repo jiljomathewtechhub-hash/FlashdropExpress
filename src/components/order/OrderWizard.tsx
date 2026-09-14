@@ -19,6 +19,7 @@ import {
   Phone,
   Mail,
   Building,
+  Shield,
   ShieldCheck,
   Zap,
   Info,
@@ -64,10 +65,12 @@ export const OrderWizard: React.FC<OrderWizardProps> = ({ initialData, onNavigat
 
   // Form states
   // 1. Customer Info
+  const [accountType, setAccountType] = useState<'commercial' | 'personal'>('commercial');
   const [customerName, setCustomerName] = useState('');
   const [customerPhone, setCustomerPhone] = useState('');
   const [customerEmail, setCustomerEmail] = useState('');
   const [companyName, setCompanyName] = useState('');
+  const [customerHstNumber, setCustomerHstNumber] = useState('');
 
   // 2. Pickup Address (Starts empty for live production)
   const [pickupAddress, setPickupAddress] = useState('');
@@ -139,10 +142,13 @@ export const OrderWizard: React.FC<OrderWizardProps> = ({ initialData, onNavigat
   // Populate logged in user info if present
   useEffect(() => {
     const user = store.getCurrentUser();
-    if (user && !customerName) {
-      setCustomerName(user.name);
-      setCustomerEmail(user.email);
-      if (user.phone) setCustomerPhone(user.phone);
+    if (user) {
+      if (!customerName) setCustomerName(user.name);
+      if (!customerEmail) setCustomerEmail(user.email);
+      if (user.phone && !customerPhone) setCustomerPhone(user.phone);
+      if (user.accountType) setAccountType(user.accountType);
+      if (user.hstNumber && !customerHstNumber) setCustomerHstNumber(user.hstNumber);
+      if (user.companyName && !companyName) setCompanyName(user.companyName);
     }
   }, []);
 
@@ -246,15 +252,29 @@ export const OrderWizard: React.FC<OrderWizardProps> = ({ initialData, onNavigat
       return;
     }
 
+    if (accountType === 'commercial') {
+      if (!companyName.trim()) {
+        setValidationError('Please provide a Company or Business Name for commercial deliveries.');
+        return;
+      }
+      if (!customerHstNumber.trim()) {
+        setValidationError('HST / Business Number is mandatory for commercial orders (e.g. 12345 6789 RT0001).');
+        return;
+      }
+    }
+
     setValidationError(null);
     const selectedVeh = vehicles.find((v) => v.slug === vehicleSlug) || vehicles[0];
 
     const orderData = {
       customer_id: store.getCurrentUser()?.email || null,
+      account_type: accountType,
       customer_name: customerName.trim(),
       customer_phone: customerPhone.trim(),
       customer_email: customerEmail.trim(),
       company_name: companyName.trim() || undefined,
+      customer_hst_number: customerHstNumber.trim() || undefined,
+      hst_number: customerHstNumber.trim() || undefined,
 
       pickup_address: pickupAddress,
       pickup_lat: pickupLat,
@@ -1039,9 +1059,48 @@ export const OrderWizard: React.FC<OrderWizardProps> = ({ initialData, onNavigat
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {/* Account Classification: Commercial vs Personal */}
+                <div className="sm:col-span-2">
+                  <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                    Order Classification <span className="text-red-600">*</span>
+                  </label>
+                  <div className="grid grid-cols-2 gap-3">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setAccountType('commercial');
+                        setValidationError(null);
+                      }}
+                      className={`py-2.5 px-3 rounded-xl border font-bold text-xs flex items-center justify-center space-x-2 transition cursor-pointer ${
+                        accountType === 'commercial'
+                          ? 'bg-red-50 border-red-600 text-red-700 shadow-xs ring-1 ring-red-600/30'
+                          : 'bg-white border-slate-300 text-slate-700 hover:bg-slate-50'
+                      }`}
+                    >
+                      <Building className="w-4 h-4 text-red-600" />
+                      <span>Commercial / Business Order</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setAccountType('personal');
+                        setValidationError(null);
+                      }}
+                      className={`py-2.5 px-3 rounded-xl border font-bold text-xs flex items-center justify-center space-x-2 transition cursor-pointer ${
+                        accountType === 'personal'
+                          ? 'bg-red-50 border-red-600 text-red-700 shadow-xs ring-1 ring-red-600/30'
+                          : 'bg-white border-slate-300 text-slate-700 hover:bg-slate-50'
+                      }`}
+                    >
+                      <User className="w-4 h-4 text-red-600" />
+                      <span>Personal / Residential Order</span>
+                    </button>
+                  </div>
+                </div>
+
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 mb-1.5">
-                    Contact / Business Name *
+                    {accountType === 'commercial' ? 'Contact Person Full Name' : 'Full Name'} *
                   </label>
                   <div className="relative">
                     <User className="w-4 h-4 text-slate-500 absolute left-3.5 top-3.5" />
@@ -1052,11 +1111,68 @@ export const OrderWizard: React.FC<OrderWizardProps> = ({ initialData, onNavigat
                         setCustomerName(e.target.value);
                         setValidationError(null);
                       }}
-                      placeholder="e.g. Jane Doe / Apex Supplies Ltd."
+                      placeholder="e.g. Jane Doe"
                       className="w-full bg-slate-50 border border-slate-300 pl-10 pr-4 py-2.5 text-sm text-slate-900 rounded-xl focus:border-red-500 focus:bg-white focus:outline-none placeholder:text-slate-400 shadow-xs"
                       required
                     />
                   </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                    Company / Organization {accountType === 'commercial' ? <span className="text-red-600 font-bold">*</span> : <span className="text-slate-400 font-normal">(Optional)</span>}
+                  </label>
+                  <div className="relative">
+                    <Building className="w-4 h-4 text-slate-500 absolute left-3.5 top-3.5" />
+                    <input
+                      type="text"
+                      value={companyName}
+                      onChange={(e) => {
+                        setCompanyName(e.target.value);
+                        setValidationError(null);
+                      }}
+                      placeholder={accountType === 'commercial' ? 'e.g. Apex Industrial Logistics Inc.' : 'Optional (if applicable)'}
+                      className="w-full bg-slate-50 border border-slate-300 pl-10 pr-4 py-2.5 text-sm text-slate-900 rounded-xl focus:border-red-500 focus:bg-white focus:outline-none placeholder:text-slate-400 shadow-xs"
+                      required={accountType === 'commercial'}
+                    />
+                  </div>
+                </div>
+
+                {/* HST / Business Number */}
+                <div className="sm:col-span-2">
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="block text-xs font-semibold text-slate-700">
+                      HST / Business Number (GST/HST #){' '}
+                      {accountType === 'commercial' ? (
+                        <span className="text-red-600 font-bold">* (Mandatory for Commercial)</span>
+                      ) : (
+                        <span className="text-slate-400 font-normal">(Optional)</span>
+                      )}
+                    </label>
+                  </div>
+                  <div className="relative">
+                    <Shield className="w-4 h-4 text-slate-500 absolute left-3.5 top-3.5" />
+                    <input
+                      type="text"
+                      value={customerHstNumber}
+                      onChange={(e) => {
+                        setCustomerHstNumber(e.target.value);
+                        setValidationError(null);
+                      }}
+                      placeholder={
+                        accountType === 'commercial'
+                          ? 'e.g. 12345 6789 RT0001 (Required for commercial invoice)'
+                          : 'e.g. 12345 6789 RT0001 (Optional)'
+                      }
+                      className="w-full bg-slate-50 border border-slate-300 pl-10 pr-4 py-2.5 text-sm text-slate-900 rounded-xl focus:border-red-500 focus:bg-white focus:outline-none placeholder:text-slate-400 shadow-xs"
+                      required={accountType === 'commercial'}
+                    />
+                  </div>
+                  <p className="text-[10px] text-slate-500 mt-1">
+                    {accountType === 'commercial'
+                      ? 'Required for business accounts to generate CRA-compliant input tax credit invoices.'
+                      : 'Optional: Enter your GST/HST number if claiming business delivery deductions.'}
+                  </p>
                 </div>
 
                 <div>
@@ -1095,22 +1211,6 @@ export const OrderWizard: React.FC<OrderWizardProps> = ({ initialData, onNavigat
                       placeholder="e.g. billing@acmesupply.ca"
                       className="w-full bg-slate-50 border border-slate-300 pl-10 pr-4 py-2.5 text-sm text-slate-900 rounded-xl focus:border-red-500 focus:bg-white focus:outline-none placeholder:text-slate-400 shadow-xs"
                       required
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1.5">
-                    Company / Organization (Optional)
-                  </label>
-                  <div className="relative">
-                    <Building className="w-4 h-4 text-slate-500 absolute left-3.5 top-3.5" />
-                    <input
-                      type="text"
-                      value={companyName}
-                      onChange={(e) => setCompanyName(e.target.value)}
-                      placeholder="e.g. Apex Industrial Logistics Inc."
-                      className="w-full bg-slate-50 border border-slate-300 pl-10 pr-4 py-2.5 text-sm text-slate-900 rounded-xl focus:border-red-500 focus:bg-white focus:outline-none placeholder:text-slate-400 shadow-xs"
                     />
                   </div>
                 </div>

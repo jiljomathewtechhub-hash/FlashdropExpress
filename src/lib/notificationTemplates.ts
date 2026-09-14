@@ -10,6 +10,13 @@ const getOrigin = () => {
   return BASE_DOMAIN;
 };
 
+const getPublicAssetUrl = (path: string): string => {
+  // Always ensure public assets in emails load from the canonical production domain
+  // so external email clients (Gmail, Outlook, Yahoo) can fetch the images
+  // without being blocked by private localhost/10.x.x.x networks.
+  return `${BASE_DOMAIN}${path.startsWith('/') ? path : '/' + path}`;
+};
+
 const formatDeliveryType = (opt?: string): string => {
   if (!opt) return 'Standard / Same-Day';
   if (opt === 'urgent' || opt === 'asap' || opt === '1-2h') return '3) Urgent / ASAP';
@@ -17,8 +24,10 @@ const formatDeliveryType = (opt?: string): string => {
   return '1) Standard / Same-Day';
 };
 
-// Base responsive HTML wrapper for FlashDrop Express branded emails
+// Base responsive HTML wrapper for FlashDrop Express branded emails (White Daylight Theme)
 const wrapHtmlEmail = (title: string, preheader: string, contentHtml: string): string => {
+  const fdLogoUrl = getPublicAssetUrl('/images/fd-favicon.jpg');
+
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -26,42 +35,54 @@ const wrapHtmlEmail = (title: string, preheader: string, contentHtml: string): s
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>${title}</title>
   <style>
-    body { margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #0A0D14; color: #E2E8F0; }
-    .container { max-width: 600px; margin: 0 auto; background-color: #111624; border: 1px solid #1E293B; border-radius: 16px; overflow: hidden; }
-    .header { background: linear-gradient(135deg, #1A0507 0%, #111624 100%); padding: 28px 24px; text-align: center; border-bottom: 2px solid #C5161D; }
-    .logo-text { font-size: 24px; font-weight: 900; letter-spacing: -0.5px; color: #FFFFFF; text-transform: uppercase; margin: 0; }
+    body { margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #F1F5F9; color: #334155; }
+    .container { max-width: 600px; margin: 0 auto; background-color: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05); }
+    .header { background-color: #FFFFFF; padding: 24px 20px; text-align: center; border-top: 4px solid #C5161D; border-bottom: 2px solid #C5161D; }
+    .logo-text { font-size: 24px; font-weight: 900; letter-spacing: -0.5px; color: #0F172A; text-transform: uppercase; margin: 0; line-height: 1.1; }
     .logo-red { color: #C5161D; }
-    .tagline { font-size: 11px; text-transform: uppercase; letter-spacing: 2px; color: #94A3B8; margin-top: 4px; }
-    .content { padding: 32px 24px; }
-    .card { background-color: #0B0F17; border: 1px solid #1E293B; border-radius: 12px; padding: 20px; margin-bottom: 20px; }
-    .badge { display: inline-block; padding: 4px 12px; border-radius: 9999px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
-    .badge-red { background-color: #3F0D12; color: #FCA5A5; border: 1px solid #7F1D1D; }
-    .badge-green { background-color: #064E3B; color: #6EE7B7; border: 1px solid #047857; }
-    .badge-blue { background-color: #172554; color: #93C5FD; border: 1px solid #1E40AF; }
-    .button { display: inline-block; background-color: #C5161D; color: #FFFFFF !important; text-decoration: none; padding: 14px 28px; font-weight: 800; font-size: 13px; border-radius: 10px; text-transform: uppercase; letter-spacing: 0.5px; box-shadow: 0 4px 12px rgba(197, 22, 29, 0.35); }
+    .tagline { font-size: 10px; text-transform: uppercase; letter-spacing: 2px; color: #64748B; margin-top: 5px; font-weight: 700; }
+    .content { padding: 32px 24px; background-color: #FFFFFF; }
+    .card { background-color: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 12px; padding: 20px; margin-bottom: 20px; }
+    .badge { display: inline-block; padding: 5px 14px; border-radius: 9999px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
+    .badge-red { background-color: #FEF2F2; color: #B91C1C; border: 1px solid #FECACA; }
+    .badge-green { background-color: #ECFDF5; color: #047857; border: 1px solid #A7F3D0; }
+    .badge-blue { background-color: #EFF6FF; color: #1D4ED8; border: 1px solid #BFDBFE; }
+    .button { display: inline-block; background-color: #C5161D; color: #FFFFFF !important; text-decoration: none; padding: 14px 28px; font-weight: 800; font-size: 13px; border-radius: 10px; text-transform: uppercase; letter-spacing: 0.5px; box-shadow: 0 4px 12px rgba(197, 22, 29, 0.25); }
     .button:hover { background-color: #A51218; }
-    .footer { padding: 24px; text-align: center; font-size: 11px; color: #64748B; border-top: 1px solid #1E293B; background-color: #0B0F17; }
+    .footer { padding: 24px; text-align: center; font-size: 11px; color: #64748B; border-top: 1px solid #E2E8F0; background-color: #F8FAFC; }
     .row { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 12px; }
-    .row-label { color: #94A3B8; }
-    .row-value { color: #F8FAFC; font-weight: 600; text-align: right; }
-    .divider { border-top: 1px solid #1E293B; margin: 14px 0; }
+    .row-label { color: #64748B; font-weight: 500; }
+    .row-value { color: #0F172A; font-weight: 700; text-align: right; }
+    .divider { border-top: 1px solid #E2E8F0; margin: 14px 0; }
   </style>
 </head>
 <body>
   <div style="display: none; max-height: 0px; overflow: hidden;">${preheader}</div>
-  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="padding: 24px 12px; background-color: #07090E;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="padding: 24px 12px; background-color: #F1F5F9;">
     <tr>
       <td align="center">
         <div class="container">
           <div class="header">
-            <h1 class="logo-text">FLASH<span class="logo-red">DROP</span> EXPRESS</h1>
-            <div class="tagline">Greater Toronto Area Rapid Logistics & Courier</div>
+            <!-- Branded Header with Rounded FD Logo Emblem -->
+            <table role="presentation" cellspacing="0" cellpadding="0" border="0" align="center" style="margin: 0 auto;">
+              <tr>
+                <td align="center" valign="middle" style="padding-right: 14px;">
+                  <div style="background-color: #FFFFFF; border-radius: 10px; padding: 4px; border: 1px solid #CBD5E1; display: inline-block; width: 44px; height: 44px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); vertical-align: middle;">
+                    <img src="${fdLogoUrl}" alt="FlashDrop Express FD Speed Logo" width="44" height="44" style="display: block; border-radius: 6px; width: 44px; height: 44px; object-fit: contain;" />
+                  </div>
+                </td>
+                <td align="left" valign="middle">
+                  <h1 class="logo-text">FLASH<span class="logo-red">DROP</span> EXPRESS</h1>
+                  <div class="tagline">Greater Toronto Area Rapid Logistics &amp; Courier</div>
+                </td>
+              </tr>
+            </table>
           </div>
           <div class="content">
             ${contentHtml}
           </div>
           <div class="footer">
-            <p style="margin: 0 0 6px 0; color: #94A3B8; font-weight: 600;">FlashDrop Express Inc. &bull; GTA Operations</p>
+            <p style="margin: 0 0 6px 0; color: #0F172A; font-weight: 700;">FlashDrop Express Inc. &bull; GTA Operations</p>
             <p style="margin: 0 0 6px 0; color: #64748B;">Suite 108, 3064 Jaguar Valley Dr, Mississauga, ON L5A 2J3, Canada</p>
             <p style="margin: 0 0 8px 0;">24/7 Hotline: ${ADMIN_PHONE_DEFAULT} &bull; Email: support@flashdropexpress.com</p>
             <p style="margin: 0;">&copy; ${new Date().getFullYear()} FlashDrop Express. All commercial courier rights reserved.</p>
@@ -87,10 +108,10 @@ export const createCustomerOrderEmail = (order: Order, settings: BusinessSetting
   const contentHtml = `
     <div style="text-align: center; margin-bottom: 24px;">
       <span class="badge badge-blue">Quote Request Under Review</span>
-      <h2 style="color: #FFFFFF; font-size: 22px; font-weight: 900; margin: 12px 0 4px 0;">
+      <h2 style="color: #0F172A; font-size: 22px; font-weight: 900; margin: 12px 0 4px 0;">
         Thank You, ${order.customer_name}!
       </h2>
-      <p style="color: #94A3B8; font-size: 13px; margin: 0;">
+      <p style="color: #64748B; font-size: 13px; margin: 0;">
         Your delivery specifications have been received by the FlashDrop Express GTA operations desk.
       </p>
     </div>
@@ -99,7 +120,7 @@ export const createCustomerOrderEmail = (order: Order, settings: BusinessSetting
     <div class="card">
       <div class="row">
         <span class="row-label">Quote Reference</span>
-        <span class="row-value" style="font-family: monospace; color: #38BDF8; font-size: 14px;">#${order.order_number}</span>
+        <span class="row-value" style="font-family: monospace; color: #0284C7; font-size: 14px;">#${order.order_number}</span>
       </div>
       <div class="row">
         <span class="row-label">Requested Pickup</span>
@@ -107,7 +128,7 @@ export const createCustomerOrderEmail = (order: Order, settings: BusinessSetting
       </div>
       <div class="row">
         <span class="row-label">Type of Delivery</span>
-        <span class="row-value" style="color: #F8FAFC; font-weight: 700;">${formatDeliveryType(order.delivery_time_option)}</span>
+        <span class="row-value" style="color: #0F172A; font-weight: 700;">${formatDeliveryType(order.delivery_time_option)}</span>
       </div>
       <div class="row">
         <span class="row-label">Selected Fleet Vehicle</span>
@@ -118,21 +139,21 @@ export const createCustomerOrderEmail = (order: Order, settings: BusinessSetting
     <!-- Route Card -->
     <div class="card">
       <div style="margin-bottom: 14px;">
-        <div style="font-size: 11px; font-weight: 700; color: #F87171; text-transform: uppercase; margin-bottom: 4px;">
+        <div style="font-size: 11px; font-weight: 700; color: #DC2626; text-transform: uppercase; margin-bottom: 4px;">
           📍 1. Pickup Location
         </div>
-        <div style="color: #FFFFFF; font-weight: 700; font-size: 13px;">${order.pickup_address}</div>
-        ${order.pickup_unit ? `<div style="color: #FCD34D; font-size: 11px; margin-top: 2px;">Dock/Unit: ${order.pickup_unit}</div>` : ''}
-        <div style="color: #94A3B8; font-size: 11px; margin-top: 2px;">Contact: ${order.pickup_contact_name || order.customer_name} (${order.pickup_contact_phone || order.customer_phone})</div>
+        <div style="color: #0F172A; font-weight: 700; font-size: 13px;">${order.pickup_address}</div>
+        ${order.pickup_unit ? `<div style="color: #D97706; font-size: 11px; margin-top: 2px;">Dock/Unit: ${order.pickup_unit}</div>` : ''}
+        <div style="color: #64748B; font-size: 11px; margin-top: 2px;">Contact: ${order.pickup_contact_name || order.customer_name} (${order.pickup_contact_phone || order.customer_phone})</div>
       </div>
       <div class="divider"></div>
       <div>
-        <div style="font-size: 11px; font-weight: 700; color: #34D399; text-transform: uppercase; margin-bottom: 4px;">
+        <div style="font-size: 11px; font-weight: 700; color: #059669; text-transform: uppercase; margin-bottom: 4px;">
           🏁 2. Drop-Off Destination
         </div>
-        <div style="color: #FFFFFF; font-weight: 700; font-size: 13px;">${order.delivery_address}</div>
-        ${order.delivery_unit ? `<div style="color: #67E8F9; font-size: 11px; margin-top: 2px;">Unit/Buzzer: ${order.delivery_unit}</div>` : ''}
-        <div style="color: #94A3B8; font-size: 11px; margin-top: 2px;">Receiver: ${order.delivery_contact_name || order.customer_name} (${order.delivery_contact_phone || order.customer_phone})</div>
+        <div style="color: #0F172A; font-weight: 700; font-size: 13px;">${order.delivery_address}</div>
+        ${order.delivery_unit ? `<div style="color: #0284C7; font-size: 11px; margin-top: 2px;">Unit/Buzzer: ${order.delivery_unit}</div>` : ''}
+        <div style="color: #64748B; font-size: 11px; margin-top: 2px;">Receiver: ${order.delivery_contact_name || order.customer_name} (${order.delivery_contact_phone || order.customer_phone})</div>
       </div>
     </div>
 
@@ -149,14 +170,14 @@ export const createCustomerOrderEmail = (order: Order, settings: BusinessSetting
     </div>
 
     <!-- Confidential Quotation Status Card (NO PUBLIC PRICES) -->
-    <div class="card" style="border-left: 4px solid #C5161D;">
-      <div style="font-size: 11px; font-weight: 700; color: #F87171; text-transform: uppercase; margin-bottom: 6px;">
+    <div class="card" style="background-color: #FFFBEB; border: 1px solid #FDE68A; border-left: 4px solid #C5161D;">
+      <div style="font-size: 11px; font-weight: 700; color: #B45309; text-transform: uppercase; margin-bottom: 6px;">
         ⏳ Rate Quotation Under Review
       </div>
-      <p style="color: #CBD5E1; font-size: 12px; line-height: 1.5; margin: 0 0 8px 0;">
+      <p style="color: #475569; font-size: 12px; line-height: 1.5; margin: 0 0 8px 0;">
         Our GTA dispatch operations team is calculating your customized rate based on exact route mileage, vehicle allocation, and priority timing.
       </p>
-      <div style="font-size: 12px; color: #34D399; font-weight: 700;">
+      <div style="font-size: 12px; color: #047857; font-weight: 700;">
         Your official price quotation will be delivered directly to this email shortly.
       </div>
     </div>
@@ -190,10 +211,10 @@ export const createCustomerQuoteReadyEmail = (order: Order, settings: BusinessSe
   const contentHtml = `
     <div style="text-align: center; margin-bottom: 24px;">
       <span class="badge badge-green">Official Price Quote Approved</span>
-      <h2 style="color: #FFFFFF; font-size: 22px; font-weight: 900; margin: 12px 0 4px 0;">
+      <h2 style="color: #0F172A; font-size: 22px; font-weight: 900; margin: 12px 0 4px 0;">
         Your Custom Quote is Ready!
       </h2>
-      <p style="color: #94A3B8; font-size: 13px; margin: 0;">
+      <p style="color: #64748B; font-size: 13px; margin: 0;">
         FlashDrop Express dispatch has reviewed and confirmed your delivery rate.
       </p>
     </div>
@@ -202,7 +223,7 @@ export const createCustomerQuoteReadyEmail = (order: Order, settings: BusinessSe
     <div class="card">
       <div class="row">
         <span class="row-label">Quote Reference</span>
-        <span class="row-value" style="font-family: monospace; color: #38BDF8; font-size: 14px;">#${order.order_number}</span>
+        <span class="row-value" style="font-family: monospace; color: #0284C7; font-size: 14px;">#${order.order_number}</span>
       </div>
       <div class="row">
         <span class="row-label">Scheduled Pickup</span>
@@ -210,7 +231,7 @@ export const createCustomerQuoteReadyEmail = (order: Order, settings: BusinessSe
       </div>
       <div class="row">
         <span class="row-label">Type of Delivery</span>
-        <span class="row-value" style="color: #F8FAFC; font-weight: 700;">${formatDeliveryType(order.delivery_time_option)}</span>
+        <span class="row-value" style="color: #0F172A; font-weight: 700;">${formatDeliveryType(order.delivery_time_option)}</span>
       </div>
       <div class="row">
         <span class="row-label">Assigned Vehicle</span>
@@ -221,25 +242,25 @@ export const createCustomerQuoteReadyEmail = (order: Order, settings: BusinessSe
     <!-- Route Card -->
     <div class="card">
       <div style="margin-bottom: 14px;">
-        <div style="font-size: 11px; font-weight: 700; color: #F87171; text-transform: uppercase; margin-bottom: 4px;">
+        <div style="font-size: 11px; font-weight: 700; color: #DC2626; text-transform: uppercase; margin-bottom: 4px;">
           📍 Pickup Location
         </div>
-        <div style="color: #FFFFFF; font-weight: 700; font-size: 13px;">${order.pickup_address}</div>
-        ${order.pickup_unit ? `<div style="color: #FCD34D; font-size: 11px; margin-top: 2px;">Dock/Unit: ${order.pickup_unit}</div>` : ''}
+        <div style="color: #0F172A; font-weight: 700; font-size: 13px;">${order.pickup_address}</div>
+        ${order.pickup_unit ? `<div style="color: #D97706; font-size: 11px; margin-top: 2px;">Dock/Unit: ${order.pickup_unit}</div>` : ''}
       </div>
       <div class="divider"></div>
       <div>
-        <div style="font-size: 11px; font-weight: 700; color: #34D399; text-transform: uppercase; margin-bottom: 4px;">
+        <div style="font-size: 11px; font-weight: 700; color: #059669; text-transform: uppercase; margin-bottom: 4px;">
           🏁 Drop-Off Destination
         </div>
-        <div style="color: #FFFFFF; font-weight: 700; font-size: 13px;">${order.delivery_address}</div>
-        ${order.delivery_unit ? `<div style="color: #67E8F9; font-size: 11px; margin-top: 2px;">Unit/Buzzer: ${order.delivery_unit}</div>` : ''}
+        <div style="color: #0F172A; font-weight: 700; font-size: 13px;">${order.delivery_address}</div>
+        ${order.delivery_unit ? `<div style="color: #0284C7; font-size: 11px; margin-top: 2px;">Unit/Buzzer: ${order.delivery_unit}</div>` : ''}
       </div>
     </div>
 
     <!-- Approved Itemized Quotation Breakdown -->
-    <div class="card" style="border: 1px solid #10B981;">
-      <div style="font-size: 12px; font-weight: 700; color: #34D399; text-transform: uppercase; margin-bottom: 12px; letter-spacing: 0.5px;">
+    <div class="card" style="border: 1px solid #10B981; background-color: #F8FAFC;">
+      <div style="font-size: 12px; font-weight: 700; color: #059669; text-transform: uppercase; margin-bottom: 12px; letter-spacing: 0.5px;">
         Confirmed Quotation Breakdown (CAD)
       </div>
       <div class="row">
@@ -280,17 +301,17 @@ export const createCustomerQuoteReadyEmail = (order: Order, settings: BusinessSe
         <span class="row-label">Ontario HST (13%)</span>
         <span class="row-value">$${(order.tax_amount || (order.total_price - (order.total_price / 1.13))).toFixed(2)} CAD</span>
       </div>
-      <div class="row" style="font-size: 16px; margin-top: 8px; padding-top: 8px; border-top: 1px solid #1E293B;">
-        <span class="row-label" style="color: #FFFFFF; font-weight: 800;">Total Confirmed Price</span>
-        <span class="row-value" style="color: #34D399; font-weight: 900; font-size: 18px;">$${order.total_price.toFixed(2)} CAD</span>
+      <div class="row" style="font-size: 16px; margin-top: 8px; padding-top: 8px; border-top: 1px solid #E2E8F0;">
+        <span class="row-label" style="color: #0F172A; font-weight: 800;">Total Confirmed Price</span>
+        <span class="row-value" style="color: #059669; font-weight: 900; font-size: 18px;">$${order.total_price.toFixed(2)} CAD</span>
       </div>
       <div class="row" style="margin-top: 4px;">
         <span class="row-label">Payment Terms</span>
-        <span class="row-value" style="color: #FCD34D;">Pay Later (Pay Upon Delivery)</span>
+        <span class="row-value" style="color: #B45309; font-weight: 700;">Pay Later (Pay Upon Delivery)</span>
       </div>
       ${order.quote_notes ? `
-      <div style="margin-top: 10px; padding: 8px 12px; background-color: #111827; border-radius: 8px; font-size: 11px; color: #94A3B8;">
-        <strong style="color: #E2E8F0;">Dispatch Notes:</strong> ${order.quote_notes}
+      <div style="margin-top: 10px; padding: 10px 14px; background-color: #F1F5F9; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 11px; color: #475569;">
+        <strong style="color: #0F172A;">Dispatch Notes:</strong> ${order.quote_notes}
       </div>` : ''}
     </div>
 
@@ -358,10 +379,10 @@ export const createCustomerStatusEmail = (order: Order, prevStatus: OrderStatus,
       <span class="badge ${newStatus === 'delivered' ? 'badge-green' : newStatus === 'cancelled' ? 'badge-red' : 'badge-blue'}">
         ${currentTitle}
       </span>
-      <h2 style="color: #FFFFFF; font-size: 22px; font-weight: 900; margin: 12px 0 4px 0;">
+      <h2 style="color: #0F172A; font-size: 22px; font-weight: 900; margin: 12px 0 4px 0;">
         Order #${order.order_number}
       </h2>
-      <p style="color: #94A3B8; font-size: 13px; margin: 0;">
+      <p style="color: #64748B; font-size: 13px; margin: 0;">
         ${currentMsg}
       </p>
     </div>
@@ -370,7 +391,7 @@ export const createCustomerStatusEmail = (order: Order, prevStatus: OrderStatus,
     <div class="card">
       <div class="row">
         <span class="row-label">Status</span>
-        <span class="row-value" style="color: ${newStatus === 'delivered' ? '#34D399' : '#38BDF8'}; text-transform: uppercase;">
+        <span class="row-value" style="color: ${newStatus === 'delivered' ? '#059669' : '#0284C7'}; text-transform: uppercase;">
           ${newStatus.replace(/_/g, ' ')}
         </span>
       </div>
@@ -383,7 +404,7 @@ export const createCustomerStatusEmail = (order: Order, prevStatus: OrderStatus,
       ${notes ? `
       <div class="row">
         <span class="row-label">Dispatch Notes</span>
-        <span class="row-value" style="font-style: italic;">${notes}</span>
+        <span class="row-value" style="font-style: italic; color: #475569;">${notes}</span>
       </div>
       ` : ''}
       <div class="row">
@@ -394,7 +415,7 @@ export const createCustomerStatusEmail = (order: Order, prevStatus: OrderStatus,
       <div class="divider"></div>
       <div class="row">
         <span class="row-label">Recipient Verified</span>
-        <span class="row-value" style="color: #34D399;">${order.proof_of_delivery.recipient_name}</span>
+        <span class="row-value" style="color: #059669; font-weight: 700;">${order.proof_of_delivery.recipient_name}</span>
       </div>
       <div class="row">
         <span class="row-label">Delivered Timestamp</span>
@@ -429,10 +450,10 @@ export const createAdminNewOrderEmail = (order: Order, settings: BusinessSetting
   const contentHtml = `
     <div style="text-align: center; margin-bottom: 24px;">
       <span class="badge badge-red">🚨 New Dispatch Booking</span>
-      <h2 style="color: #FFFFFF; font-size: 22px; font-weight: 900; margin: 12px 0 4px 0;">
+      <h2 style="color: #0F172A; font-size: 22px; font-weight: 900; margin: 12px 0 4px 0;">
         Order #${order.order_number} Received
       </h2>
-      <p style="color: #94A3B8; font-size: 13px; margin: 0;">
+      <p style="color: #64748B; font-size: 13px; margin: 0;">
         A new commercial delivery order requires driver allocation and dispatch.
       </p>
     </div>
@@ -441,15 +462,15 @@ export const createAdminNewOrderEmail = (order: Order, settings: BusinessSetting
     <div class="card">
       <div class="row">
         <span class="row-label">Order Value</span>
-        <span class="row-value" style="color: #34D399; font-size: 16px; font-weight: 900;">$${order.total_price.toFixed(2)} CAD</span>
+        <span class="row-value" style="color: #059669; font-size: 16px; font-weight: 900;">$${order.total_price.toFixed(2)} CAD</span>
       </div>
       <div class="row">
         <span class="row-label">Payment Status</span>
-        <span class="row-value">${order.payment_status.toUpperCase()}</span>
+        <span class="row-value" style="color: #0F172A; font-weight: 700;">${order.payment_status.toUpperCase()}</span>
       </div>
       <div class="row">
         <span class="row-label">Type of Delivery</span>
-        <span class="row-value" style="color: #F8FAFC; font-weight: 700;">${formatDeliveryType(order.delivery_time_option)}</span>
+        <span class="row-value" style="color: #0F172A; font-weight: 700;">${formatDeliveryType(order.delivery_time_option)}</span>
       </div>
       <div class="row">
         <span class="row-label">Vehicle Type</span>
@@ -459,7 +480,7 @@ export const createAdminNewOrderEmail = (order: Order, settings: BusinessSetting
 
     <!-- Customer Details -->
     <div class="card">
-      <div style="font-size: 11px; font-weight: 700; color: #94A3B8; text-transform: uppercase; margin-bottom: 8px;">
+      <div style="font-size: 11px; font-weight: 700; color: #64748B; text-transform: uppercase; margin-bottom: 8px;">
         Customer Information
       </div>
       <div class="row">
@@ -474,27 +495,27 @@ export const createAdminNewOrderEmail = (order: Order, settings: BusinessSetting
       ` : ''}
       <div class="row">
         <span class="row-label">Phone</span>
-        <span class="row-value"><a href="tel:${order.customer_phone}" style="color: #34D399; text-decoration: none;">${order.customer_phone}</a></span>
+        <span class="row-value"><a href="tel:${order.customer_phone}" style="color: #059669; text-decoration: none; font-weight: 700;">${order.customer_phone}</a></span>
       </div>
       <div class="row">
         <span class="row-label">Email</span>
-        <span class="row-value"><a href="mailto:${order.customer_email}" style="color: #38BDF8; text-decoration: none;">${order.customer_email}</a></span>
+        <span class="row-value"><a href="mailto:${order.customer_email}" style="color: #0284C7; text-decoration: none; font-weight: 700;">${order.customer_email}</a></span>
       </div>
     </div>
 
     <!-- Route Summary -->
     <div class="card">
-      <div style="font-size: 11px; font-weight: 700; color: #F87171; text-transform: uppercase; margin-bottom: 4px;">
+      <div style="font-size: 11px; font-weight: 700; color: #DC2626; text-transform: uppercase; margin-bottom: 4px;">
         Pickup: ${order.pickup_date} @ ${order.pickup_time}
       </div>
-      <div style="color: #FFFFFF; font-weight: 600; font-size: 12px;">${order.pickup_address} ${order.pickup_unit ? `(${order.pickup_unit})` : ''}</div>
-      <div style="color: #94A3B8; font-size: 11px;">Contact: ${order.pickup_contact_name || order.customer_name} (${order.pickup_contact_phone || order.customer_phone})</div>
+      <div style="color: #0F172A; font-weight: 600; font-size: 12px;">${order.pickup_address} ${order.pickup_unit ? `(${order.pickup_unit})` : ''}</div>
+      <div style="color: #64748B; font-size: 11px;">Contact: ${order.pickup_contact_name || order.customer_name} (${order.pickup_contact_phone || order.customer_phone})</div>
       <div class="divider"></div>
-      <div style="font-size: 11px; font-weight: 700; color: #34D399; text-transform: uppercase; margin-bottom: 4px;">
+      <div style="font-size: 11px; font-weight: 700; color: #059669; text-transform: uppercase; margin-bottom: 4px;">
         Drop-Off: ${order.distance_km} km (${order.service_area})
       </div>
-      <div style="color: #FFFFFF; font-weight: 600; font-size: 12px;">${order.delivery_address} ${order.delivery_unit ? `(${order.delivery_unit})` : ''}</div>
-      <div style="color: #94A3B8; font-size: 11px;">Receiver: ${order.delivery_contact_name || order.customer_name} (${order.delivery_contact_phone || order.customer_phone})</div>
+      <div style="color: #0F172A; font-weight: 600; font-size: 12px;">${order.delivery_address} ${order.delivery_unit ? `(${order.delivery_unit})` : ''}</div>
+      <div style="color: #64748B; font-size: 11px;">Receiver: ${order.delivery_contact_name || order.customer_name} (${order.delivery_contact_phone || order.customer_phone})</div>
     </div>
 
     <!-- Cargo Summary -->
@@ -510,7 +531,7 @@ export const createAdminNewOrderEmail = (order: Order, settings: BusinessSetting
       ${order.custom_instructions ? `
       <div class="row">
         <span class="row-label">Special Notes</span>
-        <span class="row-value" style="color: #FCD34D;">${order.custom_instructions}</span>
+        <span class="row-value" style="color: #B45309; font-weight: 600;">${order.custom_instructions}</span>
       </div>
       ` : ''}
     </div>
@@ -547,10 +568,10 @@ export const createAdminStatusEmail = (order: Order, prevStatus: OrderStatus, ne
   const contentHtml = `
     <div style="text-align: center; margin-bottom: 24px;">
       <span class="badge badge-blue">Dispatch Status Changed</span>
-      <h2 style="color: #FFFFFF; font-size: 20px; font-weight: 900; margin: 12px 0 4px 0;">
+      <h2 style="color: #0F172A; font-size: 20px; font-weight: 900; margin: 12px 0 4px 0;">
         #${order.order_number}: ${newStatus.replace(/_/g, ' ').toUpperCase()}
       </h2>
-      <p style="color: #94A3B8; font-size: 12px; margin: 0;">
+      <p style="color: #64748B; font-size: 12px; margin: 0;">
         Previous state: ${prevStatus.replace(/_/g, ' ')} &rarr; Current: ${newStatus.replace(/_/g, ' ')}
       </p>
     </div>
@@ -558,11 +579,11 @@ export const createAdminStatusEmail = (order: Order, prevStatus: OrderStatus, ne
     <div class="card">
       <div class="row">
         <span class="row-label">Order Number</span>
-        <span class="row-value" style="font-family: monospace; color: #38BDF8;">#${order.order_number}</span>
+        <span class="row-value" style="font-family: monospace; color: #0284C7;">#${order.order_number}</span>
       </div>
       <div class="row">
         <span class="row-label">Current Status</span>
-        <span class="row-value" style="color: #34D399; font-weight: 700; text-transform: uppercase;">${newStatus.replace(/_/g, ' ')}</span>
+        <span class="row-value" style="color: #059669; font-weight: 700; text-transform: uppercase;">${newStatus.replace(/_/g, ' ')}</span>
       </div>
       <div class="row">
         <span class="row-label">Assigned Courier</span>
@@ -571,7 +592,7 @@ export const createAdminStatusEmail = (order: Order, prevStatus: OrderStatus, ne
       ${notes ? `
       <div class="row">
         <span class="row-label">Update Notes</span>
-        <span class="row-value" style="font-style: italic;">${notes}</span>
+        <span class="row-value" style="font-style: italic; color: #475569;">${notes}</span>
       </div>
       ` : ''}
       <div class="row">
@@ -584,7 +605,7 @@ export const createAdminStatusEmail = (order: Order, prevStatus: OrderStatus, ne
       </div>
       <div class="row">
         <span class="row-label">Total Amount</span>
-        <span class="row-value">$${order.total_price.toFixed(2)} CAD</span>
+        <span class="row-value" style="color: #0F172A; font-weight: 700;">$${order.total_price.toFixed(2)} CAD</span>
       </div>
     </div>
 
@@ -620,23 +641,23 @@ export const createPasswordResetEmail = (
   const contentHtml = `
     <div style="text-align: center; margin-bottom: 24px;">
       <span class="badge badge-red">Security Notice</span>
-      <h2 style="font-size: 22px; font-weight: 800; color: #FFFFFF; margin: 14px 0 4px 0;">Reset Your Password</h2>
-      <p style="font-size: 13px; color: #94A3B8; margin: 0;">FlashDrop Express Commercial Account</p>
+      <h2 style="font-size: 22px; font-weight: 800; color: #0F172A; margin: 14px 0 4px 0;">Reset Your Password</h2>
+      <p style="font-size: 13px; color: #64748B; margin: 0;">FlashDrop Express Commercial Account</p>
     </div>
 
-    <p style="font-size: 14px; line-height: 1.6; color: #CBD5E1;">
+    <p style="font-size: 14px; line-height: 1.6; color: #334155;">
       Hello,
     </p>
-    <p style="font-size: 14px; line-height: 1.6; color: #CBD5E1;">
-      We received a request to reset the password for your FlashDrop Express account registered to <strong style="color: #FFFFFF;">${email}</strong>.
+    <p style="font-size: 14px; line-height: 1.6; color: #334155;">
+      We received a request to reset the password for your FlashDrop Express account registered to <strong style="color: #0F172A;">${email}</strong>.
     </p>
 
-    <div class="card" style="text-align: center; border-color: #7F1D1D; background: #1A0709; padding: 24px 20px;">
-      <p style="font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px; color: #FCA5A5; margin: 0 0 8px 0; font-weight: 700;">Your 6-Digit Security PIN</p>
-      <div style="font-family: 'Courier New', Courier, monospace; font-size: 36px; font-weight: 900; letter-spacing: 8px; color: #FFFFFF; padding: 8px 0; text-shadow: 0 0 16px rgba(239, 68, 68, 0.4);">
+    <div class="card" style="text-align: center; border-color: #FECACA; background-color: #FEF2F2; padding: 24px 20px;">
+      <p style="font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px; color: #B91C1C; margin: 0 0 8px 0; font-weight: 700;">Your 6-Digit Security PIN</p>
+      <div style="font-family: 'Courier New', Courier, monospace; font-size: 36px; font-weight: 900; letter-spacing: 8px; color: #B91C1C; padding: 8px 0;">
         ${securityCode}
       </div>
-      <p style="font-size: 11px; color: #94A3B8; margin: 8px 0 0 0;">Valid for 30 minutes &bull; Single use only</p>
+      <p style="font-size: 11px; color: #7F1D1D; margin: 8px 0 0 0;">Valid for 30 minutes &bull; Single use only</p>
     </div>
 
     <div style="text-align: center; margin: 28px 0 24px 0;">
@@ -645,12 +666,12 @@ export const createPasswordResetEmail = (
 
     <p style="font-size: 12px; color: #64748B; text-align: center; margin: 0 0 20px 0;">
       Or copy and paste this link into your browser:<br/>
-      <a href="${resetUrl}" style="color: #EF4444; word-break: break-all; font-size: 11px;">${resetUrl}</a>
+      <a href="${resetUrl}" style="color: #C5161D; word-break: break-all; font-size: 11px;">${resetUrl}</a>
     </p>
 
-    <div style="background-color: #0F172A; border-radius: 10px; padding: 16px; margin-top: 20px; border: 1px solid #1E293B;">
-      <p style="font-size: 12px; color: #E2E8F0; margin: 0 0 4px 0; font-weight: 700;">Didn't request this change?</p>
-      <p style="font-size: 11px; color: #94A3B8; margin: 0; line-height: 1.5;">
+    <div style="background-color: #F8FAFC; border-radius: 10px; padding: 16px; margin-top: 20px; border: 1px solid #E2E8F0;">
+      <p style="font-size: 12px; color: #0F172A; margin: 0 0 4px 0; font-weight: 700;">Didn't request this change?</p>
+      <p style="font-size: 11px; color: #64748B; margin: 0; line-height: 1.5;">
         If you did not request a password reset, please ignore this email. Your existing credentials remain completely secure.
       </p>
     </div>

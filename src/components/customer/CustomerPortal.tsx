@@ -121,16 +121,23 @@ export const CustomerPortal: React.FC<CustomerPortalProps> = ({ onNavigate }) =>
             {user ? user.name.charAt(0).toUpperCase() : 'C'}
           </div>
           <div>
-            <div className="flex items-center space-x-2">
+            <div className="flex flex-wrap items-center gap-2">
               <h1 className="text-2xl font-black text-slate-900 font-['Outfit']">
                 {user ? user.name : 'Customer Portal'}
               </h1>
               <span className="text-[11px] font-bold text-red-600 bg-red-50 border border-red-200 px-2.5 py-0.5 rounded-full">
-                Verified Account
+                {user?.accountType === 'personal' ? 'Personal Account' : 'Commercial Account'}
               </span>
+              {user?.hstNumber && (
+                <span className="text-[11px] font-mono font-bold text-slate-700 bg-slate-100 border border-slate-300 px-2.5 py-0.5 rounded-full">
+                  HST: {user.hstNumber}
+                </span>
+              )}
             </div>
             <p className="text-xs text-slate-600 mt-0.5">
-              {user?.email || 'customer@company.com'} • Commercial Delivery Management
+              {user?.email || 'customer@company.com'}
+              {user?.companyName && user.companyName !== 'Personal Account' ? ` • ${user.companyName}` : ''}
+              {' • Delivery Management'}
             </p>
           </div>
         </div>

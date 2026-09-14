@@ -141,6 +141,11 @@ export interface Order {
   // Custom Quotation & Review
   quote_notes?: string;
   quote_sent_at?: string;
+
+  // Account Type & Tax
+  account_type?: 'personal' | 'commercial';
+  customer_hst_number?: string;
+  hst_number?: string;
 }
 
 export interface StatusHistoryItem {
@@ -212,6 +217,7 @@ export interface BusinessSettings {
   short_redirect_fee: number;
   hst_enabled: boolean;
   hst_rate: number;
+  hst_number?: string;
   resend_api_key?: string;
   admin_sms_phone?: string;
   carrier_sms_gateway?: string;

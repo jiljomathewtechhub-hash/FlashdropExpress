@@ -1,12 +1,12 @@
 import { jsPDF } from 'jspdf';
 import { Order, BusinessSettings } from '../types/order';
 import { DEFAULT_BUSINESS_SETTINGS } from './pricing';
-import { FLASHDROP_LOGO_BASE64 } from './assets/logoBase64';
+import { FLASHDROP_LOGO_BASE64, FD_SPEED_LOGO_BASE64 } from './assets/logoBase64';
 
 /**
  * Generates and downloads a branded, high-contrast, commercial PDF invoice
  * for a FlashDrop Express delivery order using the official white daylight theme
- * and the authentic business card logo.
+ * and the rounded FD speed logo emblem.
  */
 export function generateOrderPdf(
   order: Order,
@@ -31,32 +31,52 @@ export function generateOrderPdf(
   doc.setFillColor(red[0], red[1], red[2]);
   doc.rect(0, 0, 210, 3, 'F');
 
-  // --- HEADER SECTION (WHITE THEME) ---
-  // Authentic Business Card Logo (Speed FD icon + FLASHDROP EXPRESS + Slogan)
-  // Ratio is 1200 / 896 = 1.339
-  const logoW = 40;
-  const logoH = logoW / 1.339; // ~29.87mm
+  // --- HEADER SECTION (WHITE THEME WITH ROUNDED FD SPEED LOGO EMBLEM) ---
+  // Recreated rounded FD emblem badge (matching website header)
+  doc.setFillColor(255, 255, 255);
+  doc.setDrawColor(cardBorder[0], cardBorder[1], cardBorder[2]);
+  doc.setLineWidth(0.4);
+  doc.roundedRect(15, 8, 20, 20, 3, 3, 'FD');
   try {
-    doc.addImage(FLASHDROP_LOGO_BASE64, 'JPEG', 15, 8, logoW, logoH);
+    doc.addImage(FD_SPEED_LOGO_BASE64, 'JPEG', 16, 9, 18, 18);
   } catch (err) {
-    console.error('Failed to embed logo in invoice PDF:', err);
+    console.error('Failed to embed FD speed logo in invoice PDF:', err);
+    try {
+      doc.addImage(FLASHDROP_LOGO_BASE64, 'JPEG', 15, 8, 20, 20);
+    } catch (_) {}
   }
 
-  // Company Contact Details (clean column beside logo)
-  const contactX = 59;
-  doc.setFontSize(7.5);
+  // Brand Typography beside emblem
+  const brandX = 39;
+  doc.setFontSize(18);
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(textDark[0], textDark[1], textDark[2]);
+  doc.text('FLASHDROP ', brandX, 15.5);
+  const fdW = doc.getTextWidth('FLASHDROP ');
+  doc.setTextColor(red[0], red[1], red[2]);
+  doc.text('EXPRESS', brandX + fdW, 15.5);
+
+  doc.setFontSize(7);
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(mutedText[0], mutedText[1], mutedText[2]);
+  doc.text('FAST  •  RELIABLE  •  DELIVERED', brandX, 20);
+
+  doc.setFontSize(7);
   doc.setFont('helvetica', 'bold');
   doc.setTextColor(red[0], red[1], red[2]);
-  doc.text('COMMERCIAL COURIER & EXPEDITED FREIGHT', contactX, 14);
+  doc.text('COMMERCIAL COURIER & EXPEDITED FREIGHT', brandX, 24.5);
 
+  // Company contact details below brand emblem
+  const hstRegNo = settings.hst_number || '78492 1038 RT0001';
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(textBody[0], textBody[1], textBody[2]);
-  doc.setFontSize(8);
-  doc.text('Suite 108, 3064 Jaguar Valley Dr', contactX, 19.5);
-  doc.text('Mississauga, ON L5A 2J3, Canada', contactX, 24);
-  doc.text(`Dispatch: ${settings.phone || '+1 (647) 807-0287'}`, contactX, 28.5);
-  doc.text(`Email: ${settings.email || 'support@flashdropexpress.com'}`, contactX, 33);
-  doc.text('Web: www.flashdropexpress.com', contactX, 37.5);
+  doc.setFontSize(7.5);
+  doc.text('Suite 108, 3064 Jaguar Valley Dr, Mississauga, ON L5A 2J3, Canada', 15, 33);
+  doc.text(
+    `Dispatch: ${settings.phone || '+1 (647) 804-9775'}  •  Email: ${settings.email || 'support@flashdropexpress.com'}  •  HST/GST Reg: ${hstRegNo}`,
+    15,
+    37.5
+  );
 
   // Right Side: INVOICE Title & Invoice Number
   doc.setFontSize(22);
@@ -132,8 +152,8 @@ export function generateOrderPdf(
   const pickupLines = doc.splitTextToSize(order.pickup_address, 62);
   const dropLines = doc.splitTextToSize(order.delivery_address, 62);
   const routingContentH = 15 + pickupLines.length * 4.2 + 6 + dropLines.length * 4.2 + 4;
-  const custContentH = 22 + (order.company_name ? 5 : 0) + 14;
-  const cardH = Math.max(45, Math.max(routingContentH, custContentH));
+  const custContentH = 22 + (order.company_name ? 5 : 0) + 14 + 6;
+  const cardH = Math.max(48, Math.max(routingContentH, custContentH));
 
   // Customer Card
   doc.setFillColor(255, 255, 255);
@@ -150,20 +170,32 @@ export function generateOrderPdf(
   doc.setTextColor(textDark[0], textDark[1], textDark[2]);
   doc.text(order.customer_name, 21, y + 16);
 
-  doc.setFontSize(8.5);
+  doc.setFontSize(8);
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(textBody[0], textBody[1], textBody[2]);
-  let custY = y + 21.5;
+  let custY = y + 21;
   if (order.company_name) {
     doc.setFont('helvetica', 'bold');
     doc.text(order.company_name, 21, custY);
-    custY += 5;
+    custY += 4.5;
   }
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(mutedText[0], mutedText[1], mutedText[2]);
   doc.text(`Tel: ${order.customer_phone}`, 21, custY);
-  custY += 5;
+  custY += 4.5;
   doc.text(`Email: ${order.customer_email}`, 21, custY);
+  custY += 4.5;
+
+  // Account Type & Customer HST Number
+  const acctType = order.account_type === 'personal' ? 'Personal Account' : 'Commercial Account';
+  const custHst = order.customer_hst_number || order.hst_number;
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(textDark[0], textDark[1], textDark[2]);
+  if (custHst) {
+    doc.text(`${acctType}  •  HST: ${custHst}`, 21, custY);
+  } else {
+    doc.text(`Account Type: ${acctType}`, 21, custY);
+  }
 
   // Routing Card
   doc.setFillColor(255, 255, 255);
@@ -288,13 +320,20 @@ export function generateOrderPdf(
   doc.text(`$${order.subtotal.toFixed(2)} CAD`, rightValX, y, { align: 'right' });
 
   if (order.tax_amount > 0) {
-    y += 6;
+    y += 5.5;
+    doc.setFontSize(9);
     doc.setFont('helvetica', 'normal');
     doc.setTextColor(mutedText[0], mutedText[1], mutedText[2]);
     doc.text('HST (13%):', rightLabelX, y);
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(textDark[0], textDark[1], textDark[2]);
     doc.text(`$${order.tax_amount.toFixed(2)} CAD`, rightValX, y, { align: 'right' });
+
+    y += 4;
+    doc.setFontSize(7);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(mutedText[0], mutedText[1], mutedText[2]);
+    doc.text(`CRA Reg: ${hstRegNo}`, rightValX, y, { align: 'right' });
   }
 
   // Total Due Card (Clean Crimson Card with Bold White Text)
