@@ -549,10 +549,10 @@ export const OrderWizard: React.FC<OrderWizardProps> = ({ initialData, onNavigat
 
               {/* Delivery Destination Card */}
               <div className="bg-white border border-slate-200 rounded-2xl p-5 space-y-4 relative shadow-xs">
-                <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+                <div className="flex items-center justify-between border-b border-slate-100 pb-3">
                   <div className="flex items-center space-x-2">
                     <span className="w-2.5 h-2.5 rounded-full bg-red-500 ring-4 ring-red-500/20" />
-                    <span className="text-xs font-bold text-white uppercase tracking-wider">
+                    <span className="text-xs font-bold text-slate-900 uppercase tracking-wider">
                       2. Delivery Drop-Off Destination
                     </span>
                   </div>
@@ -699,7 +699,7 @@ export const OrderWizard: React.FC<OrderWizardProps> = ({ initialData, onNavigat
                     isAfterHours={breakdown.isAfterHours}
                   />
                   {breakdown.isAfterHours && (
-                    <span className="inline-block mt-1.5 text-[11px] text-amber-300 font-bold bg-amber-950/50 border border-amber-500/30 px-2.5 py-0.5 rounded-md">
+                    <span className="inline-block mt-1.5 text-[11px] text-amber-900 font-bold bg-amber-50 border border-amber-300 px-2.5 py-0.5 rounded-lg">
                       ⚡ After-Hours Service (1.5× Rate applies outside 8 AM – 5 PM)
                     </span>
                   )}
@@ -804,14 +804,14 @@ export const OrderWizard: React.FC<OrderWizardProps> = ({ initialData, onNavigat
         {/* ========================================================================= */}
         {step === 2 && (
           <div className="space-y-8">
-            <div className="border-b border-slate-800 pb-4">
-              <h2 className="text-xl sm:text-2xl font-black text-white font-['Outfit'] flex items-center space-x-2.5">
-                <span className="p-2 rounded-xl bg-red-950/60 border border-red-500/30 text-red-400">
+            <div className="border-b border-slate-200 pb-4">
+              <h2 className="text-xl sm:text-2xl font-black text-slate-900 font-['Outfit'] flex items-center space-x-2.5">
+                <span className="p-2 rounded-xl bg-red-50 border border-red-200 text-red-600">
                   <Package className="w-5 h-5" />
                 </span>
                 <span>Step 2: Cargo Details & Vehicle Fleet</span>
               </h2>
-              <p className="text-xs sm:text-sm text-slate-400 mt-1">
+              <p className="text-xs sm:text-sm text-slate-600 mt-1">
                 Select your freight category, load specifications, and match with the optimal delivery vehicle.
               </p>
             </div>
@@ -959,13 +959,13 @@ export const OrderWizard: React.FC<OrderWizardProps> = ({ initialData, onNavigat
                       </div>
 
                       {isOverweight ? (
-                        <div className="mt-3 p-1.5 rounded bg-amber-950/60 border border-amber-500/30 text-[10px] text-amber-300 flex items-center space-x-1">
-                          <AlertCircle className="w-3 h-3 flex-shrink-0" />
+                        <div className="mt-3 p-1.5 rounded-lg bg-amber-50 border border-amber-300 text-[10px] text-amber-900 font-semibold flex items-center space-x-1">
+                          <AlertCircle className="w-3 h-3 text-amber-600 flex-shrink-0" />
                           <span>Exceeds weight ({weightLbs} lbs)</span>
                         </div>
                       ) : (
-                        <div className="mt-3 text-[10px] text-emerald-400 font-semibold flex items-center space-x-1">
-                          <CheckCircle2 className="w-3 h-3" />
+                        <div className="mt-3 text-[10px] text-emerald-700 font-semibold flex items-center space-x-1">
+                          <CheckCircle2 className="w-3 h-3 text-emerald-600" />
                           <span>Compatible with load</span>
                         </div>
                       )}
@@ -1038,26 +1038,26 @@ export const OrderWizard: React.FC<OrderWizardProps> = ({ initialData, onNavigat
         {/* ========================================================================= */}
         {step === 3 && (
           <div className="space-y-8">
-            <div className="border-b border-slate-800 pb-4">
-              <h2 className="text-xl sm:text-2xl font-black text-white font-['Outfit'] flex items-center space-x-2.5">
-                <span className="p-2 rounded-xl bg-red-950/60 border border-red-500/30 text-red-400">
+            <div className="border-b border-slate-200 pb-4">
+              <h2 className="text-xl sm:text-2xl font-black text-slate-900 font-['Outfit'] flex items-center space-x-2.5">
+                <span className="p-2 rounded-xl bg-red-50 border border-red-200 text-red-600">
                   <CheckCircle2 className="w-5 h-5" />
                 </span>
                 <span>Step 3: Contact Details & Order Review</span>
               </h2>
-              <p className="text-xs sm:text-sm text-slate-400 mt-1">
+              <p className="text-xs sm:text-sm text-slate-600 mt-1">
                 Enter your contact info to receive live tracking and official PDF invoice. Review the itemized quote below.
               </p>
             </div>
 
             {/* Customer Contact Inputs */}
             <div className="bg-white border border-slate-200 rounded-2xl p-5 space-y-4 shadow-xs">
-              <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-                <span className="text-xs font-bold text-white uppercase tracking-wider flex items-center space-x-2">
-                  <User className="w-4 h-4 text-red-400" />
+              <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                <span className="text-xs font-bold text-slate-900 uppercase tracking-wider flex items-center space-x-2">
+                  <User className="w-4 h-4 text-red-600" />
                   <span>Sender & Billing Information</span>
                 </span>
-                <span className="text-[11px] text-slate-400">Guest Checkout Enabled</span>
+                <span className="text-[11px] text-slate-500 font-medium">Guest Checkout Enabled</span>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -1240,25 +1240,25 @@ export const OrderWizard: React.FC<OrderWizardProps> = ({ initialData, onNavigat
                   </button>
                 </div>
                 <div>
-                  <span className="text-slate-400">Pickup:</span>{' '}
-                  <strong className="text-white">{pickupAddress}</strong>
-                  {pickupUnit && <span className="text-slate-400"> ({pickupUnit})</span>}
+                  <span className="text-slate-600 font-medium">Pickup:</span>{' '}
+                  <strong className="text-slate-900">{pickupAddress}</strong>
+                  {pickupUnit && <span className="text-slate-600"> ({pickupUnit})</span>}
                 </div>
                 <div>
-                  <span className="text-slate-400">Dropoff:</span>{' '}
-                  <strong className="text-white">{deliveryAddress}</strong>
-                  {deliveryUnit && <span className="text-slate-400"> ({deliveryUnit})</span>}
+                  <span className="text-slate-600 font-medium">Dropoff:</span>{' '}
+                  <strong className="text-slate-900">{deliveryAddress}</strong>
+                  {deliveryUnit && <span className="text-slate-600"> ({deliveryUnit})</span>}
                 </div>
                 <div className="flex justify-between border-t border-slate-100 pt-2 text-slate-600">
                   <span>Driving Distance:</span>
-                  <span className="font-bold text-white">
+                  <span className="font-bold text-slate-900">
                     {formattedDistance} ({serviceArea})
                   </span>
                 </div>
                 {durationMinutes && (
                   <div className="flex justify-between text-slate-600">
                     <span>Est. Drive Time:</span>
-                    <span className="font-bold text-emerald-400">~{durationMinutes} minutes</span>
+                    <span className="font-bold text-emerald-700">~{durationMinutes} minutes</span>
                   </div>
                 )}
                 <div className="flex justify-between text-slate-600">
@@ -1278,68 +1278,68 @@ export const OrderWizard: React.FC<OrderWizardProps> = ({ initialData, onNavigat
               </div>
 
               <div className="bg-white border border-slate-200 rounded-xl p-4 space-y-2.5 shadow-xs">
-                <div className="flex items-center justify-between border-b border-slate-800 pb-2">
+                <div className="flex items-center justify-between border-b border-slate-100 pb-2">
                   <span className="font-bold text-slate-900 uppercase text-[11px] flex items-center space-x-1.5">
-                    <Truck className="w-3.5 h-3.5 text-red-400" />
+                    <Truck className="w-3.5 h-3.5 text-red-600" />
                     <span>Cargo & Vehicle</span>
                   </span>
                   <button
                     type="button"
                     onClick={() => setStep(2)}
-                    className="text-[10px] text-red-400 hover:text-red-300 font-semibold"
+                    className="text-[10px] text-red-600 hover:text-red-700 font-semibold"
                   >
                     Edit Cargo
                   </button>
                 </div>
                 <div>
-                  <span className="text-slate-400">Vehicle:</span>{' '}
-                  <strong className="text-white">{vehicleSlug.replace('_', ' ').toUpperCase()}</strong>
+                  <span className="text-slate-600 font-medium">Vehicle:</span>{' '}
+                  <strong className="text-slate-900">{vehicleSlug.replace('_', ' ').toUpperCase()}</strong>
                 </div>
                 <div>
-                  <span className="text-slate-400">Cargo:</span>{' '}
-                  <strong className="text-white">{itemDescription}</strong>
+                  <span className="text-slate-600 font-medium">Cargo:</span>{' '}
+                  <strong className="text-slate-900">{itemDescription}</strong>
                 </div>
                 <div className="flex justify-between border-t border-slate-100 pt-2 text-slate-600">
                   <span>Weight & Count:</span>
                   <span className="font-bold text-slate-900">{quantity} units ({weightLbs} lbs)</span>
                 </div>
                 {customInstructions && (
-                  <div className="text-[11px] text-slate-400 truncate">
+                  <div className="text-[11px] text-slate-600 truncate">
                     <span>Notes: {customInstructions}</span>
                   </div>
                 )}
                 <div className="flex justify-between text-slate-600">
                   <span>Payment Terms:</span>
-                  <span className="font-bold text-emerald-400">Pay Later (Due on Delivery)</span>
+                  <span className="font-bold text-emerald-700">Pay Later (Due on Delivery)</span>
                 </div>
               </div>
             </div>
 
             {/* Custom Quotation & Logistics Specifications Summary Card */}
             <div className="bg-slate-50 border border-slate-200 rounded-2xl p-5 sm:p-6 space-y-4 shadow-xs">
-              <div className="flex items-center justify-between border-b border-slate-800 pb-3 text-xs">
-                <span className="font-bold text-white uppercase tracking-wider flex items-center space-x-2">
-                  <FileText className="w-4 h-4 text-red-400" />
+              <div className="flex items-center justify-between border-b border-slate-200 pb-3 text-xs">
+                <span className="font-bold text-slate-900 uppercase tracking-wider flex items-center space-x-2">
+                  <FileText className="w-4 h-4 text-red-600" />
                   <span>Logistics Specifications Summary</span>
                 </span>
-                <span className="font-bold text-red-600 bg-red-950/60 border border-red-500/30 px-3 py-1 rounded-lg">
+                <span className="font-bold text-red-700 bg-red-50 border border-red-200 px-3 py-1 rounded-lg">
                   {selectedVeh.name}
                 </span>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
-                <div className="space-y-2.5 text-slate-400">
+                <div className="space-y-2.5 text-slate-600">
                   <div className="flex justify-between">
                     <span>Route Distance:</span>
-                    <strong className="text-white">{distanceKm} km ({serviceArea})</strong>
+                    <strong className="text-slate-900">{distanceKm} km ({serviceArea})</strong>
                   </div>
                   <div className="flex justify-between">
                     <span>Pickup Window:</span>
-                    <strong className="text-white">{pickupDate} at {pickupTime}</strong>
+                    <strong className="text-slate-900">{pickupDate} at {pickupTime}</strong>
                   </div>
                   <div className="flex justify-between">
                     <span>Type of Delivery:</span>
-                    <strong className="text-emerald-400 font-bold">
+                    <strong className="text-emerald-700 font-bold">
                       {deliveryTimeOption === 'urgent' || deliveryTimeOption === 'asap' || deliveryTimeOption === '1-2h'
                         ? '3) Urgent / ASAP Priority'
                         : deliveryTimeOption === 'direct' || deliveryTimeOption === '2-3h'
@@ -1349,25 +1349,25 @@ export const OrderWizard: React.FC<OrderWizardProps> = ({ initialData, onNavigat
                   </div>
                 </div>
 
-                <div className="space-y-2.5 text-slate-400">
+                <div className="space-y-2.5 text-slate-600">
                   <div className="flex justify-between">
                     <span>Cargo Weight:</span>
-                    <strong className="text-white">{weightLbs} lbs ({quantity} units)</strong>
+                    <strong className="text-slate-900">{weightLbs} lbs ({quantity} units)</strong>
                   </div>
                   <div className="flex justify-between">
                     <span>Payment Terms:</span>
-                    <strong className="text-emerald-400">Pay Later (Due on Delivery)</strong>
+                    <strong className="text-emerald-700 font-semibold">Pay Later (Due on Delivery)</strong>
                   </div>
                   <div className="flex justify-between">
                     <span>Fuel Surcharges:</span>
-                    <strong className="text-white">Zero Hidden Surcharges</strong>
+                    <strong className="text-slate-900 font-semibold">Zero Hidden Surcharges</strong>
                   </div>
                 </div>
               </div>
 
               {/* Confidential Quotation Notice Box */}
-              <div className="mt-4 pt-4 border-t border-slate-800 bg-white border border-red-200 rounded-xl p-4 flex items-start space-x-3 text-xs shadow-xs">
-                <ShieldCheck className="w-5 h-5 text-red-400 shrink-0 mt-0.5" />
+              <div className="mt-4 pt-4 border-t border-slate-200 bg-white border border-red-200 rounded-xl p-4 flex items-start space-x-3 text-xs shadow-xs">
+                <ShieldCheck className="w-5 h-5 text-red-600 shrink-0 mt-0.5" />
                 <div className="space-y-1">
                   <div className="font-bold text-slate-900 uppercase tracking-wider text-[11px]">
                     Confidential Custom Rate Review
@@ -1431,23 +1431,23 @@ export const OrderWizard: React.FC<OrderWizardProps> = ({ initialData, onNavigat
             <div className="bg-white border border-slate-200 rounded-xl p-5 max-w-lg mx-auto text-left text-xs space-y-2 mt-6 shadow-xs">
               <div className="flex justify-between border-b border-slate-100 pb-2 font-bold text-slate-900">
                 <span>Quote Reference:</span>
-                <span className="font-mono text-red-400 font-bold">{createdOrder.order_number}</span>
+                <span className="font-mono text-red-600 font-bold">{createdOrder.order_number}</span>
               </div>
-              <div className="flex justify-between text-slate-400">
+              <div className="flex justify-between text-slate-600">
                 <span>Pickup Route:</span>
-                <span className="text-white truncate max-w-[220px]">{createdOrder.pickup_address}</span>
+                <span className="text-slate-900 font-medium truncate max-w-[220px]">{createdOrder.pickup_address}</span>
               </div>
-              <div className="flex justify-between text-slate-400">
+              <div className="flex justify-between text-slate-600">
                 <span>Dropoff Destination:</span>
-                <span className="text-white truncate max-w-[220px]">{createdOrder.delivery_address}</span>
+                <span className="text-slate-900 font-medium truncate max-w-[220px]">{createdOrder.delivery_address}</span>
               </div>
-              <div className="flex justify-between text-slate-400">
+              <div className="flex justify-between text-slate-600">
                 <span>Vehicle / Cargo:</span>
-                <span className="text-white">{createdOrder.vehicle_name} ({createdOrder.weight_lbs} lbs)</span>
+                <span className="text-slate-900 font-medium">{createdOrder.vehicle_name} ({createdOrder.weight_lbs} lbs)</span>
               </div>
-              <div className="flex justify-between text-slate-400">
+              <div className="flex justify-between text-slate-600">
                 <span>Type of Delivery:</span>
-                <span className="text-white font-bold text-red-600">
+                <span className="font-bold text-red-600">
                   {createdOrder.delivery_time_option === 'urgent' || createdOrder.delivery_time_option === 'asap' || createdOrder.delivery_time_option === '1-2h'
                     ? '3) Urgent / ASAP'
                     : createdOrder.delivery_time_option === 'direct' || createdOrder.delivery_time_option === '2-3h'
@@ -1457,7 +1457,7 @@ export const OrderWizard: React.FC<OrderWizardProps> = ({ initialData, onNavigat
               </div>
               <div className="flex justify-between border-t border-slate-100 pt-2 font-bold text-slate-900 text-sm">
                 <span>Quotation Status:</span>
-                <span className="text-amber-400">Under Review by Dispatch (Pending Quote)</span>
+                <span className="text-amber-700 font-bold">Under Review by Dispatch (Pending Quote)</span>
               </div>
             </div>
           </div>

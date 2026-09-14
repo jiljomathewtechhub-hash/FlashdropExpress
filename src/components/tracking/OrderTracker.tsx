@@ -345,11 +345,11 @@ export const OrderTracker: React.FC<OrderTrackerProps> = ({ initialOrderNumber, 
               </div>
             </div>
           ) : (
-            <div className="bg-amber-950/40 border border-amber-500/30 rounded-xl p-4 text-xs text-amber-300 flex items-center space-x-3">
-              <AlertCircle className="w-5 h-5 flex-shrink-0" />
+            <div className="bg-amber-50 border border-amber-300 rounded-xl p-4 text-xs text-amber-900 flex items-center space-x-3">
+              <AlertCircle className="w-5 h-5 flex-shrink-0 text-amber-600" />
               <div>
-                <strong className="block text-white">Status Notice:</strong>
-                This order is marked as <strong>{order.order_status.replace(/_/g, ' ').toUpperCase()}</strong>.
+                <strong className="block text-amber-950 font-bold">Status Notice:</strong>
+                This order is marked as <strong className="text-amber-950">{order.order_status.replace(/_/g, ' ').toUpperCase()}</strong>.
                 Our dispatch supervisor is actively reviewing your request.
               </div>
             </div>
@@ -454,7 +454,7 @@ export const OrderTracker: React.FC<OrderTrackerProps> = ({ initialOrderNumber, 
                   </div>
 
                   <div className="border-t border-slate-200 pt-2 flex justify-between items-center">
-                    <span className="text-slate-300 font-bold">Total CAD:</span>
+                    <span className="text-slate-700 font-bold">Total CAD:</span>
                     <span className="text-xl font-black text-slate-900 font-['Outfit']">
                       ${order.total_price.toFixed(2)}
                     </span>
@@ -553,7 +553,7 @@ export const OrderTracker: React.FC<OrderTrackerProps> = ({ initialOrderNumber, 
               />
 
               {requestSubmitted ? (
-                <div className="p-2 rounded bg-emerald-950 text-emerald-300 text-xs font-semibold text-center">
+                <div className="p-2.5 rounded-xl bg-emerald-50 border border-emerald-300 text-emerald-800 text-xs font-semibold text-center">
                   Request submitted to dispatch!
                 </div>
               ) : (

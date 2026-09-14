@@ -444,7 +444,7 @@ export const CustomerPortal: React.FC<CustomerPortalProps> = ({ onNavigate }) =>
               />
 
               {requestSent ? (
-                <div className="p-2 rounded bg-emerald-950 text-emerald-300 text-xs font-semibold text-center">
+                <div className="p-2.5 rounded-xl bg-emerald-50 border border-emerald-300 text-emerald-800 text-xs font-semibold text-center">
                   Request successfully submitted!
                 </div>
               ) : (

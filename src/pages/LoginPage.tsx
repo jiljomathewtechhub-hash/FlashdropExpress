@@ -852,7 +852,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate, initialParams 
                 <button
                   type="button"
                   onClick={() => setShowNewPassword(!showNewPassword)}
-                  className="absolute right-3 top-2.5 text-slate-500 hover:text-slate-300 cursor-pointer"
+                  className="absolute right-3 top-2.5 text-slate-500 hover:text-slate-900 cursor-pointer"
                 >
                   {showNewPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
@@ -1142,7 +1142,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate, initialParams 
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-2.5 text-slate-500 hover:text-slate-300 cursor-pointer"
+                  className="absolute right-3 top-2.5 text-slate-500 hover:text-slate-900 cursor-pointer"
                 >
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>

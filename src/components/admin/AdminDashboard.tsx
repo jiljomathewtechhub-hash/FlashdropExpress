@@ -643,7 +643,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
               className={`flex items-center space-x-2 px-3.5 py-2 rounded-xl text-xs font-bold transition flex-shrink-0 ${
                 isActive
                   ? 'bg-[#C5161D] text-white shadow-sm'
-                  : 'bg-slate-100 text-slate-400 hover:text-white hover:bg-slate-100/80'
+                  : 'bg-slate-100 text-slate-600 hover:text-slate-900 hover:bg-slate-200 border border-slate-200'
               }`}
             >
               <Icon className="w-3.5 h-3.5" />
@@ -690,7 +690,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
 
           <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-xl">
             <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs text-slate-300">
+              <table className="w-full text-left text-xs text-slate-700">
                 <thead className="bg-slate-100 text-slate-700 uppercase text-[10px] font-bold border-b border-slate-200">
                   <tr>
                     <th className="py-3 px-4">Order #</th>
@@ -717,31 +717,31 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
                           {ord.order_number}
                         </td>
                         <td className="py-3 px-4">
-                          <div className="font-semibold text-white">{ord.customer_name}</div>
-                          <div className="text-[10px] text-slate-500">{ord.customer_phone}</div>
+                          <div className="font-semibold text-slate-900">{ord.customer_name}</div>
+                          <div className="text-[10px] text-slate-600">{ord.customer_phone}</div>
                         </td>
                         <td className="py-3 px-4">
-                          <div className="truncate max-w-[180px] text-slate-200">{ord.pickup_address}</div>
-                          <div className="truncate max-w-[180px] text-slate-400">&rarr; {ord.delivery_address}</div>
-                          <span className="text-[10px] text-red-400 font-bold">{ord.distance_km} km ({ord.service_area})</span>
+                          <div className="truncate max-w-[180px] text-slate-800 font-medium">{ord.pickup_address}</div>
+                          <div className="truncate max-w-[180px] text-slate-600">&rarr; {ord.delivery_address}</div>
+                          <span className="text-[10px] text-red-600 font-bold">{ord.distance_km} km ({ord.service_area})</span>
                         </td>
                         <td className="py-3 px-4">
                           <span className="font-medium text-slate-900">{ord.vehicle_name}</span>
-                          <div className="text-[10px] text-slate-400">{ord.weight_lbs} lbs ({ord.quantity} pails/units)</div>
+                          <div className="text-[10px] text-slate-600">{ord.weight_lbs} lbs ({ord.quantity} pails/units)</div>
                         </td>
                         <td className="py-3 px-4">
                           {ord.order_status === 'submitted' ? (
-                            <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-amber-950/80 text-amber-300 border border-amber-500/40 inline-flex items-center space-x-1">
+                            <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-amber-50 text-amber-800 border border-amber-300 inline-flex items-center space-x-1">
                               <Clock className="w-2.5 h-2.5" />
                               <span>Quote Requested</span>
                             </span>
                           ) : ord.order_status === 'quote_sent' ? (
-                            <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-purple-950/80 text-purple-300 border border-purple-500/40 inline-flex items-center space-x-1">
+                            <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-purple-50 text-purple-800 border border-purple-300 inline-flex items-center space-x-1">
                               <Send className="w-2.5 h-2.5" />
                               <span>Quote Sent</span>
                             </span>
                           ) : (
-                            <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-slate-100 text-slate-300 border border-slate-300">
+                            <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-slate-100 text-slate-700 border border-slate-300">
                               {ord.order_status.replace(/_/g, ' ')}
                             </span>
                           )}
@@ -749,13 +749,13 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
                         <td className="py-3 px-4">
                           {ord.assigned_driver_name ? (
                             <div className="flex items-center space-x-2">
-                              <span className="text-emerald-400 font-semibold">{ord.assigned_driver_name}</span>
+                              <span className="text-emerald-700 font-semibold">{ord.assigned_driver_name}</span>
                               <button
                                 onClick={() => {
                                   setSelectedDriverForAssign(ord.assigned_driver_id || drivers[0]?.id || '');
                                   setAssignModalOrder(ord);
                                 }}
-                                className="text-[10px] text-slate-400 hover:text-white underline cursor-pointer"
+                                className="text-[10px] text-slate-600 hover:text-slate-900 underline cursor-pointer"
                                 title="Change or reassign driver"
                               >
                                 Reassign
@@ -767,7 +767,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
                                 setSelectedDriverForAssign(drivers[0]?.id || '');
                                 setAssignModalOrder(ord);
                               }}
-                              className="text-red-400 hover:text-white font-bold underline text-xs cursor-pointer flex items-center space-x-1"
+                              className="text-red-600 hover:text-red-800 font-bold underline text-xs cursor-pointer flex items-center space-x-1"
                             >
                               <span>+ Assign</span>
                             </button>
@@ -775,12 +775,12 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
                         </td>
                         <td className="py-3 px-4">
                           {ord.order_status === 'submitted' ? (
-                            <span className="text-amber-400 font-semibold text-[11px] block">Quote Pending</span>
+                            <span className="text-amber-700 font-bold text-[11px] block">Quote Pending</span>
                           ) : (
                             <div>
-                              <span className="font-bold text-white">${ord.total_price.toFixed(2)}</span>
+                              <span className="font-bold text-slate-900">${ord.total_price.toFixed(2)}</span>
                               {ord.order_status === 'quote_sent' && (
-                                <span className="block text-[9px] text-purple-400 font-bold uppercase">Quotation Sent</span>
+                                <span className="block text-[9px] text-purple-700 font-bold uppercase">Quotation Sent</span>
                               )}
                             </div>
                           )}
@@ -791,8 +791,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
                               onClick={() => handleOpenQuoteReview(ord)}
                               className={`p-1.5 rounded-lg transition border flex items-center space-x-1 ${
                                 ord.order_status === 'submitted'
-                                  ? 'bg-amber-500/20 text-amber-300 border-amber-500/40 hover:bg-amber-500 hover:text-white'
-                                  : 'bg-slate-800 hover:bg-slate-700 text-emerald-400 hover:text-white border-slate-300'
+                                  ? 'bg-amber-100 text-amber-900 border-amber-300 hover:bg-amber-200'
+                                  : 'bg-slate-100 hover:bg-slate-200 text-emerald-700 hover:text-emerald-900 border-slate-300'
                               }`}
                               title="Review Route & Specs, Adjust Pricing, and Send Quote"
                             >
@@ -807,7 +807,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
                             </button>
                             <button
                               onClick={() => generateOrderPdf(ord, settings)}
-                              className="p-1.5 bg-slate-800 hover:bg-slate-700 text-red-400 hover:text-white rounded-lg transition"
+                              className="p-1.5 bg-slate-100 hover:bg-slate-200 text-red-600 hover:text-red-800 border border-slate-300 rounded-lg transition"
                               title="Download Waybill PDF"
                             >
                               <FileDown className="w-3.5 h-3.5" />
@@ -817,30 +817,30 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
                                 setSelectedDriverForAssign(ord.assigned_driver_id || drivers[0]?.id || '');
                                 setAssignModalOrder(ord);
                               }}
-                              className="p-1.5 bg-slate-800 hover:bg-slate-700 text-cyan-400 hover:text-white rounded-lg transition"
+                              className="p-1.5 bg-slate-100 hover:bg-slate-200 text-blue-600 hover:text-blue-800 border border-slate-300 rounded-lg transition"
                               title="Assign / Reassign Driver"
                             >
                               <Truck className="w-3.5 h-3.5" />
                             </button>
                             <button
                               onClick={() => handleOpenEditOrder(ord)}
-                              className="p-1.5 bg-slate-800 hover:bg-slate-700 text-amber-400 hover:text-white rounded-lg transition"
+                              className="p-1.5 bg-slate-100 hover:bg-slate-200 text-amber-700 hover:text-amber-900 border border-slate-300 rounded-lg transition"
                               title="Edit Full Order Details"
                             >
                               <Edit2 className="w-3.5 h-3.5" />
                             </button>
                             {deleteOrderConfirmId === ord.id ? (
-                              <div className="flex items-center space-x-1 bg-red-950 border border-red-500/50 px-2 py-0.5 rounded-lg text-[10px]">
+                              <div className="flex items-center space-x-1 bg-red-50 border border-red-200 px-2 py-0.5 rounded-lg text-[10px]">
                                 <button
                                   onClick={() => handleDeleteOrder(ord.id)}
-                                  className="text-red-300 hover:text-white font-bold cursor-pointer"
+                                  className="text-red-700 hover:text-red-900 font-bold cursor-pointer"
                                 >
                                   Del
                                 </button>
-                                <span className="text-slate-600">|</span>
+                                <span className="text-slate-400">|</span>
                                 <button
                                   onClick={() => setDeleteOrderConfirmId(null)}
-                                  className="text-slate-400 hover:text-white cursor-pointer"
+                                  className="text-slate-600 hover:text-slate-900 cursor-pointer"
                                 >
                                   X
                                 </button>
@@ -848,7 +848,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
                             ) : (
                               <button
                                 onClick={() => setDeleteOrderConfirmId(ord.id)}
-                                className="p-1.5 bg-slate-800 hover:bg-red-900/60 text-slate-500 hover:text-red-400 rounded-lg transition"
+                                className="p-1.5 bg-slate-100 hover:bg-red-50 text-slate-500 hover:text-red-600 border border-slate-200 rounded-lg transition"
                                 title="Delete Order"
                               >
                                 <Trash2 className="w-3.5 h-3.5" />
@@ -902,7 +902,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
                     <CheckCircle2 className="w-5 h-5" />
                   </div>
                   <div>
-                    <h3 className="font-bold text-white text-sm font-['Outfit']">
+                    <h3 className="font-bold text-slate-900 text-sm font-['Outfit']">
                       Account Provisioned Successfully!
                     </h3>
                     <p className="text-[11px] text-slate-600">
@@ -912,7 +912,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
                 </div>
                 <button
                   onClick={() => setCreatedCredentials(null)}
-                  className="p-1 text-slate-400 hover:text-white rounded-lg"
+                  className="p-1 text-slate-400 hover:text-slate-900 rounded-lg"
                   title="Dismiss"
                 >
                   <X className="w-4 h-4" />
@@ -921,20 +921,20 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
 
               <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 bg-slate-50/80 rounded-xl p-3.5 border border-slate-200 text-xs">
                 <div>
-                  <span className="text-[10px] uppercase font-bold text-slate-500 block">Staff Name</span>
-                  <span className="font-bold text-white">{createdCredentials.name}</span>
+                  <span className="text-[10px] uppercase font-bold text-slate-600 block">Staff Name</span>
+                  <span className="font-bold text-slate-900">{createdCredentials.name}</span>
                 </div>
                 <div>
-                  <span className="text-[10px] uppercase font-bold text-slate-500 block">Role</span>
-                  <span className="font-semibold text-emerald-400">{createdCredentials.role}</span>
+                  <span className="text-[10px] uppercase font-bold text-slate-600 block">Role</span>
+                  <span className="font-semibold text-emerald-700">{createdCredentials.role}</span>
                 </div>
                 <div>
-                  <span className="text-[10px] uppercase font-bold text-slate-500 block">Login Email</span>
-                  <span className="font-mono text-slate-200">{createdCredentials.email}</span>
+                  <span className="text-[10px] uppercase font-bold text-slate-600 block">Login Email</span>
+                  <span className="font-mono text-slate-800 font-semibold">{createdCredentials.email}</span>
                 </div>
                 <div>
-                  <span className="text-[10px] uppercase font-bold text-slate-500 block">Initial Password</span>
-                  <span className="font-mono font-bold text-amber-300 bg-amber-950/40 px-2 py-0.5 rounded border border-amber-500/30">
+                  <span className="text-[10px] uppercase font-bold text-slate-600 block">Initial Password</span>
+                  <span className="font-mono font-bold text-amber-800 bg-amber-50 px-2 py-0.5 rounded border border-amber-300">
                     {createdCredentials.password}
                   </span>
                 </div>
@@ -942,7 +942,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
 
               <div className="flex items-center justify-between pt-1">
                 <span className="text-[11px] text-slate-600">
-                  Staff Portal login is ready immediately at <strong className="text-slate-300">Staff / Employee Login</strong>.
+                  Staff Portal login is ready immediately at <strong className="text-slate-900">Staff / Employee Login</strong>.
                 </span>
                 <button
                   onClick={handleCopyCredentials}
@@ -974,15 +974,15 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
                 </div>
                 <button
                   onClick={() => setShowAddStaffModal(false)}
-                  className="text-slate-400 hover:text-white p-1 rounded-lg"
+                  className="text-slate-400 hover:text-slate-900 p-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 cursor-pointer"
                 >
                   <X className="w-4 h-4" />
                 </button>
               </div>
 
               {provisionError && (
-                <div className="p-3 bg-red-950/70 border border-red-500/40 rounded-xl flex items-center space-x-2 text-xs text-red-200">
-                  <AlertCircle className="w-4 h-4 text-red-400 shrink-0" />
+                <div className="p-3 bg-red-50 border border-red-300 rounded-xl flex items-center space-x-2 text-xs text-red-700">
+                  <AlertCircle className="w-4 h-4 text-red-600 shrink-0" />
                   <span>{provisionError}</span>
                 </div>
               )}
@@ -990,7 +990,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
               <form onSubmit={handleProvisionStaffSubmit} className="space-y-4 text-xs">
                 {/* Role Selector Tabs */}
                 <div>
-                  <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">
+                  <label className="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-2">
                     Select Position / Role
                   </label>
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
@@ -1023,14 +1023,14 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
                           onClick={() => setStaffRole(r.role)}
                           className={`p-3 rounded-xl border text-left transition flex items-start space-x-3 cursor-pointer ${
                             isSelected
-                              ? 'bg-red-950/40 border-red-500/50 text-white ring-1 ring-red-500/40'
-                              : 'bg-slate-50 border-slate-200 text-slate-400 hover:text-white hover:bg-slate-50'
+                              ? 'bg-red-50 border-red-500 text-red-950 ring-1 ring-red-500'
+                              : 'bg-slate-50 border-slate-200 text-slate-600 hover:text-slate-900 hover:bg-slate-100'
                           }`}
                         >
-                          <Icon className={`w-5 h-5 shrink-0 mt-0.5 ${isSelected ? 'text-red-400' : 'text-slate-500'}`} />
+                          <Icon className={`w-5 h-5 shrink-0 mt-0.5 ${isSelected ? 'text-red-600' : 'text-slate-500'}`} />
                           <div>
-                            <div className="font-bold text-white text-xs">{r.label}</div>
-                            <div className="text-[10px] text-slate-400 leading-tight mt-0.5">{r.desc}</div>
+                            <div className={`font-bold text-xs ${isSelected ? 'text-red-950' : 'text-slate-900'}`}>{r.label}</div>
+                            <div className="text-[10px] text-slate-500 leading-tight mt-0.5">{r.desc}</div>
                           </div>
                         </button>
                       );
@@ -1041,7 +1041,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
                 {/* Input Fields Grid */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                   <div>
-                    <label className="block text-[11px] font-semibold text-slate-300 mb-1">
+                    <label className="block text-[11px] font-semibold text-slate-700 mb-1">
                       Full Legal / Staff Name <span className="text-red-400">*</span>
                     </label>
                     <input
@@ -1050,12 +1050,12 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
                       onChange={(e) => setNewStaffName(e.target.value)}
                       placeholder="e.g. Marcus Vance"
                       required
-                      className="w-full bg-slate-50 border border-slate-300 px-3 py-2 rounded-xl text-white placeholder:text-slate-400 focus:outline-none focus:border-red-500"
+                      className="w-full bg-slate-50 border border-slate-300 px-3 py-2 rounded-xl text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-red-500"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-[11px] font-semibold text-slate-300 mb-1">
+                    <label className="block text-[11px] font-semibold text-slate-700 mb-1">
                       Login Email Address <span className="text-red-400">*</span>
                     </label>
                     <input
@@ -1064,12 +1064,12 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
                       onChange={(e) => setNewStaffEmail(e.target.value)}
                       placeholder="e.g. staff.member@example.com"
                       required
-                      className="w-full bg-slate-50 border border-slate-300 px-3 py-2 rounded-xl text-white placeholder:text-slate-400 focus:outline-none focus:border-red-500"
+                      className="w-full bg-slate-50 border border-slate-300 px-3 py-2 rounded-xl text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-red-500"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-[11px] font-semibold text-slate-300 mb-1">
+                    <label className="block text-[11px] font-semibold text-slate-700 mb-1">
                       Direct Mobile / Dispatch Phone
                     </label>
                     <input
@@ -1077,13 +1077,13 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
                       value={newStaffPhone}
                       onChange={(e) => setNewStaffPhone(e.target.value)}
                       placeholder="e.g. +1 (647) 555-0182"
-                      className="w-full bg-slate-50 border border-slate-300 px-3 py-2 rounded-xl text-white placeholder:text-slate-400 focus:outline-none focus:border-red-500"
+                      className="w-full bg-slate-50 border border-slate-300 px-3 py-2 rounded-xl text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-red-500"
                     />
                   </div>
 
                   {staffRole === 'driver' ? (
                     <div>
-                      <label className="block text-[11px] font-semibold text-slate-300 mb-1">
+                      <label className="block text-[11px] font-semibold text-slate-700 mb-1">
                         Assigned Delivery Vehicle
                       </label>
                       <select
@@ -1099,7 +1099,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
                     </div>
                   ) : (
                     <div>
-                      <label className="block text-[11px] font-semibold text-slate-300 mb-1">
+                      <label className="block text-[11px] font-semibold text-slate-700 mb-1">
                         Station / Department
                       </label>
                       <input
@@ -1113,7 +1113,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
 
                   {staffRole === 'driver' && (
                     <div>
-                      <label className="block text-[11px] font-semibold text-slate-300 mb-1">
+                      <label className="block text-[11px] font-semibold text-slate-700 mb-1">
                         License Plate Number (Optional)
                       </label>
                       <input
@@ -1121,20 +1121,20 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
                         value={newStaffPlate}
                         onChange={(e) => setNewStaffPlate(e.target.value)}
                         placeholder="e.g. ON-FD491"
-                        className="w-full bg-slate-50 border border-slate-300 px-3 py-2 rounded-xl text-white placeholder:text-slate-400 focus:outline-none focus:border-red-500 font-mono"
+                        className="w-full bg-slate-50 border border-slate-300 px-3 py-2 rounded-xl text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-red-500 font-mono"
                       />
                     </div>
                   )}
 
                   <div className={staffRole !== 'driver' ? 'sm:col-span-2' : ''}>
                     <div className="flex items-center justify-between mb-1">
-                      <label className="text-[11px] font-semibold text-slate-300">
+                      <label className="text-[11px] font-semibold text-slate-700">
                         Initial Login Password <span className="text-red-400">*</span>
                       </label>
                       <button
                         type="button"
                         onClick={generateStrongPassword}
-                        className="flex items-center space-x-1 text-[11px] text-red-400 hover:text-red-300 font-semibold cursor-pointer"
+                        className="flex items-center space-x-1 text-[11px] text-red-600 hover:text-red-700 font-semibold cursor-pointer"
                       >
                         <Key className="w-3 h-3" />
                         <span>Regenerate Key</span>
@@ -1147,12 +1147,12 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
                         onChange={(e) => setNewStaffPassword(e.target.value)}
                         placeholder="e.g. Flash8391!"
                         required
-                        className="w-full bg-slate-50 border border-slate-300 pl-3 pr-10 py-2 rounded-xl text-white placeholder:text-slate-400 focus:outline-none focus:border-red-500 font-mono"
+                        className="w-full bg-slate-50 border border-slate-300 pl-3 pr-10 py-2 rounded-xl text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-red-500 font-mono"
                       />
                       <button
                         type="button"
                         onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-3 top-2.5 text-slate-400 hover:text-white"
+                        className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-900"
                         title={showPassword ? 'Hide password' : 'Show password'}
                       >
                         {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -1222,8 +1222,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
                   onClick={() => setStaffFilter(pill.id)}
                   className={`px-3 py-1 text-xs font-semibold rounded-lg transition cursor-pointer ${
                     staffFilter === pill.id
-                      ? 'bg-slate-800 text-white border border-slate-300 shadow-sm'
-                      : 'text-slate-400 hover:text-slate-200 hover:bg-slate-100'
+                      ? 'bg-slate-900 text-white shadow-xs'
+                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
                   }`}
                 >
                   {pill.label}
@@ -1262,18 +1262,18 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
 
                 const roleBadge =
                   drv.staff_role === 'admin' ? (
-                    <span className="text-[10px] font-bold text-red-300 bg-red-950/80 border border-red-500/30 px-2.5 py-0.5 rounded-full flex items-center space-x-1">
-                      <Shield className="w-3 h-3 mr-1 inline text-red-400" />
+                    <span className="text-[10px] font-bold text-red-800 bg-red-50 border border-red-300 px-2.5 py-0.5 rounded-full flex items-center space-x-1">
+                      <Shield className="w-3 h-3 mr-1 inline text-red-600" />
                       <span>Fleet Administrator</span>
                     </span>
                   ) : drv.staff_role === 'dispatcher' ? (
-                    <span className="text-[10px] font-bold text-purple-300 bg-purple-950/80 border border-purple-500/30 px-2.5 py-0.5 rounded-full flex items-center space-x-1">
-                      <Users className="w-3 h-3 mr-1 inline text-purple-400" />
+                    <span className="text-[10px] font-bold text-purple-800 bg-purple-50 border border-purple-300 px-2.5 py-0.5 rounded-full flex items-center space-x-1">
+                      <Users className="w-3 h-3 mr-1 inline text-purple-600" />
                       <span>Operations Dispatcher</span>
                     </span>
                   ) : (
-                    <span className="text-[10px] font-bold text-cyan-300 bg-cyan-950/80 border border-cyan-500/30 px-2.5 py-0.5 rounded-full flex items-center space-x-1">
-                      <Truck className="w-3 h-3 mr-1 inline text-cyan-400" />
+                    <span className="text-[10px] font-bold text-blue-800 bg-blue-50 border border-blue-300 px-2.5 py-0.5 rounded-full flex items-center space-x-1">
+                      <Truck className="w-3 h-3 mr-1 inline text-blue-600" />
                       <span>Courier Driver</span>
                     </span>
                   );
@@ -1281,7 +1281,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
                 return (
                   <div
                     key={drv.id}
-                    className="bg-gradient-to-br from-[#111726] via-[#0E1320] to-[#0A0D15] border border-slate-200 rounded-3xl p-6 space-y-5 shadow-2xl flex flex-col justify-between hover:border-slate-300 transition"
+                    className="bg-white border border-slate-200 rounded-3xl p-6 space-y-5 shadow-sm flex flex-col justify-between hover:border-slate-300 transition"
                   >
                     <div className="space-y-4">
                       {/* Top Profile Header */}
@@ -1309,11 +1309,11 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
                         <span
                           className={`text-[10px] font-bold px-2.5 py-1 rounded-full flex items-center space-x-1 ${
                             drv.is_active
-                              ? 'bg-emerald-950/80 text-emerald-300 border border-emerald-500/40'
-                              : 'bg-slate-100 text-slate-500 border border-slate-300'
+                              ? 'bg-emerald-50 text-emerald-800 border border-emerald-300'
+                              : 'bg-slate-100 text-slate-600 border border-slate-300'
                           }`}
                         >
-                          <span className={`w-1.5 h-1.5 rounded-full mr-1.5 ${drv.is_active ? 'bg-emerald-400 animate-pulse' : 'bg-slate-500'}`} />
+                          <span className={`w-1.5 h-1.5 rounded-full mr-1.5 ${drv.is_active ? 'bg-emerald-600 animate-pulse' : 'bg-slate-500'}`} />
                           <span>{drv.is_active ? 'Active & On Duty' : 'Shift Suspended'}</span>
                         </span>
                       </div>
@@ -1322,20 +1322,20 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-slate-50/80 border border-slate-200 rounded-2xl p-3.5 text-xs">
                         <div className="space-y-1.5">
                           <div className="flex items-center space-x-2 truncate">
-                            <Mail className="w-3.5 h-3.5 text-red-400 shrink-0" />
+                            <Mail className="w-3.5 h-3.5 text-red-600 shrink-0" />
                             <a
                               href={`mailto:${drv.email}`}
-                              className="text-slate-300 hover:text-white hover:underline truncate"
+                              className="text-slate-700 hover:text-slate-900 hover:underline truncate font-medium"
                               title="Send email to staff"
                             >
                               {drv.email}
                             </a>
                           </div>
                           <div className="flex items-center space-x-2">
-                            <Phone className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                            <Phone className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
                             <a
                               href={`tel:${drv.phone}`}
-                              className="text-slate-300 hover:text-white font-semibold"
+                              className="text-slate-700 hover:text-slate-900 font-semibold"
                               title="Call staff phone"
                             >
                               {drv.phone}
@@ -1345,15 +1345,15 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
 
                         <div className="space-y-1.5 border-t sm:border-t-0 sm:border-l border-slate-200 pt-2 sm:pt-0 sm:pl-3">
                           <div className="flex items-center space-x-2">
-                            <Car className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
-                            <span className="text-slate-200 font-medium truncate">
+                            <Car className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+                            <span className="text-slate-800 font-medium truncate">
                               {drv.vehicle_type}
                             </span>
                           </div>
                           {drv.license_plate && (
                             <div className="flex items-center space-x-2 text-[11px]">
-                              <span className="text-slate-500">Plate:</span>
-                              <span className="font-mono text-amber-300 font-bold bg-amber-950/50 px-2 py-0.5 rounded border border-amber-500/20">
+                              <span className="text-slate-600 font-medium">Plate:</span>
+                              <span className="font-mono text-amber-800 font-bold bg-amber-50 px-2 py-0.5 rounded border border-amber-300">
                                 {drv.license_plate}
                               </span>
                             </div>
@@ -1365,8 +1365,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
                       <div className="bg-slate-50/90 border border-slate-200 rounded-2xl p-4 space-y-3">
                         <div className="flex items-center justify-between border-b border-slate-200/70 pb-2">
                           <div className="flex items-center space-x-2">
-                            <Clock className="w-3.5 h-3.5 text-red-400" />
-                            <span className="text-xs font-bold text-white uppercase tracking-wider">
+                            <Clock className="w-3.5 h-3.5 text-red-600" />
+                            <span className="text-xs font-bold text-slate-900 uppercase tracking-wider">
                               Assigned Deliveries & Live Status
                             </span>
                           </div>
@@ -1379,19 +1379,19 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
                               {activeRuns.length} Active Run{activeRuns.length === 1 ? '' : 's'}
                             </span>
                             <span className="text-slate-500">&bull;</span>
-                            <span className="text-emerald-400 font-medium">
+                            <span className="text-emerald-700 font-medium">
                               {completedRuns.length} Delivered
                             </span>
                           </div>
                         </div>
 
                         {activeRuns.length === 0 ? (
-                          <div className="p-4 bg-slate-100/40 border border-slate-200 rounded-xl text-center space-y-1">
-                            <CheckCircle2 className="w-5 h-5 text-emerald-400/80 mx-auto" />
-                            <div className="text-xs font-semibold text-slate-300">
+                          <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl text-center space-y-1">
+                            <CheckCircle2 className="w-5 h-5 text-emerald-600 mx-auto" />
+                            <div className="text-xs font-bold text-slate-800">
                               No Active Runs Currently Assigned
                             </div>
-                            <p className="text-[11px] text-slate-500">
+                            <p className="text-[11px] text-slate-600">
                               This courier is currently available and awaiting dispatch assignment.
                             </p>
                           </div>
@@ -1409,30 +1409,30 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
                                     </span>
                                     <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border ${
                                       run.order_status === 'assigned'
-                                        ? 'bg-blue-950 text-blue-400 border-blue-500/30'
+                                        ? 'bg-blue-50 text-blue-800 border-blue-300'
                                         : run.order_status === 'en_route_pickup'
-                                        ? 'bg-amber-950 text-amber-400 border-amber-500/30'
+                                        ? 'bg-amber-50 text-amber-800 border-amber-300'
                                         : run.order_status === 'picked_up'
-                                        ? 'bg-purple-950 text-purple-400 border-purple-500/30'
+                                        ? 'bg-purple-50 text-purple-800 border-purple-300'
                                         : run.order_status === 'in_transit'
-                                        ? 'bg-indigo-950 text-indigo-400 border-indigo-500/30 animate-pulse'
-                                        : 'bg-slate-100 text-slate-300 border-slate-300'
+                                        ? 'bg-indigo-50 text-indigo-800 border-indigo-300'
+                                        : 'bg-slate-100 text-slate-700 border-slate-300'
                                     }`}>
                                       {run.order_status.replace(/_/g, ' ')}
                                     </span>
                                   </div>
-                                  <span className="font-bold text-emerald-400">
+                                  <span className="font-bold text-slate-900 font-mono">
                                     ${run.total_price.toFixed(2)} CAD
                                   </span>
                                 </div>
 
-                                <div className="text-[11px] text-slate-600 leading-relaxed truncate">
-                                  <span className="text-slate-300 font-medium">Pickup:</span> {run.pickup_address.split(',')[0]}
-                                  <span className="text-slate-500 mx-1.5">&rarr;</span>
-                                  <span className="text-slate-300 font-medium">Drop:</span> {run.delivery_address.split(',')[0]}
+                                <div className="text-[11px] text-slate-700 leading-relaxed truncate">
+                                  <span className="text-slate-900 font-semibold">Pickup:</span> {run.pickup_address.split(',')[0]}
+                                  <span className="text-slate-400 mx-1.5">&rarr;</span>
+                                  <span className="text-slate-900 font-semibold">Drop:</span> {run.delivery_address.split(',')[0]}
                                 </div>
 
-                                <div className="flex items-center justify-between text-[10px] text-slate-500 pt-1 border-t border-slate-200">
+                                <div className="flex items-center justify-between text-[10px] text-slate-600 pt-1 border-t border-slate-200">
                                   <span>
                                     {run.weight_lbs} lbs ({run.quantity} units) &bull; {run.distance_km} km
                                   </span>
@@ -1440,19 +1440,19 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
                                     <button
                                       type="button"
                                       onClick={() => handleOpenEditOrder(run)}
-                                      className="text-amber-400 hover:text-amber-300 font-semibold cursor-pointer"
+                                      className="text-amber-700 hover:text-amber-800 font-semibold cursor-pointer"
                                       title="Edit this order"
                                     >
                                       Edit
                                     </button>
-                                    <span className="text-slate-700">|</span>
+                                    <span className="text-slate-300">|</span>
                                     <button
                                       type="button"
                                       onClick={() => {
                                         setSelectedDriverForAssign(drv.id);
                                         setAssignModalOrder(run);
                                       }}
-                                      className="text-cyan-400 hover:text-cyan-300 font-bold cursor-pointer"
+                                      className="text-blue-700 hover:text-blue-800 font-bold cursor-pointer"
                                       title="Reassign this order to another driver"
                                     >
                                       Reassign Run
@@ -1473,16 +1473,16 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
                           type="button"
                           onClick={() => store.toggleDriverStatus(drv.id)}
                           className={`text-[11px] font-semibold cursor-pointer transition ${
-                            drv.is_active ? 'text-amber-400 hover:text-amber-300' : 'text-emerald-400 hover:text-emerald-300'
+                            drv.is_active ? 'text-amber-700 hover:text-amber-800' : 'text-emerald-700 hover:text-emerald-800'
                           }`}
                         >
                           {drv.is_active ? 'Suspend Shift' : 'Activate Shift'}
                         </button>
-                        <span className="text-slate-700">&bull;</span>
+                        <span className="text-slate-400">&bull;</span>
                         <button
                           type="button"
                           onClick={() => setViewingStaffProfile(drv)}
-                          className="text-slate-300 hover:text-white text-[11px] font-semibold cursor-pointer"
+                          className="text-slate-600 hover:text-slate-900 text-[11px] font-semibold cursor-pointer"
                         >
                           View Full Profile
                         </button>
@@ -1492,25 +1492,25 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
                         <button
                           type="button"
                           onClick={() => onNavigate('driver')}
-                          className="text-red-400 hover:text-red-300 font-bold text-[11px] cursor-pointer"
+                          className="text-red-600 hover:text-red-700 font-bold text-[11px] cursor-pointer"
                         >
                           Staff Portal &rarr;
                         </button>
                         {deleteConfirmId === drv.id ? (
-                          <div className="flex items-center space-x-1.5 bg-red-950 border border-red-500/50 px-2 py-0.5 rounded-lg text-[10px]">
-                            <span className="text-red-300 font-bold">Remove?</span>
+                          <div className="flex items-center space-x-1.5 bg-red-50 border border-red-200 px-2 py-0.5 rounded-lg text-[10px]">
+                            <span className="text-red-700 font-bold">Remove?</span>
                             <button
                               type="button"
                               onClick={() => handleDeleteDriver(drv.id)}
-                              className="text-white font-black hover:underline cursor-pointer"
+                              className="text-red-700 font-black hover:underline cursor-pointer"
                             >
                               Yes
                             </button>
-                            <span className="text-slate-600">|</span>
+                            <span className="text-slate-400">|</span>
                             <button
                               type="button"
                               onClick={() => setDeleteConfirmId(null)}
-                              className="text-slate-400 hover:text-white cursor-pointer"
+                              className="text-slate-600 hover:text-slate-900 cursor-pointer"
                             >
                               No
                             </button>
@@ -1519,7 +1519,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
                           <button
                             type="button"
                             onClick={() => setDeleteConfirmId(drv.id)}
-                            className="p-1.5 text-slate-500 hover:text-red-400 rounded-lg hover:bg-red-950/40 transition cursor-pointer"
+                            className="p-1.5 text-slate-500 hover:text-red-600 rounded-lg hover:bg-red-50 transition cursor-pointer"
                             title="Remove staff member"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
@@ -1586,8 +1586,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
                     </span>
                   </div>
 
-                  <div className="text-xs text-slate-300 bg-slate-50 p-3 rounded-xl border border-slate-200">
-                    <strong className="text-slate-400 block text-[10px] uppercase font-bold">
+                  <div className="text-xs text-slate-900 bg-slate-50 p-3 rounded-xl border border-slate-200">
+                    <strong className="text-slate-600 block text-[10px] uppercase font-bold">
                       Customer Reason / Details:
                     </strong>
                     {req.reason_or_details}
@@ -1603,7 +1603,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
                           setReviewRequestId(req.id);
                           setReviewResponse(e.target.value);
                         }}
-                        className="bg-slate-50 border border-slate-300 px-3 py-1.5 text-xs text-white rounded-xl w-full sm:w-80 placeholder:text-slate-400 focus:outline-none focus:border-red-500"
+                        className="bg-slate-50 border border-slate-300 px-3 py-1.5 text-xs text-slate-900 rounded-xl w-full sm:w-80 placeholder:text-slate-400 focus:outline-none focus:border-red-500"
                       />
                       <div className="flex space-x-2">
                         <button
@@ -2099,14 +2099,14 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
           {inAppNotifSubtab === 'email_sms' && (
             <div className="space-y-6">
           {/* Top Banner & Actions */}
-          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-gradient-to-r from-[#111726] via-[#0E1320] to-[#0A0D15] border border-slate-200 rounded-3xl p-6 shadow-2xl">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-white border border-slate-200 rounded-3xl p-6 shadow-sm">
             <div className="space-y-1">
               <div className="flex items-center space-x-2.5">
-                <h2 className="text-xl font-black text-white font-['Outfit'] tracking-tight">
+                <h2 className="text-xl font-black text-slate-900 font-['Outfit'] tracking-tight">
                   Automated Customer & Admin Notifications
                 </h2>
-                <span className="text-[10px] font-bold text-emerald-400 bg-emerald-950/80 border border-emerald-500/30 px-2.5 py-0.5 rounded-full flex items-center">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse mr-1.5" />
+                <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full flex items-center">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse mr-1.5" />
                   Live Dispatch Active
                 </span>
               </div>
@@ -2139,7 +2139,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
                 <button
                   type="button"
                   onClick={handleClearNotifications}
-                  className="px-3.5 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white text-xs font-semibold rounded-xl border border-slate-300 transition cursor-pointer"
+                  className="px-3.5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 hover:text-slate-900 text-xs font-semibold rounded-xl border border-slate-300 transition cursor-pointer"
                   title="Clear log history"
                 >
                   Clear Logs
@@ -2149,14 +2149,14 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
           </div>
 
           {testSuccess && (
-            <div className="p-4 bg-emerald-950/80 border border-emerald-500/50 rounded-2xl flex items-center justify-between text-xs text-emerald-200 animate-fade-in shadow-xl">
+            <div className="p-4 bg-emerald-50 border border-emerald-300 rounded-2xl flex items-center justify-between text-xs text-emerald-900 animate-fade-in shadow-sm">
               <div className="flex items-center space-x-2">
-                <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
+                <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
                 <span>
                   <strong>Test Notification Dispatched Successfully!</strong> Generated Customer Email (preview), Admin Dispatch Email, and Admin SMS to <strong>+1 647 804 9775</strong>. Check the audit feed below.
                 </span>
               </div>
-              <button onClick={() => setTestSuccess(false)} className="text-emerald-400 hover:text-white font-bold px-2 cursor-pointer">
+              <button onClick={() => setTestSuccess(false)} className="text-emerald-700 hover:text-emerald-900 font-bold px-2 cursor-pointer">
                 &times;
               </button>
             </div>
@@ -2165,75 +2165,75 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
           {/* 3-Channel Overview Cards */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
             {/* Customer Channel Card */}
-            <div className="bg-white border border-slate-200 rounded-2xl p-5 space-y-2.5 shadow-lg">
+            <div className="bg-white border border-slate-200 rounded-2xl p-5 space-y-2.5 shadow-sm">
               <div className="flex items-center justify-between border-b border-slate-200 pb-2.5">
-                <span className="font-bold text-white text-sm flex items-center">
-                  <Mail className="w-4 h-4 text-cyan-400 mr-2" />
+                <span className="font-bold text-slate-900 text-sm flex items-center">
+                  <Mail className="w-4 h-4 text-blue-600 mr-2" />
                   Customer Channel
                 </span>
-                <span className="text-[10px] font-bold text-cyan-300 bg-cyan-950/80 border border-cyan-500/30 px-2 py-0.5 rounded-full">
+                <span className="text-[10px] font-bold text-blue-800 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded-full">
                   Email Only
                 </span>
               </div>
-              <p className="text-slate-400 text-[11px]">
-                Sent directly to the customer's provided email address (<code className="text-slate-300">order.customer_email</code>).
+              <p className="text-slate-600 text-[11px]">
+                Sent directly to the customer's provided email address (<code className="text-slate-800 font-semibold">order.customer_email</code>).
               </p>
               <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-200 space-y-1 text-[11px]">
-                <div className="text-slate-300">&bull; <strong>Order Confirmation:</strong> Instant waybill & pricing</div>
-                <div className="text-slate-300">&bull; <strong>Live Status Updates:</strong> Driver assigned, picked up, in transit</div>
-                <div className="text-slate-300">&bull; <strong>POD Delivery Notice:</strong> Verified receiver & timestamp</div>
+                <div className="text-slate-700">&bull; <strong>Order Confirmation:</strong> Instant waybill & pricing</div>
+                <div className="text-slate-700">&bull; <strong>Live Status Updates:</strong> Driver assigned, picked up, in transit</div>
+                <div className="text-slate-700">&bull; <strong>POD Delivery Notice:</strong> Verified receiver & timestamp</div>
               </div>
             </div>
 
             {/* Admin Email Channel Card */}
-            <div className="bg-white border border-slate-200 rounded-2xl p-5 space-y-2.5 shadow-lg">
+            <div className="bg-white border border-slate-200 rounded-2xl p-5 space-y-2.5 shadow-sm">
               <div className="flex items-center justify-between border-b border-slate-200 pb-2.5">
-                <span className="font-bold text-white text-sm flex items-center">
-                  <Mail className="w-4 h-4 text-red-400 mr-2" />
+                <span className="font-bold text-slate-900 text-sm flex items-center">
+                  <Mail className="w-4 h-4 text-red-600 mr-2" />
                   Admin Email Channel
                 </span>
-                <span className="text-[10px] font-bold text-red-300 bg-red-950/80 border border-red-500/30 px-2 py-0.5 rounded-full">
+                <span className="text-[10px] font-bold text-red-800 bg-red-50 border border-red-200 px-2 py-0.5 rounded-full">
                   Direct Email
                 </span>
               </div>
-              <p className="text-slate-400 text-[11px]">
-                Sent to Admin operations desk (<code className="text-slate-300">{settings.email || 'support@flashdropexpress.com'}</code>).
+              <p className="text-slate-600 text-[11px]">
+                Sent to Admin operations desk (<code className="text-slate-800 font-semibold">{settings.email || 'support@flashdropexpress.com'}</code>).
               </p>
               <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-200 space-y-1 text-[11px]">
-                <div className="text-slate-300">&bull; <strong>Urgent Booking Alerts:</strong> Customer details, phone, route</div>
-                <div className="text-slate-300">&bull; <strong>Cargo & Pricing:</strong> Weight, pails, vehicle, total CAD</div>
-                <div className="text-slate-300">&bull; <strong>1-Click Dispatch Link:</strong> Direct link to Admin portal</div>
+                <div className="text-slate-700">&bull; <strong>Urgent Booking Alerts:</strong> Customer details, phone, route</div>
+                <div className="text-slate-700">&bull; <strong>Cargo & Pricing:</strong> Weight, pails, vehicle, total CAD</div>
+                <div className="text-slate-700">&bull; <strong>1-Click Dispatch Link:</strong> Direct link to Admin portal</div>
               </div>
             </div>
 
             {/* Admin SMS Channel Card */}
-            <div className="bg-white border border-slate-200 rounded-2xl p-5 space-y-2.5 shadow-lg">
+            <div className="bg-white border border-slate-200 rounded-2xl p-5 space-y-2.5 shadow-sm">
               <div className="flex items-center justify-between border-b border-slate-200 pb-2.5">
-                <span className="font-bold text-white text-sm flex items-center">
-                  <Phone className="w-4 h-4 text-emerald-400 mr-2" />
+                <span className="font-bold text-slate-900 text-sm flex items-center">
+                  <Phone className="w-4 h-4 text-emerald-600 mr-2" />
                   Admin SMS Channel
                 </span>
-                <span className="text-[10px] font-bold text-emerald-300 bg-emerald-950/80 border border-emerald-500/30 px-2 py-0.5 rounded-full">
+                <span className="text-[10px] font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
                   SMS / Phone
                 </span>
               </div>
-              <p className="text-slate-400 text-[11px]">
-                Sent directly to Admin mobile: <strong className="text-emerald-400 font-mono">+1 647 804 9775</strong>.
+              <p className="text-slate-600 text-[11px]">
+                Sent directly to Admin mobile: <strong className="text-emerald-700 font-mono font-bold">+1 647 804 9775</strong>.
               </p>
               <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-200 space-y-1 text-[11px]">
-                <div className="text-slate-300">&bull; <strong>New Order Alert SMS:</strong> Order #, route, amount, customer</div>
-                <div className="text-slate-300">&bull; <strong>Driver Status SMS:</strong> Road courier transitions</div>
-                <div className="text-slate-300">&bull; <strong>Delivered SMS:</strong> Final receiver POD completion</div>
+                <div className="text-slate-700">&bull; <strong>New Order Alert SMS:</strong> Order #, route, amount, customer</div>
+                <div className="text-slate-700">&bull; <strong>Driver Status SMS:</strong> Road courier transitions</div>
+                <div className="text-slate-700">&bull; <strong>Delivered SMS:</strong> Final receiver POD completion</div>
               </div>
             </div>
           </div>
 
           {/* Live Delivery Provider Setup (Resend & Canadian SMS Gateway) */}
-          <div className="bg-slate-50 border border-slate-200 rounded-2xl p-5 space-y-4 text-xs shadow-xl">
+          <div className="bg-slate-50 border border-slate-200 rounded-2xl p-5 space-y-4 text-xs shadow-sm">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-200 pb-3">
               <div>
-                <h3 className="font-bold text-white text-sm flex items-center space-x-2">
-                  <Key className="w-4 h-4 text-amber-400" />
+                <h3 className="font-bold text-slate-900 text-sm flex items-center space-x-2">
+                  <Key className="w-4 h-4 text-amber-600" />
                   <span>Real Email & SMS Delivery Provider Setup</span>
                 </h3>
                 <p className="text-[11px] text-slate-600 mt-0.5">
@@ -2242,7 +2242,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
               </div>
               <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
                 settings.resend_api_key
-                  ? 'bg-emerald-950 text-emerald-300 border border-emerald-500/40'
+                  ? 'bg-emerald-50 text-emerald-800 border border-emerald-300'
                   : 'bg-amber-50 text-amber-800 border border-amber-300'
               }`}>
                 {settings.resend_api_key ? '✓ Resend API Key Active' : 'Simulation Mode (Awaiting Free Key)'}
@@ -2251,8 +2251,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-slate-300 font-semibold mb-1">
-                  Resend Free API Key (<code className="text-amber-300">re_...</code>)
+                <label className="block text-slate-700 font-semibold mb-1">
+                  Resend Free API Key (<code className="text-amber-800 font-bold">re_...</code>)
                 </label>
                 <div className="flex space-x-2">
                   <input
@@ -2279,7 +2279,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
                     href="https://resend.com/signup"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-red-400 hover:underline font-semibold flex items-center"
+                    className="text-red-600 hover:text-red-700 hover:underline font-semibold flex items-center"
                   >
                     Get 3,000 Free Emails/Month on Resend.com &rarr;
                   </a>
@@ -2287,7 +2287,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
               </div>
 
               <div>
-                <label className="block text-slate-300 font-semibold mb-1">
+                <label className="block text-slate-700 font-semibold mb-1">
                   Admin SMS Canadian Carrier Gateway (+1 647 804 9775)
                 </label>
                 <select
@@ -2314,7 +2314,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
           {/* Filter Pills */}
           <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-3">
             <div className="flex items-center space-x-2">
-              <span className="text-xs font-semibold text-slate-400">Filter Feed:</span>
+              <span className="text-xs font-semibold text-slate-700">Filter Feed:</span>
               {[
                 { id: 'all' as const, label: `All Notifications (${notifications.length})` },
                 {
@@ -2336,8 +2336,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
                   onClick={() => setNotifFilter(pill.id)}
                   className={`px-3 py-1 text-xs font-semibold rounded-lg transition cursor-pointer ${
                     notifFilter === pill.id
-                      ? 'bg-slate-800 text-white border border-slate-300 shadow-sm'
-                      : 'text-slate-400 hover:text-slate-200 hover:bg-slate-100'
+                      ? 'bg-slate-900 text-white shadow-xs'
+                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
                   }`}
                 >
                   {pill.label}
@@ -2353,7 +2353,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
           {/* Notification Logs Table */}
           <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-xl">
             <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs text-slate-300">
+              <table className="w-full text-left text-xs text-slate-700">
                 <thead className="bg-slate-100 text-slate-700 uppercase text-[10px] font-bold border-b border-slate-200">
                   <tr>
                     <th className="py-3 px-4">Time</th>
@@ -2386,8 +2386,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
                         <td className="py-3 px-4">
                           <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
                             notif.recipient_type === 'customer'
-                              ? 'bg-emerald-950/80 text-emerald-300 border border-emerald-500/30'
-                              : 'bg-red-950/80 text-red-300 border border-red-500/30'
+                              ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
+                              : 'bg-red-50 text-red-800 border border-red-200'
                           }`}>
                             {notif.recipient_type}
                           </span>
@@ -2413,11 +2413,11 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
                         </td>
                         <td className="py-3 px-4 font-mono text-xs">
                           {notif.channel === 'sms' ? (
-                            <span className="text-emerald-400 font-bold bg-emerald-950/40 px-2 py-0.5 rounded border border-emerald-500/20">
+                            <span className="text-emerald-800 font-bold bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
                               {notif.destination}
                             </span>
                           ) : (
-                            <span className="text-slate-300 truncate max-w-[160px] block">
+                            <span className="text-slate-800 font-medium truncate max-w-[160px] block">
                               {notif.destination}
                             </span>
                           )}
@@ -2426,7 +2426,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
                           #{notif.order_number}
                         </td>
                         <td className="py-3 px-4">
-                          <div className="max-w-[280px] truncate text-slate-200 font-medium">
+                          <div className="max-w-[280px] truncate text-slate-900 font-medium">
                             {notif.subject || notif.message}
                           </div>
                           <div className="max-w-[280px] truncate text-[10px] text-slate-500">
@@ -2434,7 +2434,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
                           </div>
                         </td>
                         <td className="py-3 px-4">
-                          <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-emerald-950/60 text-emerald-400 border border-emerald-500/30">
+                          <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-emerald-50 text-emerald-800 border border-emerald-200">
                             Sent &bull; Delivered
                           </span>
                         </td>
@@ -2479,7 +2479,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
 
           <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-xl">
             <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs text-slate-300">
+              <table className="w-full text-left text-xs text-slate-700">
                 <thead className="bg-slate-100 text-slate-700 uppercase text-[10px] font-bold border-b border-slate-200">
                   <tr>
                     <th className="py-3 px-4">Vehicle Tier</th>
@@ -2494,15 +2494,15 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
                 <tbody className="divide-y divide-slate-200/60">
                   {pricingTiers.map((tier, idx) => (
                     <tr key={idx} className="hover:bg-slate-100/40">
-                      <td className="py-3 px-4 font-semibold text-white">{tier.tierName}</td>
-                      <td className="py-3 px-4">{tier.maxWeightLbs} lbs</td>
-                      <td className="py-3 px-4">{tier.maxPails} pails</td>
+                      <td className="py-3 px-4 font-semibold text-slate-900">{tier.tierName}</td>
+                      <td className="py-3 px-4 text-slate-700">{tier.maxWeightLbs} lbs</td>
+                      <td className="py-3 px-4 text-slate-700">{tier.maxPails} pails</td>
                       <td className="py-3 px-4">
                         <input
                           type="number"
                           value={tier.rate0to25}
                           onChange={(e) => handleUpdateTierRate(idx, 'rate0to25', Number(e.target.value))}
-                          className="w-16 bg-slate-50 border border-slate-300 px-2 py-1 rounded text-white text-xs"
+                          className="w-16 bg-slate-50 border border-slate-300 px-2 py-1 rounded text-slate-900 font-bold text-xs"
                         />
                       </td>
                       <td className="py-3 px-4">
@@ -2510,7 +2510,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
                           type="number"
                           value={tier.rate25to40}
                           onChange={(e) => handleUpdateTierRate(idx, 'rate25to40', Number(e.target.value))}
-                          className="w-16 bg-slate-50 border border-slate-300 px-2 py-1 rounded text-white text-xs"
+                          className="w-16 bg-slate-50 border border-slate-300 px-2 py-1 rounded text-slate-900 font-bold text-xs"
                         />
                       </td>
                       <td className="py-3 px-4">
@@ -2518,7 +2518,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
                           type="number"
                           value={tier.rate40PlusBase}
                           onChange={(e) => handleUpdateTierRate(idx, 'rate40PlusBase', Number(e.target.value))}
-                          className="w-16 bg-slate-50 border border-slate-300 px-2 py-1 rounded text-white text-xs"
+                          className="w-16 bg-slate-50 border border-slate-300 px-2 py-1 rounded text-slate-900 font-bold text-xs"
                         />
                       </td>
                       <td className="py-3 px-4">
@@ -2527,7 +2527,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
                           step="0.05"
                           value={tier.ratePerKmOver40}
                           onChange={(e) => handleUpdateTierRate(idx, 'ratePerKmOver40', Number(e.target.value))}
-                          className="w-16 bg-slate-50 border border-slate-300 px-2 py-1 rounded text-white text-xs"
+                          className="w-16 bg-slate-50 border border-slate-300 px-2 py-1 rounded text-slate-900 font-bold text-xs"
                         />
                       </td>
                     </tr>
@@ -2721,7 +2721,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
             <button
               type="button"
               onClick={() => store.resetToFactorySeed()}
-              className="flex items-center space-x-1.5 text-xs text-slate-600 hover:text-white"
+              className="flex items-center space-x-1.5 text-xs text-slate-600 hover:text-slate-900"
             >
               <RefreshCw className="w-3.5 h-3.5" />
               <span>Reset to Default Quotation Matrix</span>
@@ -2729,7 +2729,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
 
             <div className="flex items-center space-x-3">
               {settingsSaved && (
-                <span className="text-xs text-emerald-400 font-bold flex items-center space-x-1">
+                <span className="text-xs text-emerald-700 font-bold flex items-center space-x-1">
                   <CheckCircle2 className="w-4 h-4" />
                   <span>Settings Saved!</span>
                 </span>
@@ -2768,7 +2768,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
               <button
                 type="button"
                 onClick={() => setEditingOrder(null)}
-                className="p-1.5 text-slate-400 hover:text-white rounded-lg bg-slate-800/80 cursor-pointer"
+                className="p-1.5 text-slate-400 hover:text-slate-900 rounded-lg bg-slate-100 hover:bg-slate-200 cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -2777,12 +2777,12 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
             <form onSubmit={handleSaveEditOrderSubmit} className="space-y-6">
               {/* Status & Assignment Section */}
               <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-3">
-                <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                <div className="text-[11px] font-bold uppercase tracking-wider text-slate-700">
                   Status & Fleet Assignment
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <div>
-                    <label className="block text-slate-300 mb-1 font-semibold">Order Status</label>
+                    <label className="block text-slate-700 mb-1 font-semibold">Order Status</label>
                     <select
                       value={editFormData.order_status || editingOrder.order_status}
                       onChange={(e) => setEditFormData({ ...editFormData, order_status: e.target.value as OrderStatus })}
@@ -2802,7 +2802,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
                   </div>
 
                   <div>
-                    <label className="block text-slate-300 mb-1 font-semibold">Assigned Driver</label>
+                    <label className="block text-slate-700 mb-1 font-semibold">Assigned Driver</label>
                     <select
                       value={editFormData.assigned_driver_id || editingOrder.assigned_driver_id || ''}
                       onChange={(e) => {
@@ -2826,7 +2826,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
                   </div>
 
                   <div>
-                    <label className="block text-slate-300 mb-1 font-semibold">Payment Status</label>
+                    <label className="block text-slate-700 mb-1 font-semibold">Payment Status</label>
                     <select
                       value={editFormData.payment_status || editingOrder.payment_status}
                       onChange={(e) => setEditFormData({ ...editFormData, payment_status: e.target.value as any })}
@@ -2844,12 +2844,12 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
 
               {/* Customer Info Section */}
               <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-3">
-                <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                <div className="text-[11px] font-bold uppercase tracking-wider text-slate-700">
                   Customer & Billing Account Details
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                   <div>
-                    <label className="block text-slate-300 mb-1 font-semibold">Customer Name *</label>
+                    <label className="block text-slate-700 mb-1 font-semibold">Customer Name *</label>
                     <input
                       type="text"
                       value={editFormData.customer_name ?? editingOrder.customer_name}
@@ -2859,7 +2859,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
                     />
                   </div>
                   <div>
-                    <label className="block text-slate-300 mb-1 font-semibold">Company Name</label>
+                    <label className="block text-slate-700 mb-1 font-semibold">Company Name</label>
                     <input
                       type="text"
                       value={editFormData.company_name ?? (editingOrder.company_name || '')}
@@ -2868,7 +2868,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
                     />
                   </div>
                   <div>
-                    <label className="block text-slate-300 mb-1 font-semibold">Customer Phone *</label>
+                    <label className="block text-slate-700 mb-1 font-semibold">Customer Phone *</label>
                     <input
                       type="tel"
                       value={editFormData.customer_phone ?? editingOrder.customer_phone}
@@ -2878,7 +2878,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
                     />
                   </div>
                   <div>
-                    <label className="block text-slate-300 mb-1 font-semibold">Customer Email *</label>
+                    <label className="block text-slate-700 mb-1 font-semibold">Customer Email *</label>
                     <input
                       type="email"
                       value={editFormData.customer_email ?? editingOrder.customer_email}
@@ -2892,13 +2892,13 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
 
               {/* Pickup Location & Details */}
               <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-3">
-                <div className="text-[11px] font-bold uppercase tracking-wider text-red-400 flex items-center space-x-1.5">
+                <div className="text-[11px] font-bold uppercase tracking-wider text-red-600 flex items-center space-x-1.5">
                   <MapPin className="w-3.5 h-3.5" />
                   <span>Pickup Location & Shipper Contact</span>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <div className="sm:col-span-2">
-                    <label className="block text-slate-300 mb-1 font-semibold">Pickup Street Address *</label>
+                    <label className="block text-slate-700 mb-1 font-semibold">Pickup Street Address *</label>
                     <input
                       type="text"
                       value={editFormData.pickup_address ?? editingOrder.pickup_address}
@@ -2908,7 +2908,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
                     />
                   </div>
                   <div>
-                    <label className="block text-slate-300 mb-1 font-semibold">Unit / Dock / Bay</label>
+                    <label className="block text-slate-700 mb-1 font-semibold">Unit / Dock / Bay</label>
                     <input
                       type="text"
                       value={editFormData.pickup_unit ?? (editingOrder.pickup_unit || '')}
@@ -2920,7 +2920,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
                   <div>
-                    <label className="block text-slate-300 mb-1 font-semibold">On-site Contact</label>
+                    <label className="block text-slate-700 mb-1 font-semibold">On-site Contact</label>
                     <input
                       type="text"
                       value={editFormData.pickup_contact_name ?? (editingOrder.pickup_contact_name || '')}
@@ -2929,7 +2929,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
                     />
                   </div>
                   <div>
-                    <label className="block text-slate-300 mb-1 font-semibold">On-site Phone</label>
+                    <label className="block text-slate-700 mb-1 font-semibold">On-site Phone</label>
                     <input
                       type="tel"
                       value={editFormData.pickup_contact_phone ?? (editingOrder.pickup_contact_phone || '')}
@@ -2938,7 +2938,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
                     />
                   </div>
                   <div>
-                    <label className="block text-slate-300 mb-1 font-semibold">Pickup Date</label>
+                    <label className="block text-slate-700 mb-1 font-semibold">Pickup Date</label>
                     <input
                       type="date"
                       value={editFormData.pickup_date ?? editingOrder.pickup_date}
@@ -2947,7 +2947,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
                     />
                   </div>
                   <div>
-                    <label className="block text-slate-300 mb-1 font-semibold">Pickup Time</label>
+                    <label className="block text-slate-700 mb-1 font-semibold">Pickup Time</label>
                     <input
                       type="time"
                       value={editFormData.pickup_time ?? editingOrder.pickup_time}
@@ -2957,7 +2957,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
                   </div>
                 </div>
                 <div>
-                  <label className="block text-slate-300 mb-1 font-semibold">Pickup / Dock Notes</label>
+                  <label className="block text-slate-700 mb-1 font-semibold">Pickup / Dock Notes</label>
                   <input
                     type="text"
                     value={editFormData.pickup_notes ?? (editingOrder.pickup_notes || '')}
@@ -2970,13 +2970,13 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
 
               {/* Delivery Location & Details */}
               <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-3">
-                <div className="text-[11px] font-bold uppercase tracking-wider text-emerald-400 flex items-center space-x-1.5">
+                <div className="text-[11px] font-bold uppercase tracking-wider text-emerald-700 flex items-center space-x-1.5">
                   <MapPin className="w-3.5 h-3.5" />
                   <span>Delivery Destination & Consignee Contact</span>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <div className="sm:col-span-2">
-                    <label className="block text-slate-300 mb-1 font-semibold">Delivery Address *</label>
+                    <label className="block text-slate-700 mb-1 font-semibold">Delivery Address *</label>
                     <input
                       type="text"
                       value={editFormData.delivery_address ?? editingOrder.delivery_address}
@@ -2986,7 +2986,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
                     />
                   </div>
                   <div>
-                    <label className="block text-slate-300 mb-1 font-semibold">Unit / Suite / Buzzer</label>
+                    <label className="block text-slate-700 mb-1 font-semibold">Unit / Suite / Buzzer</label>
                     <input
                       type="text"
                       value={editFormData.delivery_unit ?? (editingOrder.delivery_unit || '')}
@@ -2998,7 +2998,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <div>
-                    <label className="block text-slate-300 mb-1 font-semibold">Receiving Contact</label>
+                    <label className="block text-slate-700 mb-1 font-semibold">Receiving Contact</label>
                     <input
                       type="text"
                       value={editFormData.delivery_contact_name ?? (editingOrder.delivery_contact_name || '')}
@@ -3007,7 +3007,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
                     />
                   </div>
                   <div>
-                    <label className="block text-slate-300 mb-1 font-semibold">Receiving Phone</label>
+                    <label className="block text-slate-700 mb-1 font-semibold">Receiving Phone</label>
                     <input
                       type="tel"
                       value={editFormData.delivery_contact_phone ?? (editingOrder.delivery_contact_phone || '')}
@@ -3016,7 +3016,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
                     />
                   </div>
                   <div>
-                    <label className="block text-slate-300 mb-1 font-semibold">Type of Delivery</label>
+                    <label className="block text-slate-700 mb-1 font-semibold">Type of Delivery</label>
                     <select
                       value={editFormData.delivery_time_option || editingOrder.delivery_time_option}
                       onChange={(e) => setEditFormData({ ...editFormData, delivery_time_option: e.target.value as any })}
@@ -3034,7 +3034,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
                   </div>
                 </div>
                 <div>
-                  <label className="block text-slate-300 mb-1 font-semibold">Delivery / Receiving Notes</label>
+                  <label className="block text-slate-700 mb-1 font-semibold">Delivery / Receiving Notes</label>
                   <input
                     type="text"
                     value={editFormData.delivery_notes ?? (editingOrder.delivery_notes || '')}
@@ -3047,13 +3047,13 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
 
               {/* Cargo & Fleet Specs */}
               <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-3">
-                <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400 flex items-center space-x-1.5">
-                  <Package className="w-3.5 h-3.5 text-cyan-400" />
+                <div className="text-[11px] font-bold uppercase tracking-wider text-slate-700 flex items-center space-x-1.5">
+                  <Package className="w-3.5 h-3.5 text-red-600" />
                   <span>Cargo Manifest & Vehicle Specifications</span>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
                   <div>
-                    <label className="block text-slate-300 mb-1 font-semibold">Vehicle Required</label>
+                    <label className="block text-slate-700 mb-1 font-semibold">Vehicle Required</label>
                     <input
                       type="text"
                       value={editFormData.vehicle_name ?? editingOrder.vehicle_name}
@@ -3062,7 +3062,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
                     />
                   </div>
                   <div>
-                    <label className="block text-slate-300 mb-1 font-semibold">Cargo Category</label>
+                    <label className="block text-slate-700 mb-1 font-semibold">Cargo Category</label>
                     <select
                       value={editFormData.item_type || editingOrder.item_type}
                       onChange={(e) => setEditFormData({ ...editFormData, item_type: e.target.value as any })}
@@ -3077,7 +3077,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
                     </select>
                   </div>
                   <div>
-                    <label className="block text-slate-300 mb-1 font-semibold">Weight (lbs)</label>
+                    <label className="block text-slate-700 mb-1 font-semibold">Weight (lbs)</label>
                     <input
                       type="number"
                       value={editFormData.weight_lbs ?? editingOrder.weight_lbs}
@@ -3086,7 +3086,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
                     />
                   </div>
                   <div>
-                    <label className="block text-slate-300 mb-1 font-semibold">Quantity (Units / Pails)</label>
+                    <label className="block text-slate-700 mb-1 font-semibold">Quantity (Units / Pails)</label>
                     <input
                       type="number"
                       value={editFormData.quantity ?? editingOrder.quantity}
@@ -3096,7 +3096,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
                   </div>
                 </div>
                 <div>
-                  <label className="block text-slate-300 mb-1 font-semibold">Item Manifest Description</label>
+                  <label className="block text-slate-700 mb-1 font-semibold">Item Manifest Description</label>
                   <input
                     type="text"
                     value={editFormData.item_description ?? (editingOrder.item_description || '')}
@@ -3105,7 +3105,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
                   />
                 </div>
                 <div>
-                  <label className="block text-slate-300 mb-1 font-semibold">Driver Instructions</label>
+                  <label className="block text-slate-700 mb-1 font-semibold">Driver Instructions</label>
                   <input
                     type="text"
                     value={editFormData.custom_instructions ?? (editingOrder.custom_instructions || '')}
@@ -3117,13 +3117,13 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
 
               {/* Financials & Price Breakdown */}
               <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-3">
-                <div className="text-[11px] font-bold uppercase tracking-wider text-emerald-400 flex items-center space-x-1.5">
-                  <DollarSign className="w-3.5 h-3.5" />
+                <div className="text-[11px] font-bold uppercase tracking-wider text-emerald-700 flex items-center space-x-1.5">
+                  <DollarSign className="w-3.5 h-3.5 text-emerald-600" />
                   <span>Financial Breakdown & Pricing (CAD)</span>
                 </div>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                   <div>
-                    <label className="block text-slate-300 mb-1 font-semibold">Base Price ($)</label>
+                    <label className="block text-slate-700 mb-1 font-semibold">Base Price ($)</label>
                     <input
                       type="number"
                       step="0.01"
@@ -3133,7 +3133,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
                     />
                   </div>
                   <div>
-                    <label className="block text-slate-300 mb-1 font-semibold">Excess KM Surcharge ($)</label>
+                    <label className="block text-slate-700 mb-1 font-semibold">Excess KM Surcharge ($)</label>
                     <input
                       type="number"
                       step="0.01"
@@ -3143,7 +3143,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
                     />
                   </div>
                   <div>
-                    <label className="block text-slate-300 mb-1 font-semibold">After Hours ($)</label>
+                    <label className="block text-slate-700 mb-1 font-semibold">After Hours ($)</label>
                     <input
                       type="number"
                       step="0.01"
@@ -3153,7 +3153,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
                     />
                   </div>
                   <div>
-                    <label className="block text-slate-300 mb-1 font-semibold">Total Price ($ CAD) *</label>
+                    <label className="block text-slate-700 mb-1 font-semibold">Total Price ($ CAD) *</label>
                     <input
                       type="number"
                       step="0.01"
@@ -3170,7 +3170,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
                         });
                       }}
                       required
-                      className="w-full bg-emerald-950/40 border border-emerald-500/50 px-3 py-2 rounded-xl text-emerald-300 font-bold focus:outline-none"
+                      className="w-full bg-emerald-50 border border-emerald-300 px-3 py-2 rounded-xl text-emerald-800 font-bold focus:outline-none"
                     />
                   </div>
                 </div>
@@ -3200,7 +3200,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
                       setEditingOrder(null);
                       handleOpenQuoteReview(ord);
                     }}
-                    className="px-4 py-2.5 bg-amber-500/20 hover:bg-amber-500 text-amber-300 hover:text-white border border-amber-500/40 font-bold rounded-xl text-xs transition flex items-center space-x-1.5 cursor-pointer"
+                    className="px-4 py-2.5 bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-300 font-bold rounded-xl text-xs transition flex items-center space-x-1.5 cursor-pointer"
                   >
                     <DollarSign className="w-3.5 h-3.5" />
                     <span>Review & Send Quote</span>
@@ -3208,7 +3208,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
                   <button
                     type="button"
                     onClick={() => setEditingOrder(null)}
-                    className="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold rounded-xl text-xs transition cursor-pointer"
+                    className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 font-semibold rounded-xl text-xs transition cursor-pointer"
                   >
                     Cancel
                   </button>
@@ -3246,7 +3246,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
               <button
                 type="button"
                 onClick={() => setPreviewNotification(null)}
-                className="p-1.5 text-slate-400 hover:text-white rounded-lg bg-slate-800/80 cursor-pointer"
+                className="p-1.5 text-slate-400 hover:text-slate-900 rounded-lg bg-slate-100 hover:bg-slate-200 cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -3255,42 +3255,42 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
             {/* Notification Meta */}
             <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-200 space-y-1.5 text-[11px]">
               <div className="flex items-center justify-between">
-                <span className="text-slate-400">Recipient:</span>
-                <span className="text-white font-bold capitalize">{previewNotification.recipient_type}</span>
+                <span className="text-slate-500">Recipient:</span>
+                <span className="text-slate-900 font-bold capitalize">{previewNotification.recipient_type}</span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-slate-400">Destination:</span>
-                <span className="text-emerald-400 font-mono font-bold">{previewNotification.destination}</span>
+                <span className="text-slate-500">Destination:</span>
+                <span className="text-emerald-700 font-mono font-bold">{previewNotification.destination}</span>
               </div>
               {previewNotification.subject && (
                 <div className="flex items-center justify-between">
-                  <span className="text-slate-400">Subject:</span>
-                  <span className="text-white font-semibold">{previewNotification.subject}</span>
+                  <span className="text-slate-500">Subject:</span>
+                  <span className="text-slate-900 font-semibold">{previewNotification.subject}</span>
                 </div>
               )}
               <div className="flex items-center justify-between">
-                <span className="text-slate-400">Timestamp:</span>
-                <span className="text-slate-300 font-mono">{new Date(previewNotification.sent_at).toLocaleString()}</span>
+                <span className="text-slate-500">Timestamp:</span>
+                <span className="text-slate-700 font-mono">{new Date(previewNotification.sent_at).toLocaleString()}</span>
               </div>
             </div>
 
             {/* Rendered Preview */}
             {previewNotification.channel === 'sms' ? (
               <div className="space-y-2">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
                   Mobile SMS Text Screen (+1 647 804 9775)
                 </span>
-                <div className="bg-slate-50 border-2 border-emerald-500/40 rounded-2xl p-4 text-emerald-300 font-mono text-xs leading-relaxed shadow-inner">
+                <div className="bg-emerald-50 border-2 border-emerald-300 rounded-2xl p-4 text-emerald-900 font-mono text-xs leading-relaxed shadow-inner">
                   {previewNotification.message}
                 </div>
               </div>
             ) : (
               <div className="space-y-2">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
                   HTML Email Render Preview
                 </span>
                 <div
-                  className="bg-slate-50 border border-slate-200 rounded-2xl p-4 max-h-96 overflow-y-auto"
+                  className="bg-slate-50 border border-slate-200 rounded-2xl p-4 max-h-96 overflow-y-auto text-slate-900"
                   dangerouslySetInnerHTML={{ __html: previewNotification.html_body || previewNotification.message }}
                 />
               </div>
@@ -3300,7 +3300,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
               <button
                 type="button"
                 onClick={() => setPreviewNotification(null)}
-                className="px-5 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-xl font-bold cursor-pointer transition"
+                className="px-5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300 rounded-xl font-bold cursor-pointer transition"
               >
                 Close Preview
               </button>
@@ -3334,7 +3334,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
               <button
                 type="button"
                 onClick={() => setViewingStaffProfile(null)}
-                className="p-1.5 text-slate-400 hover:text-white rounded-lg bg-slate-800/80 cursor-pointer"
+                className="p-1.5 text-slate-400 hover:text-slate-900 rounded-lg bg-slate-100 hover:bg-slate-200 cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -3356,16 +3356,16 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
                 return (
                   <>
                     <div className="bg-slate-50 p-3 rounded-xl border border-slate-200">
-                      <span className="text-slate-400 text-[10px] uppercase font-bold block">Total Jobs</span>
-                      <span className="text-lg font-black text-white">{myOrders.length}</span>
+                      <span className="text-slate-500 text-[10px] uppercase font-bold block">Total Jobs</span>
+                      <span className="text-lg font-black text-slate-900">{myOrders.length}</span>
                     </div>
                     <div className="bg-slate-50 p-3 rounded-xl border border-slate-200">
-                      <span className="text-blue-400 text-[10px] uppercase font-bold block">Active Runs</span>
-                      <span className="text-lg font-black text-blue-400">{active}</span>
+                      <span className="text-blue-700 text-[10px] uppercase font-bold block">Active Runs</span>
+                      <span className="text-lg font-black text-blue-700">{active}</span>
                     </div>
                     <div className="bg-slate-50 p-3 rounded-xl border border-slate-200">
-                      <span className="text-emerald-400 text-[10px] uppercase font-bold block">Delivered</span>
-                      <span className="text-lg font-black text-emerald-400">{completed}</span>
+                      <span className="text-emerald-700 text-[10px] uppercase font-bold block">Delivered</span>
+                      <span className="text-lg font-black text-emerald-700">{completed}</span>
                     </div>
                   </>
                 );
@@ -3375,36 +3375,36 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
             {/* Full Profile Details List */}
             <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-3">
               <div className="flex items-center justify-between border-b border-slate-200 pb-2">
-                <span className="text-slate-400 font-semibold">Login Email</span>
-                <a href={`mailto:${viewingStaffProfile.email}`} className="text-cyan-400 hover:underline font-semibold">
+                <span className="text-slate-600 font-semibold">Login Email</span>
+                <a href={`mailto:${viewingStaffProfile.email}`} className="text-blue-600 hover:underline font-semibold">
                   {viewingStaffProfile.email}
                 </a>
               </div>
               <div className="flex items-center justify-between border-b border-slate-200 pb-2">
-                <span className="text-slate-400 font-semibold">Direct Phone</span>
-                <a href={`tel:${viewingStaffProfile.phone}`} className="text-emerald-400 hover:underline font-semibold">
+                <span className="text-slate-600 font-semibold">Direct Phone</span>
+                <a href={`tel:${viewingStaffProfile.phone}`} className="text-emerald-700 hover:underline font-semibold">
                   {viewingStaffProfile.phone}
                 </a>
               </div>
               <div className="flex items-center justify-between border-b border-slate-200 pb-2">
-                <span className="text-slate-400 font-semibold">Assigned Vehicle</span>
-                <span className="text-white font-medium">{viewingStaffProfile.vehicle_type}</span>
+                <span className="text-slate-600 font-semibold">Assigned Vehicle</span>
+                <span className="text-slate-900 font-medium">{viewingStaffProfile.vehicle_type}</span>
               </div>
               <div className="flex items-center justify-between border-b border-slate-200 pb-2">
-                <span className="text-slate-400 font-semibold">License Plate</span>
-                <span className="font-mono text-amber-300 font-bold bg-amber-950/60 px-2 py-0.5 rounded border border-amber-500/20">
+                <span className="text-slate-600 font-semibold">License Plate</span>
+                <span className="font-mono text-amber-800 font-bold bg-amber-50 px-2 py-0.5 rounded border border-amber-300">
                   {viewingStaffProfile.license_plate || 'ON-FLEET'}
                 </span>
               </div>
               <div className="flex items-center justify-between border-b border-slate-200 pb-2">
-                <span className="text-slate-400 font-semibold">Current Shift Status</span>
-                <span className={`font-bold ${viewingStaffProfile.is_active ? 'text-emerald-400' : 'text-slate-500'}`}>
+                <span className="text-slate-600 font-semibold">Current Shift Status</span>
+                <span className={`font-bold ${viewingStaffProfile.is_active ? 'text-emerald-700' : 'text-slate-500'}`}>
                   {viewingStaffProfile.is_active ? 'Active & On Duty' : 'Shift Suspended'}
                 </span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-slate-400 font-semibold">Date Registered</span>
-                <span className="text-slate-300">
+                <span className="text-slate-600 font-semibold">Date Registered</span>
+                <span className="text-slate-700">
                   {viewingStaffProfile.created_at ? new Date(viewingStaffProfile.created_at).toLocaleDateString() : 'Active Member'}
                 </span>
               </div>
@@ -3414,7 +3414,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
               <button
                 type="button"
                 onClick={() => setViewingStaffProfile(null)}
-                className="px-5 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-xl font-bold cursor-pointer transition"
+                className="px-5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300 rounded-xl font-bold cursor-pointer transition"
               >
                 Close Profile
               </button>
@@ -3430,7 +3430,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
             {/* Modal Header */}
             <div className="flex items-center justify-between border-b border-slate-200 pb-4">
               <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 rounded-xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400">
+                <div className="w-10 h-10 rounded-xl bg-amber-50 border border-amber-300 flex items-center justify-center text-amber-600">
                   <DollarSign className="w-5 h-5" />
                 </div>
                 <div>
@@ -3438,7 +3438,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
                     <h3 className="text-lg font-bold text-slate-900 font-['Outfit']">
                       Review & Dispatch Price Quote
                     </h3>
-                    <span className="font-mono text-sm font-black text-amber-400">
+                    <span className="font-mono text-sm font-black text-amber-700">
                       #{reviewingQuoteOrder.order_number}
                     </span>
                     <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
@@ -3446,7 +3446,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
                         ? 'bg-amber-50 text-amber-800 border border-amber-300'
                         : reviewingQuoteOrder.order_status === 'quote_sent'
                         ? 'bg-purple-50 text-purple-800 border border-purple-300'
-                        : 'bg-slate-800 text-slate-300 border border-slate-300'
+                        : 'bg-slate-100 text-slate-800 border border-slate-300'
                     }`}>
                       {reviewingQuoteOrder.order_status === 'submitted' ? 'Quote Requested' : reviewingQuoteOrder.order_status.replace(/_/g, ' ')}
                     </span>
@@ -3459,7 +3459,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
               <button
                 type="button"
                 onClick={() => setReviewingQuoteOrder(null)}
-                className="p-1.5 text-slate-400 hover:text-white rounded-lg bg-slate-800/80 cursor-pointer"
+                className="p-1.5 text-slate-400 hover:text-slate-900 rounded-lg bg-slate-100 hover:bg-slate-200 cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -3467,57 +3467,57 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
 
             {/* Success Alert if Quote Sent */}
             {quoteSentSuccess && (
-              <div className="p-3.5 bg-emerald-950/70 border border-emerald-500/60 rounded-2xl flex items-center space-x-3 text-emerald-300 font-bold text-xs">
-                <CheckCircle2 className="w-5 h-5 text-emerald-400 flex-shrink-0" />
+              <div className="p-3.5 bg-emerald-50 border border-emerald-300 rounded-2xl flex items-center space-x-3 text-emerald-800 font-bold text-xs">
+                <CheckCircle2 className="w-5 h-5 text-emerald-600 flex-shrink-0" />
                 <span>Price quotation saved and official quotation email dispatched to customer successfully!</span>
               </div>
             )}
 
             {/* Route & Cargo Specifications Summary */}
             <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-3">
-              <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400 flex items-center justify-between">
+              <div className="text-[11px] font-bold uppercase tracking-wider text-slate-600 flex items-center justify-between">
                 <div className="flex items-center space-x-2">
-                  <Package className="w-3.5 h-3.5 text-cyan-400" />
+                  <Package className="w-3.5 h-3.5 text-red-600" />
                   <span>Shipment & Logistics Specifications</span>
                 </div>
-                <span className="text-red-400 font-mono font-bold">
+                <span className="text-red-600 font-mono font-bold">
                   {reviewingQuoteOrder.distance_km} km ({reviewingQuoteOrder.service_area})
                 </span>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs bg-slate-100 p-3 rounded-xl border border-slate-200">
                 <div>
-                  <span className="text-[10px] uppercase font-bold text-red-400 block mb-0.5">Pickup Location</span>
-                  <div className="text-white font-medium">{reviewingQuoteOrder.pickup_address}</div>
+                  <span className="text-[10px] uppercase font-bold text-red-600 block mb-0.5">Pickup Location</span>
+                  <div className="text-slate-900 font-semibold">{reviewingQuoteOrder.pickup_address}</div>
                   {reviewingQuoteOrder.pickup_unit && (
-                    <div className="text-slate-400 text-[11px]">Unit/Bay: {reviewingQuoteOrder.pickup_unit}</div>
+                    <div className="text-slate-600 text-[11px]">Unit/Bay: {reviewingQuoteOrder.pickup_unit}</div>
                   )}
-                  <div className="text-slate-400 text-[11px] mt-1">
+                  <div className="text-slate-600 text-[11px] mt-1">
                     Contact: {reviewingQuoteOrder.pickup_contact_name || reviewingQuoteOrder.customer_name} ({reviewingQuoteOrder.pickup_contact_phone || reviewingQuoteOrder.customer_phone})
                   </div>
                   {reviewingQuoteOrder.pickup_date && (
-                    <div className="text-slate-400 text-[11px]">
+                    <div className="text-slate-600 text-[11px]">
                       Scheduled: {reviewingQuoteOrder.pickup_date} at {reviewingQuoteOrder.pickup_time || 'Standard'}
                     </div>
                   )}
                   {reviewingQuoteOrder.pickup_notes && (
-                    <div className="text-amber-300/90 text-[11px] mt-1 italic">
+                    <div className="text-amber-800 text-[11px] mt-1 italic">
                       Notes: {reviewingQuoteOrder.pickup_notes}
                     </div>
                   )}
                 </div>
 
                 <div>
-                  <span className="text-[10px] uppercase font-bold text-emerald-400 block mb-0.5">Delivery Destination</span>
-                  <div className="text-white font-medium">{reviewingQuoteOrder.delivery_address}</div>
+                  <span className="text-[10px] uppercase font-bold text-emerald-700 block mb-0.5">Delivery Destination</span>
+                  <div className="text-slate-900 font-semibold">{reviewingQuoteOrder.delivery_address}</div>
                   {reviewingQuoteOrder.delivery_unit && (
-                    <div className="text-slate-400 text-[11px]">Unit/Suite: {reviewingQuoteOrder.delivery_unit}</div>
+                    <div className="text-slate-600 text-[11px]">Unit/Suite: {reviewingQuoteOrder.delivery_unit}</div>
                   )}
-                  <div className="text-slate-400 text-[11px] mt-1">
+                  <div className="text-slate-600 text-[11px] mt-1">
                     Receiving: {reviewingQuoteOrder.delivery_contact_name || 'Designated Consignee'} ({reviewingQuoteOrder.delivery_contact_phone || 'N/A'})
                   </div>
-                  <div className="text-slate-400 text-[11px]">
-                    Delivery Tier: <strong className="text-cyan-400 capitalize">
+                  <div className="text-slate-600 text-[11px]">
+                    Delivery Tier: <strong className="text-blue-700 capitalize">
                       {reviewingQuoteOrder.delivery_time_option === 'direct'
                         ? '2) On Demand / Direct Delivery'
                         : reviewingQuoteOrder.delivery_time_option === 'urgent'
@@ -3526,7 +3526,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
                     </strong>
                   </div>
                   {reviewingQuoteOrder.delivery_notes && (
-                    <div className="text-amber-300/90 text-[11px] mt-1 italic">
+                    <div className="text-amber-800 text-[11px] mt-1 italic">
                       Notes: {reviewingQuoteOrder.delivery_notes}
                     </div>
                   )}
@@ -3536,25 +3536,25 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
               {/* Cargo & Vehicle Details */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-[11px]">
                 <div className="bg-white p-2.5 rounded-xl border border-slate-200">
-                  <span className="text-slate-400 block text-[10px]">Vehicle Required</span>
-                  <span className="font-bold text-white">{reviewingQuoteOrder.vehicle_name}</span>
+                  <span className="text-slate-500 block text-[10px]">Vehicle Required</span>
+                  <span className="font-bold text-slate-900">{reviewingQuoteOrder.vehicle_name}</span>
                 </div>
                 <div className="bg-white p-2.5 rounded-xl border border-slate-200">
-                  <span className="text-slate-400 block text-[10px]">Total Weight</span>
-                  <span className="font-bold text-white">{reviewingQuoteOrder.weight_lbs} lbs</span>
+                  <span className="text-slate-500 block text-[10px]">Total Weight</span>
+                  <span className="font-bold text-slate-900">{reviewingQuoteOrder.weight_lbs} lbs</span>
                 </div>
                 <div className="bg-white p-2.5 rounded-xl border border-slate-200">
-                  <span className="text-slate-400 block text-[10px]">Units / Pails</span>
-                  <span className="font-bold text-white">{reviewingQuoteOrder.quantity} units</span>
+                  <span className="text-slate-500 block text-[10px]">Units / Pails</span>
+                  <span className="font-bold text-slate-900">{reviewingQuoteOrder.quantity} units</span>
                 </div>
                 <div className="bg-white p-2.5 rounded-xl border border-slate-200">
-                  <span className="text-slate-400 block text-[10px]">Cargo Classification</span>
-                  <span className="font-bold text-white">{reviewingQuoteOrder.item_description || reviewingQuoteOrder.item_type}</span>
+                  <span className="text-slate-500 block text-[10px]">Cargo Classification</span>
+                  <span className="font-bold text-slate-900">{reviewingQuoteOrder.item_description || reviewingQuoteOrder.item_type}</span>
                 </div>
               </div>
 
               {reviewingQuoteOrder.custom_instructions && (
-                <div className="bg-amber-950/20 border border-amber-500/30 p-2.5 rounded-xl text-amber-200 text-[11px]">
+                <div className="bg-amber-50 border border-amber-300 p-2.5 rounded-xl text-amber-900 text-[11px]">
                   <strong>Customer Special Instructions:</strong> {reviewingQuoteOrder.custom_instructions}
                 </div>
               )}
@@ -3562,17 +3562,17 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
 
             {/* Price Quote Calculation & Adjustment */}
             <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-4">
-              <div className="text-[11px] font-bold uppercase tracking-wider text-emerald-400 flex items-center justify-between">
+              <div className="text-[11px] font-bold uppercase tracking-wider text-emerald-700 flex items-center justify-between">
                 <div className="flex items-center space-x-2">
-                  <DollarSign className="w-3.5 h-3.5 text-emerald-400" />
+                  <DollarSign className="w-3.5 h-3.5 text-emerald-600" />
                   <span>Custom Rate Formulation & Surcharges (CAD)</span>
                 </div>
-                <span className="text-slate-400 text-[10px] font-normal lowercase">Adjust any component to set custom price</span>
+                <span className="text-slate-500 text-[10px] font-normal lowercase">Adjust any component to set custom price</span>
               </div>
 
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 <div>
-                  <label className="block text-slate-300 mb-1 font-semibold">Base Freight Rate ($)</label>
+                  <label className="block text-slate-700 mb-1 font-semibold">Base Freight Rate ($)</label>
                   <input
                     type="number"
                     step="0.01"
@@ -3584,7 +3584,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
                 </div>
 
                 <div>
-                  <label className="block text-slate-300 mb-1 font-semibold">Excess Distance ($)</label>
+                  <label className="block text-slate-700 mb-1 font-semibold">Excess Distance ($)</label>
                   <input
                     type="number"
                     step="0.01"
@@ -3596,7 +3596,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
                 </div>
 
                 <div>
-                  <label className="block text-slate-300 mb-1 font-semibold">Urgency / Service Tier ($)</label>
+                  <label className="block text-slate-700 mb-1 font-semibold">Urgency / Service Tier ($)</label>
                   <input
                     type="number"
                     step="0.01"
@@ -3608,7 +3608,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
                 </div>
 
                 <div>
-                  <label className="block text-slate-300 mb-1 font-semibold">After Hours / Tailgate ($)</label>
+                  <label className="block text-slate-700 mb-1 font-semibold">After Hours / Tailgate ($)</label>
                   <input
                     type="number"
                     step="0.01"
@@ -3623,24 +3623,24 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
               {/* Subtotal, Tax & Total Live Cards */}
               <div className="grid grid-cols-3 gap-3 pt-2">
                 <div className="bg-white p-3 rounded-xl border border-slate-200 text-center">
-                  <span className="text-slate-400 text-[10px] uppercase font-bold block">Subtotal</span>
+                  <span className="text-slate-500 text-[10px] uppercase font-bold block">Subtotal</span>
                   <span className="text-base font-black text-slate-900 font-mono">${quoteFormData.subtotal.toFixed(2)}</span>
                 </div>
 
                 <div className="bg-white p-3 rounded-xl border border-slate-200 text-center">
-                  <span className="text-slate-400 text-[10px] uppercase font-bold block">HST (13%)</span>
+                  <span className="text-slate-500 text-[10px] uppercase font-bold block">HST (13%)</span>
                   <span className="text-base font-black text-slate-900 font-mono">${quoteFormData.tax_amount.toFixed(2)}</span>
                 </div>
 
-                <div className="bg-emerald-950/40 p-3 rounded-xl border border-emerald-500/50 text-center">
-                  <span className="text-emerald-400 text-[10px] uppercase font-bold block">Total Quoted CAD</span>
-                  <span className="text-xl font-black text-emerald-300 font-mono">${quoteFormData.total_price.toFixed(2)}</span>
+                <div className="bg-emerald-50 p-3 rounded-xl border border-emerald-300 text-center">
+                  <span className="text-emerald-800 text-[10px] uppercase font-bold block">Total Quoted CAD</span>
+                  <span className="text-xl font-black text-emerald-800 font-mono">${quoteFormData.total_price.toFixed(2)}</span>
                 </div>
               </div>
 
               {/* Quote Dispatch Notes to Customer */}
               <div>
-                <label className="block text-slate-300 mb-1 font-semibold">
+                <label className="block text-slate-700 mb-1 font-semibold">
                   Quotation Notes / Terms Included in Email to Customer
                 </label>
                 <textarea
@@ -3654,7 +3654,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
 
               <div className="flex items-center justify-between text-[11px] text-slate-600 bg-slate-100 p-2.5 rounded-xl border border-slate-200">
                 <span>Quotation email recipient:</span>
-                <strong className="text-white font-mono">{reviewingQuoteOrder.customer_name} &lt;{reviewingQuoteOrder.customer_email}&gt;</strong>
+                <strong className="text-slate-900 font-mono">{reviewingQuoteOrder.customer_name} &lt;{reviewingQuoteOrder.customer_email}&gt;</strong>
               </div>
             </div>
 
@@ -3663,7 +3663,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
               <button
                 type="button"
                 onClick={() => setReviewingQuoteOrder(null)}
-                className="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold rounded-xl text-xs transition cursor-pointer"
+                className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 font-semibold rounded-xl text-xs transition cursor-pointer"
               >
                 Cancel
               </button>
@@ -3673,7 +3673,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
                   type="button"
                   onClick={() => handleSendQuoteSubmit(false)}
                   disabled={isSendingQuote}
-                  className="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold rounded-xl text-xs transition flex items-center space-x-1.5 cursor-pointer disabled:opacity-50"
+                  className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300 font-bold rounded-xl text-xs transition flex items-center space-x-1.5 cursor-pointer disabled:opacity-50"
                 >
                   <Save className="w-3.5 h-3.5" />
                   <span>Save Price Only</span>
@@ -3702,22 +3702,22 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
               Assign Driver to Order {assignModalOrder.order_number}
             </h3>
             <p className="text-xs text-slate-600">
-              Vehicle required: <strong className="text-white">{assignModalOrder.vehicle_name}</strong> ({assignModalOrder.weight_lbs} lbs)
+              Vehicle required: <strong className="text-slate-900">{assignModalOrder.vehicle_name}</strong> ({assignModalOrder.weight_lbs} lbs)
             </p>
 
             <div>
-              <label className="block text-xs font-bold text-slate-300 mb-1.5">
+              <label className="block text-xs font-bold text-slate-700 mb-1.5">
                 Select Fleet Driver
               </label>
               {drivers.length === 0 ? (
-                <div className="p-3 bg-amber-950/40 border border-amber-500/30 rounded-xl text-xs text-amber-300">
+                <div className="p-3 bg-amber-50 border border-amber-300 rounded-xl text-xs text-amber-800">
                   No drivers provisioned yet. Please provision a driver in the Staff tab first.
                 </div>
               ) : (
                 <select
                   value={selectedDriverForAssign}
                   onChange={(e) => setSelectedDriverForAssign(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-300 px-3 py-2 text-xs text-white rounded-xl"
+                  className="w-full bg-slate-50 border border-slate-300 px-3 py-2 text-xs text-slate-900 rounded-xl"
                 >
                   {drivers.map((d) => (
                     <option key={d.id} value={d.id}>
