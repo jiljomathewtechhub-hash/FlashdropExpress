@@ -261,7 +261,7 @@ export const CustomerPortal: React.FC<CustomerPortalProps> = ({ onNavigate }) =>
                     </div>
 
                     <div className="flex items-center space-x-2 mt-2 sm:mt-0">
-                      {(ord.order_status === 'submitted' || ord.order_status === 'quote_sent') && (
+                      {ord.order_status === 'quote_sent' && (
                         <button
                           onClick={() => handleAcceptQuoteFromPortal(ord)}
                           className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white rounded-lg text-xs font-bold transition shadow-xs flex items-center space-x-1 cursor-pointer"

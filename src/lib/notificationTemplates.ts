@@ -17,7 +17,7 @@ const getPublicAssetUrl = (path: string): string => {
   return `${BASE_DOMAIN}${path.startsWith('/') ? path : '/' + path}`;
 };
 
-const formatDeliveryType = (opt?: string): string => {
+export const formatDeliveryType = (opt?: string): string => {
   if (!opt) return 'Standard / Same-Day';
   if (opt === 'urgent' || opt === 'asap' || opt === '1-2h') return '3) Urgent / ASAP';
   if (opt === 'direct' || opt === '2-3h') return '2) On Demand / Direct';
@@ -98,38 +98,39 @@ const wrapHtmlEmail = (title: string, preheader: string, contentHtml: string): s
 // -------------------------------------------------------------
 // 1. CUSTOMER: Quote Request Received Email (NO PRICES)
 // -------------------------------------------------------------
+// 1A. CUSTOMER: Quote Request Acknowledged Email (No Price)
+// -------------------------------------------------------------
 export const createCustomerOrderEmail = (order: Order, settings: BusinessSettings) => {
   const origin = getOrigin();
-  const confirmUrl = `${origin}/?confirm_quote=${order.order_number}`;
   const trackUrl = `${origin}/?track=${order.order_number}`;
 
-  const hasPrice = order.total_price && order.total_price > 0;
-  const subject = hasPrice
-    ? `Delivery Quotation: #${order.order_number} ($${order.total_price.toFixed(2)} CAD) - FlashDrop Express`
-    : `Quote Request Received: #${order.order_number} - FlashDrop Express`;
-  const preheader = hasPrice
-    ? `Your customized price quotation for order #${order.order_number} is $${order.total_price.toFixed(2)} CAD. Review details and accept online.`
-    : `We have received your delivery specifications. Our dispatch desk is calculating your custom rate quotation.`;
+  const subject = `Quotation Request Received: #${order.order_number} - FlashDrop Express`;
+  const preheader = `We have received your delivery specifications for #${order.order_number}. Our GTA dispatch operations team is calculating your official rate quotation.`;
 
   const contentHtml = `
     <div style="text-align: center; margin-bottom: 24px;">
-      <span class="badge ${hasPrice ? 'badge-green' : 'badge-blue'}">
-        ${hasPrice ? 'Quotation Price Ready' : 'Quote Request Under Review'}
-      </span>
+      <span class="badge badge-blue">Quotation Request Under Review</span>
       <h2 style="color: #0F172A; font-size: 22px; font-weight: 900; margin: 12px 0 4px 0;">
-        ${hasPrice ? 'Your Custom Quotation is Ready!' : `Thank You, ${order.customer_name}!`}
+        Thank You, ${order.customer_name}!
       </h2>
-      <p style="color: #64748B; font-size: 13px; margin: 0 0 12px 0;">
-        ${hasPrice
-          ? 'FlashDrop Express dispatch has prepared your delivery rate breakdown below. Review and accept to schedule pickup.'
-          : 'Your delivery specifications have been received by the FlashDrop Express GTA operations desk.'}
+      <p style="color: #64748B; font-size: 13px; margin: 0;">
+        Your delivery specifications have been received by the FlashDrop Express GTA operations desk.
       </p>
+    </div>
 
-      ${hasPrice ? `
-      <div style="margin: 10px auto 6px auto; display: inline-block; background-color: #ECFDF5; border: 2px solid #059669; border-radius: 12px; padding: 12px 28px; text-align: center;">
-        <span style="font-size: 11px; font-weight: 700; color: #065F46; text-transform: uppercase; display: block; letter-spacing: 0.5px;">Quoted Delivery Price</span>
-        <span style="font-size: 30px; font-weight: 900; color: #059669; font-family: Outfit, sans-serif;">$${order.total_price.toFixed(2)} CAD</span>
-      </div>` : ''}
+    <!-- Status Notice / What Happens Next Card -->
+    <div class="card" style="background-color: #F8FAFC; border: 1px solid #E2E8F0; border-left: 4px solid #C5161D;">
+      <div style="font-size: 12px; font-weight: 800; color: #0F172A; text-transform: uppercase; margin-bottom: 6px; letter-spacing: 0.5px;">
+        📋 What Happens Next?
+      </div>
+      <p style="color: #475569; font-size: 12px; line-height: 1.6; margin: 0 0 10px 0;">
+        Our GTA operations dispatch team is currently reviewing your route distance, cargo specifications, and vehicle allocation to calculate your official rate quotation.
+      </p>
+      <div style="background-color: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 8px; padding: 12px 14px; font-size: 12px; color: #1E293B;">
+        <div style="margin-bottom: 6px;"><strong>1. Operational Review:</strong> Route logistics and courier vehicle verification.</div>
+        <div style="margin-bottom: 6px;"><strong>2. Official Quotation:</strong> An itemized rate breakdown will be prepared.</div>
+        <div><strong>3. Quotation Email:</strong> You will receive an official quotation email with your rate and a link to review and confirm your booking.</div>
+      </div>
     </div>
 
     <!-- Order Header Card -->
@@ -147,7 +148,7 @@ export const createCustomerOrderEmail = (order: Order, settings: BusinessSetting
         <span class="row-value" style="color: #0F172A; font-weight: 700;">${formatDeliveryType(order.delivery_time_option)}</span>
       </div>
       <div class="row">
-        <span class="row-label">Selected Fleet Vehicle</span>
+        <span class="row-label">Requested Vehicle</span>
         <span class="row-value">${order.vehicle_name}</span>
       </div>
     </div>
@@ -180,95 +181,33 @@ export const createCustomerOrderEmail = (order: Order, settings: BusinessSetting
         <span class="row-value">${order.item_description || order.item_type} (${order.quantity} units, ${order.weight_lbs} lbs)</span>
       </div>
       <div class="row">
-        <span class="row-label">Estimated Distance</span>
+        <span class="row-label">Estimated Route</span>
         <span class="row-value">${order.distance_km} km (${order.service_area})</span>
       </div>
+      ${order.custom_instructions ? `
+      <div class="row">
+        <span class="row-label">Special Notes</span>
+        <span class="row-value" style="color: #B45309; font-weight: 600;">${order.custom_instructions}</span>
+      </div>` : ''}
     </div>
 
-    ${hasPrice ? `
-    <!-- Itemized Quotation Breakdown Card -->
-    <div class="card" style="border: 1px solid #10B981; background-color: #F8FAFC;">
-      <div style="font-size: 12px; font-weight: 700; color: #059669; text-transform: uppercase; margin-bottom: 12px; letter-spacing: 0.5px;">
-        Itemized Quotation Breakdown (CAD)
-      </div>
-      <div class="row">
-        <span class="row-label">Base Transport Rate</span>
-        <span class="row-value">$${(order.base_price || 0).toFixed(2)} CAD</span>
-      </div>
-      ${order.excess_km_charge > 0 ? `
-      <div class="row">
-        <span class="row-label">Excess Distance Charge</span>
-        <span class="row-value">+$${order.excess_km_charge.toFixed(2)} CAD</span>
-      </div>` : ''}
-      ${(order.delivery_type_charge && order.delivery_type_charge > 0) ? `
-      <div class="row">
-        <span class="row-label">Delivery Urgency Surcharge</span>
-        <span class="row-value">+$${order.delivery_type_charge.toFixed(2)} CAD</span>
-      </div>` : ''}
-      ${order.after_hours_charge > 0 ? `
-      <div class="row">
-        <span class="row-label">After-Hours Service</span>
-        <span class="row-value">+$${order.after_hours_charge.toFixed(2)} CAD</span>
-      </div>` : ''}
-      ${order.waiting_charge > 0 ? `
-      <div class="row">
-        <span class="row-label">Waiting Time</span>
-        <span class="row-value">+$${order.waiting_charge.toFixed(2)} CAD</span>
-      </div>` : ''}
-      ${order.labor_charge > 0 ? `
-      <div class="row">
-        <span class="row-label">Additional Labor Helper</span>
-        <span class="row-value">+$${order.labor_charge.toFixed(2)} CAD</span>
-      </div>` : ''}
-      <div class="divider"></div>
-      <div class="row">
-        <span class="row-label">Subtotal</span>
-        <span class="row-value">$${(order.subtotal || (order.total_price / 1.13)).toFixed(2)} CAD</span>
-      </div>
-      <div class="row">
-        <span class="row-label">Ontario HST (13%)</span>
-        <span class="row-value">$${(order.tax_amount || (order.total_price - (order.total_price / 1.13))).toFixed(2)} CAD</span>
-      </div>
-      <div class="row" style="font-size: 16px; margin-top: 8px; padding-top: 8px; border-top: 1px solid #E2E8F0;">
-        <span class="row-label" style="color: #0F172A; font-weight: 800;">Total Quoted Price</span>
-        <span class="row-value" style="color: #059669; font-weight: 900; font-size: 18px;">$${order.total_price.toFixed(2)} CAD</span>
-      </div>
-      <div class="row" style="margin-top: 4px;">
-        <span class="row-label">Payment Terms</span>
-        <span class="row-value" style="color: #B45309; font-weight: 700;">Pay Later (Pay Upon Delivery)</span>
-      </div>
-      ${order.quote_notes ? `
-      <div style="margin-top: 10px; padding: 10px 14px; background-color: #F1F5F9; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 11px; color: #475569;">
-        <strong style="color: #0F172A;">Dispatch Notes:</strong> ${order.quote_notes}
-      </div>` : ''}
-    </div>
-    ` : `
     <!-- Rate Under Review Notice -->
-    <div class="card" style="background-color: #FFFBEB; border: 1px solid #FDE68A; border-left: 4px solid #C5161D;">
-      <div style="font-size: 11px; font-weight: 700; color: #B45309; text-transform: uppercase; margin-bottom: 6px;">
-        ⏳ Rate Quotation Under Review
+    <div class="card" style="background-color: #FFFBEB; border: 1px solid #FDE68A; border-left: 4px solid #D97706;">
+      <div style="font-size: 11px; font-weight: 700; color: #B45309; text-transform: uppercase; margin-bottom: 4px;">
+        ⏳ Rate Quotation In Progress
       </div>
-      <p style="color: #475569; font-size: 12px; line-height: 1.5; margin: 0 0 8px 0;">
-        Our GTA dispatch operations team has received your specifications and is preparing courier allocation.
+      <p style="color: #475569; font-size: 12px; line-height: 1.5; margin: 0;">
+        Our dispatch desk manually reviews your route specifications to ensure accurate commercial pricing. You will receive an official quotation email with a full itemized cost breakdown shortly.
       </p>
-      <div style="font-size: 12px; color: #047857; font-weight: 700;">
-        Click below to accept and lock in this delivery, or track live dispatch status.
-      </div>
     </div>
-    `}
 
-    <!-- CTA Tracking & Confirm Buttons -->
+    <!-- CTA Tracking Button -->
     <div style="text-align: center; margin: 28px 0;">
-      <a href="${confirmUrl}" class="button" style="background-color: #059669; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.35); font-size: 15px; padding: 14px 28px; display: inline-block;">
-        Accept &amp; Confirm Order ${hasPrice ? `($${order.total_price.toFixed(2)} CAD)` : ''} &rarr;
+      <a href="${trackUrl}" class="button" style="background-color: #C5161D; box-shadow: 0 4px 12px rgba(197, 22, 29, 0.25); font-size: 14px; padding: 14px 28px; display: inline-block;">
+        Track Quotation Request Status &rarr;
       </a>
-      <div style="margin-top: 12px;">
-        <a href="${trackUrl}" style="color: #0284C7; font-size: 12px; text-decoration: underline; font-weight: 600;">
-          Or review specifications on live tracking page &rarr;
-        </a>
-      </div>
       <p style="color: #64748B; font-size: 11px; margin-top: 12px;">
-        Need to make changes? Reply to this email or call dispatch at ${settings.phone || '+1 647 804 9775'}.
+        Need to update details? Reply to this email or call dispatch at ${settings.phone || '+1 647 804 9775'}.
       </p>
     </div>
   `;
@@ -276,7 +215,7 @@ export const createCustomerOrderEmail = (order: Order, settings: BusinessSetting
   return {
     subject,
     html: wrapHtmlEmail(subject, preheader, contentHtml),
-    plain: `FlashDrop Express: ${hasPrice ? `Delivery Quotation #${order.order_number}: $${order.total_price.toFixed(2)} CAD.` : `Quote Request #${order.order_number} Received.`} Pickup scheduled for ${order.pickup_date} at ${order.pickup_time}.\n\nAccept & Confirm Delivery: ${confirmUrl}\nOr track request: ${trackUrl}`,
+    plain: `FlashDrop Express: Quotation Request #${order.order_number} Received. Pickup scheduled for ${order.pickup_date} at ${order.pickup_time}.\n\nOur GTA dispatch operations desk is reviewing your specifications and will send an official quotation email with an itemized price breakdown shortly.\n\nTrack request: ${trackUrl}`,
   };
 };
 
@@ -360,37 +299,37 @@ export const createCustomerQuoteReadyEmail = (order: Order, settings: BusinessSe
         Confirmed Quotation Breakdown (CAD)
       </div>
       <div class="row">
-        <span class="row-label">Base Transport Rate</span>
+        <span class="row-label">Base Transport Rate (${order.vehicle_name})</span>
         <span class="row-value">$${(order.base_price || 0).toFixed(2)} CAD</span>
       </div>
       ${order.excess_km_charge > 0 ? `
       <div class="row">
-        <span class="row-label">Excess Distance Charge</span>
+        <span class="row-label">Excess Distance Charge (${order.distance_km} km total)</span>
         <span class="row-value">+$${order.excess_km_charge.toFixed(2)} CAD</span>
       </div>` : ''}
       ${(order.delivery_type_charge && order.delivery_type_charge > 0) ? `
       <div class="row">
-        <span class="row-label">Delivery Urgency Surcharge</span>
+        <span class="row-label">Delivery Speed Surcharge (${formatDeliveryType(order.delivery_time_option)})</span>
         <span class="row-value">+$${order.delivery_type_charge.toFixed(2)} CAD</span>
       </div>` : ''}
       ${order.after_hours_charge > 0 ? `
       <div class="row">
-        <span class="row-label">After-Hours Service</span>
+        <span class="row-label">After-Hours / Weekend Dispatch</span>
         <span class="row-value">+$${order.after_hours_charge.toFixed(2)} CAD</span>
       </div>` : ''}
       ${order.waiting_charge > 0 ? `
       <div class="row">
-        <span class="row-label">Waiting Time</span>
+        <span class="row-label">Dedicated Waiting / Loading Time</span>
         <span class="row-value">+$${order.waiting_charge.toFixed(2)} CAD</span>
       </div>` : ''}
       ${order.labor_charge > 0 ? `
       <div class="row">
-        <span class="row-label">Additional Labor Helper</span>
+        <span class="row-label">Additional Helper / Crew Labor</span>
         <span class="row-value">+$${order.labor_charge.toFixed(2)} CAD</span>
       </div>` : ''}
       <div class="divider"></div>
       <div class="row">
-        <span class="row-label">Subtotal</span>
+        <span class="row-label">Subtotal (Net Before Tax)</span>
         <span class="row-value">$${(order.subtotal || (order.total_price / 1.13)).toFixed(2)} CAD</span>
       </div>
       <div class="row">
@@ -398,7 +337,7 @@ export const createCustomerQuoteReadyEmail = (order: Order, settings: BusinessSe
         <span class="row-value">$${(order.tax_amount || (order.total_price - (order.total_price / 1.13))).toFixed(2)} CAD</span>
       </div>
       <div class="row" style="font-size: 16px; margin-top: 8px; padding-top: 8px; border-top: 1px solid #E2E8F0;">
-        <span class="row-label" style="color: #0F172A; font-weight: 800;">Total Confirmed Price</span>
+        <span class="row-label" style="color: #0F172A; font-weight: 800;">Total Quoted Price</span>
         <span class="row-value" style="color: #059669; font-weight: 900; font-size: 18px;">$${order.total_price.toFixed(2)} CAD</span>
       </div>
       <div class="row" style="margin-top: 4px;">
@@ -506,6 +445,55 @@ export const createCustomerStatusEmail = (order: Order, prevStatus: OrderStatus,
         Ontario HST Included (13%) &bull; Ready for Customer Confirmation
       </div>
     </div>
+
+    <!-- Approved Itemized Quotation Breakdown -->
+    <div class="card" style="border: 1px solid #10B981; background-color: #F8FAFC;">
+      <div style="font-size: 12px; font-weight: 700; color: #059669; text-transform: uppercase; margin-bottom: 12px; letter-spacing: 0.5px;">
+        Itemized Quotation Breakdown (CAD)
+      </div>
+      <div class="row">
+        <span class="row-label">Base Transport Rate (${order.vehicle_name})</span>
+        <span class="row-value">$${(order.base_price || 0).toFixed(2)} CAD</span>
+      </div>
+      ${order.excess_km_charge > 0 ? `
+      <div class="row">
+        <span class="row-label">Excess Distance Charge (${order.distance_km} km total)</span>
+        <span class="row-value">+$${order.excess_km_charge.toFixed(2)} CAD</span>
+      </div>` : ''}
+      ${(order.delivery_type_charge && order.delivery_type_charge > 0) ? `
+      <div class="row">
+        <span class="row-label">Delivery Speed Surcharge (${formatDeliveryType(order.delivery_time_option)})</span>
+        <span class="row-value">+$${order.delivery_type_charge.toFixed(2)} CAD</span>
+      </div>` : ''}
+      ${order.after_hours_charge > 0 ? `
+      <div class="row">
+        <span class="row-label">After-Hours / Weekend Dispatch</span>
+        <span class="row-value">+$${order.after_hours_charge.toFixed(2)} CAD</span>
+      </div>` : ''}
+      ${order.waiting_charge > 0 ? `
+      <div class="row">
+        <span class="row-label">Dedicated Waiting / Loading Time</span>
+        <span class="row-value">+$${order.waiting_charge.toFixed(2)} CAD</span>
+      </div>` : ''}
+      ${order.labor_charge > 0 ? `
+      <div class="row">
+        <span class="row-label">Additional Helper / Crew Labor</span>
+        <span class="row-value">+$${order.labor_charge.toFixed(2)} CAD</span>
+      </div>` : ''}
+      <div class="divider"></div>
+      <div class="row">
+        <span class="row-label">Subtotal (Net Before Tax)</span>
+        <span class="row-value">$${(order.subtotal || (order.total_price / 1.13)).toFixed(2)} CAD</span>
+      </div>
+      <div class="row">
+        <span class="row-label">Ontario HST (13%)</span>
+        <span class="row-value">$${(order.tax_amount || (order.total_price - (order.total_price / 1.13))).toFixed(2)} CAD</span>
+      </div>
+      <div class="row" style="font-size: 16px; margin-top: 8px; padding-top: 8px; border-top: 1px solid #E2E8F0;">
+        <span class="row-label" style="color: #0F172A; font-weight: 800;">Total Quoted Price</span>
+        <span class="row-value" style="color: #059669; font-weight: 900; font-size: 18px;">$${order.total_price.toFixed(2)} CAD</span>
+      </div>
+    </div>
     ` : ''}
 
     <!-- Status Details Card -->
@@ -516,10 +504,11 @@ export const createCustomerStatusEmail = (order: Order, prevStatus: OrderStatus,
           ${newStatus.replace(/_/g, ' ')}
         </span>
       </div>
+      ${newStatus !== 'submitted' ? `
       <div class="row">
-        <span class="row-label">Quoted Price</span>
+        <span class="row-label">Total Amount</span>
         <span class="row-value" style="color: #059669; font-weight: 800;">$${order.total_price.toFixed(2)} CAD</span>
-      </div>
+      </div>` : ''}
       ${order.assigned_driver_name ? `
       <div class="row">
         <span class="row-label">Assigned Courier</span>

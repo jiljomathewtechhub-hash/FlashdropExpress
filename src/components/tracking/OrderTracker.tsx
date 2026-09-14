@@ -15,6 +15,7 @@ import {
 import { Order, OrderStatus } from '../../types/order';
 import { store } from '../../lib/store';
 import { generateOrderPdf } from '../../lib/pdf';
+import { formatDeliveryType } from '../../lib/notificationTemplates';
 import { TiltCard } from '../common/TiltCard';
 
 interface OrderTrackerProps {
@@ -88,8 +89,10 @@ export const OrderTracker: React.FC<OrderTrackerProps> = ({ initialOrderNumber, 
     const ord = targetOrder || order;
     if (!ord) return;
 
-    if (ord.order_status !== 'quote_sent' && ord.order_status !== 'submitted') {
-      setQuoteConfirmedCelebration(true);
+    if (ord.order_status !== 'quote_sent') {
+      if (ord.order_status === 'confirmed') {
+        setQuoteConfirmedCelebration(true);
+      }
       return;
     }
 
@@ -132,9 +135,9 @@ export const OrderTracker: React.FC<OrderTrackerProps> = ({ initialOrderNumber, 
 
       if (hasConfirmIntent) {
         autoConfirmedRef.current = true;
-        if (order.order_status === 'quote_sent' || order.order_status === 'submitted') {
+        if (order.order_status === 'quote_sent') {
           handleConfirmQuote(order);
-        } else {
+        } else if (order.order_status === 'confirmed') {
           setQuoteConfirmedCelebration(true);
         }
       }
@@ -388,7 +391,7 @@ export const OrderTracker: React.FC<OrderTrackerProps> = ({ initialOrderNumber, 
             </div>
 
             <div className="flex items-center space-x-2.5">
-              {(order.order_status === 'submitted' || order.order_status === 'quote_sent') && (
+              {order.order_status === 'quote_sent' && (
                 <button
                   type="button"
                   onClick={() => handleConfirmQuote(order)}
@@ -396,7 +399,7 @@ export const OrderTracker: React.FC<OrderTrackerProps> = ({ initialOrderNumber, 
                   className="flex items-center space-x-1.5 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white font-bold text-xs rounded-xl shadow-md shadow-emerald-700/25 transition cursor-pointer disabled:opacity-50"
                 >
                   <CheckCircle2 className="w-3.5 h-3.5 text-white" />
-                  <span>{isConfirmingQuote ? 'Confirming...' : 'Accept & Confirm Order'}</span>
+                  <span>{isConfirmingQuote ? 'Confirming...' : 'Accept & Confirm Quotation'}</span>
                 </button>
               )}
 
@@ -429,8 +432,63 @@ export const OrderTracker: React.FC<OrderTrackerProps> = ({ initialOrderNumber, 
             </div>
           </div>
 
-          {/* Quote Review & Confirmation Action Card (When status is submitted or quote_sent) */}
-          {(order.order_status === 'submitted' || order.order_status === 'quote_sent') && (
+          {/* Quotation Request Acknowledged Banner (when status is submitted) */}
+          {order.order_status === 'submitted' && (
+            <div className="bg-amber-50/90 border-2 border-amber-300 rounded-2xl p-6 sm:p-7 shadow-xs space-y-4 animate-fade-in">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-amber-200 pb-4">
+                <div className="flex items-center space-x-3">
+                  <div className="w-10 h-10 rounded-xl bg-amber-500 text-white flex items-center justify-center flex-shrink-0 shadow-sm">
+                    <Clock className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <span className="text-[10px] font-black uppercase tracking-wider text-amber-800 bg-amber-100 border border-amber-300 px-2.5 py-0.5 rounded-full inline-block mb-1">
+                      Quotation Request Under Review
+                    </span>
+                    <h3 className="text-lg sm:text-xl font-black text-slate-900 font-['Outfit']">
+                      Quotation Request Received (#{order.order_number})
+                    </h3>
+                  </div>
+                </div>
+
+                <div className="text-left sm:text-right">
+                  <span className="text-[11px] text-slate-500 block uppercase font-semibold">
+                    Quotation Status
+                  </span>
+                  <span className="text-sm sm:text-base font-bold text-amber-800 font-['Outfit']">
+                    Dispatch Calculating Rate...
+                  </span>
+                </div>
+              </div>
+
+              <p className="text-xs sm:text-sm text-slate-700 leading-relaxed">
+                Thank you, <strong>{order.customer_name}</strong>! Your delivery specifications have been received by FlashDrop Express dispatch. We are currently calculating your rate based on route logistics, freight specs, and courier vehicle allocation.
+              </p>
+
+              {/* Delivery specifications overview */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+                <div className="p-3.5 bg-white border border-slate-200 rounded-xl space-y-1 shadow-xs">
+                  <span className="text-slate-500 block text-[10px] uppercase font-bold">Requested Pickup</span>
+                  <span className="text-slate-900 font-bold block">{order.pickup_date} at {order.pickup_time}</span>
+                  <span className="text-slate-500 text-[11px] block">{order.service_area} Region &bull; {order.vehicle_name}</span>
+                </div>
+
+                <div className="p-3.5 bg-white border border-slate-200 rounded-xl space-y-1 shadow-xs">
+                  <span className="text-slate-500 block text-[10px] uppercase font-bold">Freight Specifications</span>
+                  <span className="text-slate-900 font-bold block truncate">{order.item_description || order.item_type}</span>
+                  <span className="text-slate-500 text-[11px] block">{order.quantity} units &bull; {order.weight_lbs} lbs &bull; {order.distance_km} km</span>
+                </div>
+
+                <div className="p-3.5 bg-white border border-slate-200 rounded-xl space-y-1 shadow-xs">
+                  <span className="text-slate-500 block text-[10px] uppercase font-bold">What's Next?</span>
+                  <span className="text-emerald-800 font-bold block">Official Quote Email</span>
+                  <span className="text-slate-500 text-[11px] block">Turnaround: 15&ndash;30 mins</span>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Official Quotation Ready Action Card (when status is quote_sent) */}
+          {order.order_status === 'quote_sent' && (
             <div className="bg-gradient-to-br from-emerald-50/90 via-white to-sky-50/50 border-2 border-emerald-500 rounded-2xl p-6 sm:p-7 shadow-md space-y-5 animate-fade-in">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-emerald-200/70 pb-4">
                 <div className="flex items-center space-x-3">
@@ -439,21 +497,78 @@ export const OrderTracker: React.FC<OrderTrackerProps> = ({ initialOrderNumber, 
                   </div>
                   <div>
                     <span className="text-[10px] font-black uppercase tracking-wider text-emerald-800 bg-emerald-100 border border-emerald-300 px-2.5 py-0.5 rounded-full inline-block mb-1">
-                      {order.order_status === 'quote_sent' ? 'Official Quotation Ready' : 'Delivery Rate Ready for Confirmation'}
+                      Official Quotation Ready
                     </span>
                     <h3 className="text-lg sm:text-xl font-black text-slate-900 font-['Outfit']">
-                      {order.order_status === 'quote_sent' ? 'Review & Accept Official Quotation' : 'Review & Confirm Delivery Order'}
+                      Review &amp; Accept Official Quotation
                     </h3>
                   </div>
                 </div>
 
                 <div className="text-left sm:text-right">
                   <span className="text-[11px] text-slate-500 block uppercase font-semibold">
-                    {order.order_status === 'quote_sent' ? 'Confirmed Quotation Rate' : 'Total Quoted Delivery Rate'}
+                    Approved Delivery Rate
                   </span>
                   <span className="text-2xl sm:text-3xl font-black text-emerald-700 font-['Outfit']">
                     ${(order.total_price || 0).toFixed(2)} CAD
                   </span>
+                </div>
+              </div>
+
+              {/* Clear Itemized Breakdown: What Costs What and Total */}
+              <div className="bg-white border border-emerald-200 rounded-xl p-4 sm:p-5 space-y-2 shadow-xs">
+                <span className="font-bold text-emerald-900 uppercase text-[11px] block border-b border-emerald-100 pb-1.5 tracking-wider">
+                  Itemized Price Breakdown &bull; What Cost What
+                </span>
+                <div className="space-y-1.5 text-xs text-slate-600 pt-1">
+                  <div className="flex justify-between items-center py-0.5">
+                    <span>Base Fleet Transport ({order.vehicle_name}):</span>
+                    <span className="font-semibold text-slate-900">${(order.base_price || 0).toFixed(2)} CAD</span>
+                  </div>
+                  {order.excess_km_charge > 0 && (
+                    <div className="flex justify-between items-center py-0.5">
+                      <span>Excess Distance ({order.distance_km} km total):</span>
+                      <span className="font-semibold text-slate-900">+${order.excess_km_charge.toFixed(2)} CAD</span>
+                    </div>
+                  )}
+                  {order.delivery_type_charge && order.delivery_type_charge > 0 ? (
+                    <div className="flex justify-between items-center py-0.5">
+                      <span>Delivery Speed ({formatDeliveryType(order.delivery_time_option)}):</span>
+                      <span className="font-semibold text-slate-900">+${order.delivery_type_charge.toFixed(2)} CAD</span>
+                    </div>
+                  ) : null}
+                  {order.after_hours_charge > 0 && (
+                    <div className="flex justify-between items-center py-0.5 text-red-600">
+                      <span>After-Hours / Weekend Dispatch:</span>
+                      <span className="font-semibold">+${order.after_hours_charge.toFixed(2)} CAD</span>
+                    </div>
+                  )}
+                  {order.waiting_charge > 0 && (
+                    <div className="flex justify-between items-center py-0.5">
+                      <span>Dedicated Waiting / Loading Time:</span>
+                      <span className="font-semibold text-slate-900">+${order.waiting_charge.toFixed(2)} CAD</span>
+                    </div>
+                  )}
+                  {order.labor_charge > 0 && (
+                    <div className="flex justify-between items-center py-0.5">
+                      <span>Additional Helper / Crew Labor:</span>
+                      <span className="font-semibold text-slate-900">+${order.labor_charge.toFixed(2)} CAD</span>
+                    </div>
+                  )}
+                  <div className="border-t border-slate-200 my-1 pt-1.5 flex justify-between items-center text-slate-500">
+                    <span>Subtotal (Net Before HST):</span>
+                    <span className="font-semibold text-slate-800">${(order.subtotal || (order.total_price / 1.13)).toFixed(2)} CAD</span>
+                  </div>
+                  <div className="flex justify-between items-center py-0.5 text-slate-500">
+                    <span>Ontario HST (13%):</span>
+                    <span className="font-semibold text-slate-800">${(order.tax_amount || (order.total_price - (order.total_price / 1.13))).toFixed(2)} CAD</span>
+                  </div>
+                  <div className="border-t-2 border-emerald-500 pt-2 flex justify-between items-center text-sm sm:text-base font-black">
+                    <span className="text-slate-900">Total Quoted Price:</span>
+                    <span className="text-emerald-700 font-['Outfit'] font-black text-lg sm:text-xl">
+                      ${(order.total_price || 0).toFixed(2)} CAD
+                    </span>
+                  </div>
                 </div>
               </div>
 
@@ -462,19 +577,19 @@ export const OrderTracker: React.FC<OrderTrackerProps> = ({ initialOrderNumber, 
                 <div className="p-3.5 bg-white border border-slate-200 rounded-xl space-y-1 shadow-xs">
                   <span className="text-slate-500 block text-[10px] uppercase font-bold">Scheduled Pickup</span>
                   <span className="text-slate-900 font-bold block">{order.pickup_date} at {order.pickup_time}</span>
-                  <span className="text-slate-500 text-[11px] block">{order.service_area} Region • {order.vehicle_name}</span>
+                  <span className="text-slate-500 text-[11px] block">{order.service_area} Region &bull; {order.vehicle_name}</span>
                 </div>
 
                 <div className="p-3.5 bg-white border border-slate-200 rounded-xl space-y-1 shadow-xs">
                   <span className="text-slate-500 block text-[10px] uppercase font-bold">Freight Specifications</span>
                   <span className="text-slate-900 font-bold block truncate">{order.item_description || order.item_type}</span>
-                  <span className="text-slate-500 text-[11px] block">{order.quantity} units • {order.weight_lbs} lbs • {order.distance_km} km</span>
+                  <span className="text-slate-500 text-[11px] block">{order.quantity} units &bull; {order.weight_lbs} lbs &bull; {order.distance_km} km</span>
                 </div>
 
                 <div className="p-3.5 bg-white border border-slate-200 rounded-xl space-y-1 shadow-xs">
                   <span className="text-slate-500 block text-[10px] uppercase font-bold">Payment Terms</span>
                   <span className="text-amber-800 font-bold block">Pay Later (Upon Delivery)</span>
-                  <span className="text-slate-500 text-[11px] block">Includes Ontario HST (13%)</span>
+                  <span className="text-slate-500 text-[11px] block">Ontario HST Included (13%)</span>
                 </div>
               </div>
 
@@ -488,7 +603,7 @@ export const OrderTracker: React.FC<OrderTrackerProps> = ({ initialOrderNumber, 
               {/* Accept & Confirm CTA Button */}
               <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-2">
                 <p className="text-xs text-slate-600 leading-normal max-w-lg">
-                  Clicking <strong>&ldquo;Accept &amp; Confirm Order&rdquo;</strong> locks in your delivery rate, immediately notifies our dispatch team, sends confirmation emails, and prepares driver allocation for your route.
+                  Clicking <strong>&ldquo;Accept &amp; Confirm Quotation&rdquo;</strong> locks in your delivery rate, immediately notifies our dispatch team, sends confirmation emails, and allocates your courier driver.
                 </p>
 
                 <button
@@ -500,8 +615,8 @@ export const OrderTracker: React.FC<OrderTrackerProps> = ({ initialOrderNumber, 
                   <CheckCircle2 className="w-5 h-5 text-white" />
                   <span>
                     {isConfirmingQuote
-                      ? 'Confirming Order...'
-                      : `Accept & Confirm Order ($${(order.total_price || 0).toFixed(2)} CAD)`}
+                      ? 'Confirming Quotation...'
+                      : `Accept & Confirm Quotation ($${(order.total_price || 0).toFixed(2)} CAD)`}
                   </span>
                 </button>
               </div>
@@ -619,30 +734,21 @@ export const OrderTracker: React.FC<OrderTrackerProps> = ({ initialOrderNumber, 
 
             {/* Billing & Invoice */}
             <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-3 shadow-xs flex flex-col justify-between">
-              {order.order_status === 'submitted' && (!order.total_price || order.total_price <= 0) ? (
+              {order.order_status === 'submitted' ? (
                 <div className="space-y-2 py-1">
                   <span className="font-bold text-amber-800 uppercase text-[11px] block border-b border-amber-200 pb-1 flex items-center space-x-1.5">
-                    <Clock className="w-3.5 h-3.5 text-amber-400" />
+                    <Clock className="w-3.5 h-3.5 text-amber-500" />
                     <span>Quotation Review In Progress</span>
                   </span>
                   <p className="text-xs text-slate-600 leading-relaxed">
-                    Our operations dispatch team is currently reviewing your route specifications and cargo requirements.
+                    Our operations dispatch team is currently reviewing your route distance and cargo requirements to calculate your official quotation.
                   </p>
                   <p className="text-[11px] text-slate-600 leading-relaxed">
-                    An official itemized price quote will be sent directly to <strong className="text-slate-900 font-mono">{order.customer_email}</strong> shortly.
+                    An official itemized price quote will be sent directly to <strong className="text-slate-900 font-mono">{order.customer_email}</strong> once approved.
                   </p>
                   <div className="bg-amber-100 border border-amber-300 rounded-lg p-2.5 text-[10px] text-amber-900 font-semibold">
                     Review turnaround: within 15–30 minutes during active dispatch hours.
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => handleConfirmQuote(order)}
-                    disabled={isConfirmingQuote}
-                    className="mt-2 w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white font-bold text-xs rounded-xl shadow-md transition flex items-center justify-center space-x-1.5 cursor-pointer disabled:opacity-50"
-                  >
-                    <CheckCircle2 className="w-4 h-4 text-white" />
-                    <span>{isConfirmingQuote ? 'Confirming...' : 'Lock In Priority Dispatch'}</span>
-                  </button>
                 </div>
               ) : (
                 <>
@@ -651,29 +757,49 @@ export const OrderTracker: React.FC<OrderTrackerProps> = ({ initialOrderNumber, 
                       <FileText className="w-3.5 h-3.5 text-red-400" />
                       <span>Financial Breakdown</span>
                     </span>
-                    <div className="space-y-1 mt-2 text-slate-400">
+                    <div className="space-y-1 mt-2 text-slate-600 text-xs">
                       <div className="flex justify-between">
-                        <span>Base Freight:</span>
-                        <span className="text-slate-900">${(order.base_price || 0).toFixed(2)}</span>
+                        <span>Base Freight ({order.vehicle_name}):</span>
+                        <span className="text-slate-900 font-semibold">${(order.base_price || 0).toFixed(2)}</span>
                       </div>
                       {order.excess_km_charge > 0 && (
                         <div className="flex justify-between">
-                          <span>Excess Km:</span>
-                          <span className="text-slate-900">+${order.excess_km_charge.toFixed(2)}</span>
+                          <span>Excess Km ({order.distance_km} km):</span>
+                          <span className="text-slate-900 font-semibold">+${order.excess_km_charge.toFixed(2)}</span>
                         </div>
                       )}
-                      {order.after_hours_charge > 0 && (
-                        <div className="flex justify-between text-red-400">
-                          <span>After-Hours:</span>
-                          <span>+${order.after_hours_charge.toFixed(2)}</span>
-                        </div>
-                      )}
-                      {order.tax_amount > 0 && (
+                      {order.delivery_type_charge && order.delivery_type_charge > 0 ? (
                         <div className="flex justify-between">
-                          <span>HST (13%):</span>
-                          <span className="text-slate-900">${order.tax_amount.toFixed(2)}</span>
+                          <span>Delivery Speed:</span>
+                          <span className="text-slate-900 font-semibold">+${order.delivery_type_charge.toFixed(2)}</span>
+                        </div>
+                      ) : null}
+                      {order.after_hours_charge > 0 && (
+                        <div className="flex justify-between text-red-600">
+                          <span>After-Hours:</span>
+                          <span className="font-semibold">+${order.after_hours_charge.toFixed(2)}</span>
                         </div>
                       )}
+                      {order.waiting_charge > 0 && (
+                        <div className="flex justify-between">
+                          <span>Waiting Time:</span>
+                          <span className="text-slate-900 font-semibold">+${order.waiting_charge.toFixed(2)}</span>
+                        </div>
+                      )}
+                      {order.labor_charge > 0 && (
+                        <div className="flex justify-between">
+                          <span>Helper Labor:</span>
+                          <span className="text-slate-900 font-semibold">+${order.labor_charge.toFixed(2)}</span>
+                        </div>
+                      )}
+                      <div className="border-t border-slate-200 pt-1 flex justify-between text-slate-500">
+                        <span>Subtotal (Net):</span>
+                        <span className="text-slate-800">${(order.subtotal || (order.total_price / 1.13)).toFixed(2)}</span>
+                      </div>
+                      <div className="flex justify-between text-slate-500">
+                        <span>Ontario HST (13%):</span>
+                        <span className="text-slate-800">${(order.tax_amount || (order.total_price - (order.total_price / 1.13))).toFixed(2)}</span>
+                      </div>
                     </div>
                   </div>
 
@@ -684,7 +810,7 @@ export const OrderTracker: React.FC<OrderTrackerProps> = ({ initialOrderNumber, 
                     </span>
                   </div>
 
-                  {(order.order_status === 'submitted' || order.order_status === 'quote_sent') && (
+                  {order.order_status === 'quote_sent' && (
                     <button
                       type="button"
                       onClick={() => handleConfirmQuote(order)}
@@ -692,7 +818,7 @@ export const OrderTracker: React.FC<OrderTrackerProps> = ({ initialOrderNumber, 
                       className="mt-2.5 w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white font-bold text-xs rounded-xl shadow-md shadow-emerald-700/20 transition flex items-center justify-center space-x-1.5 cursor-pointer disabled:opacity-50"
                     >
                       <CheckCircle2 className="w-4 h-4 text-white" />
-                      <span>{isConfirmingQuote ? 'Confirming...' : `Accept & Confirm Order ($${(order.total_price || 0).toFixed(2)})`}</span>
+                      <span>{isConfirmingQuote ? 'Confirming...' : `Accept & Confirm Quotation ($${(order.total_price || 0).toFixed(2)})`}</span>
                     </button>
                   )}
                 </>
