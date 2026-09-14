@@ -356,7 +356,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate, initialParams 
         if (!fullName.trim()) throw new Error('Full Name is required.');
         if (accountType === 'commercial') {
           if (!companyName.trim()) throw new Error('Company or Business Name is required for commercial registration.');
-          if (!hstNumber.trim()) throw new Error('HST / Business Number is mandatory for commercial accounts (e.g. 12345 6789 RT0001).');
+          if (!hstNumber.trim()) throw new Error('Please enter your HST / Business Number (e.g. 12345 6789 RT0001) to create an account.');
         }
         if (!phone.trim()) throw new Error('Phone Number is required for delivery coordination.');
         if (!address.trim()) throw new Error('Street / Delivery Address is required.');
@@ -941,8 +941,8 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate, initialParams 
                   </div>
                   <p className="text-[10px] text-slate-500 mt-1">
                     {accountType === 'commercial'
-                      ? 'For corporations, contractors, wholesalers & businesses. Business HST registration is mandatory.'
-                      : 'For private individuals & residential senders. HST registration is optional.'}
+                      ? 'For corporations, contractors, wholesalers & businesses.'
+                      : 'For private individuals & residential senders.'}
                   </p>
                 </div>
 
@@ -1005,9 +1005,9 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate, initialParams 
                     <label className="block text-slate-700 font-semibold">
                       HST / Business Number (GST/HST #){' '}
                       {accountType === 'commercial' ? (
-                        <span className="text-red-600 font-bold">* (Mandatory)</span>
+                        <span className="text-red-600 font-bold">*</span>
                       ) : (
-                        <span className="text-slate-400 font-normal">(Optional)</span>
+                        <span className="text-slate-400 font-normal text-xs">(Optional)</span>
                       )}
                     </label>
                   </div>
@@ -1016,19 +1016,26 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate, initialParams 
                     <input
                       type="text"
                       value={hstNumber}
-                      onChange={(e) => setHstNumber(e.target.value)}
+                      onChange={(e) => {
+                        setHstNumber(e.target.value);
+                        if (errorMessage) setErrorMessage(null);
+                      }}
                       placeholder={
                         accountType === 'commercial'
-                          ? 'e.g. 12345 6789 RT0001 (Required)'
+                          ? 'e.g. 12345 6789 RT0001'
                           : 'e.g. 12345 6789 RT0001 (Optional)'
                       }
-                      className="w-full bg-slate-50 border border-slate-300 pl-10 pr-3 py-2.5 rounded-xl text-slate-900 placeholder:text-slate-400 focus:bg-white focus:border-red-500 focus:outline-none shadow-xs"
+                      className={`w-full bg-slate-50 border pl-10 pr-3 py-2.5 rounded-xl text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none shadow-xs transition ${
+                        accountType === 'commercial' && !hstNumber.trim() && errorMessage
+                          ? 'border-red-500 ring-2 ring-red-500/20'
+                          : 'border-slate-300 focus:border-red-500'
+                      }`}
                       required={accountType === 'commercial'}
                     />
                   </div>
                   <p className="text-[10px] text-slate-500 mt-1">
                     {accountType === 'commercial'
-                      ? 'Required for commercial accounts to generate CRA-compliant input tax credit invoices.'
+                      ? 'Used to generate CRA-compliant input tax credit invoices.'
                       : 'Optional: Enter your GST/HST or tax exemption number if claiming business deductions.'}
                   </p>
                 </div>

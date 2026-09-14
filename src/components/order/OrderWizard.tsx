@@ -255,10 +255,12 @@ export const OrderWizard: React.FC<OrderWizardProps> = ({ initialData, onNavigat
     if (accountType === 'commercial') {
       if (!companyName.trim()) {
         setValidationError('Please provide a Company or Business Name for commercial deliveries.');
+        window.scrollTo({ top: 300, behavior: 'smooth' });
         return;
       }
       if (!customerHstNumber.trim()) {
-        setValidationError('HST / Business Number is mandatory for commercial orders (e.g. 12345 6789 RT0001).');
+        setValidationError('Please enter your HST / Business Number (e.g. 12345 6789 RT0001) to complete your commercial order.');
+        window.scrollTo({ top: 300, behavior: 'smooth' });
         return;
       }
     }
@@ -1144,9 +1146,9 @@ export const OrderWizard: React.FC<OrderWizardProps> = ({ initialData, onNavigat
                     <label className="block text-xs font-semibold text-slate-700">
                       HST / Business Number (GST/HST #){' '}
                       {accountType === 'commercial' ? (
-                        <span className="text-red-600 font-bold">* (Mandatory for Commercial)</span>
+                        <span className="text-red-600 font-bold">*</span>
                       ) : (
-                        <span className="text-slate-400 font-normal">(Optional)</span>
+                        <span className="text-slate-400 font-normal text-xs">(Optional)</span>
                       )}
                     </label>
                   </div>
@@ -1161,16 +1163,20 @@ export const OrderWizard: React.FC<OrderWizardProps> = ({ initialData, onNavigat
                       }}
                       placeholder={
                         accountType === 'commercial'
-                          ? 'e.g. 12345 6789 RT0001 (Required for commercial invoice)'
+                          ? 'e.g. 12345 6789 RT0001'
                           : 'e.g. 12345 6789 RT0001 (Optional)'
                       }
-                      className="w-full bg-slate-50 border border-slate-300 pl-10 pr-4 py-2.5 text-sm text-slate-900 rounded-xl focus:border-red-500 focus:bg-white focus:outline-none placeholder:text-slate-400 shadow-xs"
+                      className={`w-full bg-slate-50 border pl-10 pr-4 py-2.5 text-sm text-slate-900 rounded-xl focus:bg-white focus:outline-none placeholder:text-slate-400 shadow-xs transition ${
+                        accountType === 'commercial' && !customerHstNumber.trim() && validationError
+                          ? 'border-red-500 ring-2 ring-red-500/20'
+                          : 'border-slate-300 focus:border-red-500'
+                      }`}
                       required={accountType === 'commercial'}
                     />
                   </div>
                   <p className="text-[10px] text-slate-500 mt-1">
                     {accountType === 'commercial'
-                      ? 'Required for business accounts to generate CRA-compliant input tax credit invoices.'
+                      ? 'Used to generate CRA-compliant input tax credit invoices.'
                       : 'Optional: Enter your GST/HST number if claiming business delivery deductions.'}
                   </p>
                 </div>
