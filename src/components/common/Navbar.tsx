@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { store, UserSession } from '../../lib/store';
 import { BrandLogo } from './BrandLogo';
+import { NotificationBell } from './NotificationBell';
 
 interface NavbarProps {
   currentTab: string;
@@ -137,9 +138,12 @@ export const Navbar: React.FC<NavbarProps> = ({ currentTab, onNavigate }) => {
               <span>Track</span>
             </button>
 
-            {/* Portal / Role Button */}
+            {/* Portal / Role Button & Notification Bell */}
             {user ? (
               <div className="flex items-center space-x-1.5">
+                {(user.role === 'admin' || user.role === 'owner' || user.role === 'driver') && (
+                  <NotificationBell onNavigate={onNavigate} />
+                )}
                 <button
                   onClick={() => onNavigate(user.role === 'owner' || user.role === 'admin' ? 'admin' : user.role === 'driver' ? 'driver' : 'customer')}
                   className="flex items-center space-x-1.5 px-3 py-1.5 text-xs font-bold rounded-lg border border-red-200 bg-red-50 text-red-700 hover:bg-red-100 transition-smooth cursor-pointer"
@@ -178,6 +182,9 @@ export const Navbar: React.FC<NavbarProps> = ({ currentTab, onNavigate }) => {
 
           {/* Mobile Menu Controls */}
           <div className="flex items-center space-x-1.5 sm:hidden shrink-0">
+            {user && (user.role === 'admin' || user.role === 'owner' || user.role === 'driver') && (
+              <NotificationBell onNavigate={onNavigate} />
+            )}
             <button
               onClick={() => onNavigate('order')}
               className="min-h-[36px] px-2.5 py-1 text-[11px] font-bold text-white btn-gradient-primary rounded-lg shadow-sm transition-smooth flex items-center justify-center cursor-pointer whitespace-nowrap"

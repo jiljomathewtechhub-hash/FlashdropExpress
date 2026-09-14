@@ -11,6 +11,7 @@ import {
 import { DEFAULT_BUSINESS_SETTINGS, DEFAULT_PRICING_TIERS, PricingTierRule } from './pricing';
 import { supabase, isSupabaseConfigured } from './supabase';
 import { notificationService } from './notificationService';
+import { inAppNotificationService } from './inAppNotificationService';
 import { NotificationLog } from '../types/notification';
 
 const STORAGE_KEY_PREFIX = 'flashdrop_';
@@ -529,6 +530,16 @@ class FlashDropStore {
     // Multi-channel dispatch: Customer Email + Admin Email & SMS
     notificationService.notifyOrderCreated(newOrder, this.settings);
 
+    // Real-time In-App Notification for Admin
+    inAppNotificationService.dispatch({
+      title: `New Order Placed: #${newOrder.order_number}`,
+      message: `${newOrder.customer_name}${newOrder.company_name ? ` (${newOrder.company_name})` : ''} placed an order for ${newOrder.item_description || 'cargo'} (${newOrder.weight_lbs} lbs) from ${newOrder.pickup_address.split(',')[0]} to ${newOrder.delivery_address.split(',')[0]}.`,
+      type: 'order_created',
+      order_id: newOrder.id,
+      order_number: newOrder.order_number,
+      recipient_role: 'admin',
+    });
+
     // Async sync to Supabase if configured
     const sb = supabase;
     if (isSupabaseConfigured && sb) {
@@ -646,6 +657,29 @@ class FlashDropStore {
         'Order updated via Dispatch Command Center',
         this.settings
       );
+
+      const statusFormatted = updatedOrder.order_status.replace('_', ' ').toUpperCase();
+      inAppNotificationService.dispatch({
+        title: `Order Status: #${updatedOrder.order_number}`,
+        message: `Order #${updatedOrder.order_number} status updated to ${statusFormatted}.`,
+        type: 'status_changed',
+        order_id: updatedOrder.id,
+        order_number: updatedOrder.order_number,
+        recipient_role: 'admin',
+      });
+
+      if (updatedOrder.assigned_driver_id) {
+        inAppNotificationService.dispatch({
+          title: `Assigned Cargo Update: #${updatedOrder.order_number}`,
+          message: `Your assigned order #${updatedOrder.order_number} is now ${statusFormatted}.`,
+          type: 'status_changed',
+          order_id: updatedOrder.id,
+          order_number: updatedOrder.order_number,
+          assigned_driver_id: updatedOrder.assigned_driver_id,
+          assigned_driver_name: updatedOrder.assigned_driver_name,
+          recipient_role: 'driver',
+        });
+      }
     }
 
     if (isSupabaseConfigured && supabase) {
@@ -767,6 +801,29 @@ class FlashDropStore {
     // Multi-channel dispatch: Customer Email + Admin Email & SMS
     if (prevStatus !== status) {
       notificationService.notifyOrderStatusChanged(order, prevStatus, status, notes, this.settings);
+
+      const statusFormatted = status.replace('_', ' ').toUpperCase();
+      inAppNotificationService.dispatch({
+        title: `Order Status: #${order.order_number}`,
+        message: `Order #${order.order_number} changed to ${statusFormatted}.${notes ? ` (${notes})` : ''}`,
+        type: 'status_changed',
+        order_id: order.id,
+        order_number: order.order_number,
+        recipient_role: 'admin',
+      });
+
+      if (order.assigned_driver_id) {
+        inAppNotificationService.dispatch({
+          title: `Assigned Cargo Update: #${order.order_number}`,
+          message: `Your assigned order #${order.order_number} is now ${statusFormatted}.${notes ? ` (${notes})` : ''}`,
+          type: 'status_changed',
+          order_id: order.id,
+          order_number: order.order_number,
+          assigned_driver_id: order.assigned_driver_id,
+          assigned_driver_name: order.assigned_driver_name,
+          recipient_role: 'driver',
+        });
+      }
     }
 
     // Supabase update
@@ -840,6 +897,29 @@ class FlashDropStore {
       this.settings
     );
 
+    // Real-time In-App Notification: Admin Dispatch + Assigned Driver
+    inAppNotificationService.dispatch({
+      title: `Driver Assigned: #${order.order_number}`,
+      message: `Order #${order.order_number} has been assigned to ${driver.name} (${driver.phone}).`,
+      type: 'order_assigned',
+      order_id: order.id,
+      order_number: order.order_number,
+      assigned_driver_id: driver.id,
+      assigned_driver_name: driver.name,
+      recipient_role: 'admin',
+    });
+
+    inAppNotificationService.dispatch({
+      title: `New Delivery Assignment: #${order.order_number}`,
+      message: `You have been assigned order #${order.order_number} for delivery from ${order.pickup_address.split(',')[0]} to ${order.delivery_address.split(',')[0]}.`,
+      type: 'order_assigned',
+      order_id: order.id,
+      order_number: order.order_number,
+      assigned_driver_id: driver.id,
+      assigned_driver_name: driver.name,
+      recipient_role: 'driver',
+    });
+
     // Supabase sync
     if (isSupabaseConfigured && supabase) {
       const matchFilter = order.id.length === 36 ? { id: order.id } : { order_number: order.order_number };
@@ -912,6 +992,31 @@ class FlashDropStore {
       `Delivered by ${pod.driver_name}. Verified receiver: ${pod.recipient_name}.`,
       this.settings
     );
+
+    // Real-time In-App Notification: Admin Dispatch + Driver confirmation
+    inAppNotificationService.dispatch({
+      title: `Proof of Delivery: #${order.order_number}`,
+      message: `Order #${order.order_number} marked delivered by ${pod.driver_name}. Verified receiver: ${pod.recipient_name}.`,
+      type: 'pod_uploaded',
+      order_id: order.id,
+      order_number: order.order_number,
+      assigned_driver_id: order.assigned_driver_id,
+      assigned_driver_name: order.assigned_driver_name,
+      recipient_role: 'admin',
+    });
+
+    if (order.assigned_driver_id) {
+      inAppNotificationService.dispatch({
+        title: `Delivery Completed: #${order.order_number}`,
+        message: `Your proof of delivery for #${order.order_number} has been logged and confirmed.`,
+        type: 'pod_uploaded',
+        order_id: order.id,
+        order_number: order.order_number,
+        assigned_driver_id: order.assigned_driver_id,
+        assigned_driver_name: order.assigned_driver_name,
+        recipient_role: 'driver',
+      });
+    }
 
     // Supabase sync
     if (isSupabaseConfigured && supabase) {

@@ -36,8 +36,13 @@ import {
   Building,
   ExternalLink,
   Bell,
+  BellOff,
   MessageSquare,
   Send,
+  Volume2,
+  VolumeX,
+  CheckCheck,
+  Filter,
 } from 'lucide-react';
 import { NotificationLog } from '../../types/notification';
 import { Order, Driver, Vehicle, OrderRequestItem, OrderStatus, BusinessSettings } from '../../types/order';
@@ -46,6 +51,8 @@ import { PricingTierRule } from '../../lib/pricing';
 import { generateOrderPdf } from '../../lib/pdf';
 import { supabase, isSupabaseConfigured, createUnpersistedClient } from '../../lib/supabase';
 import { notificationService } from '../../lib/notificationService';
+import { inAppNotificationService, InAppNotification } from '../../lib/inAppNotificationService';
+import { NotificationBell } from '../common/NotificationBell';
 
 interface AdminDashboardProps {
   onNavigate: (tab: string, param?: any) => void;
@@ -109,6 +116,14 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
   const [testSending, setTestSending] = useState(false);
   const [testSuccess, setTestSuccess] = useState(false);
 
+  // In-App Notifications State & Chimes
+  const [inAppNotifSubtab, setInAppNotifSubtab] = useState<'in_app' | 'email_sms'>('in_app');
+  const [inAppNotifications, setInAppNotifications] = useState<InAppNotification[]>(() =>
+    inAppNotificationService.getNotificationsForUser(store.getCurrentUser(), store.getDrivers())
+  );
+  const [inAppFilter, setInAppFilter] = useState<'all' | 'unread'>('all');
+  const [adminSoundEnabled, setAdminSoundEnabled] = useState(inAppNotificationService.isSoundEnabled());
+
   // Staff & Driver Provisioning State
   const [showAddStaffModal, setShowAddStaffModal] = useState(false);
   const [staffRole, setStaffRole] = useState<'driver' | 'dispatcher' | 'admin'>('driver');
@@ -141,14 +156,18 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
 
   useEffect(() => {
     const refresh = () => {
-      setUser(store.getCurrentUser());
+      const currentUser = store.getCurrentUser();
+      const currentDrivers = store.getDrivers();
+      setUser(currentUser);
       setOrders(store.getOrders());
-      setDrivers(store.getDrivers());
+      setDrivers(currentDrivers);
       setVehicles(store.getVehicles());
       setPricingTiers(store.getPricingTiers());
       setSettings(store.getSettings());
       setRequests(store.getRequests());
       setNotifications(store.getNotificationLogs());
+      setInAppNotifications(inAppNotificationService.getNotificationsForUser(currentUser, currentDrivers));
+      setAdminSoundEnabled(inAppNotificationService.isSoundEnabled());
     };
 
     refresh();
@@ -176,7 +195,12 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
       })();
     }
 
-    return store.subscribe(refresh);
+    const unsubStore = store.subscribe(refresh);
+    const unsubInApp = inAppNotificationService.subscribe(refresh);
+    return () => {
+      unsubStore();
+      unsubInApp();
+    };
   }, []);
 
   // Filter orders
@@ -531,6 +555,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
         </div>
 
         <div className="flex items-center space-x-2.5">
+          <NotificationBell onNavigate={onNavigate} />
           <button
             onClick={() => onNavigate('home')}
             className="flex items-center space-x-1.5 px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 hover:text-slate-900 border border-slate-200 text-xs font-semibold rounded-xl border border-slate-300 transition cursor-pointer"
@@ -590,7 +615,11 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
         {[
           { id: 'orders', label: `Orders Queue (${orders.length})`, icon: Package },
           { id: 'drivers', label: `Staff & Drivers (${drivers.length})`, icon: Users },
-          { id: 'notifications', label: `Email & SMS Alerts (${notifications.length})`, icon: Bell },
+          {
+            id: 'notifications',
+            label: `Notifications & Alerts (${inAppNotifications.filter((n) => !n.is_read).length > 0 ? `${inAppNotifications.filter((n) => !n.is_read).length} New` : inAppNotifications.length})`,
+            icon: Bell,
+          },
           { id: 'requests', label: `Customer Requests (${pendingRequests})`, icon: AlertCircle },
           { id: 'pricing', label: 'Pricing Matrix & Tiers', icon: DollarSign },
           { id: 'settings', label: 'Business & Operating Hours', icon: Sliders },
@@ -1589,9 +1618,460 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
         </div>
       )}
 
-      {/* TAB: AUTOMATED DISPATCH NOTIFICATIONS (EMAIL & SMS) */}
+      {/* TAB: NOTIFICATIONS (LIVE IN-APP ACTIVITY FEED & EMAIL/SMS LOGS) */}
       {activeTab === 'notifications' && (
         <div className="space-y-6">
+          {/* Subtab Switcher */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-3 border border-slate-200 rounded-2xl shadow-sm">
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setInAppNotifSubtab('in_app')}
+                className={`flex items-center space-x-2 px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer ${
+                  inAppNotifSubtab === 'in_app'
+                    ? 'bg-[#C5161D] text-white shadow-md shadow-red-600/20'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                }`}
+              >
+                <Bell className="w-4 h-4" />
+                <span>Live Activity & Audio Alerts</span>
+                {inAppNotifications.filter((n) => !n.is_read).length > 0 && (
+                  <span
+                    className={`px-2 py-0.5 text-[10px] font-black rounded-full ${
+                      inAppNotifSubtab === 'in_app'
+                        ? 'bg-white text-red-700'
+                        : 'bg-red-600 text-white animate-pulse'
+                    }`}
+                  >
+                    {inAppNotifications.filter((n) => !n.is_read).length} New
+                  </span>
+                )}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setInAppNotifSubtab('email_sms')}
+                className={`flex items-center space-x-2 px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer ${
+                  inAppNotifSubtab === 'email_sms'
+                    ? 'bg-[#C5161D] text-white shadow-md shadow-red-600/20'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                }`}
+              >
+                <Mail className="w-4 h-4" />
+                <span>Email & SMS Gateway Logs</span>
+                <span
+                  className={`px-2 py-0.5 text-[10px] font-bold rounded-full ${
+                    inAppNotifSubtab === 'email_sms'
+                      ? 'bg-white/20 text-white'
+                      : 'bg-slate-100 text-slate-600'
+                  }`}
+                >
+                  {notifications.length}
+                </span>
+              </button>
+            </div>
+
+            {/* Sound controls */}
+            <div className="flex items-center space-x-2 shrink-0">
+              <button
+                type="button"
+                onClick={() => {
+                  const next = !adminSoundEnabled;
+                  inAppNotificationService.setSoundEnabled(next);
+                  setAdminSoundEnabled(next);
+                  if (next) inAppNotificationService.playNotificationSound();
+                }}
+                className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border transition cursor-pointer ${
+                  adminSoundEnabled
+                    ? 'bg-emerald-50 text-emerald-700 border-emerald-300 hover:bg-emerald-100'
+                    : 'bg-slate-100 text-slate-500 border-slate-300 hover:bg-slate-200'
+                }`}
+                title="Toggle alert sound when orders or status changes occur"
+              >
+                {adminSoundEnabled ? (
+                  <>
+                    <Volume2 className="w-4 h-4 text-emerald-600" />
+                    <span>Alert Sound: ON</span>
+                  </>
+                ) : (
+                  <>
+                    <VolumeX className="w-4 h-4 text-slate-400" />
+                    <span>Alert Sound: MUTED</span>
+                  </>
+                )}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => inAppNotificationService.playNotificationSound()}
+                className="flex items-center space-x-1 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-xl border border-slate-300 transition cursor-pointer"
+                title="Test synthesized chime audio"
+              >
+                <Volume2 className="w-3.5 h-3.5 text-slate-500" />
+                <span>Test Chime</span>
+              </button>
+            </div>
+          </div>
+
+          {/* SUBTAB 1: LIVE IN-APP ACTIVITY FEED */}
+          {inAppNotifSubtab === 'in_app' && (
+            <div className="space-y-4">
+              {/* Summary Stats Cards */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm flex items-center justify-between">
+                  <div>
+                    <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">
+                      Total Activity Logs
+                    </span>
+                    <span className="text-2xl font-black text-slate-900 font-['Outfit']">
+                      {inAppNotifications.length}
+                    </span>
+                  </div>
+                  <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-slate-600">
+                    <Bell className="w-5 h-5" />
+                  </div>
+                </div>
+
+                <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm flex items-center justify-between">
+                  <div>
+                    <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">
+                      Unopened Alerts
+                    </span>
+                    <span className="text-2xl font-black text-red-600 font-['Outfit'] flex items-center">
+                      {inAppNotifications.filter((n) => !n.is_read).length}
+                      {inAppNotifications.filter((n) => !n.is_read).length > 0 && (
+                        <span className="ml-2 w-2.5 h-2.5 rounded-full bg-red-600 animate-ping inline-block" />
+                      )}
+                    </span>
+                  </div>
+                  <div className="w-10 h-10 rounded-xl bg-red-50 flex items-center justify-center text-red-600">
+                    <AlertCircle className="w-5 h-5" />
+                  </div>
+                </div>
+
+                <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm flex items-center justify-between">
+                  <div>
+                    <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">
+                      Opened / Reviewed
+                    </span>
+                    <span className="text-2xl font-black text-emerald-600 font-['Outfit']">
+                      {inAppNotifications.filter((n) => n.is_read).length}
+                    </span>
+                  </div>
+                  <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600">
+                    <CheckCheck className="w-5 h-5" />
+                  </div>
+                </div>
+
+                <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm flex items-center justify-between">
+                  <div>
+                    <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">
+                      Alert Coverage
+                    </span>
+                    <span className="text-xs font-bold text-slate-800 flex items-center mt-1">
+                      <Shield className="w-3.5 h-3.5 text-blue-600 mr-1" />
+                      Admin Network
+                    </span>
+                  </div>
+                  <span className="px-2 py-0.5 text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200 rounded-lg">
+                    Full Network Activity
+                  </span>
+                </div>
+              </div>
+
+              {/* Filter and Bulk Action Controls */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-3 border border-slate-200 rounded-2xl shadow-sm">
+                <div className="flex items-center space-x-2">
+                  <span className="text-xs text-slate-500 font-semibold flex items-center mr-1">
+                    <Filter className="w-3.5 h-3.5 mr-1" /> Filter:
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setInAppFilter('all')}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer ${
+                      inAppFilter === 'all'
+                        ? 'bg-slate-900 text-white'
+                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                    }`}
+                  >
+                    All ({inAppNotifications.length})
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setInAppFilter('unread')}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer flex items-center space-x-1.5 ${
+                      inAppFilter === 'unread'
+                        ? 'bg-red-600 text-white'
+                        : 'bg-red-50 text-red-700 hover:bg-red-100 border border-red-200'
+                    }`}
+                  >
+                    <span>Unopened Only</span>
+                    <span className="px-1.5 py-0.2 text-[10px] rounded-full bg-white/20 font-black">
+                      {inAppNotifications.filter((n) => !n.is_read).length}
+                    </span>
+                  </button>
+                </div>
+
+                <div className="flex items-center space-x-2">
+                  {inAppNotifications.some((n) => !n.is_read) && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        inAppNotificationService.markAllAsRead(user, drivers);
+                        setInAppNotifications(inAppNotificationService.getNotificationsForUser(user, drivers));
+                      }}
+                      className="flex items-center space-x-1.5 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl border border-slate-300 transition cursor-pointer"
+                    >
+                      <CheckCheck className="w-3.5 h-3.5 text-slate-600" />
+                      <span>Mark All as Opened</span>
+                    </button>
+                  )}
+
+                  {inAppNotifications.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (confirm('Clear all in-app activity notifications?')) {
+                          inAppNotificationService.clearAll(user, drivers);
+                          setInAppNotifications(inAppNotificationService.getNotificationsForUser(user, drivers));
+                        }
+                      }}
+                      className="flex items-center space-x-1.5 px-3 py-1.5 bg-white hover:bg-rose-50 text-slate-500 hover:text-rose-600 text-xs font-semibold rounded-xl border border-slate-300 hover:border-rose-300 transition cursor-pointer"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                      <span>Clear All</span>
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Activity Cards List */}
+              {(() => {
+                const list =
+                  inAppFilter === 'unread'
+                    ? inAppNotifications.filter((n) => !n.is_read)
+                    : inAppNotifications;
+
+                if (list.length === 0) {
+                  return (
+                    <div className="bg-white border border-slate-200 rounded-3xl p-12 text-center shadow-sm">
+                      <div className="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center mx-auto mb-4 text-slate-400">
+                        <BellOff className="w-8 h-8" />
+                      </div>
+                      <h3 className="text-base font-bold text-slate-900 mb-1">
+                        {inAppFilter === 'unread' ? 'No Unopened Notifications' : 'No Activity Notifications Yet'}
+                      </h3>
+                      <p className="text-xs text-slate-500 max-w-md mx-auto">
+                        {inAppFilter === 'unread'
+                          ? 'All incoming alerts have been opened and reviewed. Click "All" to view previous history.'
+                          : 'As soon as orders are booked, statuses update, or drivers upload Proof of Delivery, live pop-up alerts with sound will appear here in real time.'}
+                      </p>
+                    </div>
+                  );
+                }
+
+                return (
+                  <div className="space-y-3">
+                    {list.map((notif) => {
+                      const isUnopened = !notif.is_read;
+
+                      // Format date and time
+                      const notifDate = new Date(notif.created_at);
+                      const now = new Date();
+                      const diffSec = Math.floor((now.getTime() - notifDate.getTime()) / 1000);
+                      let relativeTime = 'Just now';
+                      if (diffSec >= 60 && diffSec < 3600) {
+                        relativeTime = `${Math.floor(diffSec / 60)}m ago`;
+                      } else if (diffSec >= 3600 && diffSec < 86400) {
+                        relativeTime = `${Math.floor(diffSec / 3600)}h ago`;
+                      } else if (diffSec >= 86400) {
+                        relativeTime = `${Math.floor(diffSec / 86400)}d ago`;
+                      }
+
+                      const fullDateTime =
+                        notifDate.toLocaleDateString([], {
+                          month: 'short',
+                          day: 'numeric',
+                          year: 'numeric',
+                        }) +
+                        ' • ' +
+                        notifDate.toLocaleTimeString([], {
+                          hour: '2-digit',
+                          minute: '2-digit',
+                          second: '2-digit',
+                        });
+
+                      const getIcon = () => {
+                        switch (notif.type) {
+                          case 'order_created':
+                            return <Package className="w-5 h-5 text-red-600" />;
+                          case 'order_assigned':
+                            return <Truck className="w-5 h-5 text-blue-600" />;
+                          case 'status_changed':
+                            return <CheckCircle2 className="w-5 h-5 text-emerald-600" />;
+                          case 'quote_requested':
+                            return <Clock className="w-5 h-5 text-amber-600" />;
+                          case 'pod_uploaded':
+                            return <Shield className="w-5 h-5 text-purple-600" />;
+                          default:
+                            return <Bell className="w-5 h-5 text-slate-600" />;
+                        }
+                      };
+
+                      return (
+                        <div
+                          key={notif.id}
+                          className={`rounded-2xl transition-all duration-200 p-4 border ${
+                            isUnopened
+                              ? 'bg-gradient-to-r from-red-50/90 via-red-50/40 to-white border-red-200 border-l-4 border-l-red-600 shadow-md ring-1 ring-red-500/10'
+                              : 'bg-white hover:bg-slate-50/80 border-slate-200 border-l-4 border-l-slate-300 shadow-xs'
+                          }`}
+                        >
+                          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                            {/* Left: Icon & Details */}
+                            <div className="flex items-start space-x-3.5 flex-1 min-w-0">
+                              <div
+                                className={`w-11 h-11 rounded-2xl flex items-center justify-center shrink-0 shadow-xs ${
+                                  isUnopened
+                                    ? 'bg-red-100 border border-red-200'
+                                    : 'bg-slate-100 border border-slate-200'
+                                }`}
+                              >
+                                {getIcon()}
+                              </div>
+
+                              <div className="space-y-1 min-w-0 flex-1">
+                                <div className="flex flex-wrap items-center gap-2">
+                                  {/* Opened vs Unopened Distinction Badge */}
+                                  {isUnopened ? (
+                                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-red-600 text-white shadow-xs">
+                                      <span className="w-1.5 h-1.5 rounded-full bg-white animate-ping mr-1.5" />
+                                      ● Unopened (New)
+                                    </span>
+                                  ) : (
+                                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-slate-100 text-slate-600 border border-slate-200">
+                                      <CheckCheck className="w-3 h-3 text-slate-500 mr-1" />
+                                      Opened {notif.read_at ? new Date(notif.read_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
+                                    </span>
+                                  )}
+
+                                  {/* Order Reference Pill */}
+                                  {notif.order_number && (
+                                    <span className="font-mono text-[11px] font-black text-slate-800 bg-slate-100 px-2 py-0.5 rounded-lg border border-slate-200">
+                                      #{notif.order_number}
+                                    </span>
+                                  )}
+
+                                  {/* Assigned Driver Badge if any */}
+                                  {notif.assigned_driver_name && (
+                                    <span className="text-[11px] font-semibold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-lg border border-blue-200 flex items-center">
+                                      <Truck className="w-3 h-3 mr-1" />
+                                      Driver: {notif.assigned_driver_name}
+                                    </span>
+                                  )}
+
+                                  <h4
+                                    className={`text-sm font-['Outfit'] ${
+                                      isUnopened ? 'font-black text-slate-900' : 'font-bold text-slate-700'
+                                    }`}
+                                  >
+                                    {notif.title}
+                                  </h4>
+                                </div>
+
+                                <p className={`text-xs ${isUnopened ? 'text-slate-800 font-medium' : 'text-slate-600'}`}>
+                                  {notif.message}
+                                </p>
+
+                                <div className="flex flex-wrap items-center gap-3 text-[11px] text-slate-500 pt-0.5">
+                                  <span className="font-semibold text-slate-700 flex items-center">
+                                    <Clock className="w-3 h-3 mr-1 text-slate-400" />
+                                    {relativeTime}
+                                  </span>
+                                  <span className="text-slate-300">•</span>
+                                  <span>{fullDateTime}</span>
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Right Actions */}
+                            <div className="flex items-center space-x-2 shrink-0 self-end sm:self-center">
+                              {notif.order_number && (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    inAppNotificationService.markAsRead(notif.id);
+                                    setInAppNotifications(
+                                      inAppNotificationService.getNotificationsForUser(user, drivers)
+                                    );
+                                    setSearchQuery(notif.order_number || '');
+                                    setActiveTab('orders');
+                                  }}
+                                  className="flex items-center space-x-1.5 px-3 py-1.5 bg-[#C5161D] hover:bg-red-700 text-white text-xs font-bold rounded-xl shadow-xs transition cursor-pointer"
+                                  title="View order in Orders Queue"
+                                >
+                                  <span>Inspect Order</span>
+                                  <ExternalLink className="w-3.5 h-3.5" />
+                                </button>
+                              )}
+
+                              {isUnopened ? (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    inAppNotificationService.markAsRead(notif.id);
+                                    setInAppNotifications(
+                                      inAppNotificationService.getNotificationsForUser(user, drivers)
+                                    );
+                                  }}
+                                  className="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl border border-slate-300 transition cursor-pointer"
+                                  title="Mark as Opened"
+                                >
+                                  Mark Opened
+                                </button>
+                              ) : (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    inAppNotificationService.markAsUnread(notif.id);
+                                    setInAppNotifications(
+                                      inAppNotificationService.getNotificationsForUser(user, drivers)
+                                    );
+                                  }}
+                                  className="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-semibold rounded-xl border border-slate-300 transition cursor-pointer"
+                                  title="Mark as Unopened (New)"
+                                >
+                                  Mark Unread
+                                </button>
+                              )}
+
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  inAppNotificationService.deleteNotification(notif.id);
+                                  setInAppNotifications(
+                                    inAppNotificationService.getNotificationsForUser(user, drivers)
+                                  );
+                                }}
+                                className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition cursor-pointer"
+                                title="Dismiss notification"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                );
+              })()}
+            </div>
+          )}
+
+          {/* SUBTAB 2: AUTOMATED DISPATCH NOTIFICATIONS (EMAIL & SMS) */}
+          {inAppNotifSubtab === 'email_sms' && (
+            <div className="space-y-6">
           {/* Top Banner & Actions */}
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-gradient-to-r from-[#111726] via-[#0E1320] to-[#0A0D15] border border-slate-200 rounded-3xl p-6 shadow-2xl">
             <div className="space-y-1">
@@ -1954,6 +2434,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
               </table>
             </div>
           </div>
+            </div>
+          )}
         </div>
       )}
 

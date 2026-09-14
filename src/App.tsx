@@ -17,6 +17,7 @@ import { OwnerDashboard } from './components/owner/OwnerDashboard';
 import { Phone, Truck, Search, Shield, User } from 'lucide-react';
 import { store, UserSession } from './lib/store';
 import { FullPage3DHighway } from './components/common/FullPage3DHighway';
+import { NotificationToastContainer } from './components/common/NotificationToastContainer';
 
 const VALID_TABS = [
   'home',
@@ -142,6 +143,9 @@ export default function App() {
 
       {/* Top Navbar */}
       <Navbar currentTab={currentTab} onNavigate={handleNavigate} />
+
+      {/* Real-time In-App Dispatch Notification Toasts & Audio Chimes */}
+      <NotificationToastContainer onNavigate={handleNavigate} />
 
       {/* Main Content View */}
       <main className="flex-grow relative z-10 pb-20 sm:pb-0">

@@ -26,6 +26,7 @@ import {
 } from 'lucide-react';
 import { Order, OrderStatus, Driver } from '../../types/order';
 import { store, UserSession } from '../../lib/store';
+import { NotificationBell } from '../common/NotificationBell';
 
 interface DriverDashboardProps {
   onNavigate: (tab: string, param?: any) => void;
@@ -219,6 +220,7 @@ export const DriverDashboard: React.FC<DriverDashboardProps> = ({ onNavigate }) 
         </button>
 
         <div className="flex items-center space-x-2">
+          <NotificationBell onNavigate={onNavigate} />
           {isAdminOrOwner && (
             <button
               onClick={() => onNavigate('admin')}
