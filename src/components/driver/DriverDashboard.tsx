@@ -30,9 +30,10 @@ import { NotificationBell } from '../common/NotificationBell';
 
 interface DriverDashboardProps {
   onNavigate: (tab: string, param?: any) => void;
+  initialParams?: { orderNumber?: string } | any;
 }
 
-export const DriverDashboard: React.FC<DriverDashboardProps> = ({ onNavigate }) => {
+export const DriverDashboard: React.FC<DriverDashboardProps> = ({ onNavigate, initialParams }) => {
   const [user, setUser] = useState<UserSession | null>(() => store.getCurrentUser());
   const [orders, setOrders] = useState<Order[]>(() => store.getOrders());
   const [drivers, setDrivers] = useState<Driver[]>(() => store.getDrivers());

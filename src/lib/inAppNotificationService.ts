@@ -30,6 +30,8 @@ class InAppNotificationService {
   private notifications: InAppNotification[] = [];
   private listeners: (() => void)[] = [];
   private toastListeners: ((notification: InAppNotification) => void)[] = [];
+  private modalListeners: ((notification: InAppNotification | null) => void)[] = [];
+  private activeModalNotification: InAppNotification | null = null;
   private audioCtx: AudioContext | null = null;
   private soundEnabled: boolean = true;
 
@@ -236,13 +238,14 @@ class InAppNotificationService {
   // --- Mark as Opened / Read ---
   public markAsRead(id: string) {
     let changed = false;
+    const nowIso = new Date().toISOString();
     this.notifications = this.notifications.map((n) => {
       if (n.id === id && !n.is_read) {
         changed = true;
         return {
           ...n,
           is_read: true,
-          read_at: new Date().toISOString(),
+          read_at: nowIso,
         };
       }
       return n;
@@ -251,6 +254,14 @@ class InAppNotificationService {
     if (changed) {
       this.saveToStorage();
       this.notify();
+      if (this.activeModalNotification?.id === id) {
+        this.activeModalNotification = {
+          ...this.activeModalNotification,
+          is_read: true,
+          read_at: nowIso,
+        };
+        this.modalListeners.forEach((fn) => fn(this.activeModalNotification));
+      }
     }
   }
 
@@ -271,7 +282,37 @@ class InAppNotificationService {
     if (changed) {
       this.saveToStorage();
       this.notify();
+      if (this.activeModalNotification?.id === id) {
+        this.activeModalNotification = {
+          ...this.activeModalNotification,
+          is_read: false,
+          read_at: undefined,
+        };
+        this.modalListeners.forEach((fn) => fn(this.activeModalNotification));
+      }
     }
+  }
+
+  // --- Modal Pop Window Management ---
+  public openModal(notification: InAppNotification) {
+    // Automatically mark as opened
+    this.markAsRead(notification.id);
+    const resolved = this.notifications.find((n) => n.id === notification.id) || {
+      ...notification,
+      is_read: true,
+      read_at: new Date().toISOString(),
+    };
+    this.activeModalNotification = resolved;
+    this.modalListeners.forEach((fn) => fn(this.activeModalNotification));
+  }
+
+  public closeModal() {
+    this.activeModalNotification = null;
+    this.modalListeners.forEach((fn) => fn(null));
+  }
+
+  public getActiveModalNotification(): InAppNotification | null {
+    return this.activeModalNotification;
   }
 
   public deleteNotification(id: string) {
@@ -320,6 +361,13 @@ class InAppNotificationService {
     this.toastListeners.push(listener);
     return () => {
       this.toastListeners = this.toastListeners.filter((l) => l !== listener);
+    };
+  }
+
+  public subscribeModal(listener: (notification: InAppNotification | null) => void) {
+    this.modalListeners.push(listener);
+    return () => {
+      this.modalListeners = this.modalListeners.filter((l) => l !== listener);
     };
   }
 

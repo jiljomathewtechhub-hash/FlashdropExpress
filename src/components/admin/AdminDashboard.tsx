@@ -56,9 +56,10 @@ import { NotificationBell } from '../common/NotificationBell';
 
 interface AdminDashboardProps {
   onNavigate: (tab: string, param?: any) => void;
+  initialParams?: { orderNumber?: string; tab?: 'orders' | 'drivers' | 'requests' | 'notifications' | 'pricing' | 'settings' } | any;
 }
 
-export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) => {
+export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, initialParams }) => {
   const [activeTab, setActiveTab] = useState<'orders' | 'drivers' | 'requests' | 'notifications' | 'pricing' | 'settings'>('orders');
   const [user, setUser] = useState<UserSession | null>(store.getCurrentUser());
   const [orders, setOrders] = useState<Order[]>([]);
@@ -202,6 +203,15 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
       unsubInApp();
     };
   }, []);
+
+  useEffect(() => {
+    if (initialParams?.orderNumber) {
+      setActiveTab('orders');
+      setSearchQuery(initialParams.orderNumber);
+    } else if (initialParams?.tab) {
+      setActiveTab(initialParams.tab);
+    }
+  }, [initialParams]);
 
   // Filter orders
   const filteredOrders = orders.filter((o) => {
@@ -1921,7 +1931,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
                       return (
                         <div
                           key={notif.id}
-                          className={`rounded-2xl transition-all duration-200 p-4 border ${
+                          onClick={() => inAppNotificationService.openModal(notif)}
+                          className={`rounded-2xl transition-all duration-200 p-4 border cursor-pointer hover:shadow-md ${
                             isUnopened
                               ? 'bg-gradient-to-r from-red-50/90 via-red-50/40 to-white border-red-200 border-l-4 border-l-red-600 shadow-md ring-1 ring-red-500/10'
                               : 'bg-white hover:bg-slate-50/80 border-slate-200 border-l-4 border-l-slate-300 shadow-xs'
@@ -1995,7 +2006,20 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
                             </div>
 
                             {/* Right Actions */}
-                            <div className="flex items-center space-x-2 shrink-0 self-end sm:self-center">
+                            <div
+                              className="flex flex-wrap items-center gap-2 shrink-0 self-end sm:self-center"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <button
+                                type="button"
+                                onClick={() => inAppNotificationService.openModal(notif)}
+                                className="flex items-center space-x-1 px-2.5 py-1.5 bg-slate-900 hover:bg-black text-white text-xs font-bold rounded-xl shadow-xs transition cursor-pointer"
+                                title="Open full message in pop window"
+                              >
+                                <Eye className="w-3.5 h-3.5" />
+                                <span>Pop Window</span>
+                              </button>
+
                               {notif.order_number && (
                                 <button
                                   type="button"

@@ -24,6 +24,7 @@ import { UserRole } from '../types/order';
 import { store } from '../lib/store';
 import { supabase } from '../lib/supabase';
 import { notificationService } from '../lib/notificationService';
+import { inAppNotificationService } from '../lib/inAppNotificationService';
 
 export type LoginViewMode = 'login' | 'register' | 'forgot' | 'reset';
 
@@ -424,6 +425,13 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate, initialParams 
           accountType,
           hstNumber: hstNumber.trim(),
           companyName: resolvedCompany,
+        });
+
+        inAppNotificationService.dispatch({
+          title: `New Customer Registered: ${fullName.trim()}`,
+          message: `${accountType === 'commercial' ? 'Commercial' : 'Personal'} account created (${emailTrimmed}, ${phone.trim()}${resolvedCompany ? ` • ${resolvedCompany}` : ''}).`,
+          type: 'system',
+          recipient_role: 'admin',
         });
 
         setSuccessMessage(

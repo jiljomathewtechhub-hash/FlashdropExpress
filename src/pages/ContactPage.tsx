@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Phone, Mail, Clock, MapPin, Send, CheckCircle2, MessageSquare, Building } from 'lucide-react';
 import { store } from '../lib/store';
+import { inAppNotificationService } from '../lib/inAppNotificationService';
 import { TiltCard } from '../components/common/TiltCard';
 
 interface ContactPageProps {
@@ -17,6 +18,14 @@ export const ContactPage: React.FC<ContactPageProps> = ({ onNavigate }) => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+
+    inAppNotificationService.dispatch({
+      title: `Inquiry from ${name.trim() || 'Website Visitor'}`,
+      message: `${name.trim()} (${email.trim() || phone.trim()}): "${message.trim().slice(0, 120)}${message.length > 120 ? '...' : ''}"`,
+      type: 'system',
+      recipient_role: 'admin',
+    });
+
     setSent(true);
     setTimeout(() => {
       setName('');

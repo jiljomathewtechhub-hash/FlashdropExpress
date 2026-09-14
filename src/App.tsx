@@ -18,6 +18,7 @@ import { Phone, Truck, Search, Shield, User } from 'lucide-react';
 import { store, UserSession } from './lib/store';
 import { FullPage3DHighway } from './components/common/FullPage3DHighway';
 import { NotificationToastContainer } from './components/common/NotificationToastContainer';
+import { NotificationDetailModal } from './components/common/NotificationDetailModal';
 
 const VALID_TABS = [
   'home',
@@ -147,6 +148,9 @@ export default function App() {
       {/* Real-time In-App Dispatch Notification Toasts & Audio Chimes */}
       <NotificationToastContainer onNavigate={handleNavigate} />
 
+      {/* Pop-Up Window: Full Notification Details Modal */}
+      <NotificationDetailModal onNavigate={handleNavigate} />
+
       {/* Main Content View */}
       <main className="flex-grow relative z-10 pb-20 sm:pb-0">
         {currentTab === 'home' && <HomePage onNavigate={handleNavigate} />}
@@ -165,10 +169,10 @@ export default function App() {
         {currentTab === 'login' && <LoginPage onNavigate={handleNavigate} initialParams={navParam} />}
         {currentTab === 'customer' && currentUser && <CustomerPortal onNavigate={handleNavigate} />}
         {currentTab === 'driver' && currentUser && (currentUser.role === 'driver' || currentUser.role === 'dispatcher' || currentUser.role === 'admin' || currentUser.role === 'owner') && (
-          <DriverDashboard onNavigate={handleNavigate} />
+          <DriverDashboard onNavigate={handleNavigate} initialParams={navParam} />
         )}
         {(currentTab === 'admin' || currentTab === 'owner') && currentUser && (currentUser.role === 'admin' || currentUser.role === 'owner') && (
-          <AdminDashboard onNavigate={handleNavigate} />
+          <AdminDashboard onNavigate={handleNavigate} initialParams={navParam} />
         )}
       </main>
 

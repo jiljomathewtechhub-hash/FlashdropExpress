@@ -67,18 +67,8 @@ export const NotificationToastContainer: React.FC<NotificationToastContainerProp
   };
 
   const handleToastClick = (notif: InAppNotification) => {
-    inAppNotificationService.markAsRead(notif.id);
-    const currentUser = store.getCurrentUser();
-
-    if (onNavigate && notif.order_number && currentUser) {
-      if (currentUser.role === 'admin' || currentUser.role === 'owner') {
-        onNavigate('admin', { orderNumber: notif.order_number });
-      } else if (currentUser.role === 'driver') {
-        onNavigate('driver', { orderNumber: notif.order_number });
-      } else {
-        onNavigate('tracking', notif.order_number);
-      }
-    }
+    // Open full detail pop-up modal and mark as opened
+    inAppNotificationService.openModal(notif);
 
     // Dismiss clicked toast
     setToasts((prev) => prev.filter((t) => t.notification.id !== notif.id));

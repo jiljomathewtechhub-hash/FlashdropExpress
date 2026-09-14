@@ -87,20 +87,9 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({
   }
 
   const handleNotificationClick = (notif: InAppNotification) => {
-    // Mark as opened
-    inAppNotificationService.markAsRead(notif.id);
-
-    // If order reference exists and onNavigate is supplied
-    if (onNavigate && notif.order_number) {
-      setIsOpen(false);
-      if (user.role === 'admin' || user.role === 'owner') {
-        onNavigate('admin', { orderNumber: notif.order_number });
-      } else if (user.role === 'driver') {
-        onNavigate('driver', { orderNumber: notif.order_number });
-      } else {
-        onNavigate('tracking', notif.order_number);
-      }
-    }
+    // Open full detail pop-up window modal and mark as opened
+    inAppNotificationService.openModal(notif);
+    setIsOpen(false);
   };
 
   const handleMarkAllRead = () => {
@@ -298,7 +287,7 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({
                     className={`p-3 sm:p-3.5 transition cursor-pointer flex items-start space-x-3 relative group ${
                       isUnread
                         ? 'bg-red-50/70 hover:bg-red-100/70 border-l-4 border-l-red-600'
-                        : 'bg-white hover:bg-slate-50 border-l-4 border-l-transparent opacity-85 hover:opacity-100'
+                        : 'bg-white hover:bg-slate-50 border-l-4 border-l-slate-300 opacity-90 hover:opacity-100'
                     }`}
                   >
                     {/* Event Icon Badge */}
@@ -364,11 +353,9 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({
                           )}
                         </div>
 
-                        {notif.order_number && (
-                          <span className="text-red-600 opacity-0 group-hover:opacity-100 transition flex items-center font-bold">
-                            View <ChevronRight className="w-3 h-3 ml-0.5" />
-                          </span>
-                        )}
+                        <span className="text-slate-700 group-hover:text-red-600 opacity-0 group-hover:opacity-100 transition flex items-center font-bold text-[10px]">
+                          Pop Window <ChevronRight className="w-3 h-3 ml-0.5" />
+                        </span>
                       </div>
                     </div>
                   </div>

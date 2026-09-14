@@ -761,6 +761,15 @@ class FlashDropStore {
     this.orders = this.orders.filter((o) => o.id !== targetOrder.id && o.order_number !== targetOrder.order_number);
     this.saveToStorage();
 
+    inAppNotificationService.dispatch({
+      title: `Order Deleted: #${targetOrder.order_number}`,
+      message: `Order #${targetOrder.order_number} (${targetOrder.pickup_address.split(',')[0]} -> ${targetOrder.delivery_address.split(',')[0]}) was removed from the dispatch queue.`,
+      type: 'system',
+      order_id: targetOrder.id,
+      order_number: targetOrder.order_number,
+      recipient_role: 'admin',
+    });
+
     if (isSupabaseConfigured && supabase) {
       const matchFilter = targetOrder.id.length === 36 ? { id: targetOrder.id } : { order_number: targetOrder.order_number };
       supabase
@@ -1080,6 +1089,16 @@ class FlashDropStore {
       this.updateOrderStatus(newReq.order_id, 'change_requested', `Change requested: ${newReq.reason_or_details}`);
     }
 
+    // In-app alert for admin
+    inAppNotificationService.dispatch({
+      title: `Customer ${newReq.type === 'cancellation' ? 'Cancellation' : 'Change'} Request`,
+      message: `Customer requested ${newReq.type} for Order #${newReq.order_number || newReq.order_id}: ${newReq.reason_or_details}.`,
+      type: 'quote_requested',
+      order_id: newReq.order_id,
+      order_number: newReq.order_number,
+      recipient_role: 'admin',
+    });
+
     this.saveToStorage();
     return newReq;
   }
@@ -1163,12 +1182,29 @@ class FlashDropStore {
         });
     }
 
+    inAppNotificationService.dispatch({
+      title: `Staff Member Added: ${newDrv.name}`,
+      message: `${newDrv.name} provisioned as ${newDrv.vehicle_type || 'Driver'}. Phone: ${newDrv.phone || 'N/A'}, Plate: ${newDrv.license_plate || 'N/A'}.`,
+      type: 'system',
+      recipient_role: 'admin',
+    });
+
     return newDrv;
   }
 
   public deleteDriver(driverId: string) {
+    const targetDriver = this.drivers.find((d) => d.id === driverId);
     this.drivers = this.drivers.filter((d) => d.id !== driverId);
     this.saveToStorage();
+
+    if (targetDriver) {
+      inAppNotificationService.dispatch({
+        title: `Staff Removed: ${targetDriver.name}`,
+        message: `${targetDriver.name} was removed from the courier fleet roster.`,
+        type: 'system',
+        recipient_role: 'admin',
+      });
+    }
 
     if (isSupabaseConfigured && supabase) {
       supabase
@@ -1186,6 +1222,13 @@ class FlashDropStore {
     if (d) {
       d.is_active = !d.is_active;
       this.saveToStorage();
+
+      inAppNotificationService.dispatch({
+        title: `Driver Shift Status: ${d.name}`,
+        message: `${d.name} is now marked ${d.is_active ? 'ACTIVE & ON-DUTY' : 'OFF-DUTY'}.`,
+        type: 'system',
+        recipient_role: 'admin',
+      });
 
       if (isSupabaseConfigured && supabase) {
         supabase
