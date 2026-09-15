@@ -858,6 +858,7 @@ class FlashDropStore {
 
     this.orders[orderIndex] = order;
     this.saveToStorage();
+    this.notify();
 
     // Multi-channel dispatch: Customer Email + Admin Email & SMS
     if (prevStatus !== status) {
@@ -890,9 +891,11 @@ class FlashDropStore {
     // Supabase update
     if (isSupabaseConfigured && supabase) {
       const matchFilter = order.id.length === 36 ? { id: order.id } : { order_number: order.order_number };
+      // Map 'accepted' to 'en_route_pickup' to match PostgreSQL enum in Supabase
+      const dbStatus = status === 'accepted' ? 'en_route_pickup' : status;
       supabase
         .from('orders')
-        .update({ order_status: status, updated_at: order.updated_at })
+        .update({ order_status: dbStatus, updated_at: order.updated_at })
         .match(matchFilter)
         .then(({ error }) => {
           if (error) console.warn('Supabase updateOrderStatus warning:', error.message);
@@ -904,7 +907,7 @@ class FlashDropStore {
           .insert([
             {
               order_id: order.id,
-              status,
+              status: dbStatus,
               notes: historyItem.notes,
             },
           ])

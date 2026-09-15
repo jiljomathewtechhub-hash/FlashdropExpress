@@ -198,21 +198,28 @@ export const DriverDashboard: React.FC<DriverDashboardProps> = ({ onNavigate, in
   }, [selectedDriverId]);
 
   const handleUpdateStatus = (order: Order, newStatus: OrderStatus) => {
-    store.updateOrderStatus(
+    const updated = store.updateOrderStatus(
       order.id,
       newStatus,
       `Status updated by driver (${activeName})`,
       activeName
     );
+    if (updated) {
+      setOrders(store.getOrders());
+    }
   };
 
   const handleAcceptAssignment = (order: Order) => {
-    store.updateOrderStatus(
+    // Advance status to 'en_route_pickup' so all manifest details unlock immediately and the run progresses to active pickup
+    const updated = store.updateOrderStatus(
       order.id,
-      'accepted',
-      `Assignment accepted and manifest unlocked by driver (${activeName})`,
+      'en_route_pickup',
+      `Assignment accepted and manifest unlocked by driver (${activeName}). Driver en route to pickup.`,
       activeName
     );
+    if (updated) {
+      setOrders(store.getOrders());
+    }
     inAppNotificationService.playNotificationSound();
   };
 
@@ -484,7 +491,14 @@ export const DriverDashboard: React.FC<DriverDashboardProps> = ({ onNavigate, in
         ) : (
           <div className="grid grid-cols-1 gap-6">
             {activeDeliveries.map((ord) => {
-              const isAccepted = ord.order_status !== 'assigned' || Boolean(ord.driver_accepted_at);
+              const isAccepted =
+                ord.order_status === 'accepted' ||
+                ord.order_status === 'en_route_pickup' ||
+                ord.order_status === 'picked_up' ||
+                ord.order_status === 'in_transit' ||
+                ord.order_status === 'delivered' ||
+                Boolean(ord.driver_accepted_at) ||
+                (ord.order_status !== 'assigned' && ord.order_status !== 'submitted' && ord.order_status !== 'confirmed');
               const pickupNavUrl = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(ord.pickup_address)}`;
               const deliveryNavUrl = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(ord.delivery_address)}`;
 
