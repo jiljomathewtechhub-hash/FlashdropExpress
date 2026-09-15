@@ -4,20 +4,20 @@ import tailwindcss from '@tailwindcss/vite';
 import fs from 'fs';
 import path from 'path';
 
-function getLocalApiKey(): string {
-  if (process.env.RESEND_API_KEY) return process.env.RESEND_API_KEY;
-  if (process.env.VITE_RESEND_API_KEY) return process.env.VITE_RESEND_API_KEY;
+function getLocalEnv(key: string): string {
+  if (process.env[key]) return process.env[key]!;
+  if (process.env[`VITE_${key}`]) return process.env[`VITE_${key}`]!;
   try {
     const envFile = path.resolve(process.cwd(), '.env');
     if (fs.existsSync(envFile)) {
       const lines = fs.readFileSync(envFile, 'utf8').split(/\r?\n/);
       for (const line of lines) {
         const trimmed = line.trim();
-        if (trimmed.startsWith('RESEND_API_KEY=')) {
-          return trimmed.replace('RESEND_API_KEY=', '').trim();
+        if (trimmed.startsWith(`${key}=`)) {
+          return trimmed.replace(`${key}=`, '').trim();
         }
-        if (trimmed.startsWith('VITE_RESEND_API_KEY=')) {
-          return trimmed.replace('VITE_RESEND_API_KEY=', '').trim();
+        if (trimmed.startsWith(`VITE_${key}=`)) {
+          return trimmed.replace(`VITE_${key}=`, '').trim();
         }
       }
     }
@@ -59,7 +59,7 @@ function notificationDevServerPlugin(): Plugin {
                 process.env.RESEND_API_KEY ||
                 process.env.VITE_RESEND_API_KEY ||
                 resend_api_key ||
-                getLocalApiKey();
+                getLocalEnv('RESEND_API_KEY');
 
               const sender = 'FlashDrop Express <dispatch@flashdropexpress.com>';
 
@@ -143,6 +143,35 @@ function notificationDevServerPlugin(): Plugin {
                       text: `[SMS notification alert for ${destination} (${gateway.toUpperCase()})]:\n\n${message}`,
                     }),
                   }).catch(() => {});
+                }
+
+                // Direct Twilio SMS dispatch if configured
+                const twilioSid = getLocalEnv('TWILIO_ACCOUNT_SID') || payload.twilio_account_sid;
+                const twilioToken = getLocalEnv('TWILIO_AUTH_TOKEN') || payload.twilio_auth_token;
+                const twilioFrom = getLocalEnv('TWILIO_FROM_PHONE') || payload.twilio_from_phone;
+
+                if (twilioSid && twilioToken && twilioFrom && destination) {
+                  try {
+                    const twilioUrl = `https://api.twilio.com/2010-04-01/Accounts/${twilioSid}/Messages.json`;
+                    const bodyParams = new URLSearchParams({
+                      To: destination,
+                      From: twilioFrom,
+                      Body: message,
+                    });
+                    const authHeader = 'Basic ' + Buffer.from(`${twilioSid}:${twilioToken}`).toString('base64');
+                    const twilioRes = await fetch(twilioUrl, {
+                      method: 'POST',
+                      headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                        Authorization: authHeader,
+                      },
+                      body: bodyParams.toString(),
+                    });
+                    const twilioData = await twilioRes.json();
+                    console.log(`[Vite Dev Server] ✓ Twilio SMS dispatched (${twilioRes.status}):`, twilioData);
+                  } catch (err) {
+                    console.warn('[Vite Dev Server] Twilio SMS dispatch warning:', err);
+                  }
                 }
 
                 res.writeHead(200, { 'Content-Type': 'application/json' });

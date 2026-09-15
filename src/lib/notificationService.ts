@@ -116,7 +116,9 @@ class NotificationService {
         ...log,
         resend_api_key: resendKey,
         carrier_gateway: params.metadata?.carrier_gateway || 'freedom',
-        admin_email: params.metadata?.admin_email || `${ADMIN_EMAIL_TARGET}, ${ADMIN_BACKUP_EMAIL_DEFAULT}`,
+        twilio_account_sid: params.metadata?.twilio_account_sid || (import.meta.env.VITE_TWILIO_ACCOUNT_SID as string) || '',
+        twilio_auth_token: params.metadata?.twilio_auth_token || (import.meta.env.VITE_TWILIO_AUTH_TOKEN as string) || '',
+        twilio_from_phone: params.metadata?.twilio_from_phone || (import.meta.env.VITE_TWILIO_FROM_PHONE as string) || '',
       };
 
       let delivered = false;
@@ -249,6 +251,9 @@ class NotificationService {
       metadata: { 
         carrier_gateway: settings?.carrier_sms_gateway || 'freedom',
         admin_email: adminEmailStr,
+        twilio_account_sid: settings?.twilio_account_sid || (import.meta.env.VITE_TWILIO_ACCOUNT_SID as string) || '',
+        twilio_auth_token: settings?.twilio_auth_token || (import.meta.env.VITE_TWILIO_AUTH_TOKEN as string) || '',
+        twilio_from_phone: settings?.twilio_from_phone || (import.meta.env.VITE_TWILIO_FROM_PHONE as string) || '',
       },
     });
     logs.push(adminSmsLog);
@@ -346,6 +351,9 @@ class NotificationService {
         newStatus, 
         carrier_gateway: settings?.carrier_sms_gateway || 'freedom',
         admin_email: adminEmailStr,
+        twilio_account_sid: settings?.twilio_account_sid || (import.meta.env.VITE_TWILIO_ACCOUNT_SID as string) || '',
+        twilio_auth_token: settings?.twilio_auth_token || (import.meta.env.VITE_TWILIO_AUTH_TOKEN as string) || '',
+        twilio_from_phone: settings?.twilio_from_phone || (import.meta.env.VITE_TWILIO_FROM_PHONE as string) || '',
       },
     });
     logs.push(adminSmsLog);

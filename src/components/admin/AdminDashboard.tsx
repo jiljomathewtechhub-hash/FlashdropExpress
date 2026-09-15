@@ -2336,6 +2336,74 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
                   While MX records are being added in Netlify DNS for <code className="font-bold">support@flashdropexpress.com</code>, all admin notifications and SMS alerts are also instantly routed to this verified inbox so you never miss an order.
                 </span>
               </div>
+
+              <div className="md:col-span-2 bg-sky-50/70 border border-sky-200 rounded-xl p-3.5 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="font-bold text-slate-800 text-xs flex items-center space-x-1.5">
+                    <Phone className="w-3.5 h-3.5 text-sky-700" />
+                    <span>Twilio Cellular SMS Gateway (Direct to +1 647 804 9775)</span>
+                  </div>
+                  <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                    settings.twilio_from_phone
+                      ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
+                      : 'bg-amber-100 text-amber-800 border border-amber-300'
+                  }`}>
+                    {settings.twilio_from_phone ? '✓ Twilio SMS Active' : 'Enter Twilio Phone Number Below'}
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div>
+                    <label className="block text-slate-600 text-[11px] font-semibold mb-1">Account SID</label>
+                    <input
+                      type="text"
+                      value={settings.twilio_account_sid || ''}
+                      onChange={(e) => setSettings({ ...settings, twilio_account_sid: e.target.value })}
+                      placeholder="AC..."
+                      className="w-full bg-white border border-slate-300 px-2.5 py-1.5 rounded-lg text-slate-900 font-mono text-[11px]"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-slate-600 text-[11px] font-semibold mb-1">Auth Token</label>
+                    <input
+                      type="password"
+                      value={settings.twilio_auth_token || ''}
+                      onChange={(e) => setSettings({ ...settings, twilio_auth_token: e.target.value })}
+                      placeholder="Auth token..."
+                      className="w-full bg-white border border-slate-300 px-2.5 py-1.5 rounded-lg text-slate-900 font-mono text-[11px]"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-slate-600 text-[11px] font-semibold mb-1">Twilio Phone Number (From)</label>
+                    <div className="flex space-x-1.5">
+                      <input
+                        type="text"
+                        value={settings.twilio_from_phone || ''}
+                        onChange={(e) => setSettings({ ...settings, twilio_from_phone: e.target.value })}
+                        placeholder="+1..."
+                        className="w-full bg-white border border-slate-300 px-2.5 py-1.5 rounded-lg text-slate-900 font-mono text-[11px]"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          store.updateSettings({
+                            twilio_account_sid: settings.twilio_account_sid,
+                            twilio_auth_token: settings.twilio_auth_token,
+                            twilio_from_phone: settings.twilio_from_phone,
+                          });
+                          alert('Twilio credentials saved successfully!');
+                        }}
+                        className="px-3 py-1.5 bg-sky-700 hover:bg-sky-600 text-white font-bold rounded-lg whitespace-nowrap cursor-pointer transition text-xs"
+                      >
+                        Save
+                      </button>
+                    </div>
+                  </div>
+                </div>
+                <span className="text-[11px] text-slate-600 block">
+                  Click <strong>&ldquo;Get a phone number&rdquo;</strong> in your <a href="https://console.twilio.com" target="_blank" rel="noopener noreferrer" className="text-sky-700 underline font-semibold">Twilio Console</a>, then paste the number above. Twilio will deliver real SMS messages directly to +1 647 804 9775.
+                </span>
+              </div>
             </div>
           </div>
 
