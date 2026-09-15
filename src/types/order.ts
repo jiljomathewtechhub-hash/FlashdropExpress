@@ -221,4 +221,9 @@ export interface BusinessSettings {
   resend_api_key?: string;
   admin_sms_phone?: string;
   carrier_sms_gateway?: string;
+  admin_notification_email?: string;
+  admin_backup_email?: string;
+  twilio_account_sid?: string;
+  twilio_auth_token?: string;
+  twilio_from_phone?: string;
 }

@@ -64,6 +64,10 @@ function notificationDevServerPlugin(): Plugin {
               const sender = 'FlashDrop Express <dispatch@flashdropexpress.com>';
 
               if (channel === 'email' && destination) {
+                const toRecipients = typeof destination === 'string' && destination.includes(',')
+                  ? destination.split(',').map((e: string) => e.trim()).filter(Boolean)
+                  : destination;
+
                 const emailRes = await fetch('https://api.resend.com/emails', {
                   method: 'POST',
                   headers: {
@@ -72,14 +76,14 @@ function notificationDevServerPlugin(): Plugin {
                   },
                   body: JSON.stringify({
                     from: sender,
-                    to: destination,
+                    to: toRecipients,
                     subject: subject || `FlashDrop Express Order #${order_number || ''}`,
                     html: html_body || `<p>${message}</p>`,
                   }),
                 });
                 const emailData = await emailRes.json();
                 console.log(
-                  `[Vite Dev Server] ✓ Email dispatched to ${destination} (${emailRes.status}):`,
+                  `[Vite Dev Server] ✓ Email dispatched to ${Array.isArray(toRecipients) ? toRecipients.join(', ') : toRecipients} (${emailRes.status}):`,
                   emailData
                 );
                 res.writeHead(200, { 'Content-Type': 'application/json' });
@@ -89,17 +93,17 @@ function notificationDevServerPlugin(): Plugin {
 
               if (channel === 'sms' && destination) {
                 const digits = destination.replace(/\D/g, '').slice(-10);
-                const gateway = carrier_gateway || 'rogers';
+                const gateway = carrier_gateway || 'freedom';
                 const gatewayDomains: Record<string, string> = {
+                  freedom: 'txt.freedommobile.ca',
                   rogers: 'pcs.rogers.com',
                   bell: 'txt.bell.ca',
                   telus: 'msg.telus.com',
-                  freedom: 'txt.freedommobile.ca',
                 };
-                const domain = gatewayDomains[gateway] || 'pcs.rogers.com';
+                const domain = gatewayDomains[gateway] || 'txt.freedommobile.ca';
                 const gatewayEmail = `${digits}@${domain}`;
 
-                // Dispatch SMS via Canadian Carrier Email-to-SMS Gateway
+                // Dispatch SMS via Canadian Carrier Email-to-SMS Gateway (Freedom Mobile Default)
                 const smsRes = await fetch('https://api.resend.com/emails', {
                   method: 'POST',
                   headers: {
@@ -119,9 +123,13 @@ function notificationDevServerPlugin(): Plugin {
                   smsData
                 );
 
-                // Also send priority email alert to admin if admin_email provided
-                const targetAdminEmail = (admin_email && !admin_email.includes('nidhin@flashdropexpress.com')) ? admin_email : 'support@flashdropexpress.com';
+                // Also send priority email alert to admin email so message is never missed
+                const targetAdminEmail = admin_email || process.env.ADMIN_EMAIL || process.env.VITE_ADMIN_EMAIL || 'support@flashdropexpress.com, jiljomathew.techhub@gmail.com';
                 if (targetAdminEmail) {
+                  const toAdminList = targetAdminEmail.includes(',')
+                    ? targetAdminEmail.split(',').map((s: string) => s.trim()).filter(Boolean)
+                    : targetAdminEmail;
+
                   await fetch('https://api.resend.com/emails', {
                     method: 'POST',
                     headers: {
@@ -130,9 +138,9 @@ function notificationDevServerPlugin(): Plugin {
                     },
                     body: JSON.stringify({
                       from: sender,
-                      to: targetAdminEmail,
+                      to: toAdminList,
                       subject: `[SMS URGENT ALERT] Order #${order_number || ''}`,
-                      text: `[SMS notification sent to ${destination}]:\n\n${message}`,
+                      text: `[SMS notification alert for ${destination} (${gateway.toUpperCase()})]:\n\n${message}`,
                     }),
                   }).catch(() => {});
                 }

@@ -448,6 +448,9 @@ class FlashDropStore {
       if (!this.settings.email || this.settings.email.toLowerCase().includes('nidhin@flashdropexpress.com')) {
         this.settings.email = 'support@flashdropexpress.com';
       }
+      this.settings.carrier_sms_gateway = this.settings.carrier_sms_gateway || 'freedom';
+      this.settings.admin_notification_email = this.settings.admin_notification_email || 'support@flashdropexpress.com';
+      this.settings.admin_backup_email = this.settings.admin_backup_email || 'jiljomathew.techhub@gmail.com';
       if (!this.settings.address) {
         this.settings.address = DEFAULT_BUSINESS_SETTINGS.address;
       }
@@ -688,15 +691,17 @@ class FlashDropStore {
     this.orders[orderIndex] = updatedOrder;
     this.saveToStorage();
 
-    // Trigger status change notification if order_status changed
+    // Trigger status change notification if order_status changed (quote_sent has dedicated branded quote email)
     if (updates.order_status && updates.order_status !== oldOrder.order_status) {
-      notificationService.notifyOrderStatusChanged(
-        updatedOrder,
-        oldOrder.order_status,
-        updatedOrder.order_status,
-        'Order updated via Dispatch Command Center',
-        this.settings
-      );
+      if (updates.order_status !== 'quote_sent') {
+        notificationService.notifyOrderStatusChanged(
+          updatedOrder,
+          oldOrder.order_status,
+          updatedOrder.order_status,
+          'Order updated via Dispatch Command Center',
+          this.settings
+        );
+      }
 
       const statusFormatted = updatedOrder.order_status.replace('_', ' ').toUpperCase();
       inAppNotificationService.dispatch({

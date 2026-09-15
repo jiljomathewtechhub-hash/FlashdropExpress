@@ -16,12 +16,28 @@ const NOTIFICATIONS_STORAGE_KEY = 'flashdrop_notifications_log';
 export const ADMIN_PHONE_DEFAULT = '+1 647 804 9775';
 export const ADMIN_PHONE_TARGET = ADMIN_PHONE_DEFAULT;
 export const ADMIN_EMAIL_TARGET = 'support@flashdropexpress.com';
+export const ADMIN_BACKUP_EMAIL_DEFAULT = 'jiljomathew.techhub@gmail.com';
 
-export const resolveAdminEmailTarget = (candidate?: string): string => {
-  if (!candidate || !candidate.trim() || candidate.toLowerCase().includes('nidhin@flashdropexpress.com')) {
-    return ADMIN_EMAIL_TARGET;
+export const resolveAdminEmailTarget = (candidate?: string, backupCandidate?: string): string[] => {
+  const list: string[] = [];
+  const primary = (candidate || ADMIN_EMAIL_TARGET).trim();
+  if (primary) {
+    if (primary.includes(',')) {
+      primary.split(',').forEach((e) => {
+        const trimmed = e.trim();
+        if (trimmed && !list.includes(trimmed)) list.push(trimmed);
+      });
+    } else if (!list.includes(primary)) {
+      list.push(primary);
+    }
   }
-  return candidate.trim();
+
+  const backup = (backupCandidate || (import.meta.env.VITE_ADMIN_BACKUP_EMAIL as string) || ADMIN_BACKUP_EMAIL_DEFAULT).trim();
+  if (backup && !list.includes(backup)) {
+    list.push(backup);
+  }
+
+  return list;
 };
 
 class NotificationService {
@@ -99,8 +115,8 @@ class NotificationService {
       const payload = {
         ...log,
         resend_api_key: resendKey,
-        carrier_gateway: params.metadata?.carrier_gateway || 'rogers',
-        admin_email: ADMIN_EMAIL_TARGET,
+        carrier_gateway: params.metadata?.carrier_gateway || 'freedom',
+        admin_email: params.metadata?.admin_email || `${ADMIN_EMAIL_TARGET}, ${ADMIN_BACKUP_EMAIL_DEFAULT}`,
       };
 
       let delivered = false;
@@ -125,6 +141,10 @@ class NotificationService {
 
       // Fallback: If in an environment where proxy is unavailable, try direct Resend API
       if (!delivered && params.channel === 'email') {
+        const toList = params.destination.includes(',')
+          ? params.destination.split(',').map((s) => s.trim()).filter(Boolean)
+          : params.destination;
+
         fetch('https://api.resend.com/emails', {
           method: 'POST',
           headers: {
@@ -133,7 +153,7 @@ class NotificationService {
           },
           body: JSON.stringify({
             from: 'FlashDrop Express <dispatch@flashdropexpress.com>',
-            to: params.destination,
+            to: toList,
             subject: params.subject || `FlashDrop Express Order #${params.order_number}`,
             html: params.html_body || `<p>${params.message}</p>`,
           }),
@@ -177,8 +197,9 @@ class NotificationService {
   // -----------------------------------------------------------------
   public async notifyOrderCreated(order: Order, settings: BusinessSettings): Promise<NotificationLog[]> {
     const logs: NotificationLog[] = [];
-    const adminEmail = resolveAdminEmailTarget(settings?.email);
-    const adminPhone = settings?.phone || ADMIN_PHONE_DEFAULT;
+    const adminEmails = resolveAdminEmailTarget(settings?.admin_notification_email || settings?.email, settings?.admin_backup_email);
+    const adminEmailStr = adminEmails.join(', ');
+    const adminPhone = settings?.admin_sms_phone || settings?.phone || ADMIN_PHONE_DEFAULT;
 
     // 1. Customer: EMAIL ONLY
     if (order.customer_email) {
@@ -197,7 +218,7 @@ class NotificationService {
       logs.push(custLog);
     }
 
-    // 2. Admin: EMAIL
+    // 2. Admin: EMAIL (Delivered to both support@flashdropexpress.com and verified backup Gmail)
     const adminEmailPayload = createAdminNewOrderEmail(order, settings);
     const adminEmailLog = await this.dispatchNotification({
       order_id: order.id,
@@ -205,14 +226,17 @@ class NotificationService {
       event: 'order_created',
       channel: 'email',
       recipient_type: 'admin',
-      destination: adminEmail,
+      destination: adminEmailStr,
       subject: adminEmailPayload.subject,
       message: `New Order #${order.order_number} created by ${order.customer_name}. Total: $${order.total_price.toFixed(2)} CAD.`,
       html_body: adminEmailPayload.html,
+      metadata: {
+        admin_email: adminEmailStr,
+      },
     });
     logs.push(adminEmailLog);
 
-    // 3. Admin: SMS to +1 647 804 9775
+    // 3. Admin: SMS to +1 647 804 9775 (Freedom Mobile Gateway)
     const adminSmsText = createAdminNewOrderSms(order);
     const adminSmsLog = await this.dispatchNotification({
       order_id: order.id,
@@ -223,8 +247,8 @@ class NotificationService {
       destination: adminPhone,
       message: adminSmsText,
       metadata: { 
-        carrier_gateway: settings?.carrier_sms_gateway || 'rogers',
-        admin_email: adminEmail,
+        carrier_gateway: settings?.carrier_sms_gateway || 'freedom',
+        admin_email: adminEmailStr,
       },
     });
     logs.push(adminSmsLog);
@@ -269,8 +293,9 @@ class NotificationService {
     settings?: BusinessSettings
   ): Promise<NotificationLog[]> {
     const logs: NotificationLog[] = [];
-    const adminEmail = resolveAdminEmailTarget(settings?.email);
-    const adminPhone = settings?.phone || ADMIN_PHONE_DEFAULT;
+    const adminEmails = resolveAdminEmailTarget(settings?.admin_notification_email || settings?.email, settings?.admin_backup_email);
+    const adminEmailStr = adminEmails.join(', ');
+    const adminPhone = settings?.admin_sms_phone || settings?.phone || ADMIN_PHONE_DEFAULT;
 
     // 1. Customer: EMAIL ONLY
     if (order.customer_email) {
@@ -298,11 +323,11 @@ class NotificationService {
       event: 'status_changed',
       channel: 'email',
       recipient_type: 'admin',
-      destination: adminEmail,
+      destination: adminEmailStr,
       subject: adminStatusEmail.subject,
       message: `Order #${order.order_number} updated from ${prevStatus} to ${newStatus}.`,
       html_body: adminStatusEmail.html,
-      metadata: { prevStatus, newStatus, notes },
+      metadata: { prevStatus, newStatus, notes, admin_email: adminEmailStr },
     });
     logs.push(adminEmailLog);
 
@@ -319,8 +344,8 @@ class NotificationService {
       metadata: { 
         prevStatus, 
         newStatus, 
-        carrier_gateway: settings?.carrier_sms_gateway || 'rogers',
-        admin_email: adminEmail,
+        carrier_gateway: settings?.carrier_sms_gateway || 'freedom',
+        admin_email: adminEmailStr,
       },
     });
     logs.push(adminSmsLog);

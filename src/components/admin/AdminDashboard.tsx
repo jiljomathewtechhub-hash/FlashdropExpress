@@ -227,7 +227,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
 
   // Metrics
   const totalRevenue = orders.reduce((sum, o) => sum + o.total_price, 0);
-  const pendingOrders = orders.filter((o) => o.order_status === 'submitted' || o.order_status === 'confirmed').length;
+  const pendingOrders = orders.filter((o) => o.order_status === 'submitted' || o.order_status === 'quote_sent' || o.order_status === 'confirmed').length;
   const inTransitOrders = orders.filter((o) => ['assigned', 'en_route_pickup', 'picked_up', 'in_transit'].includes(o.order_status)).length;
   const deliveredOrders = orders.filter((o) => o.order_status === 'delivered').length;
   const pendingRequests = requests.filter((r) => r.status === 'pending').length;
@@ -436,12 +436,12 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
         tax_amount: quoteFormData.tax_amount,
         total_price: quoteFormData.total_price,
         quote_notes: quoteFormData.quote_notes,
-        order_status: sendEmail ? 'quote_sent' : reviewingQuoteOrder.order_status,
-        quote_sent_at: sendEmail ? now : reviewingQuoteOrder.quote_sent_at,
+        order_status: 'quote_sent',
+        quote_sent_at: now,
       };
 
-      store.updateOrder(reviewingQuoteOrder.id, updatedData);
-      const updatedOrder = { ...reviewingQuoteOrder, ...updatedData } as Order;
+      const res = store.updateOrder(reviewingQuoteOrder.id, updatedData);
+      const updatedOrder = res || ({ ...reviewingQuoteOrder, ...updatedData, order_status: 'quote_sent' } as Order);
 
       if (sendEmail) {
         await notificationService.notifyQuoteSent(updatedOrder, settings);
@@ -2291,7 +2291,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
                   Admin SMS Canadian Carrier Gateway (+1 647 804 9775)
                 </label>
                 <select
-                  value={settings.carrier_sms_gateway || 'rogers'}
+                  value={settings.carrier_sms_gateway || 'freedom'}
                   onChange={(e) => {
                     const updated = { ...settings, carrier_sms_gateway: e.target.value };
                     setSettings(updated);
@@ -2299,13 +2299,41 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
                   }}
                   className="w-full bg-white border border-slate-300 px-3 py-2 rounded-xl text-slate-900 focus:outline-none focus:border-red-500"
                 >
+                  <option value="freedom">Freedom Mobile (6478049775@txt.freedommobile.ca) - Active</option>
                   <option value="rogers">Rogers / Fido (6478049775@pcs.rogers.com)</option>
                   <option value="bell">Bell / Virgin (6478049775@txt.bell.ca)</option>
                   <option value="telus">Telus / Koodo (6478049775@msg.telus.com)</option>
-                  <option value="freedom">Freedom Mobile (6478049775@txt.freedommobile.ca)</option>
                 </select>
                 <span className="text-[10px] text-slate-500 mt-1.5 block">
-                  Converts email alerts directly into 100% free SMS delivered to +1 647 804 9775 via Canadian carrier gateways.
+                  Converts alerts directly into 100% free SMS delivered to Freedom Mobile (+1 647 804 9775).
+                </span>
+              </div>
+
+              <div className="md:col-span-2 bg-amber-50/70 border border-amber-200 rounded-xl p-3.5">
+                <label className="block text-slate-800 font-bold mb-1">
+                  Admin Backup / Instant Alert Email (Guaranteed Delivery)
+                </label>
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <input
+                    type="email"
+                    value={settings.admin_backup_email || 'jiljomathew.techhub@gmail.com'}
+                    onChange={(e) => setSettings({ ...settings, admin_backup_email: e.target.value })}
+                    placeholder="e.g. jiljomathew.techhub@gmail.com"
+                    className="w-full bg-white border border-slate-300 px-3 py-2 rounded-xl text-slate-900 focus:outline-none focus:border-red-500 font-mono text-xs"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      store.updateSettings({ admin_backup_email: settings.admin_backup_email });
+                      alert('Admin Backup Email saved! Instant duplicate alerts will land here.');
+                    }}
+                    className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl whitespace-nowrap cursor-pointer transition shadow text-xs"
+                  >
+                    Save Backup Email
+                  </button>
+                </div>
+                <span className="text-[11px] text-slate-600 mt-1.5 block">
+                  While MX records are being added in Netlify DNS for <code className="font-bold">support@flashdropexpress.com</code>, all admin notifications and SMS alerts are also instantly routed to this verified inbox so you never miss an order.
                 </span>
               </div>
             </div>
@@ -2696,8 +2724,24 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
                 type="email"
                 value={settings.email}
                 onChange={(e) => setSettings({ ...settings, email: e.target.value })}
-                className="w-full bg-slate-50 border border-slate-300 p-2.5 rounded-xl text-slate-900 focus:outline-none focus:border-red-600"
+                className="w-full bg-slate-50 border border-slate-300 p-2.5 rounded-xl text-slate-900 focus:outline-none focus:border-red-600 font-mono"
               />
+            </div>
+
+            <div>
+              <label className="block text-slate-700 font-bold mb-1.5">
+                Admin Backup / Instant Alert Email (Gmail)
+              </label>
+              <input
+                type="email"
+                value={settings.admin_backup_email || 'jiljomathew.techhub@gmail.com'}
+                onChange={(e) => setSettings({ ...settings, admin_backup_email: e.target.value })}
+                placeholder="e.g. jiljomathew.techhub@gmail.com"
+                className="w-full bg-slate-50 border border-slate-300 p-2.5 rounded-xl text-slate-900 focus:outline-none focus:border-red-600 font-mono"
+              />
+              <span className="text-[10px] text-slate-500 mt-1 block">
+                Guarantees immediate receipt of order dispatches while domain MX records are configured.
+              </span>
             </div>
 
             <div>

@@ -30,6 +30,10 @@ export const handler = async (event: any) => {
     if (channel === 'email' && apiKey) {
       try {
         const senderDomain = 'FlashDrop Express <dispatch@flashdropexpress.com>';
+        const toRecipients = typeof destination === 'string' && destination.includes(',')
+          ? destination.split(',').map((e: string) => e.trim()).filter(Boolean)
+          : destination;
+
         const res = await fetch('https://api.resend.com/emails', {
           method: 'POST',
           headers: {
@@ -38,7 +42,7 @@ export const handler = async (event: any) => {
           },
           body: JSON.stringify({
             from: senderDomain,
-            to: destination,
+            to: toRecipients,
             subject: subject || `FlashDrop Express Order #${order_number || ''}`,
             html: html_body || `<p>${message}</p>`,
           }),
@@ -50,18 +54,18 @@ export const handler = async (event: any) => {
       }
     }
 
-    // 2. Carrier Email-to-SMS Gateway (100% Free Canadian SMS for +1 647 804 9775)
+    // 2. Carrier Email-to-SMS Gateway (100% Free Canadian SMS for +1 647 804 9775 - Freedom Mobile Default)
     if (channel === 'sms' && apiKey && destination) {
       try {
         const digits = destination.replace(/\D/g, '').slice(-10);
-        const gateway = payload.carrier_gateway || 'rogers';
+        const gateway = payload.carrier_gateway || 'freedom';
         const gatewayDomains: Record<string, string> = {
+          freedom: 'txt.freedommobile.ca',
           rogers: 'pcs.rogers.com',
           bell: 'txt.bell.ca',
           telus: 'msg.telus.com',
-          freedom: 'txt.freedommobile.ca',
         };
-        const domain = gatewayDomains[gateway] || 'pcs.rogers.com';
+        const domain = gatewayDomains[gateway] || 'txt.freedommobile.ca';
         const targetGatewayEmail = payload.carrier_gateway_email || `${digits}@${domain}`;
         const senderDomain = 'FlashDrop Express <dispatch@flashdropexpress.com>';
 
@@ -80,8 +84,12 @@ export const handler = async (event: any) => {
         });
 
         // Also send instant duplicate to admin email so message is never missed
-        const targetAdmin = (payload.admin_email && !payload.admin_email.includes('nidhin@flashdropexpress.com')) ? payload.admin_email : 'support@flashdropexpress.com';
+        const targetAdmin = payload.admin_email || process.env.ADMIN_EMAIL || process.env.VITE_ADMIN_EMAIL || 'support@flashdropexpress.com, jiljomathew.techhub@gmail.com';
         if (targetAdmin) {
+          const toAdminList = targetAdmin.includes(',')
+            ? targetAdmin.split(',').map((s: string) => s.trim()).filter(Boolean)
+            : targetAdmin;
+
           await fetch('https://api.resend.com/emails', {
             method: 'POST',
             headers: {
@@ -90,9 +98,9 @@ export const handler = async (event: any) => {
             },
             body: JSON.stringify({
               from: senderDomain,
-              to: targetAdmin,
+              to: toAdminList,
               subject: `[SMS URGENT ALERT] Order #${order_number || ''}`,
-              text: `[SMS notification sent to ${destination}]:\n\n${message}`,
+              text: `[SMS notification alert for ${destination} (${gateway.toUpperCase()})]:\n\n${message}`,
             }),
           }).catch(() => {});
         }
@@ -102,16 +110,20 @@ export const handler = async (event: any) => {
     }
 
     // 3. SMS delivery via Twilio if configured
-    if (channel === 'sms' && process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN && process.env.TWILIO_FROM_PHONE) {
+    const twilioSid = process.env.TWILIO_ACCOUNT_SID || payload.twilio_account_sid;
+    const twilioToken = process.env.TWILIO_AUTH_TOKEN || payload.twilio_auth_token;
+    const twilioFrom = process.env.TWILIO_FROM_PHONE || payload.twilio_from_phone;
+
+    if (channel === 'sms' && twilioSid && twilioToken && twilioFrom && destination) {
       try {
-        const twilioUrl = `https://api.twilio.com/2010-04-01/Accounts/${process.env.TWILIO_ACCOUNT_SID}/Messages.json`;
+        const twilioUrl = `https://api.twilio.com/2010-04-01/Accounts/${twilioSid}/Messages.json`;
         const bodyParams = new URLSearchParams({
           To: destination,
-          From: process.env.TWILIO_FROM_PHONE,
+          From: twilioFrom,
           Body: message,
         });
 
-        const authHeader = 'Basic ' + Buffer.from(`${process.env.TWILIO_ACCOUNT_SID}:${process.env.TWILIO_AUTH_TOKEN}`).toString('base64');
+        const authHeader = 'Basic ' + Buffer.from(`${twilioSid}:${twilioToken}`).toString('base64');
         await fetch(twilioUrl, {
           method: 'POST',
           headers: {

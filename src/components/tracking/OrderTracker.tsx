@@ -17,6 +17,7 @@ import { store } from '../../lib/store';
 import { generateOrderPdf } from '../../lib/pdf';
 import { formatDeliveryType } from '../../lib/notificationTemplates';
 import { TiltCard } from '../common/TiltCard';
+import confetti from 'canvas-confetti';
 
 interface OrderTrackerProps {
   initialOrderNumber?: string;
@@ -89,7 +90,7 @@ export const OrderTracker: React.FC<OrderTrackerProps> = ({ initialOrderNumber, 
     const ord = targetOrder || order;
     if (!ord) return;
 
-    if (ord.order_status !== 'quote_sent') {
+    if (ord.order_status !== 'quote_sent' && ord.order_status !== 'submitted') {
       if (ord.order_status === 'confirmed') {
         setQuoteConfirmedCelebration(true);
       }
@@ -107,6 +108,16 @@ export const OrderTracker: React.FC<OrderTrackerProps> = ({ initialOrderNumber, 
       if (updated) {
         setOrder(updated);
         setQuoteConfirmedCelebration(true);
+        try {
+          confetti({
+            particleCount: 130,
+            spread: 85,
+            origin: { y: 0.6 },
+            colors: ['#10B981', '#059669', '#34D399', '#C5161D', '#ffffff'],
+          });
+        } catch {
+          // ignore
+        }
       }
     } catch (err) {
       console.error('Failed to confirm quotation:', err);
@@ -135,7 +146,7 @@ export const OrderTracker: React.FC<OrderTrackerProps> = ({ initialOrderNumber, 
 
       if (hasConfirmIntent) {
         autoConfirmedRef.current = true;
-        if (order.order_status === 'quote_sent') {
+        if (order.order_status === 'quote_sent' || order.order_status === 'submitted') {
           handleConfirmQuote(order);
         } else if (order.order_status === 'confirmed') {
           setQuoteConfirmedCelebration(true);
