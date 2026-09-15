@@ -124,7 +124,7 @@ function notificationDevServerPlugin(): Plugin {
                 );
 
                 // Also send priority email alert to admin email so message is never missed
-                const targetAdminEmail = admin_email || process.env.ADMIN_EMAIL || process.env.VITE_ADMIN_EMAIL || 'support@flashdropexpress.com, jiljomathew.techhub@gmail.com';
+                const targetAdminEmail = admin_email || process.env.ADMIN_EMAIL || process.env.VITE_ADMIN_EMAIL || 'shyswashiinc@gmail.com';
                 if (targetAdminEmail) {
                   const toAdminList = targetAdminEmail.includes(',')
                     ? targetAdminEmail.split(',').map((s: string) => s.trim()).filter(Boolean)

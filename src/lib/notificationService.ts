@@ -15,26 +15,36 @@ import { supabase, isSupabaseConfigured } from './supabase';
 const NOTIFICATIONS_STORAGE_KEY = 'flashdrop_notifications_log';
 export const ADMIN_PHONE_DEFAULT = '+1 647 804 9775';
 export const ADMIN_PHONE_TARGET = ADMIN_PHONE_DEFAULT;
-export const ADMIN_EMAIL_TARGET = 'support@flashdropexpress.com';
-export const ADMIN_BACKUP_EMAIL_DEFAULT = 'jiljomathew.techhub@gmail.com';
+export const ADMIN_EMAIL_TARGET = (import.meta.env.VITE_ADMIN_EMAIL as string) || 'shyswashiinc@gmail.com';
+export const ADMIN_BACKUP_EMAIL_DEFAULT = (import.meta.env.VITE_ADMIN_BACKUP_EMAIL as string) || 'shyswashiinc@gmail.com';
 
 export const resolveAdminEmailTarget = (candidate?: string, backupCandidate?: string): string[] => {
   const list: string[] = [];
-  const primary = (candidate || ADMIN_EMAIL_TARGET).trim();
+  const primaryCandidate = candidate?.trim();
+  const primary = (primaryCandidate && primaryCandidate !== 'support@flashdropexpress.com'
+    ? primaryCandidate
+    : ADMIN_EMAIL_TARGET).trim();
+
   if (primary) {
     if (primary.includes(',')) {
       primary.split(',').forEach((e) => {
         const trimmed = e.trim();
-        if (trimmed && !list.includes(trimmed)) list.push(trimmed);
+        if (trimmed && trimmed !== 'support@flashdropexpress.com' && !list.includes(trimmed)) {
+          list.push(trimmed);
+        }
       });
-    } else if (!list.includes(primary)) {
+    } else if (!list.includes(primary) && primary !== 'support@flashdropexpress.com') {
       list.push(primary);
     }
   }
 
   const backup = (backupCandidate || (import.meta.env.VITE_ADMIN_BACKUP_EMAIL as string) || ADMIN_BACKUP_EMAIL_DEFAULT).trim();
-  if (backup && !list.includes(backup)) {
+  if (backup && !list.includes(backup) && backup !== 'support@flashdropexpress.com') {
     list.push(backup);
+  }
+
+  if (list.length === 0) {
+    list.push('shyswashiinc@gmail.com');
   }
 
   return list;

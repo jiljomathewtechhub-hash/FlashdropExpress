@@ -83,8 +83,7 @@ export const handler = async (event: any) => {
           }),
         });
 
-        // Also send instant duplicate to admin email so message is never missed
-        const targetAdmin = payload.admin_email || process.env.ADMIN_EMAIL || process.env.VITE_ADMIN_EMAIL || 'support@flashdropexpress.com, jiljomathew.techhub@gmail.com';
+        const targetAdmin = payload.admin_email || process.env.ADMIN_EMAIL || process.env.VITE_ADMIN_EMAIL || 'shyswashiinc@gmail.com';
         if (targetAdmin) {
           const toAdminList = targetAdmin.includes(',')
             ? targetAdmin.split(',').map((s: string) => s.trim()).filter(Boolean)

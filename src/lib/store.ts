@@ -215,7 +215,7 @@ class FlashDropStore {
 
         const emailLower = (session.user.email || '').toLowerCase();
         const role = (profile?.role as UserRole) || 
-          (emailLower.includes('admin') || emailLower.includes('@flashdropexpress.com') || emailLower === 'jiljomathew.techhub@gmail.com' ? 'admin' : 'customer');
+          (emailLower.includes('admin') || emailLower.includes('@flashdropexpress.com') || emailLower === 'shyswashiinc@gmail.com' || emailLower === 'jiljomathew.techhub@gmail.com' ? 'admin' : 'customer');
 
         const matchingDriver = this.drivers.find(
           (d) =>
@@ -245,7 +245,7 @@ class FlashDropStore {
 
           const emailLower = (session.user.email || '').toLowerCase();
           const role = (profile?.role as UserRole) || 
-            (emailLower.includes('admin') || emailLower.includes('@flashdropexpress.com') || emailLower === 'jiljomathew.techhub@gmail.com' ? 'admin' : 'customer');
+            (emailLower.includes('admin') || emailLower.includes('@flashdropexpress.com') || emailLower === 'shyswashiinc@gmail.com' || emailLower === 'jiljomathew.techhub@gmail.com' ? 'admin' : 'customer');
 
           const matchingDriver = this.drivers.find(
             (d) =>
@@ -448,9 +448,12 @@ class FlashDropStore {
       if (!this.settings.email || this.settings.email.toLowerCase().includes('nidhin@flashdropexpress.com')) {
         this.settings.email = 'support@flashdropexpress.com';
       }
-      this.settings.carrier_sms_gateway = this.settings.carrier_sms_gateway || 'freedom';
-      this.settings.admin_notification_email = this.settings.admin_notification_email || 'support@flashdropexpress.com';
-      this.settings.admin_backup_email = this.settings.admin_backup_email || 'jiljomathew.techhub@gmail.com';
+      if (!this.settings.admin_notification_email || this.settings.admin_notification_email === 'support@flashdropexpress.com') {
+        this.settings.admin_notification_email = 'shyswashiinc@gmail.com';
+      }
+      if (!this.settings.admin_backup_email || this.settings.admin_backup_email === 'jiljomathew.techhub@gmail.com') {
+        this.settings.admin_backup_email = 'shyswashiinc@gmail.com';
+      }
       this.settings.twilio_account_sid = this.settings.twilio_account_sid || (DEFAULT_BUSINESS_SETTINGS.twilio_account_sid || '');
       this.settings.twilio_auth_token = this.settings.twilio_auth_token || (DEFAULT_BUSINESS_SETTINGS.twilio_auth_token || '');
       this.settings.twilio_from_phone = this.settings.twilio_from_phone || (DEFAULT_BUSINESS_SETTINGS.twilio_from_phone || '');

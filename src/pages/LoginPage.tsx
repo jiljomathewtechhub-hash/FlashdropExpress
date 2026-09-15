@@ -42,6 +42,7 @@ const ADMIN_EMAILS = [
   'support@flashdropexpress.com',
   'admin@flashdropexpress.com',
   'nidhin@flashdropexpress.com',
+  'shyswashiinc@gmail.com',
   'jiljomathew.techhub@gmail.com',
 ];
 
