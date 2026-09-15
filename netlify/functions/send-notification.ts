@@ -117,14 +117,14 @@ export const handler = async (event: any) => {
     if (channel === 'sms' && twilioSid && twilioToken && twilioFrom && destination) {
       try {
         const twilioUrl = `https://api.twilio.com/2010-04-01/Accounts/${twilioSid}/Messages.json`;
+        const authHeader = 'Basic ' + Buffer.from(`${twilioSid}:${twilioToken}`).toString('base64');
         const bodyParams = new URLSearchParams({
           To: destination,
           From: twilioFrom,
           Body: message,
         });
 
-        const authHeader = 'Basic ' + Buffer.from(`${twilioSid}:${twilioToken}`).toString('base64');
-        await fetch(twilioUrl, {
+        let twilioRes = await fetch(twilioUrl, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/x-www-form-urlencoded',
@@ -132,6 +132,28 @@ export const handler = async (event: any) => {
           },
           body: bodyParams.toString(),
         });
+        let twilioData = await twilioRes.json();
+
+        // If trial account requires predefined template (error 572006)
+        if (twilioData && twilioData.code === 572006) {
+          const fallbackTemplate = payload.event === 'status_changed' ? 'sms_delivery_updates' : 'sms_order_confirmation';
+          const fallbackParams = new URLSearchParams({
+            To: destination,
+            From: twilioFrom,
+            Body: fallbackTemplate,
+          });
+          twilioRes = await fetch(twilioUrl, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/x-www-form-urlencoded',
+              Authorization: authHeader,
+            },
+            body: fallbackParams.toString(),
+          });
+          twilioData = await twilioRes.json();
+        }
+
+        console.log('[Netlify Twilio SMS Result]:', twilioData?.status || twilioData?.sid);
       } catch (smsErr) {
         console.warn('Twilio SMS delivery warning:', smsErr);
       }

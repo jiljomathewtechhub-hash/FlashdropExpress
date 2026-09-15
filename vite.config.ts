@@ -158,8 +158,7 @@ function notificationDevServerPlugin(): Plugin {
                       From: twilioFrom,
                       Body: message,
                     });
-                    const authHeader = 'Basic ' + Buffer.from(`${twilioSid}:${twilioToken}`).toString('base64');
-                    const twilioRes = await fetch(twilioUrl, {
+                    let twilioRes = await fetch(twilioUrl, {
                       method: 'POST',
                       headers: {
                         'Content-Type': 'application/x-www-form-urlencoded',
@@ -167,8 +166,28 @@ function notificationDevServerPlugin(): Plugin {
                       },
                       body: bodyParams.toString(),
                     });
-                    const twilioData = await twilioRes.json();
-                    console.log(`[Vite Dev Server] ✓ Twilio SMS dispatched (${twilioRes.status}):`, twilioData);
+                    let twilioData = await twilioRes.json();
+
+                    // If trial account requires predefined template (error 572006)
+                    if (twilioData && twilioData.code === 572006) {
+                      const fallbackTemplate = payload.event === 'status_changed' ? 'sms_delivery_updates' : 'sms_order_confirmation';
+                      const fallbackParams = new URLSearchParams({
+                        To: destination,
+                        From: twilioFrom,
+                        Body: fallbackTemplate,
+                      });
+                      twilioRes = await fetch(twilioUrl, {
+                        method: 'POST',
+                        headers: {
+                          'Content-Type': 'application/x-www-form-urlencoded',
+                          Authorization: authHeader,
+                        },
+                        body: fallbackParams.toString(),
+                      });
+                      twilioData = await twilioRes.json();
+                    }
+
+                    console.log(`[Vite Dev Server] ✓ Twilio SMS dispatched (${twilioRes.status}):`, twilioData?.status || twilioData?.sid);
                   } catch (err) {
                     console.warn('[Vite Dev Server] Twilio SMS dispatch warning:', err);
                   }
