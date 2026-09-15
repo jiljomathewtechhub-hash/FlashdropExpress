@@ -51,6 +51,7 @@ export const Navbar: React.FC<NavbarProps> = ({ currentTab, onNavigate }) => {
     { id: 'services', label: 'Services' },
     { id: 'service-areas', label: 'Coverage Area' },
     { id: 'vehicles', label: 'Fleet & Cargo' },
+    { id: 'terms', label: 'Terms & Policies' },
     { id: 'order', label: 'Request a Quote' },
     { id: 'tracking', label: 'Track Order' },
     { id: 'contact', label: 'Contact' },

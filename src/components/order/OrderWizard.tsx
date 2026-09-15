@@ -1379,9 +1379,22 @@ export const OrderWizard: React.FC<OrderWizardProps> = ({ initialData, onNavigat
               </div>
             </div>
 
-            {/* Submission Notice */}
-            <div className="p-4 rounded-xl bg-slate-100 border border-slate-200 text-[11px] text-slate-600 leading-relaxed">
-              By clicking <strong>&quot;Submit Quote Request&quot;</strong>, your delivery specifications are transmitted directly to the FlashDrop GTA operations desk. An official reference code starting from <strong>#FD-1001</strong> will be generated for tracking your request.
+            {/* Submission Notice & Terms Agreement */}
+            <div className="p-4 rounded-xl bg-slate-100 border border-slate-200 text-[11px] text-slate-600 leading-relaxed space-y-2">
+              <div>
+                By clicking <strong>&quot;Submit Quote Request&quot;</strong>, you acknowledge and agree to FlashDrop Express&apos;s{' '}
+                <button
+                  type="button"
+                  onClick={() => onNavigate('terms')}
+                  className="text-red-600 hover:text-red-800 font-bold underline cursor-pointer"
+                >
+                  Important Service Terms &amp; Conditions
+                </button>{' '}
+                (including standard curbside delivery, first 20 minutes waiting included, and Highway 407 tolls billed at cost).
+              </div>
+              <div className="text-[10px] text-slate-500 pt-1 border-t border-slate-200/60">
+                An official reference code starting from <strong>#FD-1001</strong> will be generated immediately for tracking your request.
+              </div>
             </div>
           </div>
         )}

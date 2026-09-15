@@ -249,6 +249,14 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
               </li>
               <li>
                 <button
+                  onClick={() => onNavigate('terms')}
+                  className="py-1 text-slate-700 hover:text-red-600 font-semibold transition-smooth cursor-pointer block text-left"
+                >
+                  Terms &amp; Conditions
+                </button>
+              </li>
+              <li>
+                <button
                   onClick={() => {
                     onNavigate('home');
                     setTimeout(() => {
@@ -287,8 +295,15 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
             &copy; {new Date().getFullYear()} FlashDrop Express. All rights reserved.
             Domain: flashdropexpress.com
           </div>
-          <div className="flex items-center space-x-4 mt-4 sm:mt-0">
-            <span>Payment Method: Pay Later on Delivery</span>
+          <div className="flex flex-wrap items-center space-x-3 mt-4 sm:mt-0">
+            <button
+              onClick={() => onNavigate('terms')}
+              className="hover:text-red-600 font-medium transition cursor-pointer underline underline-offset-2"
+            >
+              Terms &amp; Conditions
+            </button>
+            <span>•</span>
+            <span>Payment: Pay Later on Delivery</span>
             <span>•</span>
             <span>All rates in CAD subject to HST</span>
           </div>

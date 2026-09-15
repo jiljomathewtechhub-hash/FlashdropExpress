@@ -8,6 +8,7 @@ import { VehiclesPage } from './pages/VehiclesPage';
 import { PricingPage } from './pages/PricingPage';
 import { ContactPage } from './pages/ContactPage';
 import { LoginPage } from './pages/LoginPage';
+import { TermsPage } from './pages/TermsPage';
 import { OrderWizard } from './components/order/OrderWizard';
 import { OrderTracker } from './components/tracking/OrderTracker';
 import { CustomerPortal } from './components/customer/CustomerPortal';
@@ -26,6 +27,7 @@ const VALID_TABS = [
   'service-areas',
   'vehicles',
   'pricing',
+  'terms',
   'order',
   'tracking',
   'contact',
@@ -201,6 +203,7 @@ export default function App() {
         {currentTab === 'service-areas' && <ServiceAreasPage onNavigate={handleNavigate} />}
         {currentTab === 'vehicles' && <VehiclesPage onNavigate={handleNavigate} />}
         {currentTab === 'pricing' && <PricingPage onNavigate={handleNavigate} />}
+        {currentTab === 'terms' && <TermsPage onNavigate={handleNavigate} />}
         {currentTab === 'order' && <OrderWizard initialData={navParam} onNavigate={handleNavigate} />}
         {currentTab === 'tracking' && (
           <OrderTracker

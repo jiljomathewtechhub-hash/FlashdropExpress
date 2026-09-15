@@ -194,6 +194,25 @@ export const PricingPage: React.FC<PricingPageProps> = ({ onNavigate }) => {
             </div>
           </TiltCard>
         </div>
+
+        {/* Important Service Terms Callout Banner */}
+        <div className="bg-white border border-slate-200 rounded-2xl p-6 sm:p-8 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="space-y-1 text-center sm:text-left">
+            <h4 className="font-bold text-slate-900 text-base font-['Outfit'] flex items-center justify-center sm:justify-start space-x-2">
+              <ShieldCheck className="w-5 h-5 text-red-600" />
+              <span>Important Service Terms &amp; Conditions</span>
+            </h4>
+            <p className="text-xs text-slate-600 max-w-xl">
+              Understand our transparent policies regarding included waiting time (first 20 min free, $25/hr after), curbside loading, route adjustments, and 407 ETR toll reimbursement.
+            </p>
+          </div>
+          <button
+            onClick={() => onNavigate('terms')}
+            className="px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-xl whitespace-nowrap cursor-pointer transition shadow-sm shrink-0"
+          >
+            Review All 13 Terms &rarr;
+          </button>
+        </div>
       </div>
     </div>
   );
