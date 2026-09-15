@@ -5,6 +5,7 @@ export type OrderStatus =
   | 'quote_sent'
   | 'confirmed'
   | 'assigned'
+  | 'accepted'
   | 'en_route_pickup'
   | 'picked_up'
   | 'in_transit'
@@ -130,6 +131,7 @@ export interface Order {
   order_status: OrderStatus;
   assigned_driver_id?: string | null;
   assigned_driver_name?: string | null;
+  driver_accepted_at?: string;
 
   created_at: string;
   updated_at: string;

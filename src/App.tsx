@@ -9,6 +9,7 @@ import { PricingPage } from './pages/PricingPage';
 import { ContactPage } from './pages/ContactPage';
 import { LoginPage } from './pages/LoginPage';
 import { TermsPage } from './pages/TermsPage';
+import { AboutPage } from './pages/AboutPage';
 import { OrderWizard } from './components/order/OrderWizard';
 import { OrderTracker } from './components/tracking/OrderTracker';
 import { CustomerPortal } from './components/customer/CustomerPortal';
@@ -23,6 +24,7 @@ import { NotificationDetailModal } from './components/common/NotificationDetailM
 
 const VALID_TABS = [
   'home',
+  'about',
   'services',
   'service-areas',
   'vehicles',
@@ -199,6 +201,7 @@ export default function App() {
       {/* Main Content View */}
       <main className="flex-grow relative z-10 pb-20 sm:pb-0">
         {currentTab === 'home' && <HomePage onNavigate={handleNavigate} />}
+        {currentTab === 'about' && <AboutPage onNavigate={handleNavigate} />}
         {currentTab === 'services' && <ServicesPage onNavigate={handleNavigate} />}
         {currentTab === 'service-areas' && <ServiceAreasPage onNavigate={handleNavigate} />}
         {currentTab === 'vehicles' && <VehiclesPage onNavigate={handleNavigate} />}

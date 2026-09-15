@@ -1,4 +1,4 @@
-import { Order, OrderStatus, BusinessSettings } from '../types/order';
+import { Order, OrderStatus, BusinessSettings, Driver } from '../types/order';
 
 const ADMIN_PHONE_DEFAULT = '+1 647 804 9775';
 const BASE_DOMAIN = 'https://flashdropexpress.com';
@@ -386,6 +386,7 @@ export const createCustomerStatusEmail = (order: Order, prevStatus: OrderStatus,
     quote_sent: 'Official Price Quotation Ready',
     confirmed: 'Order Confirmed by Dispatch',
     assigned: 'Driver Assigned & Scheduled',
+    accepted: 'Driver Assigned & Accepted Run',
     en_route_pickup: 'Driver En Route to Pickup Site',
     picked_up: 'Cargo Loaded & Picked Up',
     in_transit: 'In Transit to Final Destination',
@@ -400,6 +401,7 @@ export const createCustomerStatusEmail = (order: Order, prevStatus: OrderStatus,
     quote_sent: 'An official itemized price quote for your delivery has been prepared and is ready for your confirmation.',
     confirmed: 'Your order has been officially verified and accepted for delivery.',
     assigned: `A fleet courier (${order.assigned_driver_name || 'Assigned Driver'}) has been dispatched to your order.`,
+    accepted: `Your assigned courier (${order.assigned_driver_name || 'Assigned Driver'}) has accepted the dispatch run and is preparing for pickup.`,
     en_route_pickup: 'The assigned driver is driving toward the designated pickup site.',
     picked_up: 'Your cargo has been safely inspected, loaded, and is now secured in the vehicle.',
     in_transit: 'Your shipment is actively in transit on the road toward the delivery destination.',
@@ -809,4 +811,142 @@ export const createPasswordResetEmail = (
     html: wrapHtmlEmail(subject, preheader, contentHtml),
   };
 };
+
+// -------------------------------------------------------------
+// 8. DRIVER: Job / Delivery Assigned Notification Email
+// -------------------------------------------------------------
+export const createDriverAssignedEmail = (
+  order: Order,
+  driver: Driver,
+  settings?: BusinessSettings
+): { subject: string; plain: string; html: string } => {
+  const serviceLevel = formatDeliveryType(order.delivery_time_option);
+  const subject = `[DISPATCH ASSIGNED] New Run #${order.order_number} Assigned to You — Action Required to Accept`;
+  const preheader = `New delivery run #${order.order_number} (${order.vehicle_name} in ${order.service_area}). Accept assignment on your Driver Portal to unlock route, cargo manifest, and payout.`;
+  const driverPortalUrl = `${getOrigin()}/#driver`;
+
+  const plain = `FLASHDROP EXPRESS — DISPATCH ASSIGNMENT NOTICE
+--------------------------------------------------
+Driver: ${driver.name}
+Assigned Order: #${order.order_number}
+Service Priority: ${serviceLevel}
+Assigned Vehicle Class: ${order.vehicle_name}
+General Service Area: ${order.service_area}
+Scheduled Pickup Window: ${order.pickup_date} at ${order.pickup_time}
+
+IMPORTANT NOTICE — DISPATCH PROTECTION:
+To ensure fair distribution of all delivery runs, full route street addresses, exact distance, customer contact information, cargo manifest, and trip compensation remain locked until you accept the assignment in your Driver Dashboard.
+
+👉 ACCEPT ASSIGNMENT & UNLOCK MANIFEST:
+${driverPortalUrl}
+
+Once accepted in your Driver Portal, you will immediately unlock:
+• Full pickup & delivery street addresses
+• Google Maps turn-by-turn navigation
+• Shipper & receiver direct contact phone numbers
+• Itemized cargo specifications & weights
+• Trip rate & compensation breakdown
+
+(Note: Digital photo proof of delivery is mandatory upon drop-off.)`;
+
+  const contentHtml = `
+    <div style="text-align: center; margin-bottom: 24px;">
+      <span class="badge badge-blue">New Dispatch Assignment &bull; Awaiting Acceptance</span>
+      <h2 style="font-size: 22px; font-weight: 800; color: #0F172A; margin: 12px 0 4px 0;">
+        Order #${order.order_number} Assigned
+      </h2>
+      <p style="font-size: 13px; color: #64748B; margin: 0;">
+        Assigned Courier: <strong style="color: #0F172A;">${driver.name}</strong> &bull; Vehicle: <strong>${order.vehicle_name}</strong>
+      </p>
+    </div>
+
+    <!-- Security & Fair Dispatch Notice -->
+    <div style="background-color: #FEF3C7; border: 1px solid #FCD34D; border-left: 4px solid #D97706; border-radius: 12px; padding: 14px 18px; margin-bottom: 22px;">
+      <div style="font-size: 12px; font-weight: 800; color: #92400E; text-transform: uppercase; margin-bottom: 4px; letter-spacing: 0.5px;">
+        🔒 Fair Dispatch Protection Active
+      </div>
+      <p style="font-size: 13px; color: #78350F; margin: 0; line-height: 1.5;">
+        <strong>Attention ${driver.name}:</strong> You have been allocated a new delivery run. To ensure reliable and unbiased dispatch across our fleet, full route street addresses, customer contact numbers, cargo specifications, and payout details remain <strong>locked until you accept this assignment</strong> in your Driver Portal.
+      </p>
+    </div>
+
+    <!-- High-Level Dispatch Specifications -->
+    <div class="card">
+      <h3 style="font-size: 13px; text-transform: uppercase; letter-spacing: 1px; color: #C5161D; margin: 0 0 14px 0; font-weight: 800;">
+        Dispatch Allocation Overview
+      </h3>
+      <div class="row">
+        <span class="row-label">Order Reference:</span>
+        <span class="row-value" style="font-family: monospace; color: #C5161D; font-weight: 700;">#${order.order_number}</span>
+      </div>
+      <div class="row">
+        <span class="row-label">Service Priority:</span>
+        <span class="row-value">${serviceLevel}</span>
+      </div>
+      <div class="row">
+        <span class="row-label">Required Vehicle:</span>
+        <span class="row-value" style="font-weight: 700; color: #0F172A;">${order.vehicle_name}</span>
+      </div>
+      <div class="row">
+        <span class="row-label">Scheduled Pickup:</span>
+        <span class="row-value" style="font-weight: 700; color: #0F172A;">${order.pickup_date} at ${order.pickup_time}</span>
+      </div>
+      <div class="row">
+        <span class="row-label">General Service Area:</span>
+        <span class="row-value">${order.service_area}</span>
+      </div>
+    </div>
+
+    <!-- Locked Details Card -->
+    <div class="card" style="background-color: #F8FAFC; border: 1px dashed #CBD5E1;">
+      <div style="font-size: 12px; font-weight: 800; color: #475569; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px;">
+        🔒 Locked Delivery Manifest (Accept to Reveal)
+      </div>
+
+      <div class="row" style="color: #64748B;">
+        <span class="row-label">Pickup Street Address:</span>
+        <span class="row-value" style="font-style: italic; color: #94A3B8;">•••••••••••• (Locked until Accepted)</span>
+      </div>
+      <div class="row" style="color: #64748B;">
+        <span class="row-label">Delivery Destination:</span>
+        <span class="row-value" style="font-style: italic; color: #94A3B8;">•••••••••••• (Locked until Accepted)</span>
+      </div>
+      <div class="row" style="color: #64748B;">
+        <span class="row-label">Total Distance:</span>
+        <span class="row-value" style="font-style: italic; color: #94A3B8;">•••• km (${order.service_area})</span>
+      </div>
+      <div class="row" style="color: #64748B;">
+        <span class="row-label">Cargo Manifest & Specs:</span>
+        <span class="row-value" style="font-style: italic; color: #94A3B8;">•••••••••••• (Locked until Accepted)</span>
+      </div>
+      <div class="row" style="color: #64748B;">
+        <span class="row-label">Shipper & Receiver Phone:</span>
+        <span class="row-value" style="font-style: italic; color: #94A3B8;">•••••••••••• (Locked until Accepted)</span>
+      </div>
+      <div class="row" style="color: #64748B;">
+        <span class="row-label">Trip Compensation / Rate:</span>
+        <span class="row-value" style="font-style: italic; color: #94A3B8;">$•••••• CAD (Locked until Accepted)</span>
+      </div>
+    </div>
+
+    <!-- Action CTA -->
+    <div style="text-align: center; margin: 28px 0 16px 0;">
+      <a href="${driverPortalUrl}" class="button" style="padding: 16px 36px; font-size: 14px; display: inline-block; background-color: #059669; text-decoration: none; border-radius: 10px; font-weight: 800; color: #FFFFFF !important;">
+        👉 Accept Assignment on Driver Portal &rarr;
+      </a>
+      <p style="font-size: 11px; color: #64748B; margin-top: 10px;">
+        Accepting unlocks full addresses, GPS turn-by-turn navigation, shipper contacts, and payout.
+        <br />
+        Digital photo proof of delivery is mandatory upon drop-off.
+      </p>
+    </div>
+  `;
+
+  return {
+    subject,
+    plain,
+    html: wrapHtmlEmail(subject, preheader, contentHtml),
+  };
+};
+
 

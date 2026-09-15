@@ -241,6 +241,14 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
               </li>
               <li>
                 <button
+                  onClick={() => onNavigate('about')}
+                  className="py-1 text-slate-600 hover:text-red-600 transition-smooth cursor-pointer block text-left"
+                >
+                  About FlashDrop Express
+                </button>
+              </li>
+              <li>
+                <button
                   onClick={() => onNavigate('pricing')}
                   className="py-1 text-slate-600 hover:text-slate-900 transition-smooth cursor-pointer block text-left"
                 >
@@ -297,8 +305,15 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
           </div>
           <div className="flex flex-wrap items-center space-x-3 mt-4 sm:mt-0">
             <button
+              onClick={() => onNavigate('about')}
+              className="hover:text-red-600 font-medium transition cursor-pointer"
+            >
+              About Us
+            </button>
+            <span>•</span>
+            <button
               onClick={() => onNavigate('terms')}
-              className="hover:text-red-600 font-medium transition cursor-pointer underline underline-offset-2"
+              className="hover:text-red-600 font-medium transition cursor-pointer"
             >
               Terms &amp; Conditions
             </button>

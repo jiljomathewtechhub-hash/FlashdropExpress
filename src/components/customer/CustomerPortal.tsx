@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import {
   Package,
   Clock,
@@ -32,6 +33,17 @@ export const CustomerPortal: React.FC<CustomerPortalProps> = ({ onNavigate }) =>
   const [modalOrder, setModalOrder] = useState<Order | null>(null);
   const [requestReason, setRequestReason] = useState('');
   const [requestSent, setRequestSent] = useState(false);
+
+  // Prevent background page scrolling when request modal is open
+  useEffect(() => {
+    if (modalType && modalOrder) {
+      const originalOverflow = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+      return () => {
+        document.body.style.overflow = originalOverflow;
+      };
+    }
+  }, [modalType, modalOrder]);
 
   // Address book (starts empty, persisted in localStorage)
   const [savedAddresses, setSavedAddresses] = useState<Array<{ id: string; label: string; address: string }>>(() => {
@@ -439,9 +451,9 @@ export const CustomerPortal: React.FC<CustomerPortalProps> = ({ onNavigate }) =>
       </div>
 
       {/* Change / Cancel Request Modal */}
-      {modalType && modalOrder && (
-        <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white border border-slate-200 rounded-2xl p-6 max-w-md w-full shadow-xl space-y-4">
+      {modalType && modalOrder && createPortal(
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto animate-fade-in">
+          <div className="bg-white border border-slate-200 rounded-2xl p-6 max-w-md w-full shadow-2xl space-y-4 my-auto">
             <h3 className="text-lg font-bold text-slate-900 font-['Outfit']">
               {modalType === 'cancel' ? 'Request Cancellation' : 'Request Order Modification'}
             </h3>
@@ -478,7 +490,7 @@ export const CustomerPortal: React.FC<CustomerPortalProps> = ({ onNavigate }) =>
                   </button>
                   <button
                     type="submit"
-                    className="px-5 py-2 bg-[#C5161D] text-white rounded-xl text-xs font-bold hover:bg-[#A51218] shadow-md shadow-red-950/40 transition"
+                    className="px-5 py-2 bg-[#C5161D] text-white rounded-xl text-xs font-bold hover:bg-[#A51218] shadow-md shadow-red-950/40 transition cursor-pointer"
                   >
                     Send to Dispatch
                   </button>
@@ -486,7 +498,8 @@ export const CustomerPortal: React.FC<CustomerPortalProps> = ({ onNavigate }) =>
               )}
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

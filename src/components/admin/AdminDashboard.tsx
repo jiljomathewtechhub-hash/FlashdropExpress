@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import {
   Shield,
   Truck,
@@ -228,7 +229,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
   // Metrics
   const totalRevenue = orders.reduce((sum, o) => sum + o.total_price, 0);
   const pendingOrders = orders.filter((o) => o.order_status === 'submitted' || o.order_status === 'quote_sent' || o.order_status === 'confirmed').length;
-  const inTransitOrders = orders.filter((o) => ['assigned', 'en_route_pickup', 'picked_up', 'in_transit'].includes(o.order_status)).length;
+  const inTransitOrders = orders.filter((o) => ['assigned', 'accepted', 'en_route_pickup', 'picked_up', 'in_transit'].includes(o.order_status)).length;
   const deliveredOrders = orders.filter((o) => o.order_status === 'delivered').length;
   const pendingRequests = requests.filter((r) => r.status === 'pending').length;
 
@@ -258,19 +259,29 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
 
   const handleProvisionStaffSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newStaffName.trim() || !newStaffEmail.trim() || !newStaffPassword.trim()) {
-      setProvisionError('Full Name, Email, and Initial Password are required.');
-      return;
-    }
-
-    setIsProvisioning(true);
-    setProvisionError(null);
 
     const emailTrimmed = newStaffEmail.trim().toLowerCase();
     const nameTrimmed = newStaffName.trim();
     const phoneTrimmed = newStaffPhone.trim() || '+1 (647) 555-0100';
     const vehicleType = staffRole === 'driver' ? newStaffVehicle : 'Operations Desk / Dispatch';
     const plate = staffRole === 'driver' ? (newStaffPlate.trim() || 'ON-FLEET') : undefined;
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailTrimmed) {
+      setProvisionError('A valid Email Address is mandatory for all staff and driver accounts to receive dispatch assignments.');
+      return;
+    }
+    if (!emailRegex.test(emailTrimmed)) {
+      setProvisionError('Please enter a valid email address format (e.g. driver.name@example.com).');
+      return;
+    }
+    if (!nameTrimmed || !newStaffPassword.trim()) {
+      setProvisionError('Full Legal Name, Email Address, and Initial Password are required.');
+      return;
+    }
+
+    setIsProvisioning(true);
+    setProvisionError(null);
 
     let newUserId: string | undefined;
 
@@ -541,8 +552,27 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
     store.updatePricingTier(index, updated[index]);
   };
 
+  // Prevent background page scrolling when any admin modal is open
+  const isAnyModalOpen = Boolean(
+    editingOrder ||
+    previewNotification ||
+    viewingStaffProfile ||
+    reviewingQuoteOrder ||
+    assignModalOrder
+  );
+
+  useEffect(() => {
+    if (isAnyModalOpen) {
+      const originalOverflow = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+      return () => {
+        document.body.style.overflow = originalOverflow;
+      };
+    }
+  }, [isAnyModalOpen]);
+
   return (
-    <div className="py-8 px-4 sm:px-6 max-w-7xl mx-auto space-y-7 animate-fade-in">
+    <div className="py-8 px-4 sm:px-6 max-w-7xl mx-auto space-y-7">
       {/* Top Banner */}
       <div className="bg-white border border-slate-200 rounded-2xl p-5 sm:p-7 flex flex-col md:flex-row items-start md:items-center justify-between gap-5 shadow-xl">
         <div className="flex items-center space-x-4">
@@ -679,7 +709,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
                 <option value="submitted">Quote Requested (Submitted)</option>
                 <option value="quote_sent">Quote Sent to Client</option>
                 <option value="confirmed">Confirmed</option>
-                <option value="assigned">Assigned</option>
+                <option value="assigned">Assigned (Awaiting Acceptance)</option>
+                <option value="accepted">Accepted by Driver</option>
                 <option value="in_transit">In Transit</option>
                 <option value="delivered">Delivered</option>
                 <option value="cancellation_requested">Cancellation Requested</option>
@@ -735,10 +766,15 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
                               <Clock className="w-2.5 h-2.5" />
                               <span>Quote Requested</span>
                             </span>
-                          ) : ord.order_status === 'quote_sent' ? (
-                            <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-purple-50 text-purple-800 border border-purple-300 inline-flex items-center space-x-1">
-                              <Send className="w-2.5 h-2.5" />
-                              <span>Quote Sent</span>
+                          ) : ord.order_status === 'accepted' ? (
+                            <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-cyan-50 text-cyan-800 border border-cyan-300 inline-flex items-center space-x-1">
+                              <CheckCircle2 className="w-2.5 h-2.5 text-cyan-600" />
+                              <span>Accepted by Driver</span>
+                            </span>
+                          ) : ord.order_status === 'assigned' ? (
+                            <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-blue-50 text-blue-800 border border-blue-300 inline-flex items-center space-x-1">
+                              <Clock className="w-2.5 h-2.5 text-blue-600" />
+                              <span>Assigned (Pending)</span>
                             </span>
                           ) : (
                             <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-slate-100 text-slate-700 border border-slate-300">
@@ -1055,17 +1091,23 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
                   </div>
 
                   <div>
-                    <label className="block text-[11px] font-semibold text-slate-700 mb-1">
-                      Login Email Address <span className="text-red-400">*</span>
+                    <label className="block text-[11px] font-bold text-slate-700 mb-1 flex items-center justify-between">
+                      <span>Login &amp; Dispatch Notification Email <span className="text-red-600 font-bold">*</span></span>
+                      <span className="text-[10px] uppercase font-extrabold text-red-600 bg-red-50 border border-red-200 px-1.5 py-0.2 rounded">
+                        Mandatory
+                      </span>
                     </label>
                     <input
                       type="email"
                       value={newStaffEmail}
                       onChange={(e) => setNewStaffEmail(e.target.value)}
-                      placeholder="e.g. staff.member@example.com"
+                      placeholder="e.g. driver.fleet@example.com"
                       required
                       className="w-full bg-slate-50 border border-slate-300 px-3 py-2 rounded-xl text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-red-500"
                     />
+                    <p className="text-[10px] text-slate-500 mt-1">
+                      Dispatch route assignments, customer contacts &amp; navigation links are emailed to this address.
+                    </p>
                   </div>
 
                   <div>
@@ -1408,7 +1450,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
                                       #{run.order_number}
                                     </span>
                                     <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border ${
-                                      run.order_status === 'assigned'
+                                      run.order_status === 'accepted'
+                                        ? 'bg-cyan-50 text-cyan-800 border-cyan-300'
+                                        : run.order_status === 'assigned'
                                         ? 'bg-blue-50 text-blue-800 border-blue-300'
                                         : run.order_status === 'en_route_pickup'
                                         ? 'bg-amber-50 text-amber-800 border-amber-300'
@@ -2859,9 +2903,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
       )}
 
       {/* EDIT ORDER MODAL */}
-      {editingOrder && (
-        <div className="fixed inset-0 z-50 bg-slate-100/40 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white border border-slate-300 rounded-3xl max-w-4xl w-full max-h-[92vh] overflow-y-auto shadow-2xl space-y-5 p-6 text-xs">
+      {editingOrder && createPortal(
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto animate-fade-in">
+          <div className="bg-white border border-slate-300 rounded-3xl max-w-4xl w-full max-h-[92vh] overflow-y-auto shadow-2xl space-y-5 p-6 text-xs my-auto">
             {/* Modal Header */}
             <div className="flex items-center justify-between border-b border-slate-200 pb-4">
               <div>
@@ -2903,7 +2947,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
                       <option value="submitted">Submitted (Quote Requested)</option>
                       <option value="quote_sent">Quote Sent to Client</option>
                       <option value="confirmed">Confirmed</option>
-                      <option value="assigned">Assigned</option>
+                      <option value="assigned">Assigned (Awaiting Acceptance)</option>
+                      <option value="accepted">Accepted by Driver</option>
                       <option value="en_route_pickup">En Route to Pickup</option>
                       <option value="picked_up">Picked Up & Loaded</option>
                       <option value="in_transit">In Transit</option>
@@ -3335,13 +3380,14 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* NOTIFICATION PREVIEW MODAL */}
-      {previewNotification && (
-        <div className="fixed inset-0 z-50 bg-slate-100/40 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white border border-slate-300 rounded-3xl max-w-2xl w-full max-h-[92vh] overflow-y-auto shadow-2xl p-6 space-y-4 text-xs">
+      {previewNotification && createPortal(
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto animate-fade-in">
+          <div className="bg-white border border-slate-300 rounded-3xl max-w-2xl w-full max-h-[92vh] overflow-y-auto shadow-2xl p-6 space-y-4 text-xs my-auto">
             <div className="flex items-center justify-between border-b border-slate-200 pb-3">
               <div className="flex items-center space-x-3">
                 <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase ${
@@ -3386,7 +3432,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
               </div>
             </div>
 
-            {/* Rendered Preview */}
             {previewNotification.channel === 'sms' ? (
               <div className="space-y-2">
                 <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
@@ -3418,13 +3463,14 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* STAFF FULL PROFILE MODAL */}
-      {viewingStaffProfile && (
-        <div className="fixed inset-0 z-50 bg-slate-100/40 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white border border-slate-300 rounded-3xl max-w-xl w-full max-h-[90vh] overflow-y-auto shadow-2xl p-6 space-y-6 text-xs">
+      {viewingStaffProfile && createPortal(
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto animate-fade-in">
+          <div className="bg-white border border-slate-300 rounded-3xl max-w-xl w-full max-h-[90vh] overflow-y-auto shadow-2xl p-6 space-y-6 text-xs my-auto">
             <div className="flex items-center justify-between border-b border-slate-200 pb-4">
               <div className="flex items-center space-x-3">
                 <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-red-600 to-red-800 flex items-center justify-center text-white font-black text-xl font-['Outfit']">
@@ -3532,13 +3578,14 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* REVIEW & SEND PRICE QUOTE MODAL */}
-      {reviewingQuoteOrder && (
-        <div className="fixed inset-0 z-50 bg-slate-100/40 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white border border-slate-300 rounded-3xl max-w-3xl w-full max-h-[92vh] overflow-y-auto shadow-2xl space-y-5 p-6 text-xs">
+      {reviewingQuoteOrder && createPortal(
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto animate-fade-in">
+          <div className="bg-white border border-slate-300 rounded-3xl max-w-3xl w-full max-h-[92vh] overflow-y-auto shadow-2xl space-y-5 p-6 text-xs my-auto">
             {/* Modal Header */}
             <div className="flex items-center justify-between border-b border-slate-200 pb-4">
               <div className="flex items-center space-x-3">
@@ -3803,13 +3850,14 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
               </div>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* DRIVER ASSIGNMENT MODAL */}
-      {assignModalOrder && (
-        <div className="fixed inset-0 z-50 bg-slate-100/40 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white border border-slate-300 rounded-2xl p-6 max-w-md w-full shadow-2xl space-y-4">
+      {assignModalOrder && createPortal(
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto animate-fade-in">
+          <div className="bg-white border border-slate-300 rounded-2xl p-6 max-w-md w-full shadow-2xl space-y-4 my-auto">
             <h3 className="text-lg font-bold text-slate-900 font-['Outfit']">
               Assign Driver to Order {assignModalOrder.order_number}
             </h3>
@@ -3826,17 +3874,37 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
                   No drivers provisioned yet. Please provision a driver in the Staff tab first.
                 </div>
               ) : (
-                <select
-                  value={selectedDriverForAssign}
-                  onChange={(e) => setSelectedDriverForAssign(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-300 px-3 py-2 text-xs text-slate-900 rounded-xl"
-                >
-                  {drivers.map((d) => (
-                    <option key={d.id} value={d.id}>
-                      {d.name} {d.staff_role ? `(${d.staff_role})` : ''} — {d.vehicle_type} ({d.phone})
-                    </option>
-                  ))}
-                </select>
+                <div className="space-y-3">
+                  <select
+                    value={selectedDriverForAssign}
+                    onChange={(e) => setSelectedDriverForAssign(e.target.value)}
+                    className="w-full bg-slate-50 border border-slate-300 px-3 py-2.5 text-xs text-slate-900 rounded-xl focus:outline-none focus:border-red-500"
+                  >
+                    {drivers.map((d) => (
+                      <option key={d.id} value={d.id}>
+                        {d.name} {d.staff_role ? `(${d.staff_role})` : ''} — {d.vehicle_type} ({d.phone}) • {d.email}
+                      </option>
+                    ))}
+                  </select>
+
+                  {(() => {
+                    const activeDriver = drivers.find((d) => d.id === (selectedDriverForAssign || drivers[0]?.id));
+                    return activeDriver ? (
+                      <div className="p-3 bg-blue-50/90 border border-blue-200 rounded-xl text-xs space-y-1">
+                        <div className="flex items-center space-x-1.5 text-blue-900 font-bold text-[11px]">
+                          <Mail className="w-3.5 h-3.5 text-blue-600" />
+                          <span>Dispatch Email Notification Target:</span>
+                        </div>
+                        <div className="font-mono text-blue-950 font-bold text-[11px]">
+                          {activeDriver.email || 'No email registered'}
+                        </div>
+                        <p className="text-[10px] text-blue-700 leading-relaxed">
+                          Job details, scheduled pickup time, cargo specs &amp; GPS navigation links will be automatically emailed to this driver upon assignment.
+                        </p>
+                      </div>
+                    ) : null;
+                  })()}
+                </div>
               )}
             </div>
 
@@ -3855,7 +3923,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

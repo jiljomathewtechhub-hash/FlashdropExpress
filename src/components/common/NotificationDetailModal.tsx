@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import {
   X,
   Package,
@@ -62,6 +63,17 @@ export const NotificationDetailModal: React.FC<NotificationDetailModalProps> = (
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
+  }, [notification]);
+
+  // Prevent background page scrolling when notification detail modal is open
+  useEffect(() => {
+    if (notification) {
+      const originalOverflow = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+      return () => {
+        document.body.style.overflow = originalOverflow;
+      };
+    }
   }, [notification]);
 
   if (!notification) return null;
@@ -155,13 +167,13 @@ export const NotificationDetailModal: React.FC<NotificationDetailModalProps> = (
 
   const isUnopened = !notification.is_read;
 
-  return (
+  return createPortal(
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in overflow-y-auto"
       onClick={handleClose}
     >
       <div
-        className="bg-white rounded-3xl shadow-2xl border border-slate-200 max-w-xl w-full overflow-hidden animate-scale-up"
+        className="bg-white rounded-3xl shadow-2xl border border-slate-200 max-w-xl w-full overflow-hidden animate-scale-up my-auto max-h-[90vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Modal Top Header with Dynamic Opened / Unopened Accent */}
@@ -417,6 +429,7 @@ export const NotificationDetailModal: React.FC<NotificationDetailModalProps> = (
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };

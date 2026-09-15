@@ -58,8 +58,7 @@ export const WebsiteFlowNavigator: React.FC<WebsiteFlowNavigatorProps> = ({ onNa
       tagline: 'Proof of Delivery',
       desc: 'Instant delivery photo verification, signature, and PDF invoice.',
       tab: 'tracking',
-      param: 'FD-883192',
-      btnLabel: 'View Sample POD',
+      btnLabel: 'Track Delivery & POD',
       icon: FileCheck2,
       accent: 'text-emerald-600',
       borderAccent: 'hover:border-emerald-400',
@@ -121,7 +120,7 @@ export const WebsiteFlowNavigator: React.FC<WebsiteFlowNavigatorProps> = ({ onNa
                 {/* Bottom Action Trigger (Accessible 44px Touch Target) */}
                 <div className="mt-5 pt-3.5 border-t border-slate-100">
                   <button
-                    onClick={() => onNavigate(s.tab, s.param)}
+                    onClick={() => onNavigate(s.tab)}
                     className="w-full min-h-[44px] flex items-center justify-between text-xs font-bold text-slate-700 hover:text-red-700 px-4 py-2.5 bg-slate-50 hover:bg-red-50/50 border border-slate-200 hover:border-red-200 rounded-xl transition-all duration-200 group/btn cursor-pointer"
                   >
                     <span>{s.btnLabel}</span>

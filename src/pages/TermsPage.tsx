@@ -193,7 +193,7 @@ export const TermsPage: React.FC<TermsPageProps> = ({ onNavigate }) => {
                 Customer-Friendly Service Policy
               </span>
             </div>
-            <h2 className="text-lg sm:text-xl font-bold text-white font-['Outfit']">
+            <h2 className="text-lg sm:text-xl font-bold text-white !text-white font-['Outfit']">
               Our Commitment to Transparency &amp; Fair Pricing
             </h2>
             <p className="text-slate-200 text-xs sm:text-sm leading-relaxed">

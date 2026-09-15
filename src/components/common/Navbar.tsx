@@ -48,11 +48,19 @@ export const Navbar: React.FC<NavbarProps> = ({ currentTab, onNavigate }) => {
 
   const navLinks = [
     { id: 'home', label: 'Home' },
+    { id: 'about', label: 'About' },
     { id: 'services', label: 'Services' },
-    { id: 'service-areas', label: 'Coverage Area' },
-    { id: 'vehicles', label: 'Fleet & Cargo' },
-    { id: 'terms', label: 'Terms & Policies' },
-    { id: 'order', label: 'Request a Quote' },
+    { id: 'service-areas', label: 'Coverage' },
+    { id: 'vehicles', label: 'Fleet' },
+    { id: 'contact', label: 'Contact' },
+  ];
+
+  const mobileNavLinks = [
+    { id: 'home', label: 'Home' },
+    { id: 'about', label: 'About' },
+    { id: 'services', label: 'Services' },
+    { id: 'service-areas', label: 'Coverage' },
+    { id: 'vehicles', label: 'Fleet' },
     { id: 'tracking', label: 'Track Order' },
     { id: 'contact', label: 'Contact' },
   ];
@@ -91,7 +99,7 @@ export const Navbar: React.FC<NavbarProps> = ({ currentTab, onNavigate }) => {
 
         {/* Sleek Compact Main Navigation Bar */}
         <nav className="px-3 sm:px-6">
-          <div className="max-w-7xl mx-auto py-2 sm:py-2.5 flex items-center justify-between gap-2">
+          <div className="max-w-7xl mx-auto py-2 sm:py-2.5 flex items-center justify-between gap-2 sm:gap-4">
           {/* Authentic Recreated Brand Logo */}
           <div
             onClick={() => onNavigate('home')}
@@ -101,12 +109,12 @@ export const Navbar: React.FC<NavbarProps> = ({ currentTab, onNavigate }) => {
           </div>
 
           {/* Desktop Nav Links */}
-          <div className="hidden lg:flex items-center space-x-1">
+          <div className="hidden lg:flex items-center space-x-0.5 xl:space-x-1 shrink min-w-0">
             {navLinks.map((link) => (
               <button
                 key={link.id}
                 onClick={() => onNavigate(link.id)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-smooth cursor-pointer ${
+                className={`px-2.5 py-1.5 rounded-lg text-xs font-medium transition-smooth cursor-pointer whitespace-nowrap ${
                   currentTab === link.id
                     ? 'text-red-700 bg-red-50 font-bold border border-red-200'
                     : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
@@ -118,21 +126,27 @@ export const Navbar: React.FC<NavbarProps> = ({ currentTab, onNavigate }) => {
           </div>
 
           {/* Action CTAs */}
-          <div className="hidden sm:flex items-center space-x-2.5">
-            {/* Quick Dispatch Phone Callout */}
-            <a
-              href="tel:+16478049775"
-              className="hidden xl:flex items-center text-xs font-semibold text-slate-700 hover:text-red-600 transition-smooth px-2.5 py-1.5 rounded-lg hover:bg-slate-100"
-              title="Call Dispatch directly"
-            >
-              <Phone className="w-3.5 h-3.5 text-red-600 mr-1.5" />
-              <span>(647) 804-9775</span>
-            </a>
+          <div className="hidden sm:flex items-center space-x-1.5 xl:space-x-2 shrink-0">
+            {/* Quick Dispatch Phone Callout (Only on very wide screens when logged out to preserve spacing) */}
+            {!user && (
+              <a
+                href="tel:+16478049775"
+                className="hidden 2xl:flex items-center text-xs font-semibold text-slate-700 hover:text-red-600 transition-smooth px-2.5 py-1.5 rounded-lg hover:bg-slate-100 whitespace-nowrap"
+                title="Call Dispatch directly"
+              >
+                <Phone className="w-3.5 h-3.5 text-red-600 mr-1.5" />
+                <span>(647) 804-9775</span>
+              </a>
+            )}
 
             {/* Quick Track order button */}
             <button
               onClick={() => onNavigate('tracking')}
-              className="flex items-center space-x-1.5 px-2.5 py-1.5 text-xs font-semibold text-slate-700 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-lg transition-smooth cursor-pointer"
+              className={`flex items-center space-x-1.5 px-2.5 py-1.5 text-xs font-semibold rounded-lg transition-smooth cursor-pointer whitespace-nowrap border ${
+                currentTab === 'tracking'
+                  ? 'bg-red-50 text-red-700 border-red-200 font-bold'
+                  : 'text-slate-700 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 border-slate-200'
+              }`}
               title="Track order with FD number"
             >
               <Search className="w-3.5 h-3.5 text-slate-500" />
@@ -205,7 +219,7 @@ export const Navbar: React.FC<NavbarProps> = ({ currentTab, onNavigate }) => {
         {/* Mobile Dropdown Menu */}
         {mobileMenuOpen && (
           <div className="lg:hidden mt-3 pt-3 border-t border-slate-200 pb-4 space-y-1 bg-white">
-            {navLinks.map((link) => (
+            {mobileNavLinks.map((link) => (
               <button
                 key={link.id}
                 onClick={() => {

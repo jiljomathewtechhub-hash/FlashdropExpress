@@ -1,4 +1,4 @@
-import { Order, OrderStatus, BusinessSettings } from '../types/order';
+import { Order, OrderStatus, BusinessSettings, Driver } from '../types/order';
 import { NotificationLog, NotificationChannel, NotificationRecipientType, NotificationEvent } from '../types/notification';
 import {
   createCustomerOrderEmail,
@@ -9,6 +9,7 @@ import {
   createAdminStatusEmail,
   createAdminStatusSms,
   createPasswordResetEmail,
+  createDriverAssignedEmail,
 } from './notificationTemplates';
 import { supabase, isSupabaseConfigured } from './supabase';
 
@@ -295,6 +296,38 @@ class NotificationService {
     }
 
     return logs;
+  }
+
+  // -----------------------------------------------------------------
+  // High-Level Trigger: Driver Assigned to Order
+  // -----------------------------------------------------------------
+  public async notifyDriverOrderAssigned(
+    order: Order,
+    driver: Driver,
+    settings?: BusinessSettings
+  ): Promise<NotificationLog | null> {
+    if (!driver.email || !driver.email.trim()) {
+      console.warn(`[Driver Dispatch Notification] Driver ${driver.name} has no email address configured.`);
+      return null;
+    }
+
+    const emailPayload = createDriverAssignedEmail(order, driver, settings);
+    return this.dispatchNotification({
+      order_id: order.id,
+      order_number: order.order_number,
+      event: 'driver_assigned',
+      channel: 'email',
+      recipient_type: 'driver',
+      destination: driver.email.trim(),
+      subject: emailPayload.subject,
+      message: emailPayload.plain,
+      html_body: emailPayload.html,
+      metadata: {
+        driver_id: driver.id,
+        driver_name: driver.name,
+        driver_email: driver.email,
+      },
+    });
   }
 
   // -----------------------------------------------------------------

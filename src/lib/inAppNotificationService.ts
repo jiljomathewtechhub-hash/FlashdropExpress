@@ -44,40 +44,7 @@ class InAppNotificationService {
   }
 
   private getDefaultSeedNotifications(): InAppNotification[] {
-    const now = Date.now();
-    return [
-      {
-        id: 'notif-seed-1',
-        title: 'New Priority Order Placed: #FD-8821',
-        message: 'A-1 Paint & Drywall placed an order for 24 Industrial Paint Cans (1,200 lbs) from Mississauga to Downtown Toronto.',
-        type: 'order_created',
-        order_number: 'FD-8821',
-        recipient_role: 'admin',
-        created_at: new Date(now - 1000 * 60 * 8).toISOString(),
-        is_read: false,
-      },
-      {
-        id: 'notif-seed-2',
-        title: 'Courier Assigned: #FD-8819',
-        message: 'Marcus Vance assigned to High-Roof Cargo Van delivery in Vaughan / Brampton.',
-        type: 'order_assigned',
-        order_number: 'FD-8819',
-        assigned_driver_name: 'Marcus Vance',
-        recipient_role: 'admin',
-        created_at: new Date(now - 1000 * 60 * 35).toISOString(),
-        is_read: false,
-      },
-      {
-        id: 'notif-seed-3',
-        title: 'GTA Dispatch Command Online',
-        message: 'Real-time dispatch activity monitoring and live audio alerts are initialized.',
-        type: 'system',
-        recipient_role: 'all',
-        created_at: new Date(now - 1000 * 60 * 120).toISOString(),
-        is_read: true,
-        read_at: new Date(now - 1000 * 60 * 60).toISOString(),
-      },
-    ];
+    return [];
   }
 
   private loadFromStorage() {
@@ -86,26 +53,21 @@ class InAppNotificationService {
       const stored = localStorage.getItem(STORAGE_KEY);
       if (stored) {
         const parsed = JSON.parse(stored);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          // If stored only contains the old single-item opened seed, upgrade to rich seed with unopened items
-          if (parsed.length === 1 && parsed[0].id === 'notif-init-1') {
-            this.notifications = this.getDefaultSeedNotifications();
-            this.saveToStorage();
-          } else {
-            this.notifications = parsed;
-          }
-        } else {
-          this.notifications = this.getDefaultSeedNotifications();
-          this.saveToStorage();
-        }
+        this.notifications = Array.isArray(parsed) ? parsed : [];
       } else {
-        this.notifications = this.getDefaultSeedNotifications();
-        this.saveToStorage();
+        this.notifications = [];
       }
     } catch (e) {
       console.warn('Failed to load in-app notifications from storage:', e);
-      this.notifications = this.getDefaultSeedNotifications();
+      this.notifications = [];
     }
+  }
+
+  public clearAllNotifications() {
+    this.notifications = [];
+    this.activeModalNotification = null;
+    this.saveToStorage();
+    this.notify();
   }
 
   private saveToStorage() {
@@ -263,6 +225,8 @@ class InAppNotificationService {
       if (userDriverId) driverIds.add(userDriverId);
       if (matchingDriver?.id) driverIds.add(matchingDriver.id);
       if (matchingDriver?.user_id) driverIds.add(matchingDriver.user_id);
+      if (matchingDriver?.email) driverIds.add(matchingDriver.email.toLowerCase());
+      if (userEmail) driverIds.add(userEmail);
 
       return this.notifications.filter((n) => {
         // Universal announcements
@@ -271,12 +235,14 @@ class InAppNotificationService {
         if (n.recipient_role === 'driver') {
           // If no specific driver ID is attached, it's for all staff
           if (!n.assigned_driver_id) return true;
-          // Matches driver ID
-          if (driverIds.has(n.assigned_driver_id)) return true;
+          // Matches driver ID or email in set
+          if (driverIds.has(n.assigned_driver_id) || driverIds.has(n.assigned_driver_id.toLowerCase())) return true;
           // Matches driver email
           if (userEmail && n.assigned_driver_id.toLowerCase() === userEmail) return true;
+          if (matchingDriver?.email && n.assigned_driver_id.toLowerCase() === matchingDriver.email.toLowerCase()) return true;
           // Matches driver name
           if (userName && n.assigned_driver_name && n.assigned_driver_name.toLowerCase() === userName) return true;
+          if (matchingDriver?.name && n.assigned_driver_name && n.assigned_driver_name.toLowerCase() === matchingDriver.name.toLowerCase()) return true;
         }
         return false;
       });

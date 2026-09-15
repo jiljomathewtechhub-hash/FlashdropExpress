@@ -79,32 +79,7 @@ export const INITIAL_VEHICLES: Vehicle[] = [
   },
 ];
 
-export const INITIAL_DRIVERS: Driver[] = [
-  {
-    id: 'd3333333-3333-3333-3333-333333333333',
-    name: 'Nidhin (Lead Dispatch Admin)',
-    phone: '+1 647 804 9775',
-    email: 'support@flashdropexpress.com',
-    vehicle_type: 'Box Truck / Heavy Freight',
-    license_plate: 'ON-FD001',
-    is_active: true,
-    current_status: 'available',
-    staff_role: 'admin',
-    created_at: new Date(Date.now() - 86400000 * 60).toISOString(),
-  },
-  {
-    id: '3e70ac07-43ec-4d0a-a978-2538666c491d',
-    name: 'Jiljo Mathew',
-    phone: '+1 647 555 0192',
-    email: 'jiljo555@gmail.com',
-    vehicle_type: 'Cargo Van (High-Roof)',
-    license_plate: 'ON-FLEET',
-    is_active: true,
-    current_status: 'available',
-    staff_role: 'driver',
-    created_at: new Date(Date.now() - 86400000 * 30).toISOString(),
-  },
-];
+export const INITIAL_DRIVERS: Driver[] = [];
 
 // Starts completely clean from empty for production live operations
 export const INITIAL_ORDERS: Order[] = [];
@@ -285,6 +260,13 @@ class FlashDropStore {
           this.fetchDriversFromSupabase();
         })
         .subscribe();
+
+      sb
+        .channel('public:pod_channel')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'proof_of_delivery' }, () => {
+          this.fetchOrdersFromSupabase();
+        })
+        .subscribe();
     } catch (err) {
       console.warn('Supabase initialization notice:', err);
     }
@@ -299,7 +281,7 @@ class FlashDropStore {
         .select('*, order_status_history(*), proof_of_delivery(*)')
         .order('created_at', { ascending: false });
 
-      if (!error && data && data.length > 0) {
+      if (!error && data) {
         this.orders = data.map((row: any) => {
           const assignedDriver = this.drivers.find(
             (d) =>
@@ -362,6 +344,7 @@ class FlashDropStore {
           };
         });
         this.saveToStorage();
+        this.notify();
       }
     } catch (e) {
       console.warn('Supabase fetch orders notice:', e);
@@ -372,7 +355,7 @@ class FlashDropStore {
     if (!isSupabaseConfigured || !supabase) return;
     try {
       const { data, error } = await supabase.from('drivers').select('*');
-      if (!error && data && data.length > 0) {
+      if (!error && data) {
         this.drivers = data.map((d: any) => ({
           id: d.id,
           user_id: d.user_id || undefined,
@@ -396,6 +379,7 @@ class FlashDropStore {
         });
 
         this.saveToStorage();
+        this.notify();
       }
     } catch (e) {
       console.warn('Supabase fetch drivers notice:', e);
@@ -404,6 +388,21 @@ class FlashDropStore {
 
   private loadFromStorage() {
     try {
+      // Automatic client-side clean slate wipe for fresh start
+      const CLEAN_SLATE_KEY = 'flashdrop_clean_slate_fresh_start_2026';
+      if (typeof window !== 'undefined') {
+        const isClean = localStorage.getItem(CLEAN_SLATE_KEY);
+        if (!isClean) {
+          localStorage.removeItem(`${STORAGE_KEY_PREFIX}orders`);
+          localStorage.removeItem(`${STORAGE_KEY_PREFIX}drivers`);
+          localStorage.removeItem(`${STORAGE_KEY_PREFIX}requests`);
+          localStorage.removeItem('flashdrop_notifications_log');
+          localStorage.removeItem('flashdrop_in_app_notifications');
+          localStorage.setItem(ORDER_COUNTER_KEY, '1001');
+          localStorage.setItem(CLEAN_SLATE_KEY, 'true');
+        }
+      }
+
       const savedOrders = localStorage.getItem(`${STORAGE_KEY_PREFIX}orders`);
       if (savedOrders) {
         try {
@@ -427,14 +426,13 @@ class FlashDropStore {
         try {
           const parsed = JSON.parse(savedDrivers);
           this.drivers = Array.isArray(parsed)
-            ? parsed.filter((d: Driver) => !['drv-01', 'drv-02', 'drv-03'].includes(d.id))
-            : INITIAL_DRIVERS;
-          if (this.drivers.length === 0) this.drivers = INITIAL_DRIVERS;
+            ? parsed.filter((d: Driver) => !['drv-01', 'drv-02', 'drv-03', 'd3333333-3333-3333-3333-333333333333', '3e70ac07-43ec-4d0a-a978-2538666c491d'].includes(d.id))
+            : [];
         } catch {
-          this.drivers = INITIAL_DRIVERS;
+          this.drivers = [];
         }
       } else {
-        this.drivers = INITIAL_DRIVERS;
+        this.drivers = [];
       }
 
       const savedVehicles = localStorage.getItem(`${STORAGE_KEY_PREFIX}vehicles`);
@@ -843,6 +841,9 @@ class FlashDropStore {
     const order = { ...this.orders[orderIndex] };
     order.order_status = status;
     order.updated_at = new Date().toISOString();
+    if (status === 'accepted' && !order.driver_accepted_at) {
+      order.driver_accepted_at = new Date().toISOString();
+    }
 
     const historyItem = {
       id: `sh-${Date.now()}`,
@@ -930,6 +931,7 @@ class FlashDropStore {
     const order = { ...this.orders[orderIndex] };
     order.assigned_driver_id = driver.id;
     order.assigned_driver_name = driver.name;
+    order.driver_accepted_at = undefined;
     if (order.order_status === 'submitted' || order.order_status === 'confirmed') {
       order.order_status = 'assigned';
     }
@@ -956,6 +958,11 @@ class FlashDropStore {
       `Assigned to driver: ${driver.name} (${driver.phone})`,
       this.settings
     );
+
+    // Automated Dispatch Email to Driver's Registered Email Address
+    if (driver.email && driver.email.trim()) {
+      notificationService.notifyDriverOrderAssigned(order, driver, this.settings);
+    }
 
     // Real-time In-App Notification: Admin Dispatch + Assigned Driver
     inAppNotificationService.dispatch({
@@ -1079,21 +1086,22 @@ class FlashDropStore {
     }
 
     // Supabase sync
-    if (isSupabaseConfigured && supabase) {
+    const sb = supabase;
+    if (isSupabaseConfigured && sb) {
       const matchFilter = order.id.length === 36 ? { id: order.id } : { order_number: order.order_number };
-      supabase
+      sb
         .from('orders')
         .update({ order_status: 'delivered', updated_at: order.updated_at })
         .match(matchFilter)
         .then();
 
-      if (order.id.length === 36) {
+      const persistPod = (resolvedOrderId: string) => {
         const driverUUID = order.assigned_driver_id && order.assigned_driver_id.length === 36 ? order.assigned_driver_id : null;
-        supabase
+        sb
           .from('proof_of_delivery')
           .insert([
             {
-              order_id: order.id,
+              order_id: resolvedOrderId,
               driver_id: driverUUID,
               recipient_name: podData.recipient_name,
               driver_notes: podData.driver_notes,
@@ -1103,16 +1111,32 @@ class FlashDropStore {
           ])
           .then();
 
-        supabase
+        sb
           .from('order_status_history')
           .insert([
             {
-              order_id: order.id,
+              order_id: resolvedOrderId,
               status: 'delivered',
               notes: `Delivered by ${pod.driver_name}. Proof of delivery recorded.`,
             },
           ])
           .then();
+      };
+
+      if (order.id.length === 36) {
+        persistPod(order.id);
+      } else {
+        sb
+          .from('orders')
+          .select('id')
+          .eq('order_number', order.order_number)
+          .single()
+          .then(({ data }) => {
+            if (data?.id) {
+              order.id = data.id;
+              persistPod(data.id);
+            }
+          });
       }
     }
 
@@ -1337,6 +1361,42 @@ class FlashDropStore {
 
   public sendTestNotification(customCustomerEmail?: string): Promise<NotificationLog[]> {
     return notificationService.sendTestNotification(customCustomerEmail);
+  }
+
+  // Complete purge for fresh production start
+  public async purgeAllTestData(): Promise<boolean> {
+    try {
+      if (isSupabaseConfigured && supabase) {
+        // Delete related child tables first to respect foreign keys
+        await supabase.from('proof_of_delivery').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+        await supabase.from('order_status_history').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+        await supabase.from('orders').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+        await supabase.from('drivers').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+      }
+
+      this.orders = [];
+      this.drivers = [];
+      this.requests = [];
+
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem(`${STORAGE_KEY_PREFIX}orders`);
+        localStorage.removeItem(`${STORAGE_KEY_PREFIX}drivers`);
+        localStorage.removeItem(`${STORAGE_KEY_PREFIX}requests`);
+        localStorage.removeItem('flashdrop_notifications_log');
+        localStorage.removeItem('flashdrop_in_app_notifications');
+        localStorage.setItem(ORDER_COUNTER_KEY, '1001');
+      }
+
+      notificationService.clearLogs();
+      inAppNotificationService.clearAllNotifications();
+
+      this.saveToStorage();
+      this.notify();
+      return true;
+    } catch (err) {
+      console.error('Failed to purge test data:', err);
+      return false;
+    }
   }
 
   // Reset to factory seed

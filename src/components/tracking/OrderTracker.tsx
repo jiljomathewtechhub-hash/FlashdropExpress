@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import {
   Search,
   Truck,
@@ -11,6 +12,7 @@ import {
   ShieldCheck,
   AlertCircle,
   FileText,
+  Camera,
 } from 'lucide-react';
 import { Order, OrderStatus } from '../../types/order';
 import { store } from '../../lib/store';
@@ -39,6 +41,17 @@ export const OrderTracker: React.FC<OrderTrackerProps> = ({ initialOrderNumber, 
   const [showRequestModal, setShowRequestModal] = useState<'cancel' | 'change' | null>(null);
   const [requestText, setRequestText] = useState('');
   const [requestSubmitted, setRequestSubmitted] = useState(false);
+
+  // Prevent background page scrolling when request modal is open
+  useEffect(() => {
+    if (showRequestModal) {
+      const originalOverflow = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+      return () => {
+        document.body.style.overflow = originalOverflow;
+      };
+    }
+  }, [showRequestModal]);
 
   useEffect(() => {
     if (initialOrderNumber && initialOrderNumber.trim()) {
@@ -173,6 +186,7 @@ export const OrderTracker: React.FC<OrderTrackerProps> = ({ initialOrderNumber, 
       case 'confirmed':
         return 1;
       case 'assigned':
+      case 'accepted':
         return 2;
       case 'en_route_pickup':
         return 3;
@@ -391,9 +405,11 @@ export const OrderTracker: React.FC<OrderTrackerProps> = ({ initialOrderNumber, 
                     ? 'bg-amber-50 text-amber-800 border border-amber-200'
                     : order.order_status === 'quote_sent'
                     ? 'bg-purple-50 text-purple-800 border border-purple-200'
+                    : order.order_status === 'accepted'
+                    ? 'bg-cyan-50 text-cyan-800 border border-cyan-300'
                     : 'bg-red-50 text-red-700 border border-red-200'
                 }`}>
-                  {order.order_status === 'submitted' ? 'Quote Requested' : order.order_status === 'quote_sent' ? 'Quote Ready' : order.order_status.replace(/_/g, ' ')}
+                  {order.order_status === 'submitted' ? 'Quote Requested' : order.order_status === 'quote_sent' ? 'Quote Ready' : order.order_status === 'accepted' ? 'Driver Confirmed' : order.order_status.replace(/_/g, ' ')}
                 </span>
               </div>
               <p className="text-xs text-slate-400 mt-1">
@@ -840,31 +856,83 @@ export const OrderTracker: React.FC<OrderTrackerProps> = ({ initialOrderNumber, 
           {/* PROOF OF DELIVERY (POD) IF DELIVERED */}
           {order.proof_of_delivery && (
             <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-6 space-y-4">
-              <div className="flex items-center space-x-2 text-emerald-800 font-bold text-sm font-['Outfit']">
-                <CheckCircle2 className="w-5 h-5" />
-                <span>Official Proof of Delivery (POD)</span>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2 text-emerald-800 font-bold text-sm font-['Outfit']">
+                  <CheckCircle2 className="w-5 h-5 text-emerald-600" />
+                  <span>Official Proof of Delivery (POD) Verified</span>
+                </div>
+                <span className="text-[10px] font-mono bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full font-bold">
+                  Completed &bull; Signed &bull; Photo Logged
+                </span>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
                 <div>
-                  <span className="text-slate-400 block text-[10px] uppercase">Delivered Timestamp:</span>
+                  <span className="text-slate-500 block text-[10px] uppercase font-bold">Delivered Timestamp:</span>
                   <span className="text-slate-900 font-medium">
                     {new Date(order.proof_of_delivery.delivered_at).toLocaleString()}
                   </span>
                 </div>
                 <div>
-                  <span className="text-slate-400 block text-[10px] uppercase">Delivered By:</span>
+                  <span className="text-slate-500 block text-[10px] uppercase font-bold">Delivered By:</span>
                   <span className="text-slate-900 font-medium">{order.proof_of_delivery.driver_name}</span>
                 </div>
                 <div>
-                  <span className="text-slate-400 block text-[10px] uppercase">Recipient Signed:</span>
+                  <span className="text-slate-500 block text-[10px] uppercase font-bold">Verified Receiver:</span>
                   <span className="text-slate-900 font-medium">{order.proof_of_delivery.recipient_name || 'On file'}</span>
                 </div>
               </div>
 
+              {/* Photo Proof & Digital Signature Row */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2 border-t border-emerald-200">
+                {order.proof_of_delivery.photo_url ? (
+                  <div className="space-y-1.5">
+                    <span className="text-slate-700 block text-[11px] uppercase font-bold flex items-center space-x-1">
+                      <Camera className="w-3.5 h-3.5 text-emerald-600" />
+                      <span>Cargo Delivery Photo Proof:</span>
+                    </span>
+                    <div className="rounded-xl overflow-hidden border border-emerald-300 bg-slate-900 h-48 flex items-center justify-center relative group">
+                      <img
+                        src={order.proof_of_delivery.photo_url}
+                        alt="Cargo proof of delivery"
+                        className="h-full w-full object-contain"
+                      />
+                      <a
+                        href={order.proof_of_delivery.photo_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="absolute bottom-2 right-2 bg-black/75 hover:bg-black text-white px-2.5 py-1 rounded-lg text-[10px] font-bold transition flex items-center space-x-1"
+                      >
+                        <span>View Full Photo &rarr;</span>
+                      </a>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="p-3 bg-white/80 rounded-xl border border-emerald-200 text-[11px] text-slate-500 flex items-center space-x-2">
+                    <Camera className="w-4 h-4 text-slate-400" />
+                    <span>No photo proof on record</span>
+                  </div>
+                )}
+
+                {order.proof_of_delivery.signature_url ? (
+                  <div className="space-y-1.5">
+                    <span className="text-slate-700 block text-[11px] uppercase font-bold">
+                      Receiver Digital Signature:
+                    </span>
+                    <div className="rounded-xl overflow-hidden border border-emerald-300 bg-white h-48 flex items-center justify-center p-3">
+                      <img
+                        src={order.proof_of_delivery.signature_url}
+                        alt="Receiver digital signature"
+                        className="max-h-full max-w-full object-contain"
+                      />
+                    </div>
+                  </div>
+                ) : null}
+              </div>
+
               {order.proof_of_delivery.driver_notes && (
-                <div className="text-xs bg-white p-3 rounded-lg border border-slate-200 text-slate-700 shadow-xs">
-                  <strong className="text-emerald-400 block mb-0.5">Driver Remarks:</strong>
+                <div className="text-xs bg-white p-3 rounded-xl border border-emerald-200 text-slate-700 shadow-xs">
+                  <strong className="text-emerald-700 block text-[11px] mb-0.5 uppercase">Driver Delivery Remarks:</strong>
                   {order.proof_of_delivery.driver_notes}
                 </div>
               )}
@@ -903,9 +971,9 @@ export const OrderTracker: React.FC<OrderTrackerProps> = ({ initialOrderNumber, 
     )}
 
       {/* Cancellation / Change Request Modal */}
-      {showRequestModal && (
-        <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white border border-slate-200 rounded-2xl p-6 max-w-md w-full shadow-2xl space-y-4">
+      {showRequestModal && createPortal(
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto animate-fade-in">
+          <div className="bg-white border border-slate-200 rounded-2xl p-6 max-w-md w-full shadow-2xl space-y-4 my-auto">
             <h3 className="text-lg font-bold text-slate-900 font-['Outfit']">
               {showRequestModal === 'cancel' ? 'Request Order Cancellation' : 'Request Order Changes'}
             </h3>
@@ -934,13 +1002,13 @@ export const OrderTracker: React.FC<OrderTrackerProps> = ({ initialOrderNumber, 
                   <button
                     type="button"
                     onClick={() => setShowRequestModal(null)}
-                    className="px-4 py-2 bg-slate-100 text-slate-700 rounded-xl text-xs font-semibold hover:bg-slate-200 border border-slate-200"
+                    className="px-4 py-2 bg-slate-100 text-slate-700 rounded-xl text-xs font-semibold hover:bg-slate-200 border border-slate-200 cursor-pointer"
                   >
                     Close
                   </button>
                   <button
                     type="submit"
-                    className="px-5 py-2 btn-gradient-primary text-white rounded-xl text-xs font-bold shadow-md shadow-red-950/40"
+                    className="px-5 py-2 btn-gradient-primary text-white rounded-xl text-xs font-bold shadow-md shadow-red-950/40 cursor-pointer"
                   >
                     Submit Request
                   </button>
@@ -948,7 +1016,8 @@ export const OrderTracker: React.FC<OrderTrackerProps> = ({ initialOrderNumber, 
               )}
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );
