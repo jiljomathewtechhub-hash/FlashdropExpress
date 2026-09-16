@@ -16,36 +16,34 @@ import { supabase, isSupabaseConfigured } from './supabase';
 const NOTIFICATIONS_STORAGE_KEY = 'flashdrop_notifications_log';
 export const ADMIN_PHONE_DEFAULT = '+1 647 804 9775';
 export const ADMIN_PHONE_TARGET = ADMIN_PHONE_DEFAULT;
-export const ADMIN_EMAIL_TARGET = (import.meta.env.VITE_ADMIN_EMAIL as string) || 'shyswashiinc@gmail.com';
-export const ADMIN_BACKUP_EMAIL_DEFAULT = (import.meta.env.VITE_ADMIN_BACKUP_EMAIL as string) || 'shyswashiinc@gmail.com';
+export const ADMIN_EMAIL_TARGET = (import.meta.env.VITE_ADMIN_EMAIL as string) || 'support@flashdropexpress.com';
+export const ADMIN_BACKUP_EMAIL_DEFAULT = (import.meta.env.VITE_ADMIN_BACKUP_EMAIL as string) || 'support@flashdropexpress.com';
 
 export const resolveAdminEmailTarget = (candidate?: string, backupCandidate?: string): string[] => {
   const list: string[] = [];
   const primaryCandidate = candidate?.trim();
-  const primary = (primaryCandidate && primaryCandidate !== 'support@flashdropexpress.com'
-    ? primaryCandidate
-    : ADMIN_EMAIL_TARGET).trim();
+  const primary = (primaryCandidate || ADMIN_EMAIL_TARGET).trim();
 
   if (primary) {
     if (primary.includes(',')) {
       primary.split(',').forEach((e) => {
         const trimmed = e.trim();
-        if (trimmed && trimmed !== 'support@flashdropexpress.com' && !list.includes(trimmed)) {
+        if (trimmed && !list.includes(trimmed)) {
           list.push(trimmed);
         }
       });
-    } else if (!list.includes(primary) && primary !== 'support@flashdropexpress.com') {
+    } else if (!list.includes(primary)) {
       list.push(primary);
     }
   }
 
   const backup = (backupCandidate || (import.meta.env.VITE_ADMIN_BACKUP_EMAIL as string) || ADMIN_BACKUP_EMAIL_DEFAULT).trim();
-  if (backup && !list.includes(backup) && backup !== 'support@flashdropexpress.com') {
+  if (backup && !list.includes(backup)) {
     list.push(backup);
   }
 
   if (list.length === 0) {
-    list.push('shyswashiinc@gmail.com');
+    list.push('support@flashdropexpress.com');
   }
 
   return list;

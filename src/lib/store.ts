@@ -479,11 +479,11 @@ class FlashDropStore {
       if (!this.settings.email || this.settings.email.toLowerCase().includes('nidhin@flashdropexpress.com')) {
         this.settings.email = 'support@flashdropexpress.com';
       }
-      if (!this.settings.admin_notification_email || this.settings.admin_notification_email === 'support@flashdropexpress.com') {
-        this.settings.admin_notification_email = 'shyswashiinc@gmail.com';
+      if (!this.settings.admin_notification_email || this.settings.admin_notification_email === 'shyswashiinc@gmail.com') {
+        this.settings.admin_notification_email = 'support@flashdropexpress.com';
       }
-      if (!this.settings.admin_backup_email || this.settings.admin_backup_email === 'jiljomathew.techhub@gmail.com') {
-        this.settings.admin_backup_email = 'shyswashiinc@gmail.com';
+      if (!this.settings.admin_backup_email || this.settings.admin_backup_email === 'shyswashiinc@gmail.com' || this.settings.admin_backup_email === 'jiljomathew.techhub@gmail.com') {
+        this.settings.admin_backup_email = 'support@flashdropexpress.com';
       }
       this.settings.twilio_account_sid = this.settings.twilio_account_sid || (DEFAULT_BUSINESS_SETTINGS.twilio_account_sid || '');
       this.settings.twilio_auth_token = this.settings.twilio_auth_token || (DEFAULT_BUSINESS_SETTINGS.twilio_auth_token || '');

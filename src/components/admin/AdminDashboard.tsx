@@ -2749,7 +2749,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
                 </span>
               </div>
               <p className="text-slate-600 text-[11px]">
-                Sent to Admin operations desk (<code className="text-slate-800 font-semibold">{settings.admin_notification_email || settings.admin_backup_email || 'shyswashiinc@gmail.com'}</code>).
+                Sent to Admin operations desk (<code className="text-slate-800 font-semibold">{settings.admin_notification_email || settings.admin_backup_email || 'support@flashdropexpress.com'}</code>).
               </p>
               <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-200 space-y-1 text-[11px]">
                 <div className="text-slate-700">&bull; <strong>Urgent Booking Alerts:</strong> Customer details, phone, route</div>
@@ -2868,9 +2868,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
                 <div className="flex flex-col sm:flex-row gap-2">
                   <input
                     type="email"
-                    value={settings.admin_backup_email || 'shyswashiinc@gmail.com'}
+                    value={settings.admin_backup_email || 'support@flashdropexpress.com'}
                     onChange={(e) => setSettings({ ...settings, admin_backup_email: e.target.value })}
-                    placeholder="e.g. shyswashiinc@gmail.com"
+                    placeholder="e.g. support@flashdropexpress.com"
                     className="w-full bg-white border border-slate-300 px-3 py-2 rounded-xl text-slate-900 focus:outline-none focus:border-red-500 font-mono text-xs"
                   />
                   <button
@@ -2885,7 +2885,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
                   </button>
                 </div>
                 <span className="text-[11px] text-slate-600 mt-1.5 block">
-                  All admin notifications, price quote requests, and order confirmation alerts are guaranteed to be instantly routed to <code className="font-bold text-slate-800">shyswashiinc@gmail.com</code> so you never miss an order.
+                  All admin notifications, price quote requests, and order confirmation alerts are guaranteed to be instantly routed to <code className="font-bold text-slate-800">{settings.admin_backup_email || 'support@flashdropexpress.com'}</code> so you never miss an order.
                 </span>
               </div>
 
@@ -3350,17 +3350,17 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
 
             <div>
               <label className="block text-slate-700 font-bold mb-1.5">
-                Admin Backup / Instant Alert Email (Gmail)
+                Admin Notification &amp; Backup Email
               </label>
               <input
                 type="email"
-                value={settings.admin_backup_email || 'shyswashiinc@gmail.com'}
+                value={settings.admin_backup_email || 'support@flashdropexpress.com'}
                 onChange={(e) => setSettings({ ...settings, admin_backup_email: e.target.value })}
-                placeholder="e.g. shyswashiinc@gmail.com"
+                placeholder="e.g. support@flashdropexpress.com"
                 className="w-full bg-slate-50 border border-slate-300 p-2.5 rounded-xl text-slate-900 focus:outline-none focus:border-red-600 font-mono"
               />
               <span className="text-[10px] text-slate-500 mt-1 block">
-                Guarantees immediate receipt of order dispatches while domain MX records are configured.
+                All order alerts, customer quotes, and dispatch requests are delivered here.
               </span>
             </div>
 
