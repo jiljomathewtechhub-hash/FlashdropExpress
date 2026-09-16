@@ -88,19 +88,17 @@ export const DriverDashboard: React.FC<DriverDashboardProps> = ({ onNavigate, in
   const [user, setUser] = useState<UserSession | null>(() => store.getCurrentUser());
   const [orders, setOrders] = useState<Order[]>(() => store.getOrders());
   const [drivers, setDrivers] = useState<Driver[]>(() => store.getDrivers());
-  const [selectedDriverId, setSelectedDriverId] = useState<string>(user?.driverId || '');
 
-  // Find the exact matching driver profile for the logged-in user
+  // Strictly find the exact matching driver profile for the logged-in user only
   const currentDriver = drivers.find(
     (d) =>
       (user?.driverId && (d.id === user.driverId || d.user_id === user.driverId)) ||
-      (selectedDriverId && (d.id === selectedDriverId || d.user_id === selectedDriverId)) ||
-      (user?.email && d.email.toLowerCase() === user.email.toLowerCase()) ||
-      (user?.name && d.name.toLowerCase() === user.name.toLowerCase())
+      (user?.email && d.email && d.email.toLowerCase() === user.email.toLowerCase()) ||
+      (user?.name && d.name && d.name.toLowerCase() === user.name.toLowerCase())
   );
 
-  // Determine active driver ID and details
-  const activeId = currentDriver?.id || user?.driverId || selectedDriverId || '';
+  // Determine active driver ID and details strictly for this authenticated account
+  const activeId = currentDriver?.id || user?.driverId || '';
   const activeName = currentDriver?.name || user?.name || 'Staff Member';
   const activeEmail = currentDriver?.email || user?.email || '';
   const activePhone = currentDriver?.phone || user?.phone || 'Not assigned';
@@ -108,12 +106,11 @@ export const DriverDashboard: React.FC<DriverDashboardProps> = ({ onNavigate, in
   const activePlate = currentDriver?.license_plate || 'ON-FLEET';
   const activeRole = currentDriver?.staff_role || (user?.role === 'admin' ? 'Fleet Administrator' : 'Courier Driver');
 
-  // Build the set of all matching driver identifier strings
+  // Build the set of matching driver identifier strings for this driver only
   const myDriverIds = new Set<string>();
   if (currentDriver?.id) myDriverIds.add(currentDriver.id);
   if (currentDriver?.user_id) myDriverIds.add(currentDriver.user_id);
   if (user?.driverId) myDriverIds.add(user.driverId);
-  if (selectedDriverId) myDriverIds.add(selectedDriverId);
 
   const myEmail = activeEmail.toLowerCase();
   const myName = activeName.toLowerCase();
@@ -198,14 +195,11 @@ export const DriverDashboard: React.FC<DriverDashboardProps> = ({ onNavigate, in
       setUser(currentUser);
       setOrders(store.getOrders());
       setDrivers(store.getDrivers());
-      if (currentUser?.driverId && !selectedDriverId) {
-        setSelectedDriverId(currentUser.driverId);
-      }
     };
 
     refreshData();
     return store.subscribe(refreshData);
-  }, [selectedDriverId]);
+  }, []);
 
   const handleUpdateStatus = (order: Order, newStatus: OrderStatus) => {
     const updated = store.updateOrderStatus(
@@ -401,24 +395,6 @@ export const DriverDashboard: React.FC<DriverDashboardProps> = ({ onNavigate, in
               </div>
             </div>
           </div>
-
-          {/* Admin Fleet Switcher (Only visible to Admin / Owner inspecting the fleet) */}
-          {isAdminOrOwner && (
-            <div className="bg-slate-50 border border-slate-200 rounded-2xl p-2.5 flex items-center space-x-2 text-xs">
-              <span className="text-slate-400 text-[11px] font-semibold pl-1">Admin Preview:</span>
-              <select
-                value={activeId}
-                onChange={(e) => setSelectedDriverId(e.target.value)}
-                className="bg-white border border-slate-300 text-slate-900 text-xs rounded-xl px-2.5 py-1.5 focus:ring-1 focus:ring-red-500 focus:outline-none cursor-pointer"
-              >
-                {drivers.map((drv: Driver) => (
-                  <option key={drv.id} value={drv.id}>
-                    {drv.name} ({drv.vehicle_type})
-                  </option>
-                ))}
-              </select>
-            </div>
-          )}
         </div>
 
         {/* 4-Panel Profile Details Grid */}
