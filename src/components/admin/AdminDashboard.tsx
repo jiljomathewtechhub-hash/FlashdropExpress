@@ -27,6 +27,12 @@ import {
   Check,
   Eye,
   EyeOff,
+  Camera,
+  ZoomIn,
+  Download,
+  CheckCircle,
+  Navigation,
+  FileText,
   UserPlus,
   X,
   Briefcase,
@@ -77,6 +83,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [selectedOrderDetails, setSelectedOrderDetails] = useState<Order | null>(null);
+  const [zoomedPhotoUrl, setZoomedPhotoUrl] = useState<string | null>(null);
+  const [copiedOrderNumber, setCopiedOrderNumber] = useState(false);
 
   // Driver Assignment modal
   const [assignModalOrder, setAssignModalOrder] = useState<Order | null>(null);
@@ -230,10 +239,32 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
     if (initialParams?.orderNumber) {
       setActiveTab('orders');
       setSearchQuery(initialParams.orderNumber);
+      const targetOrder = orders.find(
+        (o) =>
+          o.order_number.toLowerCase() === initialParams.orderNumber.toLowerCase() ||
+          o.id === initialParams.orderNumber
+      );
+      if (targetOrder) {
+        setSelectedOrderDetails(targetOrder);
+      }
     } else if (initialParams?.tab) {
       setActiveTab(initialParams.tab);
     }
-  }, [initialParams]);
+  }, [initialParams, orders]);
+
+  // Keep selectedOrderDetails in real-time sync with store updates (e.g. driver uploads POD photo)
+  useEffect(() => {
+    if (selectedOrderDetails) {
+      const live = orders.find((o) => o.id === selectedOrderDetails.id);
+      if (live && (
+        live.order_status !== selectedOrderDetails.order_status ||
+        live.updated_at !== selectedOrderDetails.updated_at ||
+        live.proof_of_delivery?.photo_url !== selectedOrderDetails.proof_of_delivery?.photo_url
+      )) {
+        setSelectedOrderDetails(live);
+      }
+    }
+  }, [orders, selectedOrderDetails]);
 
   // Filter orders
   const filteredOrders = orders.filter((o) => {
@@ -900,7 +931,26 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
                     filteredOrders.map((ord) => (
                       <tr key={ord.id} className="hover:bg-slate-100/40 transition">
                         <td className="py-3 px-4 font-mono font-bold text-slate-900">
-                          {ord.order_number}
+                          <button
+                            type="button"
+                            onClick={() => setSelectedOrderDetails(ord)}
+                            className="text-left font-mono font-bold text-slate-900 hover:text-blue-600 hover:underline flex items-center space-x-1 cursor-pointer group"
+                            title="Click to view full order details & proof of delivery"
+                          >
+                            <span>#{ord.order_number}</span>
+                            <Eye className="w-3 h-3 text-slate-400 group-hover:text-blue-600 transition" />
+                          </button>
+                          {ord.proof_of_delivery?.photo_url && (
+                            <button
+                              type="button"
+                              onClick={() => setSelectedOrderDetails(ord)}
+                              className="inline-flex items-center space-x-1 px-1.5 py-0.5 mt-1 rounded-md bg-emerald-100 hover:bg-emerald-200 text-emerald-800 text-[10px] font-bold border border-emerald-300 transition cursor-pointer"
+                              title="Verified Proof of Delivery Photo Available — Click to view"
+                            >
+                              <Camera className="w-2.5 h-2.5 text-emerald-700" />
+                              <span>POD Photo</span>
+                            </button>
+                          )}
                         </td>
                         <td className="py-3 px-4">
                           <div className="font-semibold text-slate-900">{ord.customer_name}</div>
@@ -964,6 +1014,14 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
                         </td>
                         <td className="py-3 px-4 text-right">
                           <div className="flex items-center justify-end space-x-1">
+                            <button
+                              onClick={() => setSelectedOrderDetails(ord)}
+                              className="px-2 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition flex items-center space-x-1 cursor-pointer shadow-xs"
+                              title="View Complete Order Details & Proof of Delivery"
+                            >
+                              <Eye className="w-3.5 h-3.5" />
+                              <span className="font-bold text-[10px]">Details</span>
+                            </button>
                             <button
                               onClick={() => handleOpenQuoteReview(ord)}
                               className={`p-1.5 rounded-lg transition border flex items-center space-x-1 ${
@@ -1610,6 +1668,16 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
                                   <div className="flex items-center space-x-2">
                                     <button
                                       type="button"
+                                      onClick={() => setSelectedOrderDetails(run)}
+                                      className="text-blue-700 hover:text-blue-800 font-bold cursor-pointer flex items-center space-x-0.5"
+                                      title="View complete order details & proof of delivery"
+                                    >
+                                      <Eye className="w-3 h-3 mr-0.5" />
+                                      <span>View</span>
+                                    </button>
+                                    <span className="text-slate-300">|</span>
+                                    <button
+                                      type="button"
                                       onClick={() => handleOpenEditOrder(run)}
                                       className="text-amber-700 hover:text-amber-800 font-semibold cursor-pointer"
                                       title="Edit this order"
@@ -2191,24 +2259,28 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
                                 <span>Pop Window</span>
                               </button>
 
-                              {notif.order_number && (
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    inAppNotificationService.markAsRead(notif.id);
-                                    setInAppNotifications(
-                                      inAppNotificationService.getNotificationsForUser(user, drivers)
-                                    );
-                                    setSearchQuery(notif.order_number || '');
-                                    setActiveTab('orders');
-                                  }}
-                                  className="flex items-center space-x-1.5 px-3 py-1.5 bg-[#C5161D] hover:bg-red-700 text-white text-xs font-bold rounded-xl shadow-xs transition cursor-pointer"
-                                  title="View order in Orders Queue"
-                                >
-                                  <span>Inspect Order</span>
-                                  <ExternalLink className="w-3.5 h-3.5" />
-                                </button>
-                              )}
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      inAppNotificationService.markAsRead(notif.id);
+                                      setInAppNotifications(
+                                        inAppNotificationService.getNotificationsForUser(user, drivers)
+                                      );
+                                      setSearchQuery(notif.order_number || '');
+                                      setActiveTab('orders');
+                                      const matched = orders.find(
+                                        (o) => o.order_number === notif.order_number || o.id === notif.order_id
+                                      );
+                                      if (matched) {
+                                        setSelectedOrderDetails(matched);
+                                      }
+                                    }}
+                                    className="flex items-center space-x-1.5 px-3 py-1.5 bg-[#C5161D] hover:bg-red-700 text-white text-xs font-bold rounded-xl shadow-xs transition cursor-pointer"
+                                    title="View full order details & proof of delivery"
+                                  >
+                                    <span>Inspect Order</span>
+                                    <ExternalLink className="w-3.5 h-3.5" />
+                                  </button>
 
                               {isUnopened ? (
                                 <button
@@ -4189,6 +4261,742 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
               >
                 Assign & Dispatch
               </button>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {/* COMPREHENSIVE ORDER DETAILS & PROOF OF DELIVERY (POD) MODAL */}
+      {selectedOrderDetails && createPortal(
+        <div className="fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-sm flex items-center justify-center p-3 sm:p-6 overflow-y-auto animate-fade-in">
+          <div className="bg-white border border-slate-200 rounded-3xl max-w-5xl w-full max-h-[92vh] flex flex-col shadow-2xl overflow-hidden my-auto text-xs">
+            {/* Modal Header */}
+            <div className="p-5 sm:p-6 border-b border-slate-200 bg-slate-50 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shrink-0">
+              <div className="space-y-1.5">
+                <div className="flex flex-wrap items-center gap-2.5">
+                  <span className="font-mono font-black text-xl text-slate-900 tracking-tight">
+                    #{selectedOrderDetails.order_number}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      navigator.clipboard.writeText(selectedOrderDetails.order_number);
+                      setCopiedOrderNumber(true);
+                      setTimeout(() => setCopiedOrderNumber(false), 2000);
+                    }}
+                    className="p-1 text-slate-500 hover:text-slate-900 rounded-md hover:bg-slate-200 transition cursor-pointer"
+                    title="Copy Order Number"
+                  >
+                    {copiedOrderNumber ? (
+                      <Check className="w-3.5 h-3.5 text-emerald-600" />
+                    ) : (
+                      <Copy className="w-3.5 h-3.5" />
+                    )}
+                  </button>
+                  {getOrderStatusBadge(selectedOrderDetails.order_status, 'md')}
+                  {selectedOrderDetails.delivery_time_option && (
+                    <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-red-100 text-red-800 border border-red-200">
+                      {selectedOrderDetails.delivery_time_option.replace('_', ' ')}
+                    </span>
+                  )}
+                  {selectedOrderDetails.service_area && (
+                    <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-slate-200 text-slate-700">
+                      {selectedOrderDetails.service_area} Area
+                    </span>
+                  )}
+                </div>
+                <p className="text-slate-500 text-[11px]">
+                  Created on {new Date(selectedOrderDetails.created_at).toLocaleString()} • Last updated {new Date(selectedOrderDetails.updated_at).toLocaleString()}
+                </p>
+              </div>
+
+              {/* Header Actions */}
+              <div className="flex items-center space-x-2 shrink-0 self-end sm:self-center">
+                <button
+                  type="button"
+                  onClick={() => generateOrderPdf(selectedOrderDetails, settings)}
+                  className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-red-700 font-bold border border-slate-300 rounded-xl transition flex items-center space-x-1.5 cursor-pointer shadow-xs"
+                  title="Download Official PDF Waybill & Invoice"
+                >
+                  <FileDown className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline text-xs">PDF Waybill</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onNavigate('tracking', selectedOrderDetails.order_number)}
+                  className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold border border-slate-300 rounded-xl transition flex items-center space-x-1.5 cursor-pointer shadow-xs"
+                  title="Open Live GPS Tracking Map"
+                >
+                  <Search className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline text-xs">Live Tracking</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    handleOpenEditOrder(selectedOrderDetails);
+                    setSelectedOrderDetails(null);
+                  }}
+                  className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-amber-700 font-bold border border-slate-300 rounded-xl transition flex items-center space-x-1.5 cursor-pointer shadow-xs"
+                  title="Edit Order Details"
+                >
+                  <Edit2 className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline text-xs">Edit</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSelectedOrderDetails(null)}
+                  className="p-1.5 text-slate-500 hover:text-slate-900 rounded-xl bg-slate-200 hover:bg-slate-300 transition cursor-pointer"
+                  title="Close Modal"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+
+            {/* Modal Body */}
+            <div className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-6">
+              {/* SECTION 1: PROOF OF DELIVERY (POD) & COMPLETION SNAPSHOT */}
+              {selectedOrderDetails.proof_of_delivery ? (
+                <div className="bg-gradient-to-br from-emerald-50 via-white to-emerald-50/50 border-2 border-emerald-300 rounded-2xl p-5 shadow-xs space-y-4">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-emerald-200/80 pb-3">
+                    <div className="flex items-center space-x-2">
+                      <span className="p-1.5 bg-emerald-600 text-white rounded-lg">
+                        <CheckCircle className="w-4 h-4" />
+                      </span>
+                      <div>
+                        <h4 className="text-sm font-bold text-emerald-950 uppercase tracking-wider font-['Outfit']">
+                          Verified Proof of Delivery (POD)
+                        </h4>
+                        <p className="text-[11px] text-emerald-800">
+                          Completed on {new Date(selectedOrderDetails.proof_of_delivery.delivered_at).toLocaleDateString([], {
+                            weekday: 'short',
+                            year: 'numeric',
+                            month: 'short',
+                            day: 'numeric'
+                          })} at {new Date(selectedOrderDetails.proof_of_delivery.delivered_at).toLocaleTimeString([], {
+                            hour: '2-digit',
+                            minute: '2-digit',
+                            second: '2-digit'
+                          })}
+                        </p>
+                      </div>
+                    </div>
+                    <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-600 text-white shadow-xs self-start sm:self-auto">
+                      ✓ Official Sign-Off Recorded
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+                    {/* Left: POD Photo and Signature */}
+                    <div className="space-y-3">
+                      <div className="space-y-1.5">
+                        <div className="flex items-center justify-between text-xs font-bold text-slate-800">
+                          <span className="flex items-center space-x-1">
+                            <Camera className="w-3.5 h-3.5 text-emerald-700" />
+                            <span>Delivery Photo Snapshot</span>
+                          </span>
+                          {selectedOrderDetails.proof_of_delivery.photo_url && (
+                            <button
+                              type="button"
+                              onClick={() => setZoomedPhotoUrl(selectedOrderDetails.proof_of_delivery?.photo_url || null)}
+                              className="text-emerald-700 hover:text-emerald-900 font-bold text-[11px] flex items-center space-x-1 cursor-pointer hover:underline"
+                            >
+                              <ZoomIn className="w-3 h-3" />
+                              <span>Enlarge Full Size</span>
+                            </button>
+                          )}
+                        </div>
+
+                        {selectedOrderDetails.proof_of_delivery.photo_url ? (
+                          <div
+                            onClick={() => setZoomedPhotoUrl(selectedOrderDetails.proof_of_delivery?.photo_url || null)}
+                            className="relative group rounded-2xl overflow-hidden border border-emerald-300 bg-slate-950 flex items-center justify-center cursor-pointer shadow-sm min-h-[220px] max-h-[300px]"
+                          >
+                            <img
+                              src={selectedOrderDetails.proof_of_delivery.photo_url}
+                              alt="Proof of Delivery Snapshot"
+                              className="w-full h-full max-h-[300px] object-contain transition group-hover:scale-105 duration-300"
+                            />
+                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition flex items-center justify-center space-x-2 text-white font-bold text-xs backdrop-blur-xs">
+                              <ZoomIn className="w-4 h-4" />
+                              <span>Click to Zoom</span>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="p-6 bg-emerald-100/50 border border-dashed border-emerald-300 rounded-2xl text-center text-emerald-800 text-xs">
+                            No photo attached to this delivery record.
+                          </div>
+                        )}
+
+                        {selectedOrderDetails.proof_of_delivery.photo_url && (
+                          <div className="flex justify-end pt-1">
+                            <a
+                              href={selectedOrderDetails.proof_of_delivery.photo_url}
+                              download={`POD-${selectedOrderDetails.order_number}.jpg`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-[11px] text-emerald-800 hover:text-emerald-950 font-bold flex items-center space-x-1 underline cursor-pointer"
+                            >
+                              <Download className="w-3 h-3" />
+                              <span>Download High-Res Snapshot</span>
+                            </a>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Recipient Signature if available */}
+                      {selectedOrderDetails.proof_of_delivery.signature_url && (
+                        <div className="space-y-1.5 pt-2 border-t border-emerald-200">
+                          <span className="text-[10px] font-bold uppercase text-slate-700 block">
+                            Recipient Handwritten Signature
+                          </span>
+                          <div className="p-3 bg-white rounded-xl border border-emerald-200 flex items-center justify-center">
+                            <img
+                              src={selectedOrderDetails.proof_of_delivery.signature_url}
+                              alt="Recipient Signature"
+                              className="max-h-20 object-contain"
+                            />
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Right: Sign-off details and Driver notes */}
+                    <div className="space-y-3">
+                      <div className="bg-white/90 p-4 rounded-xl border border-emerald-200 shadow-xs space-y-3">
+                        <div>
+                          <span className="text-[10px] uppercase font-black text-slate-500 block">
+                            Confirmed Sign-Off Recipient
+                          </span>
+                          <span className="text-sm font-black text-slate-900 flex items-center space-x-1.5 mt-0.5">
+                            <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                            <span>{selectedOrderDetails.proof_of_delivery.recipient_name || selectedOrderDetails.customer_name}</span>
+                          </span>
+                        </div>
+
+                        <div>
+                          <span className="text-[10px] uppercase font-black text-slate-500 block">
+                            Delivering Courier &amp; Vehicle
+                          </span>
+                          <div className="flex items-center space-x-2 mt-0.5 text-xs text-slate-800 font-bold">
+                            <Truck className="w-3.5 h-3.5 text-emerald-700" />
+                            <span>
+                              {selectedOrderDetails.proof_of_delivery.driver_name || selectedOrderDetails.assigned_driver_name || 'Fleet Courier'}
+                            </span>
+                            <span className="text-slate-400">•</span>
+                            <span className="text-slate-600 font-normal">{selectedOrderDetails.vehicle_name}</span>
+                          </div>
+                        </div>
+
+                        <div>
+                          <span className="text-[10px] uppercase font-black text-slate-500 block">
+                            Driver Drop-Off Remarks &amp; Location Notes
+                          </span>
+                          <div className="mt-1 p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 leading-relaxed font-medium italic">
+                            "{selectedOrderDetails.proof_of_delivery.driver_notes || 'Delivered directly to designated destination.'}"
+                          </div>
+                        </div>
+
+                        <div className="pt-2 border-t border-slate-200 text-[11px] text-emerald-800 flex items-center space-x-1.5 font-medium">
+                          <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                          <span>GPS Timestamp Verified &amp; Logged on FlashDrop Dispatch Ledger</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ) : selectedOrderDetails.order_status === 'delivered' ? (
+                <div className="p-4 bg-emerald-50 border border-emerald-300 rounded-2xl text-xs text-emerald-900 flex items-center space-x-2">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                  <span>
+                    Order is marked <strong>Delivered</strong>. Proof of delivery data or photo has not been digitally attached yet.
+                  </span>
+                </div>
+              ) : (
+                <div className="p-4 bg-blue-50/70 border border-blue-200 rounded-2xl text-xs text-blue-900 flex items-center justify-between flex-wrap gap-2">
+                  <div className="flex items-center space-x-2">
+                    <Clock className="w-4 h-4 text-blue-600 shrink-0" />
+                    <span>
+                      Proof of Delivery (POD) Pending: Order is currently <strong>{selectedOrderDetails.order_status.replace('_', ' ').toUpperCase()}</strong>.
+                    </span>
+                  </div>
+                  <span className="text-[11px] text-blue-700 font-medium">
+                    Courier photo &amp; sign-off will automatically appear here once delivered.
+                  </span>
+                </div>
+              )}
+
+              {/* SECTION 2: ROUTE & DOCK ACCESS DETAILS */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between text-xs font-bold text-slate-900 uppercase tracking-wider">
+                  <span className="flex items-center space-x-1.5">
+                    <MapPin className="w-3.5 h-3.5 text-red-600" />
+                    <span>Route &amp; Facility Access Details</span>
+                  </span>
+                  <div className="flex items-center space-x-2 text-[11px] font-semibold text-slate-600">
+                    <span className="font-bold text-red-600">{selectedOrderDetails.distance_km} KM</span>
+                    <span>•</span>
+                    <span>{selectedOrderDetails.service_area} zone</span>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Origin Shipper Card */}
+                  <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-3">
+                    <div className="flex items-center justify-between border-b border-slate-200 pb-2">
+                      <div className="flex items-center space-x-1.5">
+                        <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
+                        <span className="font-bold text-slate-900 text-xs uppercase tracking-wider">
+                          Pickup Origin / Shipper
+                        </span>
+                      </div>
+                      <a
+                        href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(selectedOrderDetails.pickup_address)}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-[10px] text-blue-600 hover:text-blue-800 font-bold flex items-center space-x-1 hover:underline cursor-pointer"
+                      >
+                        <span>Google Maps</span>
+                        <ExternalLink className="w-2.5 h-2.5" />
+                      </a>
+                    </div>
+
+                    <div className="space-y-2 text-xs">
+                      <div>
+                        <span className="text-[10px] uppercase font-bold text-slate-500 block">Address</span>
+                        <span className="font-bold text-slate-900 text-xs block leading-snug">
+                          {selectedOrderDetails.pickup_address}
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-2 pt-1 border-t border-slate-200/80">
+                        <div>
+                          <span className="text-[10px] uppercase font-bold text-slate-500 block">On-Site Contact</span>
+                          <span className="font-semibold text-slate-800">
+                            {selectedOrderDetails.pickup_contact_name || 'Shipping Manager'}
+                          </span>
+                        </div>
+                        <div>
+                          <span className="text-[10px] uppercase font-bold text-slate-500 block">Contact Phone</span>
+                          <a
+                            href={`tel:${selectedOrderDetails.pickup_contact_phone || selectedOrderDetails.customer_phone}`}
+                            className="text-blue-600 font-bold hover:underline"
+                          >
+                            {selectedOrderDetails.pickup_contact_phone || selectedOrderDetails.customer_phone}
+                          </a>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-2 pt-1 border-t border-slate-200/80">
+                        <div>
+                          <span className="text-[10px] uppercase font-bold text-slate-500 block">Dock / Unit / Bay</span>
+                          <span className="font-semibold text-slate-800">
+                            {selectedOrderDetails.pickup_unit || 'Main Shipper Facility'}
+                          </span>
+                        </div>
+                        <div>
+                          <span className="text-[10px] uppercase font-bold text-slate-500 block">Scheduled Pickup</span>
+                          <span className="font-semibold text-slate-800">
+                            {selectedOrderDetails.pickup_date} {selectedOrderDetails.pickup_time ? `@ ${selectedOrderDetails.pickup_time}` : ''}
+                          </span>
+                        </div>
+                      </div>
+
+                      {selectedOrderDetails.pickup_notes && (
+                        <div className="pt-1 border-t border-slate-200/80">
+                          <span className="text-[10px] uppercase font-bold text-slate-500 block">Gate &amp; Entrance Security Notes</span>
+                          <p className="text-[11px] text-slate-700 bg-white p-2 rounded-lg border border-slate-200 mt-0.5 leading-relaxed font-medium">
+                            {selectedOrderDetails.pickup_notes}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Destination Consignee Card */}
+                  <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-3">
+                    <div className="flex items-center justify-between border-b border-slate-200 pb-2">
+                      <div className="flex items-center space-x-1.5">
+                        <span className="w-2.5 h-2.5 rounded-full bg-red-500" />
+                        <span className="font-bold text-slate-900 text-xs uppercase tracking-wider">
+                          Drop-Off Destination / Consignee
+                        </span>
+                      </div>
+                      <a
+                        href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(selectedOrderDetails.delivery_address)}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-[10px] text-blue-600 hover:text-blue-800 font-bold flex items-center space-x-1 hover:underline cursor-pointer"
+                      >
+                        <span>Google Maps</span>
+                        <ExternalLink className="w-2.5 h-2.5" />
+                      </a>
+                    </div>
+
+                    <div className="space-y-2 text-xs">
+                      <div>
+                        <span className="text-[10px] uppercase font-bold text-slate-500 block">Address</span>
+                        <span className="font-bold text-slate-900 text-xs block leading-snug">
+                          {selectedOrderDetails.delivery_address}
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-2 pt-1 border-t border-slate-200/80">
+                        <div>
+                          <span className="text-[10px] uppercase font-bold text-slate-500 block">Receiver Contact</span>
+                          <span className="font-semibold text-slate-800">
+                            {selectedOrderDetails.delivery_contact_name || selectedOrderDetails.customer_name}
+                          </span>
+                        </div>
+                        <div>
+                          <span className="text-[10px] uppercase font-bold text-slate-500 block">Receiver Phone</span>
+                          <a
+                            href={`tel:${selectedOrderDetails.delivery_contact_phone || selectedOrderDetails.customer_phone}`}
+                            className="text-blue-600 font-bold hover:underline"
+                          >
+                            {selectedOrderDetails.delivery_contact_phone || selectedOrderDetails.customer_phone}
+                          </a>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-2 pt-1 border-t border-slate-200/80">
+                        <div>
+                          <span className="text-[10px] uppercase font-bold text-slate-500 block">Suite / Buzzer / Door</span>
+                          <span className="font-semibold text-slate-800">
+                            {selectedOrderDetails.delivery_unit || 'Direct Receiving Door'}
+                          </span>
+                        </div>
+                        <div>
+                          <span className="text-[10px] uppercase font-bold text-slate-500 block">Delivery Time Option</span>
+                          <span className="font-bold text-red-700 uppercase">
+                            {selectedOrderDetails.delivery_time_option || 'Standard'}
+                          </span>
+                        </div>
+                      </div>
+
+                      {selectedOrderDetails.delivery_notes && (
+                        <div className="pt-1 border-t border-slate-200/80">
+                          <span className="text-[10px] uppercase font-bold text-slate-500 block">Drop-Off &amp; Receiving Instructions</span>
+                          <p className="text-[11px] text-slate-700 bg-white p-2 rounded-lg border border-slate-200 mt-0.5 leading-relaxed font-medium">
+                            {selectedOrderDetails.delivery_notes}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* SECTION 3: CARGO SPECS & VEHICLE MANIFEST */}
+              <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-3">
+                <div className="flex items-center space-x-1.5 text-xs font-bold text-slate-900 uppercase tracking-wider">
+                  <Package className="w-3.5 h-3.5 text-blue-600" />
+                  <span>Cargo Manifest &amp; Equipment Requirements</span>
+                </div>
+
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+                  <div className="p-3 bg-white rounded-xl border border-slate-200">
+                    <span className="text-[10px] uppercase font-bold text-slate-500 block">Required Vehicle</span>
+                    <span className="font-bold text-slate-900 block mt-0.5">{selectedOrderDetails.vehicle_name}</span>
+                  </div>
+                  <div className="p-3 bg-white rounded-xl border border-slate-200">
+                    <span className="text-[10px] uppercase font-bold text-slate-500 block">Total Weight</span>
+                    <span className="font-bold text-slate-900 block mt-0.5">
+                      {selectedOrderDetails.weight_lbs} lbs ({(selectedOrderDetails.weight_lbs * 0.453592).toFixed(1)} kg)
+                    </span>
+                  </div>
+                  <div className="p-3 bg-white rounded-xl border border-slate-200">
+                    <span className="text-[10px] uppercase font-bold text-slate-500 block">Piece Count / Units</span>
+                    <span className="font-bold text-slate-900 block mt-0.5">{selectedOrderDetails.quantity} items / pails</span>
+                  </div>
+                  <div className="p-3 bg-white rounded-xl border border-slate-200">
+                    <span className="text-[10px] uppercase font-bold text-slate-500 block">Commodity Classification</span>
+                    <span className="font-bold text-slate-900 block mt-0.5 capitalize">{selectedOrderDetails.item_type}</span>
+                  </div>
+                </div>
+
+                {(selectedOrderDetails.item_description || selectedOrderDetails.custom_instructions) && (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs pt-1">
+                    {selectedOrderDetails.item_description && (
+                      <div className="p-3 bg-white rounded-xl border border-slate-200">
+                        <span className="text-[10px] uppercase font-bold text-slate-500 block">Item Description</span>
+                        <p className="text-slate-800 text-[11px] mt-0.5">{selectedOrderDetails.item_description}</p>
+                      </div>
+                    )}
+                    {selectedOrderDetails.custom_instructions && (
+                      <div className="p-3 bg-white rounded-xl border border-slate-200">
+                        <span className="text-[10px] uppercase font-bold text-slate-500 block">Special Handling Protocol</span>
+                        <p className="text-slate-800 text-[11px] mt-0.5">{selectedOrderDetails.custom_instructions}</p>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* SECTION 4: CUSTOMER PROFILE & ACCOUNT DETAILS */}
+              <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-3">
+                <div className="flex items-center justify-between text-xs font-bold text-slate-900 uppercase tracking-wider">
+                  <span className="flex items-center space-x-1.5">
+                    <Users className="w-3.5 h-3.5 text-indigo-600" />
+                    <span>Customer &amp; Commercial Account Profile</span>
+                  </span>
+                  <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
+                    selectedOrderDetails.account_type === 'commercial'
+                      ? 'bg-purple-100 text-purple-900 border border-purple-200'
+                      : 'bg-slate-200 text-slate-700'
+                  }`}>
+                    {selectedOrderDetails.account_type === 'commercial' ? 'Commercial Corporate' : 'Personal Client'}
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+                  <div className="p-3 bg-white rounded-xl border border-slate-200">
+                    <span className="text-[10px] uppercase font-bold text-slate-500 block">Customer Name</span>
+                    <span className="font-bold text-slate-900 block mt-0.5">{selectedOrderDetails.customer_name}</span>
+                    {selectedOrderDetails.company_name && (
+                      <span className="text-slate-600 text-[11px] block mt-0.5">{selectedOrderDetails.company_name}</span>
+                    )}
+                  </div>
+                  <div className="p-3 bg-white rounded-xl border border-slate-200">
+                    <span className="text-[10px] uppercase font-bold text-slate-500 block">Email Address</span>
+                    <a
+                      href={`mailto:${selectedOrderDetails.customer_email}`}
+                      className="text-blue-600 hover:underline font-medium block mt-0.5 truncate"
+                    >
+                      {selectedOrderDetails.customer_email}
+                    </a>
+                  </div>
+                  <div className="p-3 bg-white rounded-xl border border-slate-200">
+                    <span className="text-[10px] uppercase font-bold text-slate-500 block">Telephone</span>
+                    <a
+                      href={`tel:${selectedOrderDetails.customer_phone}`}
+                      className="text-blue-600 hover:underline font-bold block mt-0.5"
+                    >
+                      {selectedOrderDetails.customer_phone}
+                    </a>
+                  </div>
+                </div>
+              </div>
+
+              {/* SECTION 5: PRICING, APPLIED DISCOUNTS & BILLING BREAKDOWN */}
+              <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-3">
+                <div className="flex items-center justify-between text-xs font-bold text-slate-900 uppercase tracking-wider">
+                  <span className="flex items-center space-x-1.5">
+                    <DollarSign className="w-3.5 h-3.5 text-emerald-600" />
+                    <span>Pricing, Discounts &amp; Financial Ledger</span>
+                  </span>
+                  <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase ${
+                    selectedOrderDetails.payment_status === 'paid'
+                      ? 'bg-emerald-100 text-emerald-900 border border-emerald-300'
+                      : 'bg-amber-100 text-amber-900 border border-amber-300'
+                  }`}>
+                    Payment: {selectedOrderDetails.payment_status || 'Pending'}
+                  </span>
+                </div>
+
+                <div className="bg-white rounded-xl border border-slate-200 overflow-hidden text-xs">
+                  <div className="divide-y divide-slate-100">
+                    <div className="flex justify-between py-2 px-4">
+                      <span className="text-slate-600">Base Transportation Fee ({selectedOrderDetails.vehicle_name})</span>
+                      <span className="font-semibold text-slate-900 font-mono">${selectedOrderDetails.base_price.toFixed(2)} CAD</span>
+                    </div>
+                    {selectedOrderDetails.excess_km_charge ? (
+                      <div className="flex justify-between py-2 px-4">
+                        <span className="text-slate-600">Excess Distance Charge ({selectedOrderDetails.distance_km} km)</span>
+                        <span className="font-semibold text-slate-900 font-mono">${selectedOrderDetails.excess_km_charge.toFixed(2)} CAD</span>
+                      </div>
+                    ) : null}
+                    {selectedOrderDetails.delivery_type_charge ? (
+                      <div className="flex justify-between py-2 px-4">
+                        <span className="text-slate-600">Urgency / Delivery Option Surcharge</span>
+                        <span className="font-semibold text-slate-900 font-mono">
+                          ${selectedOrderDetails.delivery_type_charge.toFixed(2)} CAD
+                        </span>
+                      </div>
+                    ) : null}
+                    {selectedOrderDetails.after_hours_charge ? (
+                      <div className="flex justify-between py-2 px-4">
+                        <span className="text-slate-600">After-Hours / Night Surcharge</span>
+                        <span className="font-semibold text-slate-900 font-mono">${selectedOrderDetails.after_hours_charge.toFixed(2)} CAD</span>
+                      </div>
+                    ) : null}
+                    {(selectedOrderDetails.waiting_charge || selectedOrderDetails.labor_charge) ? (
+                      <div className="flex justify-between py-2 px-4">
+                        <span className="text-slate-600">Waiting Time &amp; Labor Charges</span>
+                        <span className="font-semibold text-slate-900 font-mono">
+                          ${((selectedOrderDetails.waiting_charge || 0) + (selectedOrderDetails.labor_charge || 0)).toFixed(2)} CAD
+                        </span>
+                      </div>
+                    ) : null}
+
+                    {/* DISCOUNT ROW */}
+                    {selectedOrderDetails.discount_amount && selectedOrderDetails.discount_amount > 0 ? (
+                      <div className="flex justify-between py-2 px-4 bg-emerald-50/70 text-emerald-900 font-medium">
+                        <div className="space-y-0.5">
+                          <span className="font-bold flex items-center space-x-1">
+                            <Percent className="w-3 h-3 text-emerald-700" />
+                            <span>{selectedOrderDetails.discount_type || 'Customer Loyalty Discount'}</span>
+                          </span>
+                          {selectedOrderDetails.discount_notes && (
+                            <span className="text-[10px] text-emerald-700 block italic">"{selectedOrderDetails.discount_notes}"</span>
+                          )}
+                        </div>
+                        <span className="font-bold font-mono text-emerald-700">-${selectedOrderDetails.discount_amount.toFixed(2)} CAD</span>
+                      </div>
+                    ) : null}
+
+                    <div className="flex justify-between py-2 px-4 bg-slate-50 font-semibold text-slate-700">
+                      <span>Subtotal</span>
+                      <span className="font-mono">${selectedOrderDetails.subtotal.toFixed(2)} CAD</span>
+                    </div>
+
+                    <div className="flex justify-between py-2 px-4 text-slate-600">
+                      <span>HST (13% Ontario Sales Tax)</span>
+                      <span className="font-mono">${selectedOrderDetails.tax_amount.toFixed(2)} CAD</span>
+                    </div>
+
+                    <div className="flex justify-between py-3 px-4 bg-slate-900 text-white font-bold text-sm">
+                      <span>Total Price</span>
+                      <span className="font-mono text-base text-emerald-400 font-black">${selectedOrderDetails.total_price.toFixed(2)} CAD</span>
+                    </div>
+                  </div>
+                </div>
+
+                {selectedOrderDetails.quote_notes && (
+                  <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-900 space-y-1">
+                    <span className="text-[10px] uppercase font-bold block text-amber-800">Administrator Quotation Notes to Customer</span>
+                    <p className="italic font-medium">"{selectedOrderDetails.quote_notes}"</p>
+                  </div>
+                )}
+              </div>
+
+              {/* SECTION 6: CHAIN OF CUSTODY & AUDIT TIMELINE */}
+              <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-3">
+                <div className="flex items-center space-x-1.5 text-xs font-bold text-slate-900 uppercase tracking-wider">
+                  <Clock className="w-3.5 h-3.5 text-slate-700" />
+                  <span>Chain of Custody &amp; Status Audit Log</span>
+                </div>
+
+                {selectedOrderDetails.status_history && selectedOrderDetails.status_history.length > 0 ? (
+                  <div className="space-y-2 border-l-2 border-slate-200 ml-2 pl-4">
+                    {selectedOrderDetails.status_history.map((sh, idx) => (
+                      <div key={sh.id || idx} className="relative text-xs space-y-0.5">
+                        <span className="absolute -left-[21px] top-1 w-2.5 h-2.5 rounded-full bg-slate-400 border-2 border-white ring-1 ring-slate-300" />
+                        <div className="flex items-center space-x-2">
+                          {getOrderStatusBadge(sh.status, 'sm')}
+                          <span className="text-[10px] text-slate-500 font-mono">
+                            {new Date(sh.created_at).toLocaleString()}
+                          </span>
+                          {sh.changed_by && (
+                            <span className="text-[10px] text-slate-600 bg-slate-200 px-1.5 py-0.2 rounded font-medium">
+                              By: {sh.changed_by}
+                            </span>
+                          )}
+                        </div>
+                        {sh.notes && (
+                          <p className="text-[11px] text-slate-700 pl-0.5">{sh.notes}</p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="p-3 bg-white rounded-xl border border-slate-200 text-slate-500 text-xs text-center">
+                    Order created on {new Date(selectedOrderDetails.created_at).toLocaleString()} with status <strong>{selectedOrderDetails.order_status}</strong>.
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="p-4 sm:p-5 border-t border-slate-200 bg-slate-50 flex flex-wrap items-center justify-between gap-3 shrink-0">
+              <div className="flex items-center space-x-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedDriverForAssign(selectedOrderDetails.assigned_driver_id || drivers[0]?.id || '');
+                    setAssignModalOrder(selectedOrderDetails);
+                  }}
+                  className="px-4 py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold border border-blue-300 rounded-xl transition flex items-center space-x-1.5 cursor-pointer shadow-xs"
+                >
+                  <Truck className="w-3.5 h-3.5" />
+                  <span>{selectedOrderDetails.assigned_driver_id ? 'Reassign Driver' : 'Assign Driver'}</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleOpenQuoteReview(selectedOrderDetails)}
+                  className="px-4 py-2 bg-amber-50 hover:bg-amber-100 text-amber-800 font-bold border border-amber-300 rounded-xl transition flex items-center space-x-1.5 cursor-pointer shadow-xs"
+                >
+                  <DollarSign className="w-3.5 h-3.5" />
+                  <span>Adjust Quote &amp; Discount</span>
+                </button>
+              </div>
+
+              <div className="flex items-center space-x-2">
+                <button
+                  type="button"
+                  onClick={() => generateOrderPdf(selectedOrderDetails, settings)}
+                  className="px-4 py-2 bg-slate-900 hover:bg-black text-white font-bold rounded-xl transition flex items-center space-x-1.5 cursor-pointer shadow-xs"
+                >
+                  <FileDown className="w-3.5 h-3.5" />
+                  <span>Download PDF Waybill</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSelectedOrderDetails(null)}
+                  className="px-5 py-2 bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold rounded-xl transition cursor-pointer"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {/* FULL-SCREEN PROOF OF DELIVERY (POD) PHOTO LIGHTBOX */}
+      {zoomedPhotoUrl && createPortal(
+        <div
+          onClick={() => setZoomedPhotoUrl(null)}
+          className="fixed inset-0 z-[60] bg-black/90 backdrop-blur-md flex flex-col items-center justify-center p-4 animate-fade-in cursor-zoom-out"
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="max-w-4xl max-h-[90vh] flex flex-col items-center space-y-3 cursor-default"
+          >
+            <div className="flex items-center justify-between w-full text-white px-2">
+              <span className="font-mono text-sm font-bold text-slate-200">
+                Proof of Delivery Photo Snapshot {selectedOrderDetails?.order_number ? `• Order #${selectedOrderDetails.order_number}` : ''}
+              </span>
+              <div className="flex items-center space-x-3">
+                <a
+                  href={zoomedPhotoUrl}
+                  download={`POD-${selectedOrderDetails?.order_number || 'delivery'}.jpg`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-3 py-1.5 bg-white/20 hover:bg-white/30 text-white rounded-xl text-xs font-bold transition flex items-center space-x-1 cursor-pointer"
+                >
+                  <Download className="w-3.5 h-3.5" />
+                  <span>Download Snapshot</span>
+                </a>
+                <button
+                  type="button"
+                  onClick={() => setZoomedPhotoUrl(null)}
+                  className="p-1.5 text-white/70 hover:text-white rounded-xl bg-white/10 hover:bg-white/20 transition cursor-pointer"
+                  title="Close Image Viewer"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+
+            <div className="relative overflow-hidden rounded-2xl border border-white/20 shadow-2xl bg-black flex items-center justify-center max-h-[82vh]">
+              <img
+                src={zoomedPhotoUrl}
+                alt="Enlarged Proof of Delivery"
+                className="max-w-full max-h-[82vh] object-contain rounded-2xl"
+              />
             </div>
           </div>
         </div>,
