@@ -52,6 +52,8 @@ import {
   Filter,
   Tag,
   Percent,
+  BarChart3,
+  TrendingUp,
 } from 'lucide-react';
 import { NotificationLog } from '../../types/notification';
 import { Order, Driver, Vehicle, OrderRequestItem, OrderStatus, BusinessSettings } from '../../types/order';
@@ -63,14 +65,15 @@ import { notificationService } from '../../lib/notificationService';
 import { inAppNotificationService, InAppNotification } from '../../lib/inAppNotificationService';
 import { NotificationBell } from '../common/NotificationBell';
 import { getOrderStatusBadge } from '../../lib/statusHelper';
+import { AdminAnalytics } from './AdminAnalytics';
 
 interface AdminDashboardProps {
   onNavigate: (tab: string, param?: any) => void;
-  initialParams?: { orderNumber?: string; tab?: 'orders' | 'drivers' | 'requests' | 'notifications' | 'pricing' | 'settings' } | any;
+  initialParams?: { orderNumber?: string; tab?: 'orders' | 'drivers' | 'reports' | 'requests' | 'notifications' | 'pricing' | 'settings' } | any;
 }
 
 export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, initialParams }) => {
-  const [activeTab, setActiveTab] = useState<'orders' | 'drivers' | 'requests' | 'notifications' | 'pricing' | 'settings'>('orders');
+  const [activeTab, setActiveTab] = useState<'orders' | 'drivers' | 'reports' | 'requests' | 'notifications' | 'pricing' | 'settings'>('orders');
   const [user, setUser] = useState<UserSession | null>(store.getCurrentUser());
   const [orders, setOrders] = useState<Order[]>([]);
   const [drivers, setDrivers] = useState<Driver[]>([]);
@@ -734,6 +737,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
         {[
           { id: 'orders', label: `Orders Queue (${orders.length})`, icon: Package },
           { id: 'drivers', label: `Staff & Drivers (${drivers.length})`, icon: Users },
+          { id: 'reports', label: 'Reports & Analytics', icon: BarChart3 },
           {
             id: 'notifications',
             label: `Notifications & Alerts (${inAppNotifications.filter((n) => !n.is_read).length > 0 ? `${inAppNotifications.filter((n) => !n.is_read).length} New` : inAppNotifications.length})`,
@@ -1771,6 +1775,11 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
               })}
           </div>
         </div>
+      )}
+
+      {/* TAB: REPORTS & ANALYTICS */}
+      {activeTab === 'reports' && (
+        <AdminAnalytics orders={orders} drivers={drivers} onNavigate={onNavigate} />
       )}
 
       {/* TAB 3: CUSTOMER REQUESTS APPROVAL QUEUE */}
