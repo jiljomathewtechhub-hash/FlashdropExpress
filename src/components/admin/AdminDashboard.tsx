@@ -1894,7 +1894,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
           </div>
 
           {/* Roster Grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Roster Grid (Compact & Easy to View) */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {drivers
               .filter((drv) => {
                 if (staffFilter === 'all') return true;
@@ -1919,18 +1920,18 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
 
                 const roleBadge =
                   drv.staff_role === 'admin' ? (
-                    <span className="text-[10px] font-bold text-red-800 bg-red-50 border border-red-300 px-2.5 py-0.5 rounded-full flex items-center space-x-1">
-                      <Shield className="w-3 h-3 mr-1 inline text-red-600" />
-                      <span>Fleet Administrator</span>
+                    <span className="text-[9px] font-bold text-red-800 bg-red-50 border border-red-200 px-2 py-0.5 rounded-full inline-flex items-center">
+                      <Shield className="w-2.5 h-2.5 mr-1 inline text-red-600" />
+                      <span>Admin</span>
                     </span>
                   ) : drv.staff_role === 'dispatcher' ? (
-                    <span className="text-[10px] font-bold text-purple-800 bg-purple-50 border border-purple-300 px-2.5 py-0.5 rounded-full flex items-center space-x-1">
-                      <Users className="w-3 h-3 mr-1 inline text-purple-600" />
-                      <span>Operations Dispatcher</span>
+                    <span className="text-[9px] font-bold text-purple-800 bg-purple-50 border border-purple-200 px-2 py-0.5 rounded-full inline-flex items-center">
+                      <Users className="w-2.5 h-2.5 mr-1 inline text-purple-600" />
+                      <span>Dispatcher</span>
                     </span>
                   ) : (
-                    <span className="text-[10px] font-bold text-blue-800 bg-blue-50 border border-blue-300 px-2.5 py-0.5 rounded-full flex items-center space-x-1">
-                      <Truck className="w-3 h-3 mr-1 inline text-blue-600" />
+                    <span className="text-[9px] font-bold text-blue-800 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded-full inline-flex items-center">
+                      <Truck className="w-2.5 h-2.5 mr-1 inline text-blue-600" />
                       <span>Courier Driver</span>
                     </span>
                   );
@@ -1938,243 +1939,130 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
                 return (
                   <div
                     key={drv.id}
-                    className="bg-white border border-slate-200 rounded-3xl p-6 space-y-5 shadow-sm flex flex-col justify-between hover:border-slate-300 transition"
+                    className="bg-white border border-slate-200/90 rounded-2xl p-4 shadow-2xs hover:shadow-md hover:border-slate-300 transition flex flex-col justify-between space-y-3.5 group"
                   >
-                    <div className="space-y-4">
+                    <div className="space-y-3">
                       {/* Top Profile Header */}
-                      <div className="flex items-center justify-between border-b border-slate-200 pb-4">
-                        <div className="flex items-center space-x-3.5">
-                          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-red-600 to-red-800 border border-red-500/30 text-white font-black text-lg flex items-center justify-center font-['Outfit'] shadow-md shadow-red-950/50">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex items-center space-x-3">
+                          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-red-600 to-red-800 text-white font-black text-base flex items-center justify-center font-['Outfit'] shadow-sm shadow-red-950/20 shrink-0">
                             {drv.name.charAt(0).toUpperCase()}
                           </div>
-                          <div>
-                            <div className="flex items-center space-x-2">
-                              <h3 className="font-bold text-slate-900 text-base font-['Outfit']">
+                          <div className="min-w-0">
+                            <div className="flex items-center space-x-1.5 flex-wrap">
+                              <h3 className="font-bold text-slate-900 text-sm font-['Outfit'] truncate">
                                 {drv.name}
                               </h3>
                               {roleBadge}
                             </div>
-                            <div className="flex items-center space-x-2 text-[11px] text-slate-600 mt-0.5">
-                              <span>FlashDrop GTA Operations</span>
-                              <span>&bull;</span>
-                              <span className="font-mono text-slate-500">ID: {drv.id.slice(0, 8)}...</span>
+                            <div className="text-[10px] text-slate-400 font-mono mt-0.5 truncate">
+                              ID: {drv.id.slice(0, 8)}...
                             </div>
                           </div>
                         </div>
 
                         {/* Status badge */}
                         <span
-                          className={`text-[10px] font-bold px-2.5 py-1 rounded-full flex items-center space-x-1 ${
+                          className={`text-[9px] font-bold px-2 py-0.5 rounded-full flex items-center space-x-1 shrink-0 ${
                             drv.is_active
-                              ? 'bg-emerald-50 text-emerald-800 border border-emerald-300'
-                              : 'bg-slate-100 text-slate-600 border border-slate-300'
+                              ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
+                              : 'bg-slate-100 text-slate-600 border border-slate-200'
                           }`}
                         >
-                          <span className={`w-1.5 h-1.5 rounded-full mr-1.5 ${drv.is_active ? 'bg-emerald-600 animate-pulse' : 'bg-slate-500'}`} />
-                          <span>{drv.is_active ? 'Active & On Duty' : 'Shift Suspended'}</span>
+                          <span className={`w-1.5 h-1.5 rounded-full mr-1 ${drv.is_active ? 'bg-emerald-600 animate-pulse' : 'bg-slate-400'}`} />
+                          <span>{drv.is_active ? 'On Duty' : 'Suspended'}</span>
                         </span>
                       </div>
 
-                      {/* Contact & Vehicle Info Bar */}
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-slate-50/80 border border-slate-200 rounded-2xl p-3.5 text-xs">
-                        <div className="space-y-1.5">
-                          <div className="flex items-center space-x-2 truncate">
-                            <Mail className="w-3.5 h-3.5 text-red-600 shrink-0" />
-                            <a
-                              href={`mailto:${drv.email}`}
-                              className="text-slate-700 hover:text-slate-900 hover:underline truncate font-medium"
-                              title="Send email to staff"
-                            >
-                              {drv.email}
-                            </a>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <Phone className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                            <a
-                              href={`tel:${drv.phone}`}
-                              className="text-slate-700 hover:text-slate-900 font-semibold"
-                              title="Call staff phone"
-                            >
+                      {/* Contact & Vehicle Info Snippet */}
+                      <div className="bg-slate-50/80 border border-slate-200/80 rounded-xl p-2.5 text-xs space-y-1.5">
+                        <div className="flex items-center justify-between text-[11px] text-slate-700">
+                          <span className="flex items-center space-x-1.5 truncate">
+                            <Phone className="w-3 h-3 text-emerald-600 shrink-0" />
+                            <a href={`tel:${drv.phone}`} className="hover:underline font-semibold text-slate-800 truncate">
                               {drv.phone}
                             </a>
-                          </div>
+                          </span>
+                          <span className="flex items-center space-x-1 text-slate-500 text-[10px]">
+                            <Car className="w-3 h-3 text-blue-600 shrink-0" />
+                            <span className="truncate max-w-[90px]">{drv.vehicle_type}</span>
+                          </span>
                         </div>
 
-                        <div className="space-y-1.5 border-t sm:border-t-0 sm:border-l border-slate-200 pt-2 sm:pt-0 sm:pl-3">
-                          <div className="flex items-center space-x-2">
-                            <Car className="w-3.5 h-3.5 text-blue-600 shrink-0" />
-                            <span className="text-slate-800 font-medium truncate">
-                              {drv.vehicle_type}
-                            </span>
-                          </div>
-                          {drv.license_plate && (
-                            <div className="flex items-center space-x-2 text-[11px]">
-                              <span className="text-slate-600 font-medium">Plate:</span>
-                              <span className="font-mono text-amber-800 font-bold bg-amber-50 px-2 py-0.5 rounded border border-amber-300">
-                                {drv.license_plate}
-                              </span>
-                            </div>
-                          )}
+                        <div className="flex items-center justify-between text-[10px] text-slate-500 pt-1 border-t border-slate-200/60">
+                          <span className="truncate max-w-[160px] text-slate-600 font-mono">
+                            {drv.email}
+                          </span>
+                          <span className="font-mono text-amber-800 font-bold bg-amber-50 px-1.5 py-0.2 rounded border border-amber-200">
+                            {drv.license_plate || 'ON-FLEET'}
+                          </span>
                         </div>
                       </div>
 
-                      {/* ASSIGNED WORK & DISPATCH STATUS FEED */}
-                      <div className="bg-slate-50/90 border border-slate-200 rounded-2xl p-4 space-y-3">
-                        <div className="flex items-center justify-between border-b border-slate-200/70 pb-2">
-                          <div className="flex items-center space-x-2">
-                            <Clock className="w-3.5 h-3.5 text-red-600" />
-                            <span className="text-xs font-bold text-slate-900 uppercase tracking-wider">
-                              Assigned Deliveries & Live Status
-                            </span>
-                          </div>
-                          <div className="flex items-center space-x-2 text-[11px]">
-                            <span className={`px-2 py-0.5 rounded-full font-bold ${
-                              activeRuns.length > 0
-                                ? 'bg-blue-50 text-blue-800 border border-blue-300'
-                                : 'bg-slate-100 text-slate-500 border border-slate-200'
-                            }`}>
-                              {activeRuns.length} Active Run{activeRuns.length === 1 ? '' : 's'}
-                            </span>
-                            <span className="text-slate-500">&bull;</span>
-                            <span className="text-emerald-700 font-medium">
-                              {completedRuns.length} Delivered
-                            </span>
-                          </div>
-                        </div>
-
-                        {activeRuns.length === 0 ? (
-                          <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl text-center space-y-1">
-                            <CheckCircle2 className="w-5 h-5 text-emerald-600 mx-auto" />
-                            <div className="text-xs font-bold text-slate-800">
-                              No Active Runs Currently Assigned
-                            </div>
-                            <p className="text-[11px] text-slate-600">
-                              This courier is currently available and awaiting dispatch assignment.
-                            </p>
-                          </div>
-                        ) : (
-                          <div className="space-y-2.5 max-h-56 overflow-y-auto pr-1">
-                            {activeRuns.map((run) => (
-                              <div
-                                key={run.id}
-                                className="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-2 text-xs hover:border-slate-300 transition"
-                              >
-                                <div className="flex items-center justify-between">
-                                  <div className="flex items-center space-x-2">
-                                    <span className="font-mono font-bold text-slate-900 text-xs">
-                                      #{run.order_number}
-                                    </span>
-                                    {getOrderStatusBadge(run.order_status, 'sm')}
-                                  </div>
-                                  <span className="font-bold text-slate-900 font-mono">
-                                    ${run.total_price.toFixed(2)} CAD
-                                  </span>
-                                </div>
-
-                                <div className="text-[11px] text-slate-700 leading-relaxed truncate">
-                                  <span className="text-slate-900 font-semibold">Pickup:</span> {run.pickup_address.split(',')[0]}
-                                  <span className="text-slate-400 mx-1.5">&rarr;</span>
-                                  <span className="text-slate-900 font-semibold">Drop:</span> {run.delivery_address.split(',')[0]}
-                                </div>
-
-                                <div className="flex items-center justify-between text-[10px] text-slate-600 pt-1 border-t border-slate-200">
-                                  <span>
-                                    {run.weight_lbs} lbs ({run.quantity} units) &bull; {run.distance_km} km
-                                  </span>
-                                  <div className="flex items-center space-x-2">
-                                    <button
-                                      type="button"
-                                      onClick={() => setSelectedOrderDetails(run)}
-                                      className="text-blue-700 hover:text-blue-800 font-bold cursor-pointer flex items-center space-x-0.5"
-                                      title="View complete order details & proof of delivery"
-                                    >
-                                      <Eye className="w-3 h-3 mr-0.5" />
-                                      <span>View</span>
-                                    </button>
-                                    <span className="text-slate-300">|</span>
-                                    <button
-                                      type="button"
-                                      onClick={() => handleOpenEditOrder(run)}
-                                      className="text-amber-700 hover:text-amber-800 font-semibold cursor-pointer"
-                                      title="Edit this order"
-                                    >
-                                      Edit
-                                    </button>
-                                    <span className="text-slate-300">|</span>
-                                    <button
-                                      type="button"
-                                      onClick={() => {
-                                        setSelectedDriverForAssign(drv.id);
-                                        setAssignModalOrder(run);
-                                      }}
-                                      className="text-blue-700 hover:text-blue-800 font-bold cursor-pointer"
-                                      title="Reassign this order to another driver"
-                                    >
-                                      Reassign Run
-                                    </button>
-                                  </div>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        )}
+                      {/* Workload Summary Badge */}
+                      <div className="flex items-center justify-between text-xs px-1">
+                        <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${
+                          activeRuns.length > 0
+                            ? 'bg-blue-50 text-blue-800 border border-blue-200 animate-pulse'
+                            : 'bg-emerald-50 text-emerald-800 border border-emerald-200'
+                        }`}>
+                          {activeRuns.length > 0 ? `${activeRuns.length} Active Run${activeRuns.length === 1 ? '' : 's'}` : '0 Active (Available)'}
+                        </span>
+                        <span className="text-[11px] text-slate-600 font-medium">
+                          {completedRuns.length} Completed Drop{completedRuns.length === 1 ? '' : 's'}
+                        </span>
                       </div>
                     </div>
 
-                    {/* Bottom Action Footer */}
-                    <div className="pt-4 border-t border-slate-200 flex flex-wrap items-center justify-between gap-3 text-xs">
-                      <div className="flex items-center space-x-3">
+                    {/* Action Buttons */}
+                    <div className="pt-2 border-t border-slate-100 flex items-center justify-between gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setViewingStaffProfile(drv)}
+                        className="flex-1 py-2 px-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition flex items-center justify-center space-x-1.5 cursor-pointer shadow-2xs"
+                        title="View Full Profile & Live Activity History"
+                      >
+                        <Eye className="w-3.5 h-3.5" />
+                        <span>View Details & Activity</span>
+                      </button>
+
+                      <div className="flex items-center space-x-1 shrink-0">
                         <button
                           type="button"
                           onClick={() => store.toggleDriverStatus(drv.id)}
-                          className={`text-[11px] font-semibold cursor-pointer transition ${
-                            drv.is_active ? 'text-amber-700 hover:text-amber-800' : 'text-emerald-700 hover:text-emerald-800'
+                          className={`px-2 py-1.5 rounded-lg border text-xs font-semibold cursor-pointer transition ${
+                            drv.is_active
+                              ? 'bg-amber-50 hover:bg-amber-100 text-amber-800 border-amber-200'
+                              : 'bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border-emerald-200'
                           }`}
+                          title={drv.is_active ? 'Suspend Shift' : 'Activate Shift'}
                         >
-                          {drv.is_active ? 'Suspend Shift' : 'Activate Shift'}
+                          {drv.is_active ? 'Suspend' : 'Activate'}
                         </button>
-                        <span className="text-slate-400">&bull;</span>
-                        <button
-                          type="button"
-                          onClick={() => setViewingStaffProfile(drv)}
-                          className="text-slate-600 hover:text-slate-900 text-[11px] font-semibold cursor-pointer"
-                        >
-                          View Full Profile
-                        </button>
-                      </div>
 
-                      <div className="flex items-center space-x-2">
-                        <button
-                          type="button"
-                          onClick={() => onNavigate('driver')}
-                          className="text-red-600 hover:text-red-700 font-bold text-[11px] cursor-pointer"
-                        >
-                          Staff Portal &rarr;
-                        </button>
                         {deleteConfirmId === drv.id ? (
-                          <div className="flex items-center space-x-1.5 bg-red-50 border border-red-200 px-2 py-0.5 rounded-lg text-[10px]">
-                            <span className="text-red-700 font-bold">Remove?</span>
+                          <div className="flex items-center space-x-1 bg-red-50 border border-red-200 px-1.5 py-0.5 rounded-lg text-[10px]">
                             <button
                               type="button"
                               onClick={() => handleDeleteDriver(drv.id)}
                               className="text-red-700 font-black hover:underline cursor-pointer"
                             >
-                              Yes
+                              Del
                             </button>
-                            <span className="text-slate-400">|</span>
+                            <span className="text-slate-300">|</span>
                             <button
                               type="button"
                               onClick={() => setDeleteConfirmId(null)}
-                              className="text-slate-600 hover:text-slate-900 cursor-pointer"
+                              className="text-slate-600 hover:underline cursor-pointer"
                             >
-                              No
+                              X
                             </button>
                           </div>
                         ) : (
                           <button
                             type="button"
                             onClick={() => setDeleteConfirmId(drv.id)}
-                            className="p-1.5 text-slate-500 hover:text-red-600 rounded-lg hover:bg-red-50 transition cursor-pointer"
+                            className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg border border-slate-200 transition cursor-pointer"
                             title="Remove staff member"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
@@ -4098,112 +3986,346 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
         document.body
       )}
 
-      {/* STAFF FULL PROFILE MODAL */}
+      {/* DRIVER DETAILS & ACTIVITY HUB MODAL */}
       {viewingStaffProfile && createPortal(
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto animate-fade-in">
-          <div className="bg-white border border-slate-300 rounded-3xl max-w-xl w-full max-h-[90vh] overflow-y-auto shadow-2xl p-6 space-y-6 text-xs my-auto">
-            <div className="flex items-center justify-between border-b border-slate-200 pb-4">
-              <div className="flex items-center space-x-3">
-                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-red-600 to-red-800 flex items-center justify-center text-white font-black text-xl font-['Outfit']">
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 overflow-y-auto animate-fade-in">
+          <div className="bg-white border border-slate-300 rounded-3xl max-w-3xl w-full max-h-[92vh] flex flex-col shadow-2xl overflow-hidden my-auto text-xs">
+            {/* Header */}
+            <div className="p-5 sm:p-6 border-b border-slate-200 bg-slate-50 flex items-center justify-between shrink-0">
+              <div className="flex items-center space-x-3.5">
+                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-red-600 to-red-800 flex items-center justify-center text-white font-black text-xl font-['Outfit'] shadow-md shadow-red-950/20 shrink-0">
                   {viewingStaffProfile.name.charAt(0).toUpperCase()}
                 </div>
                 <div>
-                  <h3 className="text-lg font-bold text-slate-900 font-['Outfit']">
-                    {viewingStaffProfile.name}
-                  </h3>
-                  <span className="text-[11px] text-slate-600 capitalize">
-                    {viewingStaffProfile.staff_role === 'admin'
-                      ? 'System Administrator'
-                      : viewingStaffProfile.staff_role === 'dispatcher'
-                      ? 'Operations Coordinator'
-                      : 'Authorized Road Courier'}
-                  </span>
+                  <div className="flex items-center space-x-2 flex-wrap">
+                    <h3 className="text-lg sm:text-xl font-bold text-slate-900 font-['Outfit']">
+                      {viewingStaffProfile.name}
+                    </h3>
+                    {viewingStaffProfile.staff_role === 'admin' ? (
+                      <span className="text-[10px] font-bold text-red-800 bg-red-100 border border-red-300 px-2.5 py-0.5 rounded-full inline-flex items-center">
+                        <Shield className="w-3 h-3 mr-1 inline text-red-600" /> Admin
+                      </span>
+                    ) : viewingStaffProfile.staff_role === 'dispatcher' ? (
+                      <span className="text-[10px] font-bold text-purple-800 bg-purple-100 border border-purple-300 px-2.5 py-0.5 rounded-full inline-flex items-center">
+                        <Users className="w-3 h-3 mr-1 inline text-purple-600" /> Dispatcher
+                      </span>
+                    ) : (
+                      <span className="text-[10px] font-bold text-blue-800 bg-blue-100 border border-blue-300 px-2.5 py-0.5 rounded-full inline-flex items-center">
+                        <Truck className="w-3 h-3 mr-1 inline text-blue-600" /> Courier Driver
+                      </span>
+                    )}
+                    <span
+                      className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full inline-flex items-center space-x-1 ${
+                        viewingStaffProfile.is_active
+                          ? 'bg-emerald-50 text-emerald-800 border border-emerald-300'
+                          : 'bg-slate-100 text-slate-600 border border-slate-300'
+                      }`}
+                    >
+                      <span className={`w-1.5 h-1.5 rounded-full mr-1 ${viewingStaffProfile.is_active ? 'bg-emerald-600 animate-pulse' : 'bg-slate-400'}`} />
+                      <span>{viewingStaffProfile.is_active ? 'Active & On Duty' : 'Shift Suspended'}</span>
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-slate-500 font-mono mt-0.5">
+                    Courier ID: {viewingStaffProfile.id}
+                  </p>
                 </div>
               </div>
               <button
                 type="button"
                 onClick={() => setViewingStaffProfile(null)}
-                className="p-1.5 text-slate-400 hover:text-slate-900 rounded-lg bg-slate-100 hover:bg-slate-200 cursor-pointer"
+                className="p-2 text-slate-400 hover:text-slate-900 rounded-xl bg-slate-100 hover:bg-slate-200 transition cursor-pointer"
+                title="Close Profile"
               >
-                <X className="w-4 h-4" />
+                <X className="w-5 h-5" />
               </button>
             </div>
 
-            {/* Profile Metrics */}
-            <div className="grid grid-cols-3 gap-3 text-center">
+            {/* Scrollable Content */}
+            <div className="p-5 sm:p-6 space-y-6 overflow-y-auto">
               {(() => {
-                const myOrders = orders.filter(
+                const staffOrders = orders.filter(
                   (o) =>
                     o.assigned_driver_id === viewingStaffProfile.id ||
                     o.assigned_driver_id === viewingStaffProfile.user_id ||
                     (viewingStaffProfile.email && o.assigned_driver_id && o.assigned_driver_id.toLowerCase() === viewingStaffProfile.email.toLowerCase()) ||
                     (o.assigned_driver_name && o.assigned_driver_name.toLowerCase() === viewingStaffProfile.name.toLowerCase())
                 );
-                const active = myOrders.filter((o) => o.order_status !== 'delivered' && o.order_status !== 'cancelled').length;
-                const completed = myOrders.filter((o) => o.order_status === 'delivered').length;
+                const activeRuns = staffOrders.filter(
+                  (o) => o.order_status !== 'delivered' && o.order_status !== 'cancelled'
+                );
+                const completedRuns = staffOrders.filter((o) => o.order_status === 'delivered');
+                const deliveredRevenue = completedRuns.reduce((sum, o) => sum + (Number(o.total_price) || 0), 0);
 
                 return (
                   <>
-                    <div className="bg-slate-50 p-3 rounded-xl border border-slate-200">
-                      <span className="text-slate-500 text-[10px] uppercase font-bold block">Total Jobs</span>
-                      <span className="text-lg font-black text-slate-900">{myOrders.length}</span>
+                    {/* Performance & Revenue Metric KPIs */}
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                      <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-200 text-center">
+                        <span className="text-slate-500 text-[10px] uppercase font-bold tracking-wider block">Total Jobs</span>
+                        <span className="text-xl font-black text-slate-900 mt-0.5 block">{staffOrders.length}</span>
+                      </div>
+                      <div className="bg-blue-50/60 p-3.5 rounded-2xl border border-blue-200 text-center">
+                        <span className="text-blue-700 text-[10px] uppercase font-bold tracking-wider block">Active Runs</span>
+                        <span className="text-xl font-black text-blue-700 mt-0.5 block">{activeRuns.length}</span>
+                      </div>
+                      <div className="bg-emerald-50/60 p-3.5 rounded-2xl border border-emerald-200 text-center">
+                        <span className="text-emerald-700 text-[10px] uppercase font-bold tracking-wider block">Delivered Drops</span>
+                        <span className="text-xl font-black text-emerald-700 mt-0.5 block">{completedRuns.length}</span>
+                      </div>
+                      <div className="bg-amber-50/60 p-3.5 rounded-2xl border border-amber-200 text-center">
+                        <span className="text-amber-800 text-[10px] uppercase font-bold tracking-wider block">Delivered Revenue</span>
+                        <span className="text-xl font-black text-amber-900 mt-0.5 block">
+                          ${deliveredRevenue.toFixed(2)}
+                        </span>
+                      </div>
                     </div>
-                    <div className="bg-slate-50 p-3 rounded-xl border border-slate-200">
-                      <span className="text-blue-700 text-[10px] uppercase font-bold block">Active Runs</span>
-                      <span className="text-lg font-black text-blue-700">{active}</span>
+
+                    {/* Driver Profile Details & Shift Quick Controls */}
+                    <div className="bg-slate-50/80 rounded-2xl border border-slate-200 p-4 space-y-3">
+                      <div className="flex items-center justify-between border-b border-slate-200 pb-2">
+                        <h4 className="font-bold text-slate-800 text-xs uppercase tracking-wider flex items-center space-x-1.5">
+                          <Users className="w-3.5 h-3.5 text-slate-500" />
+                          <span>Contact & Vehicle Assignment</span>
+                        </h4>
+                        <div className="flex items-center space-x-2">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              store.toggleDriverStatus(viewingStaffProfile.id);
+                              setViewingStaffProfile((prev) => prev ? { ...prev, is_active: !prev.is_active } : null);
+                            }}
+                            className={`px-3 py-1 rounded-lg border text-xs font-bold transition cursor-pointer ${
+                              viewingStaffProfile.is_active
+                                ? 'bg-amber-50 hover:bg-amber-100 text-amber-800 border-amber-300'
+                                : 'bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border-emerald-300'
+                            }`}
+                          >
+                            {viewingStaffProfile.is_active ? 'Suspend Shift' : 'Activate Shift'}
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                        <div className="flex items-center space-x-2">
+                          <Mail className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+                          <span className="text-slate-500 font-medium">Email:</span>
+                          <a href={`mailto:${viewingStaffProfile.email}`} className="text-blue-600 hover:underline font-semibold truncate">
+                            {viewingStaffProfile.email}
+                          </a>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <Phone className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                          <span className="text-slate-500 font-medium">Phone:</span>
+                          <a href={`tel:${viewingStaffProfile.phone}`} className="text-emerald-700 hover:underline font-semibold truncate">
+                            {viewingStaffProfile.phone}
+                          </a>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <Car className="w-3.5 h-3.5 text-purple-600 shrink-0" />
+                          <span className="text-slate-500 font-medium">Vehicle:</span>
+                          <span className="text-slate-900 font-bold capitalize">{viewingStaffProfile.vehicle_type}</span>
+                          <span className="font-mono text-amber-800 font-bold bg-amber-50 px-1.5 py-0.2 rounded border border-amber-200 text-[10px]">
+                            {viewingStaffProfile.license_plate || 'ON-FLEET'}
+                          </span>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <Calendar className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                          <span className="text-slate-500 font-medium">Registered:</span>
+                          <span className="text-slate-700 font-medium">
+                            {viewingStaffProfile.created_at ? new Date(viewingStaffProfile.created_at).toLocaleDateString() : 'Active Member'}
+                          </span>
+                        </div>
+                      </div>
                     </div>
-                    <div className="bg-slate-50 p-3 rounded-xl border border-slate-200">
-                      <span className="text-emerald-700 text-[10px] uppercase font-bold block">Delivered</span>
-                      <span className="text-lg font-black text-emerald-700">{completed}</span>
+
+                    {/* Active Runs / Dispatches */}
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-2">
+                          <Truck className="w-4 h-4 text-blue-600" />
+                          <h4 className="text-sm font-bold text-slate-900 font-['Outfit']">
+                            Active Runs In Progress ({activeRuns.length})
+                          </h4>
+                        </div>
+                        {activeRuns.length > 0 && (
+                          <span className="text-[10px] bg-blue-100 text-blue-800 font-bold px-2 py-0.5 rounded-full animate-pulse">
+                            Live On Road
+                          </span>
+                        )}
+                      </div>
+
+                      {activeRuns.length === 0 ? (
+                        <div className="p-6 bg-slate-50 border border-slate-200 rounded-2xl text-center space-y-1.5">
+                          <CheckCircle2 className="w-8 h-8 text-emerald-500 mx-auto" />
+                          <p className="font-bold text-slate-800 text-xs">Courier is Currently Idle & Available</p>
+                          <p className="text-slate-500 text-[11px]">No active dispatches in progress. Ready to receive new delivery orders.</p>
+                        </div>
+                      ) : (
+                        <div className="space-y-2.5">
+                          {activeRuns.map((run) => (
+                            <div
+                              key={run.id}
+                              className="p-3.5 bg-white border border-blue-200 rounded-2xl shadow-xs hover:border-blue-400 transition space-y-2.5"
+                            >
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center space-x-2">
+                                  <span className="font-mono font-bold text-slate-900 text-xs">
+                                    #{run.order_number}
+                                  </span>
+                                  {getOrderStatusBadge(run.order_status, 'sm')}
+                                </div>
+                                <span className="font-black text-slate-900 text-xs">
+                                  ${Number(run.total_price).toFixed(2)} CAD
+                                </span>
+                              </div>
+
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px] bg-slate-50 p-2 rounded-xl">
+                                <div>
+                                  <span className="text-[10px] text-slate-400 font-bold block uppercase">Pickup</span>
+                                  <span className="text-slate-800 font-medium truncate block">{run.pickup_address}</span>
+                                </div>
+                                <div>
+                                  <span className="text-[10px] text-slate-400 font-bold block uppercase">Dropoff</span>
+                                  <span className="text-slate-800 font-medium truncate block">{run.delivery_address}</span>
+                                </div>
+                              </div>
+
+                              <div className="flex items-center justify-between text-[10px] text-slate-500 pt-1">
+                                <span>Customer: <strong className="text-slate-700">{run.customer_name}</strong></span>
+                                <div className="flex items-center space-x-2">
+                                  <button
+                                    type="button"
+                                    onClick={() => setSelectedOrderDetails(run)}
+                                    className="px-2.5 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold flex items-center space-x-1 cursor-pointer transition shadow-2xs"
+                                    title="Inspect full order specs and route"
+                                  >
+                                    <Eye className="w-3 h-3" />
+                                    <span>Inspect Order</span>
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setSelectedDriverForAssign(viewingStaffProfile.id);
+                                      setAssignModalOrder(run);
+                                    }}
+                                    className="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-200 rounded-lg font-bold flex items-center space-x-1 cursor-pointer transition"
+                                    title="Reassign to another driver"
+                                  >
+                                    <RefreshCw className="w-3 h-3" />
+                                    <span>Reassign</span>
+                                  </button>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Completed Delivery History & Proof of Delivery */}
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-2">
+                          <CheckCircle className="w-4 h-4 text-emerald-600" />
+                          <h4 className="text-sm font-bold text-slate-900 font-['Outfit']">
+                            Completed Deliveries & Proof of Delivery ({completedRuns.length})
+                          </h4>
+                        </div>
+                        <span className="text-[10px] text-slate-500">
+                          Sorted by most recent
+                        </span>
+                      </div>
+
+                      {completedRuns.length === 0 ? (
+                        <div className="p-6 bg-slate-50 border border-slate-200 rounded-2xl text-center space-y-1">
+                          <p className="font-bold text-slate-700 text-xs">No Completed Deliveries Yet</p>
+                          <p className="text-slate-500 text-[11px]">Orders delivered by this courier will appear here with proof of delivery photos.</p>
+                        </div>
+                      ) : (
+                        <div className="divide-y divide-slate-100 border border-slate-200 rounded-2xl overflow-hidden bg-white max-h-72 overflow-y-auto">
+                          {completedRuns.map((ord) => {
+                            const hasPod = !!ord.proof_of_delivery?.photo_url;
+                            return (
+                              <div
+                                key={ord.id}
+                                className="p-3 hover:bg-slate-50/80 transition flex items-center justify-between gap-3 text-xs"
+                              >
+                                <div className="space-y-1 min-w-0 flex-1">
+                                  <div className="flex items-center space-x-2">
+                                    <span className="font-mono font-bold text-slate-900">
+                                      #{ord.order_number}
+                                    </span>
+                                    <span className="text-[10px] text-slate-400">
+                                      {new Date(ord.updated_at || ord.created_at).toLocaleDateString([], {
+                                        month: 'short',
+                                        day: 'numeric',
+                                        hour: '2-digit',
+                                        minute: '2-digit',
+                                      })}
+                                    </span>
+                                  </div>
+                                  <div className="text-[11px] text-slate-600 truncate">
+                                    To: <strong className="text-slate-800">{ord.delivery_address}</strong>
+                                    {ord.customer_name && ` (${ord.customer_name})`}
+                                  </div>
+                                </div>
+
+                                <div className="flex items-center space-x-2 shrink-0">
+                                  <span className="font-bold text-slate-800 text-xs">
+                                    ${Number(ord.total_price).toFixed(2)}
+                                  </span>
+
+                                  {/* POD Badge / Action */}
+                                  {hasPod ? (
+                                    <button
+                                      type="button"
+                                      onClick={() => setSelectedOrderDetails(ord)}
+                                      className="flex items-center space-x-1.5 px-2.5 py-1 bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 rounded-lg text-emerald-800 font-bold text-[11px] cursor-pointer transition"
+                                      title="View verified proof of delivery photo"
+                                    >
+                                      <Camera className="w-3 h-3 text-emerald-600" />
+                                      <span>📸 POD Photo</span>
+                                    </button>
+                                  ) : (
+                                    <span className="text-[10px] text-slate-400 bg-slate-100 px-2 py-1 rounded-lg">
+                                      Delivered
+                                    </span>
+                                  )}
+
+                                  <button
+                                    type="button"
+                                    onClick={() => setSelectedOrderDetails(ord)}
+                                    className="p-1.5 text-slate-400 hover:text-slate-900 rounded-lg hover:bg-slate-200 transition cursor-pointer"
+                                    title="View complete order details"
+                                  >
+                                    <Eye className="w-3.5 h-3.5" />
+                                  </button>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
                     </div>
                   </>
                 );
               })()}
             </div>
 
-            {/* Full Profile Details List */}
-            <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-3">
-              <div className="flex items-center justify-between border-b border-slate-200 pb-2">
-                <span className="text-slate-600 font-semibold">Login Email</span>
-                <a href={`mailto:${viewingStaffProfile.email}`} className="text-blue-600 hover:underline font-semibold">
-                  {viewingStaffProfile.email}
-                </a>
-              </div>
-              <div className="flex items-center justify-between border-b border-slate-200 pb-2">
-                <span className="text-slate-600 font-semibold">Direct Phone</span>
-                <a href={`tel:${viewingStaffProfile.phone}`} className="text-emerald-700 hover:underline font-semibold">
-                  {viewingStaffProfile.phone}
-                </a>
-              </div>
-              <div className="flex items-center justify-between border-b border-slate-200 pb-2">
-                <span className="text-slate-600 font-semibold">Assigned Vehicle</span>
-                <span className="text-slate-900 font-medium">{viewingStaffProfile.vehicle_type}</span>
-              </div>
-              <div className="flex items-center justify-between border-b border-slate-200 pb-2">
-                <span className="text-slate-600 font-semibold">License Plate</span>
-                <span className="font-mono text-amber-800 font-bold bg-amber-50 px-2 py-0.5 rounded border border-amber-300">
-                  {viewingStaffProfile.license_plate || 'ON-FLEET'}
-                </span>
-              </div>
-              <div className="flex items-center justify-between border-b border-slate-200 pb-2">
-                <span className="text-slate-600 font-semibold">Current Shift Status</span>
-                <span className={`font-bold ${viewingStaffProfile.is_active ? 'text-emerald-700' : 'text-slate-500'}`}>
-                  {viewingStaffProfile.is_active ? 'Active & On Duty' : 'Shift Suspended'}
-                </span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-slate-600 font-semibold">Date Registered</span>
-                <span className="text-slate-700">
-                  {viewingStaffProfile.created_at ? new Date(viewingStaffProfile.created_at).toLocaleDateString() : 'Active Member'}
-                </span>
-              </div>
-            </div>
-
-            <div className="flex justify-end pt-2 border-t border-slate-200">
+            {/* Footer */}
+            <div className="p-4 border-t border-slate-200 bg-slate-50 flex items-center justify-between shrink-0">
+              <button
+                type="button"
+                onClick={() => onNavigate('driver')}
+                className="text-red-600 hover:text-red-700 font-bold text-xs flex items-center space-x-1 cursor-pointer transition"
+              >
+                <span>Staff Portal</span>
+                <span>&rarr;</span>
+              </button>
               <button
                 type="button"
                 onClick={() => setViewingStaffProfile(null)}
-                className="px-5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300 rounded-xl font-bold cursor-pointer transition"
+                className="px-5 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-bold cursor-pointer transition shadow-2xs text-xs"
               >
                 Close Profile
               </button>
@@ -4690,7 +4812,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
 
       {/* COMPREHENSIVE ORDER DETAILS & PROOF OF DELIVERY (POD) MODAL */}
       {selectedOrderDetails && createPortal(
-        <div className="fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-sm flex items-center justify-center p-3 sm:p-6 overflow-y-auto animate-fade-in">
+        <div className="fixed inset-0 z-[55] bg-slate-900/70 backdrop-blur-sm flex items-center justify-center p-3 sm:p-6 overflow-y-auto animate-fade-in">
           <div className="bg-white border border-slate-200 rounded-3xl max-w-5xl w-full max-h-[92vh] flex flex-col shadow-2xl overflow-hidden my-auto text-xs">
             {/* Modal Header */}
             <div className="p-5 sm:p-6 border-b border-slate-200 bg-slate-50 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shrink-0">
@@ -5380,7 +5502,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
       {zoomedPhotoUrl && createPortal(
         <div
           onClick={() => setZoomedPhotoUrl(null)}
-          className="fixed inset-0 z-[60] bg-black/90 backdrop-blur-md flex flex-col items-center justify-center p-4 animate-fade-in cursor-zoom-out"
+          className="fixed inset-0 z-[70] bg-black/90 backdrop-blur-md flex flex-col items-center justify-center p-4 animate-fade-in cursor-zoom-out"
         >
           <div
             onClick={(e) => e.stopPropagation()}
