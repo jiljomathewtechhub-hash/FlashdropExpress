@@ -282,7 +282,7 @@ class FlashDropStore {
         .order('created_at', { ascending: false });
 
       if (!error && data) {
-        this.orders = data.map((row: any) => {
+        const remoteOrders: Order[] = data.map((row: any) => {
           const assignedDriver = this.drivers.find(
             (d) =>
               d.id === row.assigned_driver_id ||
@@ -361,6 +361,12 @@ class FlashDropStore {
             proof_of_delivery: row.proof_of_delivery?.[0] || existing?.proof_of_delivery || undefined,
           };
         });
+
+        // Safeguard: Preserve any local orders that have not yet synced to Supabase
+        const unSyncedLocal = this.orders.filter(
+          (localOrd) => !remoteOrders.some((rem) => rem.id === localOrd.id || rem.order_number === localOrd.order_number)
+        );
+        this.orders = [...remoteOrders, ...unSyncedLocal];
         this.saveToStorage();
         this.notify();
       }
@@ -374,7 +380,7 @@ class FlashDropStore {
     try {
       const { data, error } = await supabase.from('drivers').select('*');
       if (!error && data) {
-        this.drivers = data.map((d: any) => ({
+        const remoteDrivers = data.map((d: any) => ({
           id: d.id,
           user_id: d.user_id || undefined,
           name: d.name,
@@ -387,6 +393,17 @@ class FlashDropStore {
           staff_role: d.staff_role || (d.email?.toLowerCase().includes('admin') ? 'admin' : 'driver'),
           created_at: d.created_at,
         }));
+
+        // Safeguard: Preserve any locally created drivers that have not yet synced
+        const unSyncedLocalDrivers = this.drivers.filter(
+          (locDrv) =>
+            !remoteDrivers.some(
+              (rem) =>
+                rem.id === locDrv.id ||
+                (rem.email && locDrv.email && rem.email.toLowerCase() === locDrv.email.toLowerCase())
+            )
+        );
+        this.drivers = [...remoteDrivers, ...unSyncedLocalDrivers];
 
         // Backfill assigned_driver_name on existing orders in memory if missing
         this.orders.forEach((o) => {
@@ -406,32 +423,11 @@ class FlashDropStore {
 
   private loadFromStorage() {
     try {
-      // Automatic client-side clean slate wipe for fresh start
-      const CLEAN_SLATE_KEY = 'flashdrop_clean_slate_fresh_start_2026';
-      if (typeof window !== 'undefined') {
-        const isClean = localStorage.getItem(CLEAN_SLATE_KEY);
-        if (!isClean) {
-          localStorage.removeItem(`${STORAGE_KEY_PREFIX}orders`);
-          localStorage.removeItem(`${STORAGE_KEY_PREFIX}drivers`);
-          localStorage.removeItem(`${STORAGE_KEY_PREFIX}requests`);
-          localStorage.removeItem('flashdrop_notifications_log');
-          localStorage.removeItem('flashdrop_in_app_notifications');
-          localStorage.setItem(ORDER_COUNTER_KEY, '1001');
-          localStorage.setItem(CLEAN_SLATE_KEY, 'true');
-        }
-      }
-
       const savedOrders = localStorage.getItem(`${STORAGE_KEY_PREFIX}orders`);
       if (savedOrders) {
         try {
           const parsed = JSON.parse(savedOrders);
-          this.orders = Array.isArray(parsed)
-            ? parsed.filter(
-                (o: Order) =>
-                  !['ord-101', 'ord-102', 'ord-103'].includes(o.id) &&
-                  !['FD-749201', 'FD-883192', 'FD-412953'].includes(o.order_number)
-              )
-            : [];
+          this.orders = Array.isArray(parsed) ? parsed : [];
         } catch {
           this.orders = [];
         }
@@ -443,9 +439,7 @@ class FlashDropStore {
       if (savedDrivers) {
         try {
           const parsed = JSON.parse(savedDrivers);
-          this.drivers = Array.isArray(parsed)
-            ? parsed.filter((d: Driver) => !['drv-01', 'drv-02', 'drv-03', 'd3333333-3333-3333-3333-333333333333', '3e70ac07-43ec-4d0a-a978-2538666c491d'].includes(d.id))
-            : [];
+          this.drivers = Array.isArray(parsed) ? parsed : [];
         } catch {
           this.drivers = [];
         }
@@ -1384,51 +1378,19 @@ class FlashDropStore {
     return notificationService.sendTestNotification(customCustomerEmail);
   }
 
-  // Complete purge for fresh production start
+  // Automated purge is permanently locked to protect all production data
   public async purgeAllTestData(): Promise<boolean> {
-    try {
-      if (isSupabaseConfigured && supabase) {
-        // Delete related child tables first to respect foreign keys
-        await supabase.from('proof_of_delivery').delete().neq('id', '00000000-0000-0000-0000-000000000000');
-        await supabase.from('order_status_history').delete().neq('id', '00000000-0000-0000-0000-000000000000');
-        await supabase.from('orders').delete().neq('id', '00000000-0000-0000-0000-000000000000');
-        await supabase.from('drivers').delete().neq('id', '00000000-0000-0000-0000-000000000000');
-      }
-
-      this.orders = [];
-      this.drivers = [];
-      this.requests = [];
-
-      if (typeof window !== 'undefined') {
-        localStorage.removeItem(`${STORAGE_KEY_PREFIX}orders`);
-        localStorage.removeItem(`${STORAGE_KEY_PREFIX}drivers`);
-        localStorage.removeItem(`${STORAGE_KEY_PREFIX}requests`);
-        localStorage.removeItem('flashdrop_notifications_log');
-        localStorage.removeItem('flashdrop_in_app_notifications');
-        localStorage.setItem(ORDER_COUNTER_KEY, '1001');
-      }
-
-      notificationService.clearLogs();
-      inAppNotificationService.clearAllNotifications();
-
-      this.saveToStorage();
-      this.notify();
-      return true;
-    } catch (err) {
-      console.error('Failed to purge test data:', err);
-      return false;
-    }
+    console.warn('purgeAllTestData is permanently locked to protect all production data.');
+    return false;
   }
 
-  // Reset to factory seed
+  // Reset default quotation matrix & pricing tiers only (NEVER touches orders or staff drivers)
   public resetToFactorySeed() {
-    this.orders = INITIAL_ORDERS;
-    this.drivers = INITIAL_DRIVERS;
     this.vehicles = INITIAL_VEHICLES;
     this.pricingTiers = DEFAULT_PRICING_TIERS;
     this.settings = DEFAULT_BUSINESS_SETTINGS;
-    this.requests = [];
     this.saveToStorage();
+    this.notify();
   }
 }
 
