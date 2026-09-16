@@ -390,7 +390,7 @@ export const PriceCalculator: React.FC<PriceCalculatorProps> = ({ onNavigate }) 
                   </button>
                   <div className="flex items-center justify-center space-x-1.5 text-xs text-slate-300 mt-2.5">
                     <CheckCircle2 className="w-4 h-4 text-emerald-200" />
-                    <span>Instant FD-XXXXXX Dispatch Code Generated</span>
+                    <span>Instant FDXXXXXX Dispatch Code Generated</span>
                   </div>
                 </div>
               </div>

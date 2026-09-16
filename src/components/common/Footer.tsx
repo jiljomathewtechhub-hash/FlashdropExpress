@@ -236,7 +236,7 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
                   onClick={() => onNavigate('tracking')}
                   className="py-1 text-slate-600 hover:text-slate-900 transition-smooth cursor-pointer block text-left"
                 >
-                  Track an Order (FD-XXXXXX)
+                  Track an Order (FDXXXXXX)
                 </button>
               </li>
               <li>

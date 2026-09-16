@@ -1393,7 +1393,7 @@ export const OrderWizard: React.FC<OrderWizardProps> = ({ initialData, onNavigat
                 (including standard curbside delivery, first 20 minutes waiting included, and Highway 407 tolls billed at cost).
               </div>
               <div className="text-[10px] text-slate-500 pt-1 border-t border-slate-200/60">
-                An official reference code starting from <strong>#FD-1001</strong> will be generated immediately for tracking your request.
+                An official reference code starting from <strong>#FD1001</strong> will be generated immediately for tracking your request.
               </div>
             </div>
           </div>

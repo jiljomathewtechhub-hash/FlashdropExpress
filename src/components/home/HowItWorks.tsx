@@ -17,7 +17,7 @@ export const HowItWorks: React.FC<HowItWorksProps> = ({ onNavigate }) => {
       step: '02',
       icon: Calculator,
       title: 'Automatic Distance & Rate',
-      desc: 'Instant transparent pricing calculated based on exact kilometres and weight tiers. Order generated with unique FD-XXXXXX tracking number.',
+      desc: 'Instant transparent pricing calculated based on exact kilometres and weight tiers. Order generated with unique FDXXXXXX tracking number.',
     },
     {
       step: '03',

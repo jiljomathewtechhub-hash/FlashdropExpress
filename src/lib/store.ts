@@ -84,17 +84,17 @@ export const INITIAL_DRIVERS: Driver[] = [];
 // Starts completely clean from empty for production live operations
 export const INITIAL_ORDERS: Order[] = [];
 
-// Helper to generate sequential order number starting from FD-1001 onwards
+// Helper to generate sequential order number starting from FD1001 onwards (contiguous alphanumeric)
 const ORDER_COUNTER_KEY = 'flashdrop_order_counter_seq';
 
 export function generateOrderNumber(existingOrders: Order[] = []): string {
   let maxNumber = 1000;
 
-  // 1. Scan any existing numerical order numbers in memory/storage
+  // 1. Scan any existing numerical order numbers in memory/storage (matches both FD1001 and legacy FD-1001)
   if (Array.isArray(existingOrders)) {
     for (const ord of existingOrders) {
       if (ord?.order_number) {
-        const match = ord.order_number.match(/^FD-(\d+)$/i);
+        const match = ord.order_number.match(/^FD-?(\d+)$/i);
         if (match) {
           const val = parseInt(match[1], 10);
           if (!isNaN(val) && val > maxNumber) {
@@ -131,7 +131,7 @@ export function generateOrderNumber(existingOrders: Order[] = []): string {
     }
   }
 
-  return `FD-${nextNumber}`;
+  return `FD${nextNumber}`;
 }
 
 class FlashDropStore {
@@ -321,7 +321,7 @@ class FlashDropStore {
 
           return {
             id: row.id,
-            order_number: row.order_number,
+            order_number: (row.order_number || '').replace(/^FD-/i, 'FD'),
             customer_id: row.customer_id,
             customer_name: row.customer_name,
             customer_phone: row.customer_phone,
@@ -443,7 +443,12 @@ class FlashDropStore {
       if (savedOrders) {
         try {
           const parsed = JSON.parse(savedOrders);
-          this.orders = Array.isArray(parsed) ? parsed : [];
+          this.orders = Array.isArray(parsed)
+            ? parsed.map((o: any) => ({
+                ...o,
+                order_number: (o.order_number || '').replace(/^FD-/i, 'FD'),
+              }))
+            : [];
         } catch {
           this.orders = [];
         }
@@ -562,11 +567,25 @@ class FlashDropStore {
   }
 
   public getOrderById(idOrNumber: string): Order | undefined {
-    return this.orders.find(
-      (o) =>
-        o.id === idOrNumber ||
-        o.order_number.toLowerCase() === idOrNumber.trim().toLowerCase()
-    );
+    if (!idOrNumber) return undefined;
+    const cleanQuery = idOrNumber.trim().toLowerCase();
+    const queryNormalized = cleanQuery.replace(/[\s-#]/g, '');
+
+    return this.orders.find((o) => {
+      if (o.id === idOrNumber.trim()) return true;
+      const orderNumLower = o.order_number.toLowerCase();
+      if (orderNumLower === cleanQuery) return true;
+      const orderNumNormalized = orderNumLower.replace(/[\s-#]/g, '');
+      if (orderNumNormalized === queryNormalized) return true;
+      // Allow matching if user typed just the numerical suffix (e.g. "1001")
+      if (
+        queryNormalized.length >= 3 &&
+        orderNumNormalized.replace(/^fd/i, '') === queryNormalized.replace(/^fd/i, '')
+      ) {
+        return true;
+      }
+      return false;
+    });
   }
 
   public getOrdersForCustomer(emailOrId: string): Order[] {

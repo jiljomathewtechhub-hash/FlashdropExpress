@@ -410,7 +410,7 @@ class NotificationService {
   public async sendTestNotification(customCustomerEmail?: string): Promise<NotificationLog[]> {
     const dummyOrder: Order = {
       id: 'test-order-sample',
-      order_number: 'FD-TEST01',
+      order_number: 'FDTEST01',
       customer_name: 'Test GTA Logistics Client',
       customer_phone: '+1 (416) 555-0199',
       customer_email: customCustomerEmail || 'customer@example.com',

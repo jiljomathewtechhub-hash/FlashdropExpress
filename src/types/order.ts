@@ -74,7 +74,7 @@ export interface ServiceArea {
 
 export interface Order {
   id: string;
-  order_number: string; // FD-XXXXXX
+  order_number: string; // FDXXXXXX (e.g. FD1001)
   customer_id?: string | null;
   customer_name: string;
   customer_phone: string;
