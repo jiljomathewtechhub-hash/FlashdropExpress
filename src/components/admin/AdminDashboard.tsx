@@ -54,6 +54,12 @@ import {
   Percent,
   BarChart3,
   TrendingUp,
+  LayoutGrid,
+  List,
+  Radio,
+  Zap,
+  Activity,
+  ChevronRight,
 } from 'lucide-react';
 import { NotificationLog } from '../../types/notification';
 import { Order, Driver, Vehicle, OrderRequestItem, OrderStatus, BusinessSettings } from '../../types/order';
@@ -85,6 +91,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
   // Filter states
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [orderViewMode, setOrderViewMode] = useState<'table' | 'kanban'>('table');
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [selectedOrderDetails, setSelectedOrderDetails] = useState<Order | null>(null);
   const [zoomedPhotoUrl, setZoomedPhotoUrl] = useState<string | null>(null);
@@ -280,6 +287,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
     const matchesStatus =
       statusFilter === 'all'
         ? true
+        : statusFilter === 'pending'
+        ? (o.order_status === 'submitted' || o.order_status === 'quote_sent' || o.order_status === 'confirmed' || o.order_status === 'assigned')
         : statusFilter === 'in_transit'
         ? ['accepted', 'en_route_pickup', 'picked_up', 'in_transit'].includes(o.order_status)
         : statusFilter === 'submitted'
@@ -655,42 +664,52 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
 
   return (
     <div className="py-8 px-4 sm:px-6 max-w-7xl mx-auto space-y-7">
-      {/* Top Banner */}
-      <div className="bg-white border border-slate-200 rounded-2xl p-5 sm:p-7 flex flex-col md:flex-row items-start md:items-center justify-between gap-5 shadow-xl">
+      {/* Top Executive Header Banner */}
+      <div className="bg-white border border-slate-200/90 rounded-2xl p-5 sm:p-6 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div className="flex items-center space-x-4">
-          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#C5161D] to-[#99141A] flex items-center justify-center text-white shadow-md">
-            <Shield className="w-6 h-6" />
+          <div className="relative">
+            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#C5161D] via-[#A61217] to-[#800C10] flex items-center justify-center text-white shadow-md shadow-red-900/20 ring-4 ring-red-50">
+              <Shield className="w-6 h-6 text-white" />
+            </div>
+            <span className="absolute -bottom-1 -right-1 flex h-3.5 w-3.5">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-emerald-500 border-2 border-white"></span>
+            </span>
           </div>
           <div>
-            <div className="flex items-center space-x-2">
-              <h1 className="text-xl sm:text-2xl font-black text-slate-900 font-['Outfit']">
+            <div className="flex flex-wrap items-center gap-2">
+              <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight font-['Outfit']">
                 FlashDrop Admin Panel
               </h1>
-              <span className="text-[10px] font-bold text-red-400 bg-red-50 border border-red-200 px-2 py-0.5 rounded-full">
-                Operations & Dispatch
+              <span className="inline-flex items-center space-x-1 text-[10px] font-bold text-emerald-800 bg-emerald-50 border border-emerald-200/80 px-2.5 py-0.5 rounded-full">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                <span>Live Dispatch Active</span>
+              </span>
+              <span className="hidden sm:inline-flex items-center text-[10px] font-semibold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full border border-slate-200">
+                Logged in as: <strong className="ml-1 text-slate-800">{user.name}</strong>
               </span>
             </div>
-            <p className="text-xs text-slate-600 mt-0.5">
+            <p className="text-xs text-slate-600 mt-1">
               Live dispatches, fleet allocations, pricing rules engine, and customer requests.
             </p>
           </div>
         </div>
 
-        <div className="flex items-center space-x-2.5">
+        <div className="flex items-center space-x-2 w-full md:w-auto justify-end">
           <NotificationBell onNavigate={onNavigate} />
           <button
             onClick={() => onNavigate('home')}
-            className="flex items-center space-x-1.5 px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 hover:text-slate-900 border border-slate-200 text-xs font-semibold rounded-xl border border-slate-300 transition cursor-pointer"
+            className="flex items-center space-x-1.5 px-3.5 py-2 bg-slate-50 hover:bg-slate-100 text-slate-700 hover:text-slate-900 border border-slate-200 text-xs font-semibold rounded-xl transition cursor-pointer"
             title="Go to customer-facing website"
           >
-            <Home className="w-3.5 h-3.5 text-slate-400" />
+            <Home className="w-3.5 h-3.5 text-slate-500" />
             <span className="hidden sm:inline">Website</span>
           </button>
           <button
             onClick={() => onNavigate('order')}
-            className="flex items-center space-x-1.5 px-4 py-2 bg-[#C5161D] hover:bg-red-700 text-white font-bold text-xs rounded-xl shadow transition cursor-pointer"
+            className="flex items-center space-x-1.5 px-4 py-2 bg-gradient-to-r from-[#C5161D] to-[#A31217] hover:from-[#B01319] hover:to-[#8E1015] text-white font-bold text-xs rounded-xl shadow-sm shadow-red-900/20 active:scale-95 transition cursor-pointer"
           >
-            <Plus className="w-3.5 h-3.5" />
+            <Plus className="w-4 h-4" />
             <span>Create Order</span>
           </button>
           <button
@@ -698,52 +717,170 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
               store.logout();
               onNavigate('login');
             }}
-            className="flex items-center space-x-1.5 px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 hover:text-slate-900 border border-slate-200 text-xs font-semibold rounded-xl border border-slate-300 transition cursor-pointer"
+            className="flex items-center space-x-1.5 px-3.5 py-2 bg-slate-50 hover:bg-red-50 text-slate-700 hover:text-red-700 border border-slate-200 hover:border-red-200 text-xs font-semibold rounded-xl transition cursor-pointer"
           >
-            <LogOut className="w-3.5 h-3.5" />
+            <LogOut className="w-3.5 h-3.5 text-slate-500" />
             <span>Sign Out</span>
           </button>
         </div>
       </div>
 
-      {/* Overview Metrics Cards */}
+      {/* Overview Metrics Cards (Interactive Click-to-Filter) */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3.5">
-        <div className="bg-white border border-slate-200 rounded-xl p-4">
-          <div className="text-[11px] font-semibold text-slate-600">Total Orders</div>
-          <div className="text-xl sm:text-2xl font-black text-slate-900 font-['Outfit'] mt-1">{orders.length}</div>
+        {/* Total Shipments */}
+        <div
+          onClick={() => {
+            setActiveTab('orders');
+            setStatusFilter('all');
+            setSearchQuery('');
+          }}
+          className={`bg-white border rounded-2xl p-4 transition-all duration-200 cursor-pointer group shadow-2xs hover:shadow-md ${
+            activeTab === 'orders' && statusFilter === 'all' && !searchQuery
+              ? 'border-slate-900 ring-2 ring-slate-900/10'
+              : 'border-slate-200 hover:border-slate-300'
+          }`}
+          title="Click to view All Orders"
+        >
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-bold text-slate-600 uppercase tracking-wider">Total Shipments</span>
+            <div className="w-7 h-7 rounded-xl bg-slate-100 group-hover:bg-slate-200 flex items-center justify-center text-slate-700 transition">
+              <Package className="w-3.5 h-3.5" />
+            </div>
+          </div>
+          <div className="text-2xl font-black text-slate-900 font-['Outfit'] mt-2 tracking-tight">
+            {orders.length}
+          </div>
+          <div className="text-[10px] font-semibold text-slate-500 mt-1 flex items-center">
+            <span>All time dispatches</span>
+          </div>
         </div>
-        <div className="bg-white border border-slate-200 rounded-xl p-4">
-          <div className="text-[11px] font-semibold text-slate-600">Pending Dispatch</div>
-          <div className="text-xl sm:text-2xl font-black text-amber-400 font-['Outfit'] mt-1">{pendingOrders}</div>
+
+        {/* Pending Dispatch */}
+        <div
+          onClick={() => {
+            setActiveTab('orders');
+            setStatusFilter('pending');
+          }}
+          className={`bg-amber-500/[0.04] border rounded-2xl p-4 transition-all duration-200 cursor-pointer group shadow-2xs hover:shadow-md ${
+            activeTab === 'orders' && (statusFilter === 'pending' || statusFilter === 'submitted')
+              ? 'border-amber-500 ring-2 ring-amber-500/20 bg-amber-500/10'
+              : 'border-amber-200/80 hover:border-amber-300'
+          }`}
+          title="Click to filter by Pending Quotes & Dispatch"
+        >
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-bold text-amber-900 uppercase tracking-wider">Pending Dispatch</span>
+            <div className="w-7 h-7 rounded-xl bg-amber-100 group-hover:bg-amber-200 flex items-center justify-center text-amber-800 transition">
+              <Clock className="w-3.5 h-3.5" />
+            </div>
+          </div>
+          <div className="text-2xl font-black text-amber-950 font-['Outfit'] mt-2 tracking-tight">
+            {pendingOrders}
+          </div>
+          <div className="text-[10px] font-semibold text-amber-700 mt-1 flex items-center">
+            <span>Quotes & allocations</span>
+          </div>
         </div>
-        <div className="bg-white border border-slate-200 rounded-xl p-4">
-          <div className="text-[11px] font-semibold text-slate-600">Active In-Transit</div>
-          <div className="text-xl sm:text-2xl font-black text-cyan-400 font-['Outfit'] mt-1">{inTransitOrders}</div>
+
+        {/* Active In-Transit */}
+        <div
+          onClick={() => {
+            setActiveTab('orders');
+            setStatusFilter('in_transit');
+          }}
+          className={`bg-blue-500/[0.04] border rounded-2xl p-4 transition-all duration-200 cursor-pointer group shadow-2xs hover:shadow-md ${
+            activeTab === 'orders' && statusFilter === 'in_transit'
+              ? 'border-blue-500 ring-2 ring-blue-500/20 bg-blue-500/10'
+              : 'border-blue-200/80 hover:border-blue-300'
+          }`}
+          title="Click to filter by Active In-Transit"
+        >
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-bold text-blue-900 uppercase tracking-wider">Active In-Transit</span>
+            <div className="w-7 h-7 rounded-xl bg-blue-100 group-hover:bg-blue-200 flex items-center justify-center text-blue-800 transition">
+              <Truck className="w-3.5 h-3.5" />
+            </div>
+          </div>
+          <div className="text-2xl font-black text-blue-950 font-['Outfit'] mt-2 tracking-tight flex items-center justify-between">
+            <span>{inTransitOrders}</span>
+            {inTransitOrders > 0 && (
+              <span className="flex h-2 w-2 relative">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-600"></span>
+              </span>
+            )}
+          </div>
+          <div className="text-[10px] font-semibold text-blue-700 mt-1 flex items-center">
+            <span>Live on the road</span>
+          </div>
         </div>
-        <div className="bg-white border border-slate-200 rounded-xl p-4">
-          <div className="text-[11px] font-semibold text-slate-600">Completed Delivered</div>
-          <div className="text-xl sm:text-2xl font-black text-emerald-400 font-['Outfit'] mt-1">{deliveredOrders}</div>
+
+        {/* Completed Delivered */}
+        <div
+          onClick={() => {
+            setActiveTab('orders');
+            setStatusFilter('delivered');
+          }}
+          className={`bg-emerald-500/[0.04] border rounded-2xl p-4 transition-all duration-200 cursor-pointer group shadow-2xs hover:shadow-md ${
+            activeTab === 'orders' && statusFilter === 'delivered'
+              ? 'border-emerald-500 ring-2 ring-emerald-500/20 bg-emerald-500/10'
+              : 'border-emerald-200/80 hover:border-emerald-300'
+          }`}
+          title="Click to filter by Completed Deliveries"
+        >
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-bold text-emerald-900 uppercase tracking-wider">Completed Delivered</span>
+            <div className="w-7 h-7 rounded-xl bg-emerald-100 group-hover:bg-emerald-200 flex items-center justify-center text-emerald-800 transition">
+              <CheckCircle2 className="w-3.5 h-3.5" />
+            </div>
+          </div>
+          <div className="text-2xl font-black text-emerald-950 font-['Outfit'] mt-2 tracking-tight">
+            {deliveredOrders}
+          </div>
+          <div className="text-[10px] font-semibold text-emerald-700 mt-1 flex items-center">
+            <span>{orders.length > 0 ? `${((deliveredOrders / orders.length) * 100).toFixed(0)}% completion rate` : '100% target'}</span>
+          </div>
         </div>
-        <div className="bg-white border border-slate-200 rounded-xl p-4">
-          <div className="text-[11px] font-semibold text-slate-600">Total Revenue</div>
-          <div className="text-xl sm:text-2xl font-black text-slate-900 font-['Outfit'] mt-1">
-            ${totalRevenue.toFixed(0)} <span className="text-[10px] font-normal text-slate-400">CAD</span>
+
+        {/* Total Billed Revenue */}
+        <div
+          onClick={() => setActiveTab('reports')}
+          className={`bg-rose-500/[0.04] border rounded-2xl p-4 transition-all duration-200 cursor-pointer group shadow-2xs hover:shadow-md ${
+            activeTab === 'reports'
+              ? 'border-rose-500 ring-2 ring-rose-500/20 bg-rose-500/10'
+              : 'border-rose-200/80 hover:border-rose-300'
+          }`}
+          title="Click to open Reports & Analytics"
+        >
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-bold text-rose-900 uppercase tracking-wider">Gross Billed</span>
+            <div className="w-7 h-7 rounded-xl bg-rose-100 group-hover:bg-rose-200 flex items-center justify-center text-rose-800 transition">
+              <DollarSign className="w-3.5 h-3.5" />
+            </div>
+          </div>
+          <div className="text-2xl font-black text-slate-900 font-['Outfit'] mt-2 tracking-tight">
+            ${totalRevenue.toFixed(0)} <span className="text-xs font-semibold text-slate-500">CAD</span>
+          </div>
+          <div className="text-[10px] font-semibold text-rose-700 mt-1 flex items-center justify-between">
+            <span>All time volume</span>
+            <span className="text-[10px] text-rose-600 font-bold group-hover:translate-x-0.5 transition">&rarr; Reports</span>
           </div>
         </div>
       </div>
 
       {/* Tabs Navigation */}
-      <div className="flex border-b border-slate-200 overflow-x-auto gap-2 pb-2">
+      <div className="flex border-b border-slate-200/90 overflow-x-auto gap-2 pb-2 scrollbar-thin">
         {[
-          { id: 'orders', label: `Orders Queue (${orders.length})`, icon: Package },
-          { id: 'drivers', label: `Staff & Drivers (${drivers.length})`, icon: Users },
+          { id: 'orders', label: 'Orders Queue', count: orders.length, icon: Package },
+          { id: 'drivers', label: 'Staff & Drivers', count: drivers.length, icon: Users },
           { id: 'reports', label: 'Reports & Analytics', icon: BarChart3 },
           {
             id: 'notifications',
-            label: `Notifications & Alerts (${inAppNotifications.filter((n) => !n.is_read).length > 0 ? `${inAppNotifications.filter((n) => !n.is_read).length} New` : inAppNotifications.length})`,
+            label: 'Notifications & Alerts',
+            badge: inAppNotifications.filter((n) => !n.is_read).length,
             icon: Bell,
           },
-          { id: 'requests', label: `Customer Requests (${pendingRequests})`, icon: AlertCircle },
+          { id: 'requests', label: 'Customer Requests', count: pendingRequests, alertCount: pendingRequests, icon: AlertCircle },
           { id: 'pricing', label: 'Pricing Matrix & Tiers', icon: DollarSign },
           { id: 'settings', label: 'Business & Operating Hours', icon: Sliders },
         ].map((tab) => {
@@ -753,14 +890,28 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id as any)}
-              className={`flex items-center space-x-2 px-3.5 py-2 rounded-xl text-xs font-bold transition flex-shrink-0 ${
+              className={`flex items-center space-x-2 px-4 py-2.5 rounded-xl text-xs font-bold transition flex-shrink-0 cursor-pointer ${
                 isActive
-                  ? 'bg-[#C5161D] text-white shadow-sm'
-                  : 'bg-slate-100 text-slate-600 hover:text-slate-900 hover:bg-slate-200 border border-slate-200'
+                  ? 'bg-gradient-to-r from-[#C5161D] to-[#9E1218] text-white shadow-sm ring-1 ring-red-700/20'
+                  : 'bg-white hover:bg-slate-100 text-slate-600 hover:text-slate-900 border border-slate-200/80 shadow-2xs'
               }`}
             >
-              <Icon className="w-3.5 h-3.5" />
+              <Icon className={`w-3.5 h-3.5 ${isActive ? 'text-white' : 'text-slate-500'}`} />
               <span>{tab.label}</span>
+              {typeof tab.count === 'number' && (
+                <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
+                  isActive ? 'bg-white/20 text-white' : tab.alertCount ? 'bg-amber-100 text-amber-900' : 'bg-slate-100 text-slate-700'
+                }`}>
+                  {tab.count}
+                </span>
+              )}
+              {tab.badge !== undefined && tab.badge > 0 && (
+                <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
+                  isActive ? 'bg-white text-red-700' : 'bg-red-500 text-white animate-pulse'
+                }`}>
+                  {tab.badge}
+                </span>
+              )}
             </button>
           );
         })}
@@ -769,34 +920,80 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
       {/* TAB 1: ORDERS QUEUE */}
       {activeTab === 'orders' && (
         <div className="space-y-4">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-            <div className="relative w-full sm:w-80">
-              <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-3" />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Filter by FD #, customer, address..."
-                className="w-full bg-white border border-slate-300 pl-9 pr-3 py-2 text-xs text-slate-900 rounded-xl focus:border-red-600 focus:outline-none font-mono placeholder:text-slate-400"
-              />
+          {/* Controls Bar: Search, Status Dropdown, and View Switcher */}
+          <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 bg-white p-3 rounded-2xl border border-slate-200/90 shadow-2xs">
+            <div className="flex flex-1 items-center gap-2">
+              <div className="relative flex-1 max-w-md">
+                <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-3" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Filter by FD #, customer, address..."
+                  className="w-full bg-slate-50 border border-slate-200 pl-9 pr-8 py-2 text-xs text-slate-900 rounded-xl focus:bg-white focus:border-red-600 focus:outline-none font-mono placeholder:text-slate-400 transition"
+                />
+                {searchQuery && (
+                  <button
+                    onClick={() => setSearchQuery('')}
+                    className="absolute right-2.5 top-2.5 text-slate-400 hover:text-slate-700 p-0.5 rounded-md cursor-pointer"
+                    title="Clear search"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
+
+              <div className="flex items-center space-x-1.5 shrink-0">
+                <Filter className="w-3.5 h-3.5 text-slate-400 hidden sm:block" />
+                <select
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value)}
+                  className="bg-slate-50 border border-slate-200 text-slate-900 text-xs rounded-xl px-3 py-2 font-medium focus:bg-white focus:outline-none cursor-pointer"
+                >
+                  <option value="all">All Statuses</option>
+                  <option value="pending">Pending (Quotes & Assignments)</option>
+                  <option value="submitted">Quotes (Submitted / Ready)</option>
+                  <option value="confirmed">Confirmed</option>
+                  <option value="assigned">Assigned (Awaiting Driver)</option>
+                  <option value="accepted">Accepted by Driver</option>
+                  <option value="in_transit">In Transit / En Route</option>
+                  <option value="delivered">Delivered Successfully</option>
+                  <option value="cancelled">Cancelled</option>
+                </select>
+              </div>
             </div>
 
-            <div className="flex items-center space-x-2 w-full sm:w-auto">
-              <span className="text-xs text-slate-600 font-semibold">Status:</span>
-              <select
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-                className="bg-white border border-slate-300 text-slate-900 text-xs rounded-xl px-3 py-2"
-              >
-                <option value="all">All Statuses</option>
-                <option value="submitted">Quotes (Submitted / Ready)</option>
-                <option value="confirmed">Confirmed</option>
-                <option value="assigned">Assigned (Awaiting Driver)</option>
-                <option value="accepted">Accepted by Driver</option>
-                <option value="in_transit">In Transit / En Route</option>
-                <option value="delivered">Delivered Successfully</option>
-                <option value="cancelled">Cancelled</option>
-              </select>
+            {/* View Mode Switcher: Table vs Kanban Dispatch Board */}
+            <div className="flex items-center justify-end space-x-2 shrink-0 border-t md:border-t-0 pt-2 md:pt-0 border-slate-100">
+              <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider hidden sm:inline">View Mode:</span>
+              <div className="flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200">
+                <button
+                  type="button"
+                  onClick={() => setOrderViewMode('table')}
+                  className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
+                    orderViewMode === 'table'
+                      ? 'bg-white text-slate-900 shadow-2xs'
+                      : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                  title="Detailed Table View"
+                >
+                  <List className="w-3.5 h-3.5" />
+                  <span>Table</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setOrderViewMode('kanban')}
+                  className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
+                    orderViewMode === 'kanban'
+                      ? 'bg-white text-slate-900 shadow-2xs'
+                      : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                  title="Kanban Dispatch Board"
+                >
+                  <LayoutGrid className="w-3.5 h-3.5" />
+                  <span>Dispatch Board</span>
+                </button>
+              </div>
             </div>
           </div>
 
@@ -909,199 +1106,429 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
             </button>
           </div>
 
-          <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-xl">
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs text-slate-700">
-                <thead className="bg-slate-100 text-slate-700 uppercase text-[10px] font-bold border-b border-slate-200">
-                  <tr>
-                    <th className="py-3 px-4">Order #</th>
-                    <th className="py-3 px-4">Customer</th>
-                    <th className="py-3 px-4">Route & Area</th>
-                    <th className="py-3 px-4">Vehicle & Cargo</th>
-                    <th className="py-3 px-4">Status</th>
-                    <th className="py-3 px-4">Assigned Driver</th>
-                    <th className="py-3 px-4">Total</th>
-                    <th className="py-3 px-4 text-right">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-200/60">
-                  {filteredOrders.length === 0 ? (
+          {/* TABLE VIEW */}
+          {orderViewMode === 'table' && (
+            <div className="bg-white border border-slate-200/90 rounded-2xl overflow-hidden shadow-sm">
+              <div className="overflow-x-auto max-h-[750px] scrollbar-thin">
+                <table className="w-full text-left text-xs text-slate-700">
+                  <thead className="sticky top-0 bg-slate-50/95 backdrop-blur-xs text-slate-700 uppercase text-[10px] font-bold border-b border-slate-200 z-10">
                     <tr>
-                      <td colSpan={8} className="py-8 text-center text-slate-500">
-                        No orders matching current filter.
-                      </td>
+                      <th className="py-3.5 px-4">Order #</th>
+                      <th className="py-3.5 px-4">Customer</th>
+                      <th className="py-3.5 px-4">Route & Area</th>
+                      <th className="py-3.5 px-4">Vehicle & Cargo</th>
+                      <th className="py-3.5 px-4">Status</th>
+                      <th className="py-3.5 px-4">Assigned Driver</th>
+                      <th className="py-3.5 px-4">Total</th>
+                      <th className="py-3.5 px-4 text-right">Actions</th>
                     </tr>
-                  ) : (
-                    filteredOrders.map((ord) => (
-                      <tr key={ord.id} className="hover:bg-slate-100/40 transition">
-                        <td className="py-3 px-4 font-mono font-bold text-slate-900">
-                          <button
-                            type="button"
-                            onClick={() => setSelectedOrderDetails(ord)}
-                            className="text-left font-mono font-bold text-slate-900 hover:text-blue-600 hover:underline flex items-center space-x-1 cursor-pointer group"
-                            title="Click to view full order details & proof of delivery"
-                          >
-                            <span>#{ord.order_number}</span>
-                            <Eye className="w-3 h-3 text-slate-400 group-hover:text-blue-600 transition" />
-                          </button>
-                          {ord.proof_of_delivery?.photo_url && (
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {filteredOrders.length === 0 ? (
+                      <tr>
+                        <td colSpan={8} className="py-12 text-center text-slate-500">
+                          <Package className="w-8 h-8 text-slate-300 mx-auto mb-2" />
+                          <div className="font-semibold text-slate-700">No orders matching current filter</div>
+                          <p className="text-[11px] text-slate-400 mt-0.5">Try selecting another status or clearing the search query.</p>
+                          {(statusFilter !== 'all' || searchQuery) && (
                             <button
-                              type="button"
-                              onClick={() => setSelectedOrderDetails(ord)}
-                              className="inline-flex items-center space-x-1 px-1.5 py-0.5 mt-1 rounded-md bg-emerald-100 hover:bg-emerald-200 text-emerald-800 text-[10px] font-bold border border-emerald-300 transition cursor-pointer"
-                              title="Verified Proof of Delivery Photo Available — Click to view"
+                              onClick={() => {
+                                setStatusFilter('all');
+                                setSearchQuery('');
+                              }}
+                              className="mt-3 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl cursor-pointer transition"
                             >
-                              <Camera className="w-2.5 h-2.5 text-emerald-700" />
-                              <span>POD Photo</span>
+                              Reset Filters
                             </button>
                           )}
                         </td>
-                        <td className="py-3 px-4">
-                          <div className="font-semibold text-slate-900">{ord.customer_name}</div>
-                          <div className="text-[10px] text-slate-600">{ord.customer_phone}</div>
-                        </td>
-                        <td className="py-3 px-4">
-                          <div className="truncate max-w-[180px] text-slate-800 font-medium">{ord.pickup_address}</div>
-                          <div className="truncate max-w-[180px] text-slate-600">&rarr; {ord.delivery_address}</div>
-                          <span className="text-[10px] text-red-600 font-bold">{ord.distance_km} km ({ord.service_area})</span>
-                        </td>
-                        <td className="py-3 px-4">
-                          <span className="font-medium text-slate-900">{ord.vehicle_name}</span>
-                          <div className="text-[10px] text-slate-600">{ord.weight_lbs} lbs ({ord.quantity} pails/units)</div>
-                        </td>
-                        <td className="py-3 px-4">
-                          {getOrderStatusBadge(ord.order_status, 'sm')}
-                        </td>
-                        <td className="py-3 px-4">
-                          {ord.assigned_driver_name ? (
-                            <div className="flex items-center space-x-2">
-                              <span className="text-emerald-700 font-semibold">{ord.assigned_driver_name}</span>
+                      </tr>
+                    ) : (
+                      filteredOrders.map((ord) => (
+                        <tr key={ord.id} className="hover:bg-slate-50/80 transition-colors">
+                          <td className="py-3 px-4 font-mono font-bold text-slate-900">
+                            <button
+                              type="button"
+                              onClick={() => setSelectedOrderDetails(ord)}
+                              className="text-left font-mono font-bold text-slate-900 hover:text-blue-600 hover:underline flex items-center space-x-1 cursor-pointer group"
+                              title="Click to view full order details & proof of delivery"
+                            >
+                              <span>#{ord.order_number}</span>
+                              <Eye className="w-3 h-3 text-slate-400 group-hover:text-blue-600 transition" />
+                            </button>
+                            {ord.proof_of_delivery?.photo_url && (
+                              <button
+                                type="button"
+                                onClick={() => setSelectedOrderDetails(ord)}
+                                className="inline-flex items-center space-x-1 px-1.5 py-0.5 mt-1 rounded-md bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-[10px] font-bold border border-emerald-200 transition cursor-pointer"
+                                title="Verified Proof of Delivery Photo Available — Click to view"
+                              >
+                                <Camera className="w-2.5 h-2.5 text-emerald-700" />
+                                <span>POD Photo</span>
+                              </button>
+                            )}
+                          </td>
+                          <td className="py-3 px-4">
+                            <div className="font-semibold text-slate-900">{ord.customer_name}</div>
+                            <div className="text-[10px] text-slate-500">{ord.customer_phone}</div>
+                          </td>
+                          <td className="py-3 px-4">
+                            <div className="truncate max-w-[180px] text-slate-800 font-medium">{ord.pickup_address}</div>
+                            <div className="truncate max-w-[180px] text-slate-500">&rarr; {ord.delivery_address}</div>
+                            <span className="text-[10px] text-red-600 font-bold">{ord.distance_km} km ({ord.service_area})</span>
+                          </td>
+                          <td className="py-3 px-4">
+                            <span className="font-medium text-slate-900">{ord.vehicle_name}</span>
+                            <div className="text-[10px] text-slate-500">{ord.weight_lbs} lbs ({ord.quantity} pails/units)</div>
+                          </td>
+                          <td className="py-3 px-4">
+                            {getOrderStatusBadge(ord.order_status, 'sm')}
+                          </td>
+                          <td className="py-3 px-4">
+                            {ord.assigned_driver_name ? (
+                              <div className="flex items-center space-x-2">
+                                <span className="text-emerald-700 font-semibold">{ord.assigned_driver_name}</span>
+                                <button
+                                  onClick={() => {
+                                    setSelectedDriverForAssign(ord.assigned_driver_id || drivers[0]?.id || '');
+                                    setAssignModalOrder(ord);
+                                  }}
+                                  className="text-[10px] text-slate-500 hover:text-slate-900 underline cursor-pointer"
+                                  title="Change or reassign driver"
+                                >
+                                  Reassign
+                                </button>
+                              </div>
+                            ) : (
+                              <button
+                                onClick={() => {
+                                  setSelectedDriverForAssign(drivers[0]?.id || '');
+                                  setAssignModalOrder(ord);
+                                }}
+                                className="text-red-600 hover:text-red-800 font-bold underline text-xs cursor-pointer flex items-center space-x-1"
+                              >
+                                <span>+ Assign</span>
+                              </button>
+                            )}
+                          </td>
+                          <td className="py-3 px-4">
+                            {ord.order_status === 'submitted' ? (
+                              <span className="text-amber-700 font-bold text-[11px] block">Quote Pending</span>
+                            ) : (
+                              <div>
+                                <span className="font-bold text-slate-900">${ord.total_price.toFixed(2)}</span>
+                                {ord.discount_amount && ord.discount_amount > 0 ? (
+                                  <span className="block text-[10px] text-emerald-700 font-bold" title={`${ord.discount_type || 'Discount'}: -$${ord.discount_amount.toFixed(2)} CAD`}>
+                                    -${ord.discount_amount.toFixed(2)} off
+                                  </span>
+                                ) : null}
+                                {ord.order_status === 'quote_sent' && (
+                                  <span className="block text-[9px] text-purple-700 font-bold uppercase">Quotation Sent</span>
+                                )}
+                              </div>
+                            )}
+                          </td>
+                          <td className="py-3 px-4 text-right">
+                            <div className="flex items-center justify-end space-x-1">
+                              <button
+                                onClick={() => setSelectedOrderDetails(ord)}
+                                className="px-2 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition flex items-center space-x-1 cursor-pointer shadow-2xs"
+                                title="View Complete Order Details & Proof of Delivery"
+                              >
+                                <Eye className="w-3.5 h-3.5" />
+                                <span className="font-bold text-[10px]">Details</span>
+                              </button>
+                              <button
+                                onClick={() => handleOpenQuoteReview(ord)}
+                                className={`p-1.5 rounded-lg transition border flex items-center space-x-1 cursor-pointer ${
+                                  ord.order_status === 'submitted'
+                                    ? 'bg-amber-100 text-amber-900 border-amber-300 hover:bg-amber-200'
+                                    : 'bg-slate-50 hover:bg-slate-100 text-emerald-700 hover:text-emerald-900 border-slate-200'
+                                }`}
+                                title="Review Route & Specs, Adjust Pricing, and Send Quote"
+                              >
+                                <DollarSign className="w-3.5 h-3.5" />
+                              </button>
+                              <button
+                                onClick={() => onNavigate('tracking', ord.order_number)}
+                                className="p-1.5 bg-slate-50 hover:bg-slate-100 text-slate-700 hover:text-slate-900 border border-slate-200 rounded-lg transition cursor-pointer"
+                                title="Inspect Live Tracking"
+                              >
+                                <Search className="w-3.5 h-3.5" />
+                              </button>
+                              <button
+                                onClick={() => generateOrderPdf(ord, settings)}
+                                className="p-1.5 bg-slate-50 hover:bg-slate-100 text-red-600 hover:text-red-800 border border-slate-200 rounded-lg transition cursor-pointer"
+                                title="Download Waybill PDF"
+                              >
+                                <FileDown className="w-3.5 h-3.5" />
+                              </button>
                               <button
                                 onClick={() => {
                                   setSelectedDriverForAssign(ord.assigned_driver_id || drivers[0]?.id || '');
                                   setAssignModalOrder(ord);
                                 }}
-                                className="text-[10px] text-slate-600 hover:text-slate-900 underline cursor-pointer"
-                                title="Change or reassign driver"
+                                className="p-1.5 bg-slate-50 hover:bg-slate-100 text-blue-600 hover:text-blue-800 border border-slate-200 rounded-lg transition cursor-pointer"
+                                title="Assign / Reassign Driver"
                               >
-                                Reassign
+                                <Truck className="w-3.5 h-3.5" />
                               </button>
-                            </div>
-                          ) : (
-                            <button
-                              onClick={() => {
-                                setSelectedDriverForAssign(drivers[0]?.id || '');
-                                setAssignModalOrder(ord);
-                              }}
-                              className="text-red-600 hover:text-red-800 font-bold underline text-xs cursor-pointer flex items-center space-x-1"
-                            >
-                              <span>+ Assign</span>
-                            </button>
-                          )}
-                        </td>
-                        <td className="py-3 px-4">
-                          {ord.order_status === 'submitted' ? (
-                            <span className="text-amber-700 font-bold text-[11px] block">Quote Pending</span>
-                          ) : (
-                            <div>
-                              <span className="font-bold text-slate-900">${ord.total_price.toFixed(2)}</span>
-                              {ord.discount_amount && ord.discount_amount > 0 ? (
-                                <span className="block text-[10px] text-emerald-700 font-bold" title={`${ord.discount_type || 'Discount'}: -$${ord.discount_amount.toFixed(2)} CAD`}>
-                                  -${ord.discount_amount.toFixed(2)} off
-                                </span>
-                              ) : null}
-                              {ord.order_status === 'quote_sent' && (
-                                <span className="block text-[9px] text-purple-700 font-bold uppercase">Quotation Sent</span>
+                              <button
+                                onClick={() => handleOpenEditOrder(ord)}
+                                className="p-1.5 bg-slate-50 hover:bg-slate-100 text-amber-700 hover:text-amber-900 border border-slate-200 rounded-lg transition cursor-pointer"
+                                title="Edit Full Order Details"
+                              >
+                                <Edit2 className="w-3.5 h-3.5" />
+                              </button>
+                              {deleteOrderConfirmId === ord.id ? (
+                                <div className="flex items-center space-x-1 bg-red-50 border border-red-200 px-2 py-0.5 rounded-lg text-[10px]">
+                                  <button
+                                    onClick={() => handleDeleteOrder(ord.id)}
+                                    className="text-red-700 hover:text-red-900 font-bold cursor-pointer"
+                                  >
+                                    Del
+                                  </button>
+                                  <span className="text-slate-400">|</span>
+                                  <button
+                                    onClick={() => setDeleteOrderConfirmId(null)}
+                                    className="text-slate-600 hover:text-slate-900 cursor-pointer"
+                                  >
+                                    X
+                                  </button>
+                                </div>
+                              ) : (
+                                <button
+                                  onClick={() => setDeleteOrderConfirmId(ord.id)}
+                                  className="p-1.5 bg-slate-50 hover:bg-red-50 text-slate-400 hover:text-red-600 border border-slate-200 rounded-lg transition cursor-pointer"
+                                  title="Delete Order"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </button>
                               )}
                             </div>
-                          )}
-                        </td>
-                        <td className="py-3 px-4 text-right">
-                          <div className="flex items-center justify-end space-x-1">
-                            <button
-                              onClick={() => setSelectedOrderDetails(ord)}
-                              className="px-2 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition flex items-center space-x-1 cursor-pointer shadow-xs"
-                              title="View Complete Order Details & Proof of Delivery"
-                            >
-                              <Eye className="w-3.5 h-3.5" />
-                              <span className="font-bold text-[10px]">Details</span>
-                            </button>
-                            <button
-                              onClick={() => handleOpenQuoteReview(ord)}
-                              className={`p-1.5 rounded-lg transition border flex items-center space-x-1 ${
-                                ord.order_status === 'submitted'
-                                  ? 'bg-amber-100 text-amber-900 border-amber-300 hover:bg-amber-200'
-                                  : 'bg-slate-100 hover:bg-slate-200 text-emerald-700 hover:text-emerald-900 border-slate-300'
-                              }`}
-                              title="Review Route & Specs, Adjust Pricing, and Send Quote"
-                            >
-                              <DollarSign className="w-3.5 h-3.5" />
-                            </button>
-                            <button
-                              onClick={() => onNavigate('tracking', ord.order_number)}
-                              className="p-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 hover:text-slate-900 border border-slate-200 rounded-lg transition"
-                              title="Inspect Live Tracking"
-                            >
-                              <Search className="w-3.5 h-3.5" />
-                            </button>
-                            <button
-                              onClick={() => generateOrderPdf(ord, settings)}
-                              className="p-1.5 bg-slate-100 hover:bg-slate-200 text-red-600 hover:text-red-800 border border-slate-300 rounded-lg transition"
-                              title="Download Waybill PDF"
-                            >
-                              <FileDown className="w-3.5 h-3.5" />
-                            </button>
-                            <button
-                              onClick={() => {
-                                setSelectedDriverForAssign(ord.assigned_driver_id || drivers[0]?.id || '');
-                                setAssignModalOrder(ord);
-                              }}
-                              className="p-1.5 bg-slate-100 hover:bg-slate-200 text-blue-600 hover:text-blue-800 border border-slate-300 rounded-lg transition"
-                              title="Assign / Reassign Driver"
-                            >
-                              <Truck className="w-3.5 h-3.5" />
-                            </button>
-                            <button
-                              onClick={() => handleOpenEditOrder(ord)}
-                              className="p-1.5 bg-slate-100 hover:bg-slate-200 text-amber-700 hover:text-amber-900 border border-slate-300 rounded-lg transition"
-                              title="Edit Full Order Details"
-                            >
-                              <Edit2 className="w-3.5 h-3.5" />
-                            </button>
-                            {deleteOrderConfirmId === ord.id ? (
-                              <div className="flex items-center space-x-1 bg-red-50 border border-red-200 px-2 py-0.5 rounded-lg text-[10px]">
-                                <button
-                                  onClick={() => handleDeleteOrder(ord.id)}
-                                  className="text-red-700 hover:text-red-900 font-bold cursor-pointer"
-                                >
-                                  Del
-                                </button>
-                                <span className="text-slate-400">|</span>
-                                <button
-                                  onClick={() => setDeleteOrderConfirmId(null)}
-                                  className="text-slate-600 hover:text-slate-900 cursor-pointer"
-                                >
-                                  X
-                                </button>
-                              </div>
-                            ) : (
-                              <button
-                                onClick={() => setDeleteOrderConfirmId(ord.id)}
-                                className="p-1.5 bg-slate-100 hover:bg-red-50 text-slate-500 hover:text-red-600 border border-slate-200 rounded-lg transition"
-                                title="Delete Order"
-                              >
-                                <Trash2 className="w-3.5 h-3.5" />
-                              </button>
-                            )}
-                          </div>
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
             </div>
-          </div>
+          )}
+
+          {/* KANBAN DISPATCH BOARD VIEW */}
+          {orderViewMode === 'kanban' && (
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+              {[
+                {
+                  id: 'quotes',
+                  title: 'Quotes & Inquiries',
+                  desc: 'Pending pricing or customer review',
+                  badgeBg: 'bg-amber-100 text-amber-900',
+                  orders: filteredOrders.filter((o) => o.order_status === 'submitted' || o.order_status === 'quote_sent'),
+                  icon: Clock,
+                },
+                {
+                  id: 'assigned',
+                  title: 'Assigned & Confirmed',
+                  desc: 'Dispatched, awaiting courier pickup',
+                  badgeBg: 'bg-blue-100 text-blue-900',
+                  orders: filteredOrders.filter((o) => o.order_status === 'assigned' || o.order_status === 'confirmed' || o.order_status === 'accepted'),
+                  icon: Users,
+                },
+                {
+                  id: 'in_transit',
+                  title: 'Active In Transit',
+                  desc: 'Couriers en route with cargo',
+                  badgeBg: 'bg-cyan-100 text-cyan-900',
+                  orders: filteredOrders.filter((o) => ['en_route_pickup', 'picked_up', 'in_transit'].includes(o.order_status)),
+                  icon: Truck,
+                },
+                {
+                  id: 'delivered',
+                  title: 'Delivered (Completed)',
+                  desc: 'Delivered with POD photo sign-off',
+                  badgeBg: 'bg-emerald-100 text-emerald-900',
+                  orders: filteredOrders.filter((o) => o.order_status === 'delivered'),
+                  icon: CheckCircle2,
+                },
+              ].map((col) => {
+                const ColIcon = col.icon;
+                return (
+                  <div
+                    key={col.id}
+                    className="bg-slate-50/70 border border-slate-200/80 rounded-2xl p-3.5 flex flex-col space-y-3 min-h-[500px]"
+                  >
+                    {/* Column Header */}
+                    <div className="flex items-center justify-between border-b border-slate-200/80 pb-2.5">
+                      <div className="flex items-center space-x-2">
+                        <div className="p-1 rounded-lg bg-white border border-slate-200 shadow-2xs">
+                          <ColIcon className="w-3.5 h-3.5 text-slate-700" />
+                        </div>
+                        <div>
+                          <h3 className="font-bold text-slate-900 text-xs font-['Outfit']">{col.title}</h3>
+                          <p className="text-[10px] text-slate-500 leading-tight">{col.desc}</p>
+                        </div>
+                      </div>
+                      <span className={`text-[10px] px-2 py-0.5 rounded-full font-black ${col.badgeBg}`}>
+                        {col.orders.length}
+                      </span>
+                    </div>
+
+                    {/* Column Cards List */}
+                    <div className="flex-1 space-y-3 overflow-y-auto max-h-[720px] pr-1 scrollbar-thin">
+                      {col.orders.length === 0 ? (
+                        <div className="h-32 border-2 border-dashed border-slate-200 rounded-xl flex flex-col items-center justify-center text-center p-3 text-slate-400 text-xs">
+                          <span>No orders in this stage</span>
+                        </div>
+                      ) : (
+                        col.orders.map((ord) => (
+                          <div
+                            key={ord.id}
+                            className="bg-white border border-slate-200/90 rounded-xl p-3 shadow-2xs hover:shadow-md hover:border-slate-300 transition space-y-2.5 group"
+                          >
+                            {/* Card Header: Order # & Status Badge */}
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center space-x-1.5">
+                                <button
+                                  type="button"
+                                  onClick={() => setSelectedOrderDetails(ord)}
+                                  className="font-mono font-bold text-slate-900 hover:text-blue-600 transition flex items-center space-x-1 cursor-pointer"
+                                  title="View full order details & POD"
+                                >
+                                  <span>#{ord.order_number}</span>
+                                  <Eye className="w-3 h-3 text-slate-400 group-hover:text-blue-600" />
+                                </button>
+                                {ord.proof_of_delivery?.photo_url && (
+                                  <button
+                                    type="button"
+                                    onClick={() => setSelectedOrderDetails(ord)}
+                                    className="inline-flex items-center space-x-1 px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-800 text-[9px] font-bold border border-emerald-200 cursor-pointer"
+                                    title="Verified POD Photo Available"
+                                  >
+                                    <Camera className="w-2.5 h-2.5 text-emerald-600" />
+                                    <span>POD</span>
+                                  </button>
+                                )}
+                              </div>
+                              {getOrderStatusBadge(ord.order_status, 'sm')}
+                            </div>
+
+                            {/* Customer & Cargo Info */}
+                            <div>
+                              <div className="font-bold text-slate-900 text-xs truncate">{ord.customer_name}</div>
+                              <div className="text-[11px] text-slate-500 flex items-center justify-between">
+                                <a href={`tel:${ord.customer_phone}`} className="hover:text-slate-900 hover:underline">
+                                  {ord.customer_phone}
+                                </a>
+                                <span className="text-[10px] text-slate-600 font-medium">
+                                  {ord.vehicle_name} &bull; {ord.weight_lbs} lbs
+                                </span>
+                              </div>
+                            </div>
+
+                            {/* Route Snippet */}
+                            <div className="bg-slate-50 rounded-lg p-2 text-[11px] border border-slate-100 space-y-1">
+                              <div className="flex items-start space-x-1.5 text-slate-700">
+                                <div className="w-1.5 h-1.5 rounded-full bg-blue-500 mt-1 shrink-0" />
+                                <span className="truncate">{ord.pickup_address}</span>
+                              </div>
+                              <div className="flex items-start space-x-1.5 text-slate-700">
+                                <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 mt-1 shrink-0" />
+                                <span className="truncate">{ord.delivery_address}</span>
+                              </div>
+                              <div className="text-[10px] text-slate-500 font-semibold pt-0.5 border-t border-slate-200/60 flex items-center justify-between">
+                                <span>{ord.distance_km} km</span>
+                                <span className="text-red-700 font-bold">{ord.service_area}</span>
+                              </div>
+                            </div>
+
+                            {/* Driver Assignment & Price */}
+                            <div className="flex items-center justify-between pt-1 text-xs">
+                              <div>
+                                {ord.assigned_driver_name ? (
+                                  <div className="flex items-center space-x-1 text-slate-800">
+                                    <Truck className="w-3 h-3 text-emerald-600 shrink-0" />
+                                    <span className="text-[11px] font-semibold truncate max-w-[100px]">
+                                      {ord.assigned_driver_name}
+                                    </span>
+                                  </div>
+                                ) : (
+                                  <button
+                                    onClick={() => {
+                                      setSelectedDriverForAssign(drivers[0]?.id || '');
+                                      setAssignModalOrder(ord);
+                                    }}
+                                    className="text-[11px] font-bold text-red-600 hover:text-red-700 underline flex items-center space-x-1 cursor-pointer"
+                                  >
+                                    <span>+ Assign</span>
+                                  </button>
+                                )}
+                              </div>
+
+                              <div className="text-right">
+                                <span className="font-bold text-slate-900 font-mono">
+                                  ${ord.total_price.toFixed(2)}
+                                </span>
+                                {ord.discount_amount && ord.discount_amount > 0 ? (
+                                  <span className="block text-[9px] text-emerald-700 font-bold">
+                                    -${ord.discount_amount.toFixed(2)}
+                                  </span>
+                                ) : null}
+                              </div>
+                            </div>
+
+                            {/* Card Actions Ribbon */}
+                            <div className="flex items-center justify-end space-x-1 pt-1.5 border-t border-slate-100">
+                              <button
+                                onClick={() => setSelectedOrderDetails(ord)}
+                                className="px-2 py-1 bg-blue-50 hover:bg-blue-100 text-blue-700 text-[10px] font-bold rounded-lg transition cursor-pointer flex items-center space-x-1"
+                                title="View Details"
+                              >
+                                <Eye className="w-3 h-3" />
+                                <span>Details</span>
+                              </button>
+                              <button
+                                onClick={() => handleOpenQuoteReview(ord)}
+                                className="p-1 bg-slate-50 hover:bg-slate-100 text-slate-700 text-[10px] rounded-lg border border-slate-200 transition cursor-pointer"
+                                title="Review Quote"
+                              >
+                                <DollarSign className="w-3 h-3" />
+                              </button>
+                              <button
+                                onClick={() => {
+                                  setSelectedDriverForAssign(ord.assigned_driver_id || drivers[0]?.id || '');
+                                  setAssignModalOrder(ord);
+                                }}
+                                className="p-1 bg-slate-50 hover:bg-slate-100 text-slate-700 text-[10px] rounded-lg border border-slate-200 transition cursor-pointer"
+                                title="Assign Driver"
+                              >
+                                <Truck className="w-3 h-3" />
+                              </button>
+                              <button
+                                onClick={() => generateOrderPdf(ord, settings)}
+                                className="p-1 bg-slate-50 hover:bg-slate-100 text-slate-700 text-[10px] rounded-lg border border-slate-200 transition cursor-pointer"
+                                title="Download PDF"
+                              >
+                                <FileDown className="w-3 h-3" />
+                              </button>
+                              <button
+                                onClick={() => onNavigate('tracking', ord.order_number)}
+                                className="p-1 bg-slate-50 hover:bg-slate-100 text-slate-700 text-[10px] rounded-lg border border-slate-200 transition cursor-pointer"
+                                title="Live Tracking"
+                              >
+                                <Search className="w-3 h-3" />
+                              </button>
+                            </div>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       )}
 
@@ -1134,58 +1561,58 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
 
           {/* Newly Created Credentials Banner Card */}
           {createdCredentials && (
-            <div className="bg-gradient-to-r from-emerald-950/80 via-slate-900 to-[#111726] border border-emerald-500/50 rounded-2xl p-5 shadow-2xl space-y-3 animate-fade-in">
+            <div className="bg-emerald-50 border border-emerald-300 rounded-2xl p-5 shadow-sm space-y-3 animate-fade-in">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-2.5">
-                  <div className="w-8 h-8 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center border border-emerald-500/30">
+                  <div className="w-8 h-8 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center border border-emerald-300 shadow-2xs">
                     <CheckCircle2 className="w-5 h-5" />
                   </div>
                   <div>
-                    <h3 className="font-bold text-slate-900 text-sm font-['Outfit']">
+                    <h3 className="font-bold text-emerald-950 text-sm font-['Outfit']">
                       Account Provisioned Successfully!
                     </h3>
-                    <p className="text-[11px] text-slate-600">
+                    <p className="text-[11px] text-emerald-800">
                       Copy these login credentials and send them securely to your employee.
                     </p>
                   </div>
                 </div>
                 <button
                   onClick={() => setCreatedCredentials(null)}
-                  className="p-1 text-slate-400 hover:text-slate-900 rounded-lg"
+                  className="p-1 text-slate-400 hover:text-slate-700 rounded-lg cursor-pointer"
                   title="Dismiss"
                 >
                   <X className="w-4 h-4" />
                 </button>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 bg-slate-50/80 rounded-xl p-3.5 border border-slate-200 text-xs">
+              <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 bg-white rounded-xl p-3.5 border border-emerald-200 text-xs shadow-2xs">
                 <div>
-                  <span className="text-[10px] uppercase font-bold text-slate-600 block">Staff Name</span>
+                  <span className="text-[10px] uppercase font-bold text-slate-500 block">Staff Name</span>
                   <span className="font-bold text-slate-900">{createdCredentials.name}</span>
                 </div>
                 <div>
-                  <span className="text-[10px] uppercase font-bold text-slate-600 block">Role</span>
-                  <span className="font-semibold text-emerald-700">{createdCredentials.role}</span>
+                  <span className="text-[10px] uppercase font-bold text-slate-500 block">Role</span>
+                  <span className="font-semibold text-emerald-800">{createdCredentials.role}</span>
                 </div>
                 <div>
-                  <span className="text-[10px] uppercase font-bold text-slate-600 block">Login Email</span>
-                  <span className="font-mono text-slate-800 font-semibold">{createdCredentials.email}</span>
+                  <span className="text-[10px] uppercase font-bold text-slate-500 block">Login Email</span>
+                  <span className="font-mono text-slate-900 font-semibold">{createdCredentials.email}</span>
                 </div>
                 <div>
-                  <span className="text-[10px] uppercase font-bold text-slate-600 block">Initial Password</span>
-                  <span className="font-mono font-bold text-amber-800 bg-amber-50 px-2 py-0.5 rounded border border-amber-300">
+                  <span className="text-[10px] uppercase font-bold text-slate-500 block">Initial Password</span>
+                  <span className="font-mono font-bold text-amber-900 bg-amber-50 px-2 py-0.5 rounded border border-amber-300 inline-block mt-0.5">
                     {createdCredentials.password}
                   </span>
                 </div>
               </div>
 
-              <div className="flex items-center justify-between pt-1">
-                <span className="text-[11px] text-slate-600">
-                  Staff Portal login is ready immediately at <strong className="text-slate-900">Staff / Employee Login</strong>.
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-1">
+                <span className="text-[11px] text-emerald-900">
+                  Staff Portal login is ready immediately at <strong className="text-emerald-950 underline">Staff / Employee Login</strong>.
                 </span>
                 <button
                   onClick={handleCopyCredentials}
-                  className="flex items-center space-x-1.5 px-3.5 py-1.5 bg-emerald-700 hover:bg-emerald-600 text-white font-bold text-xs rounded-xl transition cursor-pointer"
+                  className="flex items-center justify-center space-x-1.5 px-4 py-2 bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs rounded-xl transition cursor-pointer shadow-2xs"
                 >
                   {copiedCredentials ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
                   <span>{copiedCredentials ? 'Copied to Clipboard!' : 'Copy Login Details'}</span>
