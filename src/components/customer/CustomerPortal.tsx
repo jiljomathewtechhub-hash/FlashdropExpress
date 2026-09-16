@@ -17,6 +17,7 @@ import {
 import { Order, OrderRequestItem } from '../../types/order';
 import { store, UserSession } from '../../lib/store';
 import { generateOrderPdf } from '../../lib/pdf';
+import { getOrderStatusBadge, ORDER_STATUS_CONFIG } from '../../lib/statusHelper';
 
 interface CustomerPortalProps {
   onNavigate: (tab: string, param?: any) => void;
@@ -251,26 +252,22 @@ export const CustomerPortal: React.FC<CustomerPortalProps> = ({ onNavigate }) =>
                 No active orders at this moment. Click &quot;New Delivery Order&quot; to book a courier.
               </div>
             ) : (
-              activeOrders.map((ord) => (
-                <div
-                  key={ord.id}
-                  className="bg-white hover:bg-slate-50 border border-slate-200 hover:border-slate-300 rounded-2xl p-5 transition shadow-sm space-y-3"
-                >
-                  <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-                    <div className="flex items-center space-x-3">
-                      <span className="text-base font-black text-slate-900 font-mono">
-                        {ord.order_number}
-                      </span>
-                      <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
-                        ord.order_status === 'submitted'
-                          ? 'bg-amber-50 text-amber-800 border border-amber-300'
-                          : ord.order_status === 'quote_sent'
-                          ? 'bg-purple-50 text-purple-800 border border-purple-300'
-                          : 'bg-red-50 text-red-700 border border-red-200'
-                      }`}>
-                        {ord.order_status === 'submitted' ? 'Quote Requested' : ord.order_status === 'quote_sent' ? 'Quote Ready' : ord.order_status.replace(/_/g, ' ')}
-                      </span>
-                    </div>
+              activeOrders.map((ord) => {
+                const statusCfg = ORDER_STATUS_CONFIG[ord.order_status];
+                return (
+                  <div
+                    key={ord.id}
+                    className={`border rounded-2xl p-5 transition shadow-sm space-y-3 ${
+                      statusCfg?.cardClass || 'bg-white hover:bg-slate-50 border-slate-200 hover:border-slate-300'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between border-b border-slate-200/80 pb-3">
+                      <div className="flex items-center space-x-3">
+                        <span className="text-base font-black text-slate-900 font-mono">
+                          #{ord.order_number}
+                        </span>
+                        {getOrderStatusBadge(ord.order_status, 'sm')}
+                      </div>
                     {ord.order_status === 'submitted' ? (
                       <span className="text-xs font-bold text-amber-800 bg-amber-50 px-3 py-1 rounded-lg border border-amber-300 font-['Outfit']">
                         Quotation In Review
@@ -342,9 +339,10 @@ export const CustomerPortal: React.FC<CustomerPortalProps> = ({ onNavigate }) =>
                     </div>
                   </div>
                 </div>
-              ))
-            )}
-          </div>
+              );
+            })
+          )}
+        </div>
 
           {/* Past Orders List */}
           <div className="space-y-4 pt-4">
@@ -356,14 +354,12 @@ export const CustomerPortal: React.FC<CustomerPortalProps> = ({ onNavigate }) =>
             {pastOrders.map((ord) => (
               <div
                 key={ord.id}
-                className="bg-white border border-slate-200 rounded-2xl p-5 transition shadow-sm space-y-3"
+                className="bg-emerald-50/20 border-2 border-emerald-300/80 rounded-2xl p-5 transition shadow-sm space-y-3 hover:border-emerald-400"
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-3">
-                    <span className="text-sm font-bold text-slate-900 font-mono">{ord.order_number}</span>
-                    <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-300">
-                      {ord.order_status}
-                    </span>
+                    <span className="text-sm font-bold text-slate-900 font-mono">#{ord.order_number}</span>
+                    {getOrderStatusBadge(ord.order_status, 'sm')}
                   </div>
                   <div className="flex items-center space-x-3">
                     <span className="text-xs font-bold text-slate-800">${ord.total_price.toFixed(2)} CAD</span>

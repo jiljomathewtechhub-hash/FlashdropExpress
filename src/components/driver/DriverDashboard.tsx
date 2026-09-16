@@ -20,7 +20,6 @@ import {
   Car,
   BadgeCheck,
   Building,
-  DollarSign,
   ExternalLink,
   Package,
   Calendar,
@@ -35,6 +34,7 @@ import { Order, OrderStatus, Driver } from '../../types/order';
 import { store, UserSession } from '../../lib/store';
 import { inAppNotificationService } from '../../lib/inAppNotificationService';
 import { NotificationBell } from '../common/NotificationBell';
+import { getOrderStatusBadge, ORDER_STATUS_CONFIG } from '../../lib/statusHelper';
 
 // High-performance client-side photo compression utility for mobile and desktop uploads
 const compressImageFile = (file: File, maxDimension = 1280, quality = 0.82): Promise<string> => {
@@ -125,6 +125,45 @@ export const DriverDashboard: React.FC<DriverDashboardProps> = ({ onNavigate, in
 
   const activeDeliveries = driverOrders.filter((o) => o.order_status !== 'delivered' && o.order_status !== 'cancelled');
   const completedDeliveries = driverOrders.filter((o) => o.order_status === 'delivered');
+
+  // Navigation tab filter state for sleek, easy driver navigation
+  const [activeTabFilter, setActiveTabFilter] = useState<'all' | 'assigned' | 'in_transit' | 'completed'>('all');
+
+  const pendingAcceptanceOrders = activeDeliveries.filter((o) => {
+    const isAccepted =
+      o.order_status === 'accepted' ||
+      o.order_status === 'en_route_pickup' ||
+      o.order_status === 'picked_up' ||
+      o.order_status === 'in_transit' ||
+      o.order_status === 'delivered' ||
+      Boolean(o.driver_accepted_at);
+    return !isAccepted;
+  });
+
+  const inProgressOrders = activeDeliveries.filter((o) => {
+    const isAccepted =
+      o.order_status === 'accepted' ||
+      o.order_status === 'en_route_pickup' ||
+      o.order_status === 'picked_up' ||
+      o.order_status === 'in_transit' ||
+      Boolean(o.driver_accepted_at);
+    return isAccepted;
+  });
+
+  const displayedActiveOrders = activeDeliveries.filter((o) => {
+    if (activeTabFilter === 'all') return true;
+    const isAccepted =
+      o.order_status === 'accepted' ||
+      o.order_status === 'en_route_pickup' ||
+      o.order_status === 'picked_up' ||
+      o.order_status === 'in_transit' ||
+      o.order_status === 'delivered' ||
+      Boolean(o.driver_accepted_at);
+    if (activeTabFilter === 'assigned') return !isAccepted;
+    if (activeTabFilter === 'in_transit') return isAccepted;
+    if (activeTabFilter === 'completed') return false;
+    return true;
+  });
 
   // POD Modal state
   const [podOrder, setPodOrder] = useState<Order | null>(null);
@@ -458,58 +497,327 @@ export const DriverDashboard: React.FC<DriverDashboardProps> = ({ onNavigate, in
         </div>
       </div>
 
-      {/* Active Assigned Deliveries (Strictly filtered for this driver) */}
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <h2 className="text-lg font-bold text-slate-900 font-['Outfit'] flex items-center space-x-2">
-            <Clock className="w-5 h-5 text-red-600" />
-            <span>Active Deliveries Assigned to You ({activeDeliveries.length})</span>
-          </h2>
-          <span className="text-xs text-slate-400">
-            Real-time GTA dispatch feed
+      {/* Quick Navigation Filter Bar */}
+      <div className="flex flex-wrap items-center gap-2 pb-2 border-b border-slate-200">
+        <button
+          type="button"
+          onClick={() => setActiveTabFilter('all')}
+          className={`px-3.5 py-2 rounded-xl text-xs font-bold transition flex items-center space-x-2 cursor-pointer ${
+            activeTabFilter === 'all'
+              ? 'bg-slate-900 text-white shadow-sm'
+              : 'bg-white text-slate-600 hover:text-slate-900 hover:bg-slate-100 border border-slate-200'
+          }`}
+        >
+          <Clock className="w-3.5 h-3.5" />
+          <span>All Assigned Runs</span>
+          <span className={`text-[10px] px-2 py-0.5 rounded-full font-extrabold ${
+            activeTabFilter === 'all' ? 'bg-slate-700 text-white' : 'bg-slate-100 text-slate-700'
+          }`}>
+            {driverOrders.length}
           </span>
-        </div>
+        </button>
 
-        {activeDeliveries.length === 0 ? (
-          <div className="bg-white border border-slate-200 rounded-2xl p-10 text-center space-y-2 text-slate-600 shadow-xs">
-            <CheckCircle2 className="w-8 h-8 text-emerald-400 mx-auto opacity-70" />
-            <div className="text-slate-900 font-bold text-sm">No Pending Runs Assigned</div>
-            <p className="text-xs max-w-md mx-auto">
-              You currently have no outstanding pickups or deliveries. When the dispatch desk assigns your next run, it will appear here automatically.
-            </p>
+        <button
+          type="button"
+          onClick={() => setActiveTabFilter('assigned')}
+          className={`px-3.5 py-2 rounded-xl text-xs font-bold transition flex items-center space-x-2 cursor-pointer ${
+            activeTabFilter === 'assigned'
+              ? 'bg-amber-600 text-white shadow-sm'
+              : 'bg-amber-50/70 text-amber-900 hover:bg-amber-100 border border-amber-200'
+          }`}
+        >
+          <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
+          <span>Awaiting Acceptance</span>
+          <span className={`text-[10px] px-2 py-0.5 rounded-full font-extrabold ${
+            activeTabFilter === 'assigned' ? 'bg-amber-700 text-white' : 'bg-amber-200/80 text-amber-900'
+          }`}>
+            {pendingAcceptanceOrders.length}
+          </span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveTabFilter('in_transit')}
+          className={`px-3.5 py-2 rounded-xl text-xs font-bold transition flex items-center space-x-2 cursor-pointer ${
+            activeTabFilter === 'in_transit'
+              ? 'bg-blue-600 text-white shadow-sm'
+              : 'bg-blue-50/70 text-blue-900 hover:bg-blue-100 border border-blue-200'
+          }`}
+        >
+          <Navigation className="w-3.5 h-3.5" />
+          <span>In Progress / Transit</span>
+          <span className={`text-[10px] px-2 py-0.5 rounded-full font-extrabold ${
+            activeTabFilter === 'in_transit' ? 'bg-blue-700 text-white' : 'bg-blue-200/80 text-blue-900'
+          }`}>
+            {inProgressOrders.length}
+          </span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveTabFilter('completed')}
+          className={`px-3.5 py-2 rounded-xl text-xs font-bold transition flex items-center space-x-2 cursor-pointer ${
+            activeTabFilter === 'completed'
+              ? 'bg-emerald-600 text-white shadow-sm'
+              : 'bg-emerald-50/70 text-emerald-900 hover:bg-emerald-100 border border-emerald-200'
+          }`}
+        >
+          <CheckCircle2 className="w-3.5 h-3.5" />
+          <span>Completed POD</span>
+          <span className={`text-[10px] px-2 py-0.5 rounded-full font-extrabold ${
+            activeTabFilter === 'completed' ? 'bg-emerald-700 text-white' : 'bg-emerald-200/80 text-emerald-900'
+          }`}>
+            {completedDeliveries.length}
+          </span>
+        </button>
+      </div>
+
+      {/* Active Assigned Deliveries (Strictly filtered for this driver) */}
+      {activeTabFilter !== 'completed' && (
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-bold text-slate-900 font-['Outfit'] flex items-center space-x-2">
+              <Clock className="w-5 h-5 text-red-600" />
+              <span>
+                {activeTabFilter === 'assigned'
+                  ? `Assignments Awaiting Acceptance (${pendingAcceptanceOrders.length})`
+                  : activeTabFilter === 'in_transit'
+                  ? `Deliveries In Progress (${inProgressOrders.length})`
+                  : `Active Deliveries Assigned to You (${activeDeliveries.length})`}
+              </span>
+            </h2>
+            <span className="text-xs text-slate-400">
+              Real-time GTA dispatch feed
+            </span>
           </div>
-        ) : (
-          <div className="grid grid-cols-1 gap-6">
-            {activeDeliveries.map((ord) => {
-              const isAccepted =
-                ord.order_status === 'accepted' ||
-                ord.order_status === 'en_route_pickup' ||
-                ord.order_status === 'picked_up' ||
-                ord.order_status === 'in_transit' ||
-                ord.order_status === 'delivered' ||
-                Boolean(ord.driver_accepted_at) ||
-                (ord.order_status !== 'assigned' && ord.order_status !== 'submitted' && ord.order_status !== 'confirmed');
-              const pickupNavUrl = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(ord.pickup_address)}`;
-              const deliveryNavUrl = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(ord.delivery_address)}`;
 
-              // BEFORE ACCEPTANCE: Sensitive trip details (exact addresses, distance km, cargo manifest, payout) are locked
-              if (!isAccepted) {
+          {displayedActiveOrders.length === 0 ? (
+            <div className="bg-white border border-slate-200 rounded-2xl p-10 text-center space-y-2 text-slate-600 shadow-xs">
+              <CheckCircle2 className="w-8 h-8 text-emerald-500 mx-auto opacity-80" />
+              <div className="text-slate-900 font-bold text-sm">
+                {activeTabFilter === 'assigned'
+                  ? 'No Runs Awaiting Acceptance'
+                  : activeTabFilter === 'in_transit'
+                  ? 'No Runs In Transit'
+                  : 'No Pending Runs Assigned'}
+              </div>
+              <p className="text-xs max-w-md mx-auto">
+                {activeTabFilter === 'assigned'
+                  ? 'All newly assigned runs have been accepted. Check "In Progress" or "All Assigned Runs".'
+                  : activeTabFilter === 'in_transit'
+                  ? 'You currently have no active deliveries en route. Check "Awaiting Acceptance" for newly assigned dispatches.'
+                  : 'You currently have no outstanding pickups or deliveries. When the dispatch desk assigns your next run, it will appear here automatically.'}
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 gap-6">
+              {displayedActiveOrders.map((ord) => {
+                const isAccepted =
+                  ord.order_status === 'accepted' ||
+                  ord.order_status === 'en_route_pickup' ||
+                  ord.order_status === 'picked_up' ||
+                  ord.order_status === 'in_transit' ||
+                  ord.order_status === 'delivered' ||
+                  Boolean(ord.driver_accepted_at) ||
+                  (ord.order_status !== 'assigned' && ord.order_status !== 'submitted' && ord.order_status !== 'confirmed');
+                const pickupNavUrl = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(ord.pickup_address)}`;
+                const deliveryNavUrl = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(ord.delivery_address)}`;
+
+                // BEFORE ACCEPTANCE: Sensitive trip details (exact addresses, distance km, cargo manifest) are locked
+                if (!isAccepted) {
+                  return (
+                    <div
+                      key={ord.id}
+                      className="bg-white border-2 border-amber-300/90 rounded-3xl p-6 shadow-md space-y-6 hover:border-amber-400 transition"
+                    >
+                      {/* Top Bar: Order ID, Status, Priority & Dispatch Region Callout */}
+                      <div className="flex flex-col lg:flex-row lg:items-center justify-between border-b border-slate-100 pb-5 gap-4">
+                        <div className="space-y-2">
+                          <div className="flex flex-wrap items-center gap-2.5">
+                            <span className="text-2xl font-black text-slate-900 font-mono tracking-tight">
+                              #{ord.order_number}
+                            </span>
+                            {getOrderStatusBadge('assigned', 'sm')}
+                            <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold border ${
+                              ord.delivery_time_option === 'urgent' || ord.delivery_time_option === 'asap' || ord.delivery_time_option === '1-2h'
+                                ? 'bg-red-50 text-red-700 border-red-200 animate-pulse'
+                                : ord.delivery_time_option === 'direct' || ord.delivery_time_option === '2-3h'
+                                ? 'bg-amber-50 text-amber-800 border-amber-200'
+                                : 'bg-blue-50 text-blue-700 border-blue-200'
+                            }`}>
+                              {ord.delivery_time_option === 'urgent' || ord.delivery_time_option === 'asap' || ord.delivery_time_option === '1-2h'
+                                ? '3) URGENT / ASAP'
+                                : ord.delivery_time_option === 'direct' || ord.delivery_time_option === '2-3h'
+                                ? '2) ON DEMAND / DIRECT'
+                                : '1) STANDARD SAME-DAY'}
+                            </span>
+                            <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-slate-100 text-slate-700 border border-slate-200">
+                              Required: {ord.vehicle_name}
+                            </span>
+                          </div>
+
+                          <div className="flex flex-wrap items-center gap-2.5 text-xs text-slate-500">
+                            <div className="flex items-center space-x-1.5">
+                              <Calendar className="w-3.5 h-3.5 text-red-500" />
+                              <span>Scheduled Pickup: <strong className="text-slate-900 font-semibold">{ord.pickup_date} at {ord.pickup_time}</strong></span>
+                            </div>
+                            <span>&bull;</span>
+                            <span>Operating Zone: <strong className="text-slate-800 font-semibold">{ord.service_area}</strong></span>
+                          </div>
+                        </div>
+
+                        {/* Dispatch Operational Region Callout (Zero pricing shown) */}
+                        <div className="bg-amber-50/70 border border-amber-200 px-5 py-3 rounded-2xl flex items-center justify-between lg:justify-end space-x-4 shrink-0 shadow-xs">
+                          <div>
+                            <div className="text-[10px] uppercase font-bold tracking-wider text-amber-800 flex items-center">
+                              <Navigation className="w-3 h-3 text-amber-600 mr-1" />
+                              <span>Dispatch Region</span>
+                            </div>
+                            <div className="text-xl font-black text-slate-900 font-['Outfit']">
+                              {ord.service_area}
+                            </div>
+                            <div className="text-[10px] font-semibold text-slate-500">
+                              Est. Route: {ord.distance_km} km
+                            </div>
+                          </div>
+                          <div className="w-10 h-10 rounded-xl bg-amber-100 border border-amber-300 flex items-center justify-center text-amber-700">
+                            <MapPin className="w-5 h-5" />
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Fair Dispatch Protection Notice Banner */}
+                      <div className="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-2xl p-4.5 text-xs text-amber-950 flex items-start space-x-3.5 shadow-xs">
+                        <div className="w-8 h-8 rounded-xl bg-amber-100 border border-amber-300 flex items-center justify-center text-amber-700 shrink-0 mt-0.5">
+                          <Shield className="w-4 h-4" />
+                        </div>
+                        <div className="space-y-1">
+                          <div className="font-bold text-slate-900 text-xs flex items-center space-x-2">
+                            <span>Fair Dispatch Allocation &bull; Anti-Cherry-Picking Protection</span>
+                            <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 bg-amber-100 text-amber-800 rounded-full border border-amber-300">
+                              Details Locked
+                            </span>
+                          </div>
+                          <p className="text-[11px] text-slate-700 leading-relaxed">
+                            In accordance with FlashDrop Express fleet policy, exact pickup &amp; delivery addresses, turn-by-turn navigation routes, customer phone numbers, and cargo specifications remain <strong>locked until you accept this assignment</strong>. Please accept the run below to unlock the complete delivery manifest.
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* 4-Panel Masked Details Grid */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-xs">
+                        {/* Panel 1: Route & Destination */}
+                        <div className="bg-slate-50/80 border border-slate-200 rounded-2xl p-4 space-y-2">
+                          <div className="flex items-center justify-between text-slate-600 font-bold uppercase text-[10px] tracking-wider">
+                            <div className="flex items-center space-x-1.5">
+                              <MapPin className="w-3.5 h-3.5 text-slate-400" />
+                              <span>Route &amp; Destination</span>
+                            </div>
+                            <Lock className="w-3.5 h-3.5 text-amber-500" />
+                          </div>
+                          <div className="font-mono text-slate-400 text-xs tracking-widest py-1 select-none">
+                            ••••••••••••••••••••••••
+                          </div>
+                          <p className="text-[10px] text-slate-500">
+                            Pickup &amp; drop-off addresses revealed upon acceptance.
+                          </p>
+                        </div>
+
+                        {/* Panel 2: Route Distance */}
+                        <div className="bg-slate-50/80 border border-slate-200 rounded-2xl p-4 space-y-2">
+                          <div className="flex items-center justify-between text-slate-600 font-bold uppercase text-[10px] tracking-wider">
+                            <div className="flex items-center space-x-1.5">
+                              <Navigation className="w-3.5 h-3.5 text-slate-400" />
+                              <span>Route Distance</span>
+                            </div>
+                            <Lock className="w-3.5 h-3.5 text-amber-500" />
+                          </div>
+                          <div className="font-mono text-slate-400 text-xs tracking-widest py-1 select-none">
+                            •••• km
+                          </div>
+                          <p className="text-[10px] text-slate-500">
+                            Regional zone: <strong className="text-slate-700">{ord.service_area}</strong>
+                          </p>
+                        </div>
+
+                        {/* Panel 3: Cargo Manifest */}
+                        <div className="bg-slate-50/80 border border-slate-200 rounded-2xl p-4 space-y-2">
+                          <div className="flex items-center justify-between text-slate-600 font-bold uppercase text-[10px] tracking-wider">
+                            <div className="flex items-center space-x-1.5">
+                              <Package className="w-3.5 h-3.5 text-slate-400" />
+                              <span>Cargo Manifest</span>
+                            </div>
+                            <Lock className="w-3.5 h-3.5 text-amber-500" />
+                          </div>
+                          <div className="font-mono text-slate-400 text-xs tracking-widest py-1 select-none">
+                            ••••••••••••••••
+                          </div>
+                          <p className="text-[10px] text-slate-500">
+                            Assigned Vehicle: <strong className="text-slate-700">{ord.vehicle_name}</strong>
+                          </p>
+                        </div>
+
+                        {/* Panel 4: Direct Contacts */}
+                        <div className="bg-slate-50/80 border border-slate-200 rounded-2xl p-4 space-y-2">
+                          <div className="flex items-center justify-between text-slate-600 font-bold uppercase text-[10px] tracking-wider">
+                            <div className="flex items-center space-x-1.5">
+                              <Phone className="w-3.5 h-3.5 text-slate-400" />
+                              <span>Customer Contacts</span>
+                            </div>
+                            <Lock className="w-3.5 h-3.5 text-amber-500" />
+                          </div>
+                          <div className="font-mono text-slate-400 text-xs tracking-widest py-1 select-none">
+                            +1 (•••) •••-••••
+                          </div>
+                          <p className="text-[10px] text-slate-500">
+                            Shipper &amp; receiver direct phones unlock after acceptance.
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Prominent Acceptance Action Bar */}
+                      <div className="pt-2 flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-slate-200">
+                        <button
+                          type="button"
+                          onClick={() => handleAcceptAssignment(ord)}
+                          className="w-full sm:w-auto px-8 py-4 bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 active:scale-[0.99] text-white font-black text-sm rounded-2xl transition shadow-xl shadow-emerald-950/20 flex items-center justify-center space-x-3 cursor-pointer group"
+                        >
+                          <CheckCircle2 className="w-5 h-5 text-emerald-200 group-hover:scale-110 transition-transform" />
+                          <span>Accept Assignment &amp; Unlock Full Manifest</span>
+                          <ArrowRight className="w-4 h-4 text-emerald-200 group-hover:translate-x-1 transition-transform" />
+                        </button>
+
+                        <div className="text-center sm:text-right space-y-0.5">
+                          <div className="text-xs font-bold text-slate-800 flex items-center justify-center sm:justify-end space-x-1">
+                            <Unlock className="w-3.5 h-3.5 text-emerald-600" />
+                            <span>Accepting immediately unlocks GPS navigation &amp; contacts</span>
+                          </div>
+                          <div className="text-[11px] text-slate-500">
+                            Mandatory photo proof of delivery required upon drop-off
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                }
+
+                // AFTER ACCEPTANCE: Full operational details, contacts, navigation unlocked (Price free!)
+                const statusCfg = ORDER_STATUS_CONFIG[ord.order_status];
                 return (
                   <div
                     key={ord.id}
-                    className="bg-white border-2 border-amber-300/90 rounded-3xl p-6 shadow-md space-y-6 hover:border-amber-400 transition"
+                    className={`border-2 rounded-3xl p-6 shadow-sm space-y-6 transition ${
+                      statusCfg?.cardClass || 'border-slate-200 bg-white hover:border-slate-300'
+                    }`}
                   >
-                    {/* Top Bar: Order ID, Status, Priority & Locked Amount */}
-                    <div className="flex flex-col lg:flex-row lg:items-center justify-between border-b border-slate-100 pb-5 gap-4">
-                      <div className="space-y-2">
+                    {/* Top Bar: Order ID, Status, Schedule Window & Route Distance */}
+                    <div className="flex flex-col lg:flex-row lg:items-center justify-between border-b border-slate-200/80 pb-5 gap-4">
+                      <div className="space-y-1.5">
                         <div className="flex flex-wrap items-center gap-2.5">
                           <span className="text-2xl font-black text-slate-900 font-mono tracking-tight">
                             #{ord.order_number}
                           </span>
-                          <span className="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-amber-50 text-amber-900 border border-amber-300 flex items-center space-x-1.5">
-                            <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
-                            <span>Awaiting Acceptance</span>
-                          </span>
+                          {getOrderStatusBadge(ord.order_status, 'md')}
                           <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold border ${
                             ord.delivery_time_option === 'urgent' || ord.delivery_time_option === 'asap' || ord.delivery_time_option === '1-2h'
                               ? 'bg-red-50 text-red-700 border-red-200 animate-pulse'
@@ -527,586 +835,412 @@ export const DriverDashboard: React.FC<DriverDashboardProps> = ({ onNavigate, in
                             Required: {ord.vehicle_name}
                           </span>
                         </div>
-
-                        <div className="flex flex-wrap items-center gap-2.5 text-xs text-slate-500">
-                          <div className="flex items-center space-x-1.5">
-                            <Calendar className="w-3.5 h-3.5 text-red-500" />
-                            <span>Scheduled Pickup: <strong className="text-slate-900 font-semibold">{ord.pickup_date} at {ord.pickup_time}</strong></span>
-                          </div>
+                        <div className="flex items-center space-x-2 text-xs text-slate-500">
+                          <Calendar className="w-3.5 h-3.5 text-red-500" />
+                          <span>Scheduled: <strong className="text-slate-900">{ord.pickup_date} at {ord.pickup_time}</strong></span>
                           <span>&bull;</span>
-                          <span>Operating Zone: <strong className="text-slate-800 font-semibold">{ord.service_area}</strong></span>
+                          <span>Area: <strong className="text-slate-700">{ord.service_area}</strong></span>
+                          <span>&bull;</span>
+                          <span>Distance: <strong className="text-slate-700">{ord.distance_km} km</strong></span>
                         </div>
                       </div>
 
-                      {/* Locked Compensation Callout */}
-                      <div className="bg-slate-50 border border-slate-200 px-5 py-3 rounded-2xl flex items-center justify-between lg:justify-end space-x-4 shrink-0 shadow-xs">
+                      {/* Route Distance & Operational Callout */}
+                      <div className="bg-white/90 border border-slate-200 px-5 py-3 rounded-2xl flex items-center justify-between lg:justify-end space-x-4 shrink-0 shadow-xs">
                         <div>
                           <div className="text-[10px] uppercase font-bold tracking-wider text-slate-500 flex items-center">
-                            <Lock className="w-3 h-3 text-amber-500 mr-1" />
-                            <span>Trip Payout Locked</span>
+                            <Navigation className="w-3.5 h-3.5 text-blue-600 mr-1" />
+                            <span>Total Route</span>
                           </div>
-                          <div className="text-2xl font-black text-slate-400 font-mono tracking-widest">
-                            $•••••• <span className="text-xs font-semibold text-slate-400 font-sans">CAD</span>
+                          <div className="text-2xl font-black text-slate-900 font-['Outfit']">
+                            {ord.distance_km} <span className="text-xs font-semibold text-slate-500">KM</span>
+                          </div>
+                          <div className="text-[10px] font-semibold text-slate-600">
+                            Zone: {ord.service_area}
                           </div>
                         </div>
-                        <div className="w-10 h-10 rounded-xl bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-600">
-                          <Lock className="w-5 h-5" />
+                        <div className="w-10 h-10 rounded-xl bg-blue-50 border border-blue-200 flex items-center justify-center text-blue-600">
+                          <Truck className="w-5 h-5" />
                         </div>
                       </div>
                     </div>
 
-                    {/* Fair Dispatch Protection Notice Banner */}
-                    <div className="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-2xl p-4.5 text-xs text-amber-950 flex items-start space-x-3.5 shadow-xs">
-                      <div className="w-8 h-8 rounded-xl bg-amber-100 border border-amber-300 flex items-center justify-center text-amber-700 shrink-0 mt-0.5">
-                        <Shield className="w-4 h-4" />
+                    {/* Section 1: Customer & Account Contact Information */}
+                    <div className="bg-white/80 border border-slate-200 rounded-2xl p-4.5 space-y-2.5">
+                      <div className="flex items-center space-x-2 text-slate-800 font-bold uppercase text-[11px] tracking-wider border-b border-slate-200 pb-2">
+                        <User className="w-3.5 h-3.5 text-red-500" />
+                        <span>Customer & Account Information</span>
                       </div>
-                      <div className="space-y-1">
-                        <div className="font-bold text-slate-900 text-xs flex items-center space-x-2">
-                          <span>Fair Dispatch Allocation &bull; Anti-Cherry-Picking Protection</span>
-                          <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 bg-amber-100 text-amber-800 rounded-full border border-amber-300">
-                            Details Locked
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
+                        <div>
+                          <span className="text-slate-500 block text-[10px] uppercase font-bold">Contact Name</span>
+                          <span className="text-slate-900 font-bold text-sm">{ord.customer_name}</span>
+                        </div>
+                        <div>
+                          <span className="text-slate-500 block text-[10px] uppercase font-bold">Company / Account</span>
+                          <span className="text-slate-800 font-semibold flex items-center">
+                            <Building className="w-3.5 h-3.5 mr-1 text-slate-400" />
+                            {ord.company_name || 'Individual / Commercial Shipper'}
                           </span>
                         </div>
-                        <p className="text-[11px] text-slate-700 leading-relaxed">
-                          In accordance with FlashDrop Express fleet policy, exact pickup &amp; delivery addresses, turn-by-turn navigation routes, customer phone numbers, cargo specifications, and financial payouts remain <strong>locked until you accept this assignment</strong>. Please accept the run below to unlock the complete delivery manifest.
-                        </p>
+                        <div>
+                          <span className="text-slate-500 block text-[10px] uppercase font-bold">Customer Phone</span>
+                          <a
+                            href={`tel:${ord.customer_phone}`}
+                            className="text-emerald-700 hover:text-emerald-800 font-bold flex items-center space-x-1.5 hover:underline"
+                          >
+                            <Phone className="w-3.5 h-3.5 shrink-0" />
+                            <span>{ord.customer_phone}</span>
+                          </a>
+                        </div>
+                        <div>
+                          <span className="text-slate-500 block text-[10px] uppercase font-bold">Customer Email</span>
+                          <a
+                            href={`mailto:${ord.customer_email}`}
+                            className="text-sky-700 hover:text-sky-800 font-semibold flex items-center space-x-1.5 hover:underline truncate"
+                          >
+                            <Mail className="w-3.5 h-3.5 shrink-0" />
+                            <span className="truncate">{ord.customer_email}</span>
+                          </a>
+                        </div>
                       </div>
                     </div>
 
-                    {/* 4-Panel Masked Details Grid */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-xs">
-                      {/* Panel 1: Route & Destination */}
-                      <div className="bg-slate-50/80 border border-slate-200 rounded-2xl p-4 space-y-2">
-                        <div className="flex items-center justify-between text-slate-600 font-bold uppercase text-[10px] tracking-wider">
-                          <span className="flex items-center space-x-1.5">
-                            <MapPin className="w-3.5 h-3.5 text-slate-400" />
-                            <span>Route &amp; Destination</span>
-                          </span>
-                          <Lock className="w-3.5 h-3.5 text-amber-500" />
+                    {/* Section 2 & 3: Pickup Site & Delivery Site Side-by-Side */}
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 text-xs">
+                      {/* Pickup Location & On-site Contact */}
+                      <div className="bg-white/80 border border-slate-200 rounded-2xl p-5 space-y-3.5 flex flex-col justify-between">
+                        <div className="space-y-3">
+                          <div className="flex items-center justify-between border-b border-slate-200 pb-2.5">
+                            <div className="flex items-center space-x-2 text-red-600 font-bold uppercase text-[11px] tracking-wider">
+                              <MapPin className="w-4 h-4" />
+                              <span>1. Pickup Site & Shipper</span>
+                            </div>
+                            <span className="text-[10px] text-slate-500 font-mono">
+                              {ord.pickup_date} @ {ord.pickup_time}
+                            </span>
+                          </div>
+
+                          <div>
+                            <span className="text-slate-500 block text-[10px] uppercase font-bold">Street Address</span>
+                            <div className="text-slate-900 font-bold text-sm mt-0.5">{ord.pickup_address}</div>
+                            {ord.pickup_unit && (
+                              <div className="text-amber-900 font-medium mt-1 bg-amber-50 border border-amber-300 px-2 py-0.5 rounded-lg text-[11px] inline-block">
+                                Dock / Unit / Bay: {ord.pickup_unit}
+                              </div>
+                            )}
+                          </div>
+
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1 border-t border-slate-200">
+                            <div>
+                              <span className="text-slate-500 block text-[10px] uppercase font-bold">On-Site Contact</span>
+                              <span className="text-slate-800 font-semibold">
+                                {ord.pickup_contact_name || ord.customer_name}
+                              </span>
+                            </div>
+                            <div>
+                              <span className="text-slate-500 block text-[10px] uppercase font-bold">Direct Phone</span>
+                              <a
+                                href={`tel:${ord.pickup_contact_phone || ord.customer_phone}`}
+                                className="text-emerald-700 hover:text-emerald-800 font-bold flex items-center space-x-1"
+                              >
+                                <Phone className="w-3 h-3 shrink-0" />
+                                <span>{ord.pickup_contact_phone || ord.customer_phone}</span>
+                              </a>
+                            </div>
+                          </div>
+
+                          {ord.pickup_notes && (
+                            <div className="p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-700 text-[11px]">
+                              <strong className="text-slate-500 block text-[10px] uppercase">Shipper Gate / Dock Notes:</strong>
+                              {ord.pickup_notes}
+                            </div>
+                          )}
                         </div>
-                        <div className="font-mono text-slate-400 text-xs tracking-widest py-1 select-none">
-                          ••••••••••••••••••••••••
+
+                        {/* Pickup Navigation Link */}
+                        <div className="pt-2 border-t border-slate-200">
+                          <a
+                            href={pickupNavUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="w-full inline-flex items-center justify-center space-x-2 px-4 py-2.5 bg-red-50 hover:bg-red-100 text-red-700 hover:text-red-800 font-bold rounded-xl border border-red-200 transition shadow-xs cursor-pointer text-xs"
+                          >
+                            <Navigation className="w-3.5 h-3.5 text-red-600" />
+                            <span>Navigate to Pickup in Google Maps</span>
+                            <ExternalLink className="w-3 h-3 text-red-600" />
+                          </a>
                         </div>
-                        <p className="text-[10px] text-slate-500">
-                          Pickup &amp; drop-off addresses revealed upon acceptance.
-                        </p>
                       </div>
 
-                      {/* Panel 2: Route Distance */}
-                      <div className="bg-slate-50/80 border border-slate-200 rounded-2xl p-4 space-y-2">
-                        <div className="flex items-center justify-between text-slate-600 font-bold uppercase text-[10px] tracking-wider">
-                          <span className="flex items-center space-x-1.5">
-                            <Navigation className="w-3.5 h-3.5 text-slate-400" />
-                            <span>Route Distance</span>
-                          </span>
-                          <Lock className="w-3.5 h-3.5 text-amber-500" />
-                        </div>
-                        <div className="font-mono text-slate-400 text-xs tracking-widest py-1 select-none">
-                          •••• km
-                        </div>
-                        <p className="text-[10px] text-slate-500">
-                          Regional zone: <strong className="text-slate-700">{ord.service_area}</strong>
-                        </p>
-                      </div>
+                      {/* Delivery Destination & Receiving Contact */}
+                      <div className="bg-white/80 border border-slate-200 rounded-2xl p-5 space-y-3.5 flex flex-col justify-between">
+                        <div className="space-y-3">
+                          <div className="flex items-center justify-between border-b border-slate-200 pb-2.5">
+                            <div className="flex items-center space-x-2 text-emerald-700 font-bold uppercase text-[11px] tracking-wider">
+                              <MapPin className="w-4 h-4" />
+                              <span>2. Drop-Off Destination & Receiver</span>
+                            </div>
+                            <span className="text-[10px] text-blue-700 font-bold">
+                              {ord.distance_km} km ({ord.service_area})
+                            </span>
+                          </div>
 
-                      {/* Panel 3: Cargo Manifest */}
-                      <div className="bg-slate-50/80 border border-slate-200 rounded-2xl p-4 space-y-2">
-                        <div className="flex items-center justify-between text-slate-600 font-bold uppercase text-[10px] tracking-wider">
-                          <span className="flex items-center space-x-1.5">
-                            <Package className="w-3.5 h-3.5 text-slate-400" />
-                            <span>Cargo Manifest</span>
-                          </span>
-                          <Lock className="w-3.5 h-3.5 text-amber-500" />
-                        </div>
-                        <div className="font-mono text-slate-400 text-xs tracking-widest py-1 select-none">
-                          ••••••••••••••••
-                        </div>
-                        <p className="text-[10px] text-slate-500">
-                          Assigned Vehicle: <strong className="text-slate-700">{ord.vehicle_name}</strong>
-                        </p>
-                      </div>
+                          <div>
+                            <span className="text-slate-500 block text-[10px] uppercase font-bold">Delivery Address</span>
+                            <div className="text-slate-900 font-bold text-sm mt-0.5">{ord.delivery_address}</div>
+                            {ord.delivery_unit && (
+                              <div className="text-blue-900 font-medium mt-1 bg-blue-50 border border-blue-300 px-2 py-0.5 rounded-lg text-[11px] inline-block">
+                                Unit / Suite / Buzzer: {ord.delivery_unit}
+                              </div>
+                            )}
+                          </div>
 
-                      {/* Panel 4: Direct Contacts */}
-                      <div className="bg-slate-50/80 border border-slate-200 rounded-2xl p-4 space-y-2">
-                        <div className="flex items-center justify-between text-slate-600 font-bold uppercase text-[10px] tracking-wider">
-                          <span className="flex items-center space-x-1.5">
-                            <Phone className="w-3.5 h-3.5 text-slate-400" />
-                            <span>Customer Contacts</span>
-                          </span>
-                          <Lock className="w-3.5 h-3.5 text-amber-500" />
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1 border-t border-slate-200">
+                            <div>
+                              <span className="text-slate-500 block text-[10px] uppercase font-bold">Receiving Contact</span>
+                              <span className="text-slate-800 font-semibold">
+                                {ord.delivery_contact_name || ord.customer_name}
+                              </span>
+                            </div>
+                            <div>
+                              <span className="text-slate-500 block text-[10px] uppercase font-bold">Receiving Phone</span>
+                              <a
+                                href={`tel:${ord.delivery_contact_phone || ord.customer_phone}`}
+                                className="text-emerald-700 hover:text-emerald-800 font-bold flex items-center space-x-1"
+                              >
+                                <Phone className="w-3 h-3 shrink-0" />
+                                <span>{ord.delivery_contact_phone || ord.customer_phone}</span>
+                              </a>
+                            </div>
+                          </div>
+
+                          {ord.delivery_notes && (
+                            <div className="p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-700 text-[11px]">
+                              <strong className="text-slate-500 block text-[10px] uppercase">Receiver Drop-off Notes:</strong>
+                              {ord.delivery_notes}
+                            </div>
+                          )}
                         </div>
-                        <div className="font-mono text-slate-400 text-xs tracking-widest py-1 select-none">
-                          +1 (•••) •••-••••
+
+                        {/* Drop-off Navigation Link */}
+                        <div className="pt-2 border-t border-slate-200">
+                          <a
+                            href={deliveryNavUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="w-full inline-flex items-center justify-center space-x-2 px-4 py-2.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 hover:text-emerald-900 font-bold rounded-xl border border-emerald-200 transition shadow-xs cursor-pointer text-xs"
+                          >
+                            <Navigation className="w-3.5 h-3.5 text-emerald-600" />
+                            <span>Navigate to Drop-Off in Google Maps</span>
+                            <ExternalLink className="w-3 h-3 text-emerald-600" />
+                          </a>
                         </div>
-                        <p className="text-[10px] text-slate-500">
-                          Shipper &amp; receiver direct phones unlock after acceptance.
-                        </p>
                       </div>
                     </div>
 
-                    {/* Prominent Acceptance Action Bar */}
-                    <div className="pt-2 flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-slate-200">
-                      <button
-                        type="button"
-                        onClick={() => handleAcceptAssignment(ord)}
-                        className="w-full sm:w-auto px-8 py-4 bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 active:scale-[0.99] text-white font-black text-sm rounded-2xl transition shadow-xl shadow-emerald-950/20 flex items-center justify-center space-x-3 cursor-pointer group"
-                      >
-                        <CheckCircle2 className="w-5 h-5 text-emerald-200 group-hover:scale-110 transition-transform" />
-                        <span>Accept Assignment &amp; Unlock Full Manifest</span>
-                        <ArrowRight className="w-4 h-4 text-emerald-200 group-hover:translate-x-1 transition-transform" />
-                      </button>
+                    {/* Section 4: Cargo Manifest & Fleet Specifications */}
+                    <div className="bg-white/80 border border-slate-200 rounded-2xl p-5 space-y-3 text-xs">
+                      <div className="flex items-center space-x-2 text-slate-800 font-bold uppercase text-[11px] tracking-wider border-b border-slate-200 pb-2">
+                        <Package className="w-3.5 h-3.5 text-red-500" />
+                        <span>Cargo Manifest & Vehicle Specifications</span>
+                      </div>
 
-                      <div className="text-center sm:text-right space-y-0.5">
-                        <div className="text-xs font-bold text-slate-800 flex items-center justify-center sm:justify-end space-x-1">
-                          <Unlock className="w-3.5 h-3.5 text-emerald-600" />
-                          <span>Accepting immediately unlocks GPS navigation &amp; rates</span>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <div className="bg-slate-50 border border-slate-200 p-3 rounded-xl">
+                          <span className="text-slate-500 block text-[10px] uppercase font-bold">Assigned Vehicle</span>
+                          <span className="text-slate-900 font-bold text-sm block mt-0.5">{ord.vehicle_name}</span>
+                          <span className="text-[10px] text-slate-500">Fleet requirement</span>
                         </div>
-                        <div className="text-[11px] text-slate-500">
-                          Mandatory photo proof of delivery required upon drop-off
+
+                        <div className="bg-slate-50 border border-slate-200 p-3 rounded-xl">
+                          <span className="text-slate-500 block text-[10px] uppercase font-bold">Cargo Type</span>
+                          <span className="text-slate-900 font-bold text-sm block mt-0.5 capitalize">
+                            {ord.item_type.replace(/_/g, ' ')}
+                          </span>
+                          <span className="text-[10px] text-slate-500">Classification</span>
                         </div>
+
+                        <div className="bg-slate-50 border border-slate-200 p-3 rounded-xl">
+                          <span className="text-slate-500 block text-[10px] uppercase font-bold">Weight & Quantity</span>
+                          <span className="text-emerald-700 font-black text-sm block mt-0.5">
+                            {ord.weight_lbs} lbs &bull; {ord.quantity} pails / units
+                          </span>
+                          <span className="text-[10px] text-slate-500">Payload weight</span>
+                        </div>
+
+                        <div className="bg-slate-50 border border-slate-200 p-3 rounded-xl">
+                          <span className="text-slate-500 block text-[10px] uppercase font-bold">Cargo Description</span>
+                          <span className="text-slate-800 font-medium text-xs block mt-0.5 truncate">
+                            {ord.item_description || 'Standard packaged cargo manifest'}
+                          </span>
+                          <span className="text-[10px] text-slate-500">Item details</span>
+                        </div>
+                      </div>
+
+                      {ord.custom_instructions && (
+                        <div className="p-3 bg-amber-50 border border-amber-300 rounded-xl text-amber-900 text-xs flex items-start space-x-2">
+                          <AlertCircle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                          <div>
+                            <strong className="font-bold text-amber-900 block text-[11px] uppercase">
+                              Special Driver Handling Instructions:
+                            </strong>
+                            <span>{ord.custom_instructions}</span>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Section 5: Standard Operating Protocol & Verification (Replaced all financial rates) */}
+                    <div className="bg-white/80 border border-slate-200 rounded-2xl p-4.5 space-y-3 text-xs">
+                      <div className="flex items-center justify-between border-b border-slate-200 pb-2">
+                        <div className="flex items-center space-x-2 text-slate-800 font-bold uppercase text-[11px] tracking-wider">
+                          <Shield className="w-3.5 h-3.5 text-blue-600" />
+                          <span>Standard Delivery Protocol & Quality Verification</span>
+                        </div>
+                        <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                          Direct Hand-off &bull; Digital POD
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <div className="bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-1">
+                          <div className="font-bold text-slate-900 flex items-center space-x-1.5 text-xs">
+                            <CheckCircle2 className="w-3.5 h-3.5 text-blue-600" />
+                            <span>1. Safe Cargo Loading</span>
+                          </div>
+                          <p className="text-[11px] text-slate-600">
+                            Inspect packaging integrity, ensure secure tie-down in vehicle, and verify piece count before leaving shipper.
+                          </p>
+                        </div>
+                        <div className="bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-1">
+                          <div className="font-bold text-slate-900 flex items-center space-x-1.5 text-xs">
+                            <Navigation className="w-3.5 h-3.5 text-amber-600" />
+                            <span>2. Direct Route Transit</span>
+                          </div>
+                          <p className="text-[11px] text-slate-600">
+                            Follow GPS route without unauthorized detours to maintain client SLA delivery promise and live dispatch tracking.
+                          </p>
+                        </div>
+                        <div className="bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-1">
+                          <div className="font-bold text-slate-900 flex items-center space-x-1.5 text-xs">
+                            <Camera className="w-3.5 h-3.5 text-emerald-600" />
+                            <span>3. Digital POD Capture</span>
+                          </div>
+                          <p className="text-[11px] text-slate-600">
+                            Capture clear photo of dropped cargo at receiver dock/door and enter recipient sign-off name to finalize delivery.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Driver Action Stepper Buttons */}
+                    <div className="pt-2 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200">
+                      <div className="flex flex-wrap items-center gap-3">
+                        {(ord.order_status === 'accepted' || ord.order_status === 'assigned') && (
+                          <button
+                            onClick={() => handleUpdateStatus(ord, 'en_route_pickup')}
+                            className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl transition shadow-lg shadow-blue-950/50 flex items-center space-x-2 cursor-pointer"
+                          >
+                            <span>1. Start En Route to Pickup</span>
+                            <ArrowRight className="w-4 h-4" />
+                          </button>
+                        )}
+
+                        {ord.order_status === 'en_route_pickup' && (
+                          <button
+                            onClick={() => handleUpdateStatus(ord, 'picked_up')}
+                            className="px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs rounded-xl transition shadow-lg shadow-purple-950/50 flex items-center space-x-2 cursor-pointer"
+                          >
+                            <span>2. Cargo Picked Up & Loaded</span>
+                            <ArrowRight className="w-4 h-4" />
+                          </button>
+                        )}
+
+                        {ord.order_status === 'picked_up' && (
+                          <button
+                            onClick={() => handleUpdateStatus(ord, 'in_transit')}
+                            className="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl transition shadow-lg shadow-indigo-950/50 flex items-center space-x-2 cursor-pointer"
+                          >
+                            <span>3. In Transit to Destination</span>
+                            <ArrowRight className="w-4 h-4" />
+                          </button>
+                        )}
+
+                        {(ord.order_status === 'in_transit' || ord.order_status === 'picked_up') && (
+                          <button
+                            onClick={() => setPodOrder(ord)}
+                            className="px-6 py-3 bg-[#C5161D] hover:bg-[#A51218] text-white font-bold text-xs rounded-xl transition shadow-xl shadow-red-950/60 flex items-center space-x-2 cursor-pointer"
+                          >
+                            <Camera className="w-4 h-4" />
+                            <span>4. Complete Delivery & Capture Digital POD</span>
+                          </button>
+                        )}
+                      </div>
+
+                      <div className="text-[11px] text-slate-500 font-mono">
+                        Shift dispatch verification &bull; Real-time tracking active
                       </div>
                     </div>
                   </div>
                 );
-              }
+              })}
+            </div>
+          )}
+        </div>
+      )}
 
-              // AFTER ACCEPTANCE: Full delivery details, contacts, navigation, and payouts unlocked
-              return (
+      {/* Completed Deliveries (Strictly for this driver - Beautiful Green Card Styling & Badge) */}
+      {(activeTabFilter === 'all' || activeTabFilter === 'completed') && (
+        <div className="space-y-4 pt-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-bold text-emerald-800 font-['Outfit'] flex items-center space-x-2">
+              <CheckCircle2 className="w-5 h-5 text-emerald-600" />
+              <span>Completed Deliveries ({completedDeliveries.length})</span>
+            </h2>
+            <span className="text-xs text-emerald-700 font-semibold bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
+              Verified Digital POD
+            </span>
+          </div>
+
+          {completedDeliveries.length === 0 ? (
+            <div className="bg-white border border-slate-200 rounded-2xl p-6 text-center text-xs text-slate-500 shadow-xs">
+              No completed deliveries recorded for this shift yet.
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 gap-4">
+              {completedDeliveries.map((ord) => (
                 <div
                   key={ord.id}
-                  className="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm space-y-6 hover:border-slate-300 transition"
+                  className="bg-emerald-50/25 border-2 border-emerald-300/80 rounded-2xl p-5 shadow-xs space-y-3 text-xs hover:border-emerald-400 transition"
                 >
-                  {/* Top Bar: Order ID, Status, Schedule Window & Big Total Amount */}
-                  <div className="flex flex-col lg:flex-row lg:items-center justify-between border-b border-slate-100 pb-5 gap-4">
-                    <div className="space-y-1.5">
-                      <div className="flex flex-wrap items-center gap-2.5">
-                        <span className="text-2xl font-black text-slate-900 font-mono tracking-tight">
-                          #{ord.order_number}
-                        </span>
-                        <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider border ${
-                          ord.order_status === 'accepted'
-                            ? 'bg-cyan-50 text-cyan-800 border-cyan-300'
-                            : ord.order_status === 'assigned'
-                            ? 'bg-blue-50 text-blue-700 border-blue-200'
-                            : ord.order_status === 'en_route_pickup'
-                            ? 'bg-amber-50 text-amber-800 border-amber-300'
-                            : ord.order_status === 'picked_up'
-                            ? 'bg-purple-50 text-purple-800 border-purple-200'
-                            : ord.order_status === 'in_transit'
-                            ? 'bg-indigo-50 text-indigo-700 border-indigo-200 animate-pulse'
-                            : 'bg-slate-100 text-slate-700 border-slate-200'
-                        }`}>
-                          {ord.order_status === 'accepted' ? 'Accepted by You' : ord.order_status.replace(/_/g, ' ')}
-                        </span>
-                        <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold border ${
-                          ord.delivery_time_option === 'urgent' || ord.delivery_time_option === 'asap' || ord.delivery_time_option === '1-2h'
-                            ? 'bg-red-50 text-red-700 border-red-200 animate-pulse'
-                            : ord.delivery_time_option === 'direct' || ord.delivery_time_option === '2-3h'
-                            ? 'bg-amber-50 text-amber-800 border-amber-200'
-                            : 'bg-blue-50 text-blue-700 border-blue-200'
-                        }`}>
-                          {ord.delivery_time_option === 'urgent' || ord.delivery_time_option === 'asap' || ord.delivery_time_option === '1-2h'
-                            ? '3) URGENT / ASAP'
-                            : ord.delivery_time_option === 'direct' || ord.delivery_time_option === '2-3h'
-                            ? '2) ON DEMAND / DIRECT'
-                            : '1) STANDARD SAME-DAY'}
-                        </span>
-                        <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold border ${
-                          ord.payment_status === 'paid'
-                            ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                            : 'bg-amber-50 text-amber-800 border-amber-200'
-                        }`}>
-                          {ord.payment_status === 'paid' ? 'PAID ONLINE (CARD)' : 'PAY ON DELIVERY / NET 30'}
-                        </span>
-                      </div>
-                      <div className="flex items-center space-x-2 text-xs text-slate-400">
-                        <Calendar className="w-3.5 h-3.5 text-red-400" />
-                        <span>Scheduled: <strong className="text-slate-900">{ord.pickup_date} at {ord.pickup_time}</strong></span>
-                        <span>&bull;</span>
-                        <span>Area: <strong className="text-slate-700">{ord.service_area}</strong></span>
-                        <span>&bull;</span>
-                        <span>Distance: <strong className="text-slate-700">{ord.distance_km} km</strong></span>
-                      </div>
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div className="flex items-center space-x-2">
+                      <span className="font-bold text-slate-900 font-mono text-sm">#{ord.order_number}</span>
+                      <span className="text-[11px] text-slate-600 font-medium">({ord.service_area} • {ord.distance_km} km)</span>
                     </div>
-
-                    {/* Total Amount Callout */}
-                    <div className="bg-emerald-50/70 border border-emerald-200 px-5 py-3 rounded-2xl flex items-center justify-between lg:justify-end space-x-4 shrink-0 shadow-xs">
-                      <div>
-                        <div className="text-[10px] uppercase font-bold tracking-wider text-emerald-800">Total Order Value</div>
-                        <div className="text-2xl font-black text-emerald-700 font-['Outfit']">
-                          ${ord.total_price.toFixed(2)} <span className="text-xs font-semibold text-emerald-500">CAD</span>
-                        </div>
-                      </div>
-                      <div className="w-10 h-10 rounded-xl bg-emerald-100 border border-emerald-300 flex items-center justify-center text-emerald-700">
-                        <DollarSign className="w-5 h-5" />
-                      </div>
-                    </div>
+                    {getOrderStatusBadge(ord.order_status, 'sm')}
                   </div>
-
-                  {/* Section 1: Customer & Account Contact Information */}
-                  <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4.5 space-y-2.5">
-                    <div className="flex items-center space-x-2 text-slate-800 font-bold uppercase text-[11px] tracking-wider border-b border-slate-200 pb-2">
-                      <User className="w-3.5 h-3.5 text-red-400" />
-                      <span>Customer & Account Information</span>
-                    </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
-                      <div>
-                        <span className="text-slate-500 block text-[10px] uppercase font-bold">Contact Name</span>
-                        <span className="text-slate-900 font-bold text-sm">{ord.customer_name}</span>
-                      </div>
-                      <div>
-                        <span className="text-slate-500 block text-[10px] uppercase font-bold">Company / Account</span>
-                        <span className="text-slate-800 font-semibold flex items-center">
-                          <Building className="w-3.5 h-3.5 mr-1 text-slate-400" />
-                          {ord.company_name || 'Individual / Commercial Shipper'}
-                        </span>
-                      </div>
-                      <div>
-                        <span className="text-slate-500 block text-[10px] uppercase font-bold">Customer Phone</span>
-                        <a
-                          href={`tel:${ord.customer_phone}`}
-                          className="text-emerald-700 hover:text-emerald-800 font-bold flex items-center space-x-1.5 hover:underline"
-                        >
-                          <Phone className="w-3.5 h-3.5 shrink-0" />
-                          <span>{ord.customer_phone}</span>
-                        </a>
-                      </div>
-                      <div>
-                        <span className="text-slate-500 block text-[10px] uppercase font-bold">Customer Email</span>
-                        <a
-                          href={`mailto:${ord.customer_email}`}
-                          className="text-sky-700 hover:text-sky-800 font-semibold flex items-center space-x-1.5 hover:underline truncate"
-                        >
-                          <Mail className="w-3.5 h-3.5 shrink-0" />
-                          <span className="truncate">{ord.customer_email}</span>
-                        </a>
-                      </div>
-                    </div>
+                  <div className="text-slate-700 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 pt-1 font-medium">
+                    <span><strong>From:</strong> {ord.pickup_address}</span>
+                    <span><strong>To:</strong> {ord.delivery_address}</span>
                   </div>
-
-                  {/* Section 2 & 3: Pickup Site & Delivery Site Side-by-Side */}
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 text-xs">
-                    {/* Pickup Location & On-site Contact */}
-                    <div className="bg-slate-50 border border-slate-200 rounded-2xl p-5 space-y-3.5 flex flex-col justify-between">
-                      <div className="space-y-3">
-                        <div className="flex items-center justify-between border-b border-slate-200 pb-2.5">
-                          <div className="flex items-center space-x-2 text-red-400 font-bold uppercase text-[11px] tracking-wider">
-                            <MapPin className="w-4 h-4" />
-                            <span>1. Pickup Site & Shipper</span>
-                          </div>
-                          <span className="text-[10px] text-slate-400 font-mono">
-                            {ord.pickup_date} @ {ord.pickup_time}
-                          </span>
-                        </div>
-
-                        <div>
-                          <span className="text-slate-500 block text-[10px] uppercase font-bold">Street Address</span>
-                          <div className="text-slate-900 font-bold text-sm mt-0.5">{ord.pickup_address}</div>
-                          {ord.pickup_unit && (
-                            <div className="text-amber-900 font-medium mt-1 bg-amber-50 border border-amber-300 px-2 py-0.5 rounded-lg text-[11px] inline-block">
-                              Dock / Unit / Bay: {ord.pickup_unit}
-                            </div>
-                          )}
-                        </div>
-
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1 border-t border-slate-200">
-                          <div>
-                            <span className="text-slate-500 block text-[10px] uppercase font-bold">On-Site Contact</span>
-                            <span className="text-slate-800 font-semibold">
-                              {ord.pickup_contact_name || ord.customer_name}
-                            </span>
-                          </div>
-                          <div>
-                            <span className="text-slate-500 block text-[10px] uppercase font-bold">Direct Phone</span>
-                            <a
-                              href={`tel:${ord.pickup_contact_phone || ord.customer_phone}`}
-                              className="text-emerald-700 hover:text-emerald-800 font-bold flex items-center space-x-1"
-                            >
-                              <Phone className="w-3 h-3 shrink-0" />
-                              <span>{ord.pickup_contact_phone || ord.customer_phone}</span>
-                            </a>
-                          </div>
-                        </div>
-
-                        {ord.pickup_notes && (
-                          <div className="p-2.5 bg-white border border-slate-200 rounded-xl text-slate-700 text-[11px]">
-                            <strong className="text-slate-400 block text-[10px] uppercase">Shipper Gate / Dock Notes:</strong>
-                            {ord.pickup_notes}
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Pickup Navigation Link */}
-                      <div className="pt-2 border-t border-slate-200">
-                        <a
-                          href={pickupNavUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="w-full inline-flex items-center justify-center space-x-2 px-4 py-2.5 bg-red-50 hover:bg-red-100 text-red-700 hover:text-red-800 font-bold rounded-xl border border-red-200 transition shadow-xs cursor-pointer text-xs"
-                        >
-                          <Navigation className="w-3.5 h-3.5 text-red-600" />
-                          <span>Navigate to Pickup in Google Maps</span>
-                          <ExternalLink className="w-3 h-3 text-red-600" />
-                        </a>
-                      </div>
-                    </div>
-
-                    {/* Delivery Destination & Receiving Contact */}
-                    <div className="bg-slate-50 border border-slate-200 rounded-2xl p-5 space-y-3.5 flex flex-col justify-between">
-                      <div className="space-y-3">
-                        <div className="flex items-center justify-between border-b border-slate-200 pb-2.5">
-                          <div className="flex items-center space-x-2 text-emerald-700 font-bold uppercase text-[11px] tracking-wider">
-                            <MapPin className="w-4 h-4" />
-                            <span>2. Drop-Off Destination & Receiver</span>
-                          </div>
-                          <span className="text-[10px] text-blue-700 font-bold">
-                            {ord.distance_km} km ({ord.service_area})
-                          </span>
-                        </div>
-
-                        <div>
-                          <span className="text-slate-500 block text-[10px] uppercase font-bold">Delivery Address</span>
-                          <div className="text-slate-900 font-bold text-sm mt-0.5">{ord.delivery_address}</div>
-                          {ord.delivery_unit && (
-                            <div className="text-blue-900 font-medium mt-1 bg-blue-50 border border-blue-300 px-2 py-0.5 rounded-lg text-[11px] inline-block">
-                              Unit / Suite / Buzzer: {ord.delivery_unit}
-                            </div>
-                          )}
-                        </div>
-
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1 border-t border-slate-200">
-                          <div>
-                            <span className="text-slate-500 block text-[10px] uppercase font-bold">Receiving Contact</span>
-                            <span className="text-slate-800 font-semibold">
-                              {ord.delivery_contact_name || ord.customer_name}
-                            </span>
-                          </div>
-                          <div>
-                            <span className="text-slate-500 block text-[10px] uppercase font-bold">Receiving Phone</span>
-                            <a
-                              href={`tel:${ord.delivery_contact_phone || ord.customer_phone}`}
-                              className="text-emerald-700 hover:text-emerald-800 font-bold flex items-center space-x-1"
-                            >
-                              <Phone className="w-3 h-3 shrink-0" />
-                              <span>{ord.delivery_contact_phone || ord.customer_phone}</span>
-                            </a>
-                          </div>
-                        </div>
-
-                        {ord.delivery_notes && (
-                          <div className="p-2.5 bg-white border border-slate-200 rounded-xl text-slate-700 text-[11px]">
-                            <strong className="text-slate-400 block text-[10px] uppercase">Receiver Drop-off Notes:</strong>
-                            {ord.delivery_notes}
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Drop-off Navigation Link */}
-                      <div className="pt-2 border-t border-slate-200">
-                        <a
-                          href={deliveryNavUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="w-full inline-flex items-center justify-center space-x-2 px-4 py-2.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 hover:text-emerald-900 font-bold rounded-xl border border-emerald-200 transition shadow-xs cursor-pointer text-xs"
-                        >
-                          <Navigation className="w-3.5 h-3.5 text-emerald-400" />
-                          <span>Navigate to Drop-Off in Google Maps</span>
-                          <ExternalLink className="w-3 h-3 text-emerald-400" />
-                        </a>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Section 4: Cargo Manifest & Fleet Specifications */}
-                  <div className="bg-slate-50 border border-slate-200 rounded-2xl p-5 space-y-3 text-xs">
-                    <div className="flex items-center space-x-2 text-slate-800 font-bold uppercase text-[11px] tracking-wider border-b border-slate-200 pb-2">
-                      <Package className="w-3.5 h-3.5 text-red-400" />
-                      <span>Cargo Manifest & Vehicle Specifications</span>
-                    </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                      <div className="bg-white border border-slate-200 p-3 rounded-xl">
-                        <span className="text-slate-400 block text-[10px] uppercase font-bold">Assigned Vehicle</span>
-                        <span className="text-slate-900 font-bold text-sm block mt-0.5">{ord.vehicle_name}</span>
-                        <span className="text-[10px] text-slate-500">Fleet requirement</span>
-                      </div>
-
-                      <div className="bg-white border border-slate-200 p-3 rounded-xl">
-                        <span className="text-slate-400 block text-[10px] uppercase font-bold">Cargo Type</span>
-                        <span className="text-slate-900 font-bold text-sm block mt-0.5 capitalize">
-                          {ord.item_type.replace(/_/g, ' ')}
-                        </span>
-                        <span className="text-[10px] text-slate-500">Classification</span>
-                      </div>
-
-                      <div className="bg-white border border-slate-200 p-3 rounded-xl">
-                        <span className="text-slate-400 block text-[10px] uppercase font-bold">Weight & Quantity</span>
-                        <span className="text-emerald-700 font-black text-sm block mt-0.5">
-                          {ord.weight_lbs} lbs &bull; {ord.quantity} pails / units
-                        </span>
-                        <span className="text-[10px] text-slate-500">Payload weight</span>
-                      </div>
-
-                      <div className="bg-white border border-slate-200 p-3 rounded-xl">
-                        <span className="text-slate-400 block text-[10px] uppercase font-bold">Cargo Description</span>
-                        <span className="text-slate-800 font-medium text-xs block mt-0.5 truncate">
-                          {ord.item_description || 'Standard packaged cargo manifest'}
-                        </span>
-                        <span className="text-[10px] text-slate-500">Item details</span>
-                      </div>
-                    </div>
-
-                    {ord.custom_instructions && (
-                      <div className="p-3 bg-amber-50 border border-amber-300 rounded-xl text-amber-900 text-xs flex items-start space-x-2">
-                        <AlertCircle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
-                        <div>
-                          <strong className="font-bold text-amber-900 block text-[11px] uppercase">
-                            Special Driver Handling Instructions:
-                          </strong>
-                          <span>{ord.custom_instructions}</span>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Section 5: Financials & Rate Breakdown */}
-                  <div className="bg-slate-50 border border-slate-200 rounded-2xl p-5 space-y-3 text-xs">
-                    <div className="flex items-center justify-between border-b border-slate-200 pb-2">
-                      <div className="flex items-center space-x-2 text-emerald-700 font-bold uppercase text-[11px] tracking-wider">
-                        <DollarSign className="w-3.5 h-3.5 text-emerald-600" />
-                        <span>Financial Breakdown & Compensation (CAD)</span>
-                      </div>
-                      <span className="text-[10px] text-slate-400 font-mono">
-                        HST Included (13%)
+                  {ord.proof_of_delivery && (
+                    <div className="text-[11px] text-emerald-900 bg-emerald-100/60 border border-emerald-200 px-3 py-1.5 rounded-xl flex flex-wrap items-center justify-between gap-2">
+                      <span>
+                        <strong>POD Confirmed:</strong> Receiver {ord.proof_of_delivery.recipient_name}
+                      </span>
+                      <span className="text-slate-500 font-mono text-[10px]">
+                        Delivered {new Date(ord.proof_of_delivery.delivered_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                       </span>
                     </div>
-
-                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-                      <div className="bg-white p-2.5 rounded-xl border border-slate-200">
-                        <span className="text-slate-400 block text-[10px]">Base Rate</span>
-                        <span className="text-slate-900 font-bold text-xs">${(ord.base_price || 0).toFixed(2)}</span>
-                      </div>
-                      <div className="bg-white p-2.5 rounded-xl border border-slate-200">
-                        <span className="text-slate-400 block text-[10px]">Excess KM</span>
-                        <span className="text-slate-900 font-bold text-xs">${(ord.excess_km_charge || 0).toFixed(2)}</span>
-                      </div>
-                      <div className="bg-white p-2.5 rounded-xl border border-slate-200">
-                        <span className="text-slate-400 block text-[10px]">After Hours</span>
-                        <span className="text-slate-900 font-bold text-xs">${(ord.after_hours_charge || 0).toFixed(2)}</span>
-                      </div>
-                      <div className="bg-white p-2.5 rounded-xl border border-slate-200">
-                        <span className="text-slate-400 block text-[10px]">Waiting / Labor</span>
-                        <span className="text-slate-900 font-bold text-xs">
-                          ${((ord.waiting_charge || 0) + (ord.labor_charge || 0)).toFixed(2)}
-                        </span>
-                      </div>
-                      <div className="bg-white p-2.5 rounded-xl border border-slate-200">
-                        <span className="text-slate-400 block text-[10px]">13% HST</span>
-                        <span className="text-slate-900 font-bold text-xs">
-                          ${(ord.tax_amount || (ord.total_price * 0.13 / 1.13)).toFixed(2)}
-                        </span>
-                      </div>
-                      <div className="bg-emerald-50 p-2.5 rounded-xl border border-emerald-200">
-                        <span className="text-emerald-800 block text-[10px] font-bold uppercase">Total Price</span>
-                        <span className="text-emerald-700 font-black text-xs">${ord.total_price.toFixed(2)}</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Driver Action Stepper Buttons */}
-                  <div className="pt-2 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200">
-                    <div className="flex flex-wrap items-center gap-3">
-                      {(ord.order_status === 'accepted' || ord.order_status === 'assigned') && (
-                        <button
-                          onClick={() => handleUpdateStatus(ord, 'en_route_pickup')}
-                          className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl transition shadow-lg shadow-blue-950/50 flex items-center space-x-2 cursor-pointer"
-                        >
-                          <span>1. Start En Route to Pickup</span>
-                          <ArrowRight className="w-4 h-4" />
-                        </button>
-                      )}
-
-                      {ord.order_status === 'en_route_pickup' && (
-                        <button
-                          onClick={() => handleUpdateStatus(ord, 'picked_up')}
-                          className="px-6 py-3 bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs rounded-xl transition shadow-lg shadow-amber-950/50 flex items-center space-x-2 cursor-pointer"
-                        >
-                          <span>2. Cargo Picked Up & Loaded</span>
-                          <ArrowRight className="w-4 h-4" />
-                        </button>
-                      )}
-
-                      {ord.order_status === 'picked_up' && (
-                        <button
-                          onClick={() => handleUpdateStatus(ord, 'in_transit')}
-                          className="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl transition shadow-lg shadow-indigo-950/50 flex items-center space-x-2 cursor-pointer"
-                        >
-                          <span>3. In Transit to Destination</span>
-                          <ArrowRight className="w-4 h-4" />
-                        </button>
-                      )}
-
-                      {(ord.order_status === 'in_transit' || ord.order_status === 'picked_up') && (
-                        <button
-                          onClick={() => setPodOrder(ord)}
-                          className="px-6 py-3 bg-[#C5161D] hover:bg-[#A51218] text-white font-bold text-xs rounded-xl transition shadow-xl shadow-red-950/60 flex items-center space-x-2 cursor-pointer"
-                        >
-                          <Camera className="w-4 h-4" />
-                          <span>4. Complete Delivery & Capture Digital POD</span>
-                        </button>
-                      )}
-                    </div>
-
-                    <div className="text-[11px] text-slate-500 font-mono">
-                      Shift dispatch verification &bull; Real-time tracking active
-                    </div>
-                  </div>
+                  )}
                 </div>
-              );
-            })}
-          </div>
-        )}
-      </div>
-
-      {/* Completed Deliveries (Strictly for this driver) */}
-      <div className="space-y-4 pt-4">
-        <h2 className="text-lg font-bold text-slate-400 font-['Outfit'] flex items-center space-x-2">
-          <CheckCircle2 className="w-5 h-5 text-emerald-400" />
-          <span>My Completed Deliveries ({completedDeliveries.length})</span>
-        </h2>
-
-        {completedDeliveries.length === 0 ? (
-          <div className="bg-white border border-slate-200 rounded-2xl p-6 text-center text-xs text-slate-500 shadow-xs">
-            No completed deliveries recorded for this shift yet.
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 gap-4">
-            {completedDeliveries.map((ord) => (
-              <div
-                key={ord.id}
-                className="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs space-y-2 text-xs"
-              >
-                <div className="flex items-center justify-between">
-                  <span className="font-bold text-slate-900 font-mono">{ord.order_number}</span>
-                  <span className="text-emerald-700 font-bold bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
-                    Delivered Successfully
-                  </span>
-                </div>
-                <div className="text-slate-600 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 pt-1 font-medium">
-                  <span>From: {ord.pickup_address}</span>
-                  <span>To: {ord.delivery_address}</span>
-                </div>
-                {ord.proof_of_delivery && (
-                  <div className="text-[11px] text-slate-600 pt-1">
-                    POD Confirmed: Receiver {ord.proof_of_delivery.recipient_name} at{' '}
-                    {new Date(ord.proof_of_delivery.delivered_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Digital POD Capture Modal */}
       {podOrder && createPortal(
