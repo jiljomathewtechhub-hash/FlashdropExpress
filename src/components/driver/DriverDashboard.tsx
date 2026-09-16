@@ -29,6 +29,11 @@ import {
   RefreshCw,
   Lock,
   Unlock,
+  ChevronDown,
+  ChevronUp,
+  Maximize2,
+  Minimize2,
+  Eye,
 } from 'lucide-react';
 import { Order, OrderStatus, Driver } from '../../types/order';
 import { store, UserSession } from '../../lib/store';
@@ -164,6 +169,58 @@ export const DriverDashboard: React.FC<DriverDashboardProps> = ({ onNavigate, in
     if (activeTabFilter === 'completed') return false;
     return true;
   });
+
+  // Track which orders are enlarged to show full detailed manifest
+  const [expandedOrderIds, setExpandedOrderIds] = useState<Set<string>>(() => {
+    const initial = new Set<string>();
+    if (initialParams?.orderNumber) {
+      const match = orders.find((o) => o.order_number === initialParams.orderNumber);
+      if (match) initial.add(match.id);
+    }
+    return initial;
+  });
+
+  const [expandedCompletedIds, setExpandedCompletedIds] = useState<Set<string>>(new Set());
+
+  // Automatically expand if navigated with a specific order
+  useEffect(() => {
+    if (initialParams?.orderNumber) {
+      const match = orders.find((o) => o.order_number === initialParams.orderNumber);
+      if (match) {
+        setExpandedOrderIds((prev) => new Set(prev).add(match.id));
+      }
+    }
+  }, [initialParams, orders]);
+
+  const toggleExpand = (id: string) => {
+    setExpandedOrderIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  };
+
+  const toggleExpandCompleted = (id: string) => {
+    setExpandedCompletedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const expandAll = () => {
+    const allIds = new Set(displayedActiveOrders.map((o) => o.id));
+    setExpandedOrderIds(allIds);
+  };
+
+  const collapseAll = () => {
+    setExpandedOrderIds(new Set());
+  };
 
   // POD Modal state
   const [podOrder, setPodOrder] = useState<Order | null>(null);
@@ -575,7 +632,7 @@ export const DriverDashboard: React.FC<DriverDashboardProps> = ({ onNavigate, in
       {/* Active Assigned Deliveries (Strictly filtered for this driver) */}
       {activeTabFilter !== 'completed' && (
         <div className="space-y-4">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <h2 className="text-lg font-bold text-slate-900 font-['Outfit'] flex items-center space-x-2">
               <Clock className="w-5 h-5 text-red-600" />
               <span>
@@ -586,9 +643,22 @@ export const DriverDashboard: React.FC<DriverDashboardProps> = ({ onNavigate, in
                   : `Active Deliveries Assigned to You (${activeDeliveries.length})`}
               </span>
             </h2>
-            <span className="text-xs text-slate-400">
-              Real-time GTA dispatch feed
-            </span>
+
+            {displayedActiveOrders.length > 0 && (
+              <div className="flex items-center space-x-2">
+                <button
+                  type="button"
+                  onClick={expandedOrderIds.size === displayedActiveOrders.length ? collapseAll : expandAll}
+                  className="px-3 py-1.5 rounded-xl text-xs font-bold text-slate-700 bg-white hover:bg-slate-100 border border-slate-200 transition shadow-xs flex items-center space-x-1.5 cursor-pointer"
+                >
+                  <Eye className="w-3.5 h-3.5 text-slate-500" />
+                  <span>{expandedOrderIds.size === displayedActiveOrders.length ? 'Collapse All' : 'Enlarge All'}</span>
+                </button>
+                <span className="text-xs text-slate-400 hidden sm:inline">
+                  &bull; Click any order card to enlarge
+                </span>
+              </div>
+            )}
           </div>
 
           {displayedActiveOrders.length === 0 ? (
@@ -610,7 +680,7 @@ export const DriverDashboard: React.FC<DriverDashboardProps> = ({ onNavigate, in
               </p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 gap-6">
+            <div className="grid grid-cols-1 gap-4">
               {displayedActiveOrders.map((ord) => {
                 const isAccepted =
                   ord.order_status === 'accepted' ||
@@ -622,19 +692,27 @@ export const DriverDashboard: React.FC<DriverDashboardProps> = ({ onNavigate, in
                   (ord.order_status !== 'assigned' && ord.order_status !== 'submitted' && ord.order_status !== 'confirmed');
                 const pickupNavUrl = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(ord.pickup_address)}`;
                 const deliveryNavUrl = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(ord.delivery_address)}`;
+                const isExpanded = expandedOrderIds.has(ord.id);
+                const statusCfg = ORDER_STATUS_CONFIG[ord.order_status];
 
-                // BEFORE ACCEPTANCE: Sensitive trip details (exact addresses, distance km, cargo manifest) are locked
+                // CASE 1: BEFORE ACCEPTANCE
                 if (!isAccepted) {
                   return (
                     <div
                       key={ord.id}
-                      className="bg-white border-2 border-amber-300/90 rounded-3xl p-6 shadow-md space-y-6 hover:border-amber-400 transition"
+                      className={`bg-white border-2 border-amber-300 rounded-3xl p-5 shadow-xs space-y-4 hover:border-amber-400 transition ${
+                        isExpanded ? 'ring-2 ring-amber-400/50 shadow-md' : ''
+                      }`}
                     >
-                      {/* Top Bar: Order ID, Status, Priority & Dispatch Region Callout */}
-                      <div className="flex flex-col lg:flex-row lg:items-center justify-between border-b border-slate-100 pb-5 gap-4">
-                        <div className="space-y-2">
-                          <div className="flex flex-wrap items-center gap-2.5">
-                            <span className="text-2xl font-black text-slate-900 font-mono tracking-tight">
+                      {/* COMPACT SELECTING SECTION (High-level relevant info) */}
+                      <div
+                        onClick={() => toggleExpand(ord.id)}
+                        className="cursor-pointer space-y-3"
+                      >
+                        {/* Header: Order #, Status, Priority, Required vehicle & Enlarge toggle */}
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-amber-100 pb-3">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <span className="text-xl sm:text-2xl font-black text-slate-900 font-mono tracking-tight">
                               #{ord.order_number}
                             </span>
                             {getOrderStatusBadge('assigned', 'sm')}
@@ -656,168 +734,251 @@ export const DriverDashboard: React.FC<DriverDashboardProps> = ({ onNavigate, in
                             </span>
                           </div>
 
-                          <div className="flex flex-wrap items-center gap-2.5 text-xs text-slate-500">
-                            <div className="flex items-center space-x-1.5">
-                              <Calendar className="w-3.5 h-3.5 text-red-500" />
-                              <span>Scheduled Pickup: <strong className="text-slate-900 font-semibold">{ord.pickup_date} at {ord.pickup_time}</strong></span>
-                            </div>
-                            <span>&bull;</span>
-                            <span>Operating Zone: <strong className="text-slate-800 font-semibold">{ord.service_area}</strong></span>
-                          </div>
-                        </div>
-
-                        {/* Dispatch Operational Region Callout (Zero pricing shown) */}
-                        <div className="bg-amber-50/70 border border-amber-200 px-5 py-3 rounded-2xl flex items-center justify-between lg:justify-end space-x-4 shrink-0 shadow-xs">
-                          <div>
-                            <div className="text-[10px] uppercase font-bold tracking-wider text-amber-800 flex items-center">
-                              <Navigation className="w-3 h-3 text-amber-600 mr-1" />
-                              <span>Dispatch Region</span>
-                            </div>
-                            <div className="text-xl font-black text-slate-900 font-['Outfit']">
-                              {ord.service_area}
-                            </div>
-                            <div className="text-[10px] font-semibold text-slate-500">
-                              Est. Route: {ord.distance_km} km
-                            </div>
-                          </div>
-                          <div className="w-10 h-10 rounded-xl bg-amber-100 border border-amber-300 flex items-center justify-center text-amber-700">
-                            <MapPin className="w-5 h-5" />
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Fair Dispatch Protection Notice Banner */}
-                      <div className="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-2xl p-4.5 text-xs text-amber-950 flex items-start space-x-3.5 shadow-xs">
-                        <div className="w-8 h-8 rounded-xl bg-amber-100 border border-amber-300 flex items-center justify-center text-amber-700 shrink-0 mt-0.5">
-                          <Shield className="w-4 h-4" />
-                        </div>
-                        <div className="space-y-1">
-                          <div className="font-bold text-slate-900 text-xs flex items-center space-x-2">
-                            <span>Fair Dispatch Allocation &bull; Anti-Cherry-Picking Protection</span>
-                            <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 bg-amber-100 text-amber-800 rounded-full border border-amber-300">
-                              Details Locked
+                          <div className="flex items-center space-x-2 self-start sm:self-auto shrink-0">
+                            <span className="text-xs font-bold text-amber-900 bg-amber-50 px-2.5 py-1 rounded-xl border border-amber-200 flex items-center space-x-1">
+                              <Navigation className="w-3 h-3 text-amber-600" />
+                              <span>{ord.service_area} • ~{ord.distance_km} km</span>
                             </span>
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                toggleExpand(ord.id);
+                              }}
+                              className="px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center space-x-1 bg-amber-100 hover:bg-amber-200 text-amber-900 border border-amber-300 cursor-pointer"
+                              title={isExpanded ? 'Collapse order details' : 'Enlarge order details'}
+                            >
+                              <span>{isExpanded ? 'Collapse' : 'Enlarge'}</span>
+                              {isExpanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+                            </button>
                           </div>
-                          <p className="text-[11px] text-slate-700 leading-relaxed">
-                            In accordance with FlashDrop Express fleet policy, exact pickup &amp; delivery addresses, turn-by-turn navigation routes, customer phone numbers, and cargo specifications remain <strong>locked until you accept this assignment</strong>. Please accept the run below to unlock the complete delivery manifest.
-                          </p>
+                        </div>
+
+                        {/* Middle Selecting Info Row */}
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
+                          <div className="bg-amber-50/50 p-3 rounded-2xl border border-amber-200/70">
+                            <span className="text-[10px] uppercase font-bold text-amber-800 block flex items-center space-x-1">
+                              <Calendar className="w-3 h-3 text-red-500" />
+                              <span>Pickup Window</span>
+                            </span>
+                            <div className="font-bold text-slate-900 mt-0.5">
+                              {ord.pickup_date} at {ord.pickup_time}
+                            </div>
+                            <span className="text-[10px] text-slate-500">Service SLA Scheduled</span>
+                          </div>
+
+                          <div className="bg-amber-50/50 p-3 rounded-2xl border border-amber-200/70">
+                            <span className="text-[10px] uppercase font-bold text-amber-800 block flex items-center space-x-1">
+                              <MapPin className="w-3 h-3 text-amber-600" />
+                              <span>Operating Territory</span>
+                            </span>
+                            <div className="font-bold text-slate-900 mt-0.5">
+                              {ord.service_area} Region
+                            </div>
+                            <span className="text-[10px] text-slate-500">Addresses reveal upon acceptance</span>
+                          </div>
+
+                          <div className="bg-amber-50/50 p-3 rounded-2xl border border-amber-200/70">
+                            <span className="text-[10px] uppercase font-bold text-amber-800 block flex items-center space-x-1">
+                              <Package className="w-3 h-3 text-amber-600" />
+                              <span>Cargo & Fleet Type</span>
+                            </span>
+                            <div className="font-bold text-slate-900 mt-0.5 capitalize">
+                              {ord.vehicle_name} ({ord.weight_lbs} lbs)
+                            </div>
+                            <span className="text-[10px] text-slate-500">{ord.item_type.replace(/_/g, ' ')} payload</span>
+                          </div>
+                        </div>
+
+                        {/* Action row in selecting section */}
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1 border-t border-amber-100">
+                          <div className="flex items-center space-x-2 text-[11px] text-amber-900 font-medium">
+                            <Lock className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                            <span>Full addresses & direct receiver contacts unlock upon assignment acceptance</span>
+                          </div>
+
+                          <div className="flex items-center space-x-3 shrink-0">
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleAcceptAssignment(ord);
+                              }}
+                              className="w-full sm:w-auto px-6 py-2.5 bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white font-bold text-xs rounded-xl transition shadow-md shadow-emerald-950/20 flex items-center justify-center space-x-2 cursor-pointer group"
+                            >
+                              <CheckCircle2 className="w-4 h-4 text-emerald-200 group-hover:scale-110 transition-transform" />
+                              <span>Accept Assignment</span>
+                              <ArrowRight className="w-3.5 h-3.5 text-emerald-200 group-hover:translate-x-0.5 transition-transform" />
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                toggleExpand(ord.id);
+                              }}
+                              className="text-xs text-amber-800 hover:text-amber-950 font-bold underline cursor-pointer hidden sm:inline"
+                            >
+                              {isExpanded ? 'Close Details ▲' : 'View Full Details ▼'}
+                            </button>
+                          </div>
                         </div>
                       </div>
 
-                      {/* 4-Panel Masked Details Grid */}
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-xs">
-                        {/* Panel 1: Route & Destination */}
-                        <div className="bg-slate-50/80 border border-slate-200 rounded-2xl p-4 space-y-2">
-                          <div className="flex items-center justify-between text-slate-600 font-bold uppercase text-[10px] tracking-wider">
-                            <div className="flex items-center space-x-1.5">
-                              <MapPin className="w-3.5 h-3.5 text-slate-400" />
-                              <span>Route &amp; Destination</span>
+                      {/* ENLARGED DETAILS VIEW (Shown when clicked/enlarged) */}
+                      {isExpanded && (
+                        <div className="pt-4 border-t-2 border-amber-200/80 space-y-5 animate-fade-in">
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs font-black uppercase tracking-wider text-amber-900 flex items-center space-x-1.5">
+                              <Maximize2 className="w-3.5 h-3.5 text-amber-600" />
+                              <span>Enlarged Dispatch Manifest & Acceptance Protocol</span>
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => toggleExpand(ord.id)}
+                              className="text-xs text-slate-500 hover:text-slate-900 font-semibold flex items-center space-x-1 cursor-pointer"
+                            >
+                              <Minimize2 className="w-3.5 h-3.5" />
+                              <span>Collapse</span>
+                            </button>
+                          </div>
+
+                          {/* Fair Dispatch Protection Notice Banner */}
+                          <div className="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-2xl p-4 text-xs text-amber-950 flex items-start space-x-3 shadow-xs">
+                            <div className="w-8 h-8 rounded-xl bg-amber-100 border border-amber-300 flex items-center justify-center text-amber-700 shrink-0 mt-0.5">
+                              <Shield className="w-4 h-4" />
                             </div>
-                            <Lock className="w-3.5 h-3.5 text-amber-500" />
-                          </div>
-                          <div className="font-mono text-slate-400 text-xs tracking-widest py-1 select-none">
-                            ••••••••••••••••••••••••
-                          </div>
-                          <p className="text-[10px] text-slate-500">
-                            Pickup &amp; drop-off addresses revealed upon acceptance.
-                          </p>
-                        </div>
-
-                        {/* Panel 2: Route Distance */}
-                        <div className="bg-slate-50/80 border border-slate-200 rounded-2xl p-4 space-y-2">
-                          <div className="flex items-center justify-between text-slate-600 font-bold uppercase text-[10px] tracking-wider">
-                            <div className="flex items-center space-x-1.5">
-                              <Navigation className="w-3.5 h-3.5 text-slate-400" />
-                              <span>Route Distance</span>
+                            <div className="space-y-1">
+                              <div className="font-bold text-slate-900 text-xs flex items-center space-x-2">
+                                <span>Fair Dispatch Allocation &bull; Anti-Cherry-Picking Protection</span>
+                                <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 bg-amber-100 text-amber-800 rounded-full border border-amber-300">
+                                  Details Locked
+                                </span>
+                              </div>
+                              <p className="text-[11px] text-slate-700 leading-relaxed">
+                                In accordance with FlashDrop Express fleet policy, exact pickup &amp; delivery addresses, turn-by-turn navigation routes, customer phone numbers, and cargo specifications remain <strong>locked until you accept this assignment</strong>. Please accept the run below to unlock the complete delivery manifest.
+                              </p>
                             </div>
-                            <Lock className="w-3.5 h-3.5 text-amber-500" />
                           </div>
-                          <div className="font-mono text-slate-400 text-xs tracking-widest py-1 select-none">
-                            •••• km
-                          </div>
-                          <p className="text-[10px] text-slate-500">
-                            Regional zone: <strong className="text-slate-700">{ord.service_area}</strong>
-                          </p>
-                        </div>
 
-                        {/* Panel 3: Cargo Manifest */}
-                        <div className="bg-slate-50/80 border border-slate-200 rounded-2xl p-4 space-y-2">
-                          <div className="flex items-center justify-between text-slate-600 font-bold uppercase text-[10px] tracking-wider">
-                            <div className="flex items-center space-x-1.5">
-                              <Package className="w-3.5 h-3.5 text-slate-400" />
-                              <span>Cargo Manifest</span>
+                          {/* 4-Panel Masked Details Grid */}
+                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
+                            {/* Panel 1: Route & Destination */}
+                            <div className="bg-slate-50 border border-slate-200 rounded-2xl p-3.5 space-y-1.5">
+                              <div className="flex items-center justify-between text-slate-600 font-bold uppercase text-[10px] tracking-wider">
+                                <div className="flex items-center space-x-1.5">
+                                  <MapPin className="w-3.5 h-3.5 text-slate-400" />
+                                  <span>Route &amp; Destination</span>
+                                </div>
+                                <Lock className="w-3.5 h-3.5 text-amber-500" />
+                              </div>
+                              <div className="font-mono text-slate-400 text-xs tracking-widest py-0.5 select-none">
+                                ••••••••••••••••••••••••
+                              </div>
+                              <p className="text-[10px] text-slate-500">
+                                Exact addresses revealed upon acceptance.
+                              </p>
                             </div>
-                            <Lock className="w-3.5 h-3.5 text-amber-500" />
-                          </div>
-                          <div className="font-mono text-slate-400 text-xs tracking-widest py-1 select-none">
-                            ••••••••••••••••
-                          </div>
-                          <p className="text-[10px] text-slate-500">
-                            Assigned Vehicle: <strong className="text-slate-700">{ord.vehicle_name}</strong>
-                          </p>
-                        </div>
 
-                        {/* Panel 4: Direct Contacts */}
-                        <div className="bg-slate-50/80 border border-slate-200 rounded-2xl p-4 space-y-2">
-                          <div className="flex items-center justify-between text-slate-600 font-bold uppercase text-[10px] tracking-wider">
-                            <div className="flex items-center space-x-1.5">
-                              <Phone className="w-3.5 h-3.5 text-slate-400" />
-                              <span>Customer Contacts</span>
+                            {/* Panel 2: Route Distance */}
+                            <div className="bg-slate-50 border border-slate-200 rounded-2xl p-3.5 space-y-1.5">
+                              <div className="flex items-center justify-between text-slate-600 font-bold uppercase text-[10px] tracking-wider">
+                                <div className="flex items-center space-x-1.5">
+                                  <Navigation className="w-3.5 h-3.5 text-slate-400" />
+                                  <span>Route Distance</span>
+                                </div>
+                                <Lock className="w-3.5 h-3.5 text-amber-500" />
+                              </div>
+                              <div className="font-mono text-slate-400 text-xs tracking-widest py-0.5 select-none">
+                                •••• km
+                              </div>
+                              <p className="text-[10px] text-slate-500">
+                                Regional zone: <strong className="text-slate-700">{ord.service_area}</strong>
+                              </p>
                             </div>
-                            <Lock className="w-3.5 h-3.5 text-amber-500" />
-                          </div>
-                          <div className="font-mono text-slate-400 text-xs tracking-widest py-1 select-none">
-                            +1 (•••) •••-••••
-                          </div>
-                          <p className="text-[10px] text-slate-500">
-                            Shipper &amp; receiver direct phones unlock after acceptance.
-                          </p>
-                        </div>
-                      </div>
 
-                      {/* Prominent Acceptance Action Bar */}
-                      <div className="pt-2 flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-slate-200">
-                        <button
-                          type="button"
-                          onClick={() => handleAcceptAssignment(ord)}
-                          className="w-full sm:w-auto px-8 py-4 bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 active:scale-[0.99] text-white font-black text-sm rounded-2xl transition shadow-xl shadow-emerald-950/20 flex items-center justify-center space-x-3 cursor-pointer group"
-                        >
-                          <CheckCircle2 className="w-5 h-5 text-emerald-200 group-hover:scale-110 transition-transform" />
-                          <span>Accept Assignment &amp; Unlock Full Manifest</span>
-                          <ArrowRight className="w-4 h-4 text-emerald-200 group-hover:translate-x-1 transition-transform" />
-                        </button>
+                            {/* Panel 3: Cargo Manifest */}
+                            <div className="bg-slate-50 border border-slate-200 rounded-2xl p-3.5 space-y-1.5">
+                              <div className="flex items-center justify-between text-slate-600 font-bold uppercase text-[10px] tracking-wider">
+                                <div className="flex items-center space-x-1.5">
+                                  <Package className="w-3.5 h-3.5 text-slate-400" />
+                                  <span>Cargo Manifest</span>
+                                </div>
+                                <Lock className="w-3.5 h-3.5 text-amber-500" />
+                              </div>
+                              <div className="font-mono text-slate-400 text-xs tracking-widest py-0.5 select-none">
+                                ••••••••••••••••
+                              </div>
+                              <p className="text-[10px] text-slate-500">
+                                Assigned: <strong className="text-slate-700">{ord.vehicle_name}</strong>
+                              </p>
+                            </div>
 
-                        <div className="text-center sm:text-right space-y-0.5">
-                          <div className="text-xs font-bold text-slate-800 flex items-center justify-center sm:justify-end space-x-1">
-                            <Unlock className="w-3.5 h-3.5 text-emerald-600" />
-                            <span>Accepting immediately unlocks GPS navigation &amp; contacts</span>
+                            {/* Panel 4: Direct Contacts */}
+                            <div className="bg-slate-50 border border-slate-200 rounded-2xl p-3.5 space-y-1.5">
+                              <div className="flex items-center justify-between text-slate-600 font-bold uppercase text-[10px] tracking-wider">
+                                <div className="flex items-center space-x-1.5">
+                                  <Phone className="w-3.5 h-3.5 text-slate-400" />
+                                  <span>Customer Contacts</span>
+                                </div>
+                                <Lock className="w-3.5 h-3.5 text-amber-500" />
+                              </div>
+                              <div className="font-mono text-slate-400 text-xs tracking-widest py-0.5 select-none">
+                                +1 (•••) •••-••••
+                              </div>
+                              <p className="text-[10px] text-slate-500">
+                                Shipper & receiver phones unlock after acceptance.
+                              </p>
+                            </div>
                           </div>
-                          <div className="text-[11px] text-slate-500">
-                            Mandatory photo proof of delivery required upon drop-off
+
+                          {/* Acceptance Action Bar */}
+                          <div className="pt-3 flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-slate-200">
+                            <button
+                              type="button"
+                              onClick={() => handleAcceptAssignment(ord)}
+                              className="w-full sm:w-auto px-8 py-3.5 bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 active:scale-[0.99] text-white font-black text-sm rounded-2xl transition shadow-xl shadow-emerald-950/20 flex items-center justify-center space-x-3 cursor-pointer group"
+                            >
+                              <CheckCircle2 className="w-5 h-5 text-emerald-200 group-hover:scale-110 transition-transform" />
+                              <span>Accept Assignment &amp; Unlock Full Manifest</span>
+                              <ArrowRight className="w-4 h-4 text-emerald-200 group-hover:translate-x-1 transition-transform" />
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() => toggleExpand(ord.id)}
+                              className="text-xs text-slate-500 hover:text-slate-900 font-bold flex items-center space-x-1 underline cursor-pointer"
+                            >
+                              <ChevronUp className="w-3.5 h-3.5" />
+                              <span>Collapse Details</span>
+                            </button>
                           </div>
                         </div>
-                      </div>
+                      )}
                     </div>
                   );
                 }
 
-                // AFTER ACCEPTANCE: Full operational details, contacts, navigation unlocked (Price free!)
-                const statusCfg = ORDER_STATUS_CONFIG[ord.order_status];
+                // CASE 2: AFTER ACCEPTANCE (Organized Card with Enlarge Details)
                 return (
                   <div
                     key={ord.id}
-                    className={`border-2 rounded-3xl p-6 shadow-sm space-y-6 transition ${
+                    className={`border-2 rounded-3xl p-5 shadow-xs space-y-4 transition ${
                       statusCfg?.cardClass || 'border-slate-200 bg-white hover:border-slate-300'
-                    }`}
+                    } ${isExpanded ? 'ring-2 ring-blue-400/40 shadow-md' : ''}`}
                   >
-                    {/* Top Bar: Order ID, Status, Schedule Window & Route Distance */}
-                    <div className="flex flex-col lg:flex-row lg:items-center justify-between border-b border-slate-200/80 pb-5 gap-4">
-                      <div className="space-y-1.5">
-                        <div className="flex flex-wrap items-center gap-2.5">
-                          <span className="text-2xl font-black text-slate-900 font-mono tracking-tight">
+                    {/* COMPACT SELECTING SECTION (High-level relevant info) */}
+                    <div
+                      onClick={() => toggleExpand(ord.id)}
+                      className="cursor-pointer space-y-3"
+                    >
+                      {/* Top Header: Order #, Status badge, Priority, Vehicle, Distance & Enlarge button */}
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200/80 pb-3">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="text-xl sm:text-2xl font-black text-slate-900 font-mono tracking-tight">
                             #{ord.order_number}
                           </span>
-                          {getOrderStatusBadge(ord.order_status, 'md')}
+                          {getOrderStatusBadge(ord.order_status, 'sm')}
                           <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold border ${
                             ord.delivery_time_option === 'urgent' || ord.delivery_time_option === 'asap' || ord.delivery_time_option === '1-2h'
                               ? 'bg-red-50 text-red-700 border-red-200 animate-pulse'
@@ -835,353 +996,541 @@ export const DriverDashboard: React.FC<DriverDashboardProps> = ({ onNavigate, in
                             Required: {ord.vehicle_name}
                           </span>
                         </div>
-                        <div className="flex items-center space-x-2 text-xs text-slate-500">
-                          <Calendar className="w-3.5 h-3.5 text-red-500" />
-                          <span>Scheduled: <strong className="text-slate-900">{ord.pickup_date} at {ord.pickup_time}</strong></span>
-                          <span>&bull;</span>
-                          <span>Area: <strong className="text-slate-700">{ord.service_area}</strong></span>
-                          <span>&bull;</span>
-                          <span>Distance: <strong className="text-slate-700">{ord.distance_km} km</strong></span>
-                        </div>
-                      </div>
 
-                      {/* Route Distance & Operational Callout */}
-                      <div className="bg-white/90 border border-slate-200 px-5 py-3 rounded-2xl flex items-center justify-between lg:justify-end space-x-4 shrink-0 shadow-xs">
-                        <div>
-                          <div className="text-[10px] uppercase font-bold tracking-wider text-slate-500 flex items-center">
-                            <Navigation className="w-3.5 h-3.5 text-blue-600 mr-1" />
-                            <span>Total Route</span>
-                          </div>
-                          <div className="text-2xl font-black text-slate-900 font-['Outfit']">
-                            {ord.distance_km} <span className="text-xs font-semibold text-slate-500">KM</span>
-                          </div>
-                          <div className="text-[10px] font-semibold text-slate-600">
-                            Zone: {ord.service_area}
-                          </div>
-                        </div>
-                        <div className="w-10 h-10 rounded-xl bg-blue-50 border border-blue-200 flex items-center justify-center text-blue-600">
-                          <Truck className="w-5 h-5" />
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Section 1: Customer & Account Contact Information */}
-                    <div className="bg-white/80 border border-slate-200 rounded-2xl p-4.5 space-y-2.5">
-                      <div className="flex items-center space-x-2 text-slate-800 font-bold uppercase text-[11px] tracking-wider border-b border-slate-200 pb-2">
-                        <User className="w-3.5 h-3.5 text-red-500" />
-                        <span>Customer & Account Information</span>
-                      </div>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
-                        <div>
-                          <span className="text-slate-500 block text-[10px] uppercase font-bold">Contact Name</span>
-                          <span className="text-slate-900 font-bold text-sm">{ord.customer_name}</span>
-                        </div>
-                        <div>
-                          <span className="text-slate-500 block text-[10px] uppercase font-bold">Company / Account</span>
-                          <span className="text-slate-800 font-semibold flex items-center">
-                            <Building className="w-3.5 h-3.5 mr-1 text-slate-400" />
-                            {ord.company_name || 'Individual / Commercial Shipper'}
+                        <div className="flex items-center space-x-2 self-start sm:self-auto shrink-0">
+                          <span className="text-xs font-bold text-slate-800 bg-white/90 px-2.5 py-1 rounded-xl border border-slate-200 flex items-center space-x-1">
+                            <Navigation className="w-3 h-3 text-blue-600" />
+                            <span>{ord.distance_km} km &bull; {ord.service_area}</span>
                           </span>
-                        </div>
-                        <div>
-                          <span className="text-slate-500 block text-[10px] uppercase font-bold">Customer Phone</span>
-                          <a
-                            href={`tel:${ord.customer_phone}`}
-                            className="text-emerald-700 hover:text-emerald-800 font-bold flex items-center space-x-1.5 hover:underline"
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              toggleExpand(ord.id);
+                            }}
+                            className="px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center space-x-1 bg-slate-900 hover:bg-slate-800 text-white shadow-xs cursor-pointer"
+                            title={isExpanded ? 'Collapse order details' : 'Enlarge order details'}
                           >
-                            <Phone className="w-3.5 h-3.5 shrink-0" />
-                            <span>{ord.customer_phone}</span>
-                          </a>
-                        </div>
-                        <div>
-                          <span className="text-slate-500 block text-[10px] uppercase font-bold">Customer Email</span>
-                          <a
-                            href={`mailto:${ord.customer_email}`}
-                            className="text-sky-700 hover:text-sky-800 font-semibold flex items-center space-x-1.5 hover:underline truncate"
-                          >
-                            <Mail className="w-3.5 h-3.5 shrink-0" />
-                            <span className="truncate">{ord.customer_email}</span>
-                          </a>
+                            <span>{isExpanded ? 'Collapse' : 'Enlarge Details'}</span>
+                            {isExpanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+                          </button>
                         </div>
                       </div>
-                    </div>
 
-                    {/* Section 2 & 3: Pickup Site & Delivery Site Side-by-Side */}
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 text-xs">
-                      {/* Pickup Location & On-site Contact */}
-                      <div className="bg-white/80 border border-slate-200 rounded-2xl p-5 space-y-3.5 flex flex-col justify-between">
-                        <div className="space-y-3">
-                          <div className="flex items-center justify-between border-b border-slate-200 pb-2.5">
-                            <div className="flex items-center space-x-2 text-red-600 font-bold uppercase text-[11px] tracking-wider">
-                              <MapPin className="w-4 h-4" />
-                              <span>1. Pickup Site & Shipper</span>
-                            </div>
-                            <span className="text-[10px] text-slate-500 font-mono">
-                              {ord.pickup_date} @ {ord.pickup_time}
-                            </span>
+                      {/* Middle Selecting Info Row: Route From -> To, Timing & Cargo */}
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
+                        {/* Column 1: Route */}
+                        <div className="bg-white/90 p-3 rounded-2xl border border-slate-200 space-y-1.5">
+                          <div className="text-[10px] uppercase font-bold text-slate-500 flex items-center space-x-1">
+                            <MapPin className="w-3 h-3 text-red-500" />
+                            <span>Route Locations</span>
                           </div>
-
-                          <div>
-                            <span className="text-slate-500 block text-[10px] uppercase font-bold">Street Address</span>
-                            <div className="text-slate-900 font-bold text-sm mt-0.5">{ord.pickup_address}</div>
-                            {ord.pickup_unit && (
-                              <div className="text-amber-900 font-medium mt-1 bg-amber-50 border border-amber-300 px-2 py-0.5 rounded-lg text-[11px] inline-block">
-                                Dock / Unit / Bay: {ord.pickup_unit}
-                              </div>
-                            )}
-                          </div>
-
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1 border-t border-slate-200">
-                            <div>
-                              <span className="text-slate-500 block text-[10px] uppercase font-bold">On-Site Contact</span>
-                              <span className="text-slate-800 font-semibold">
-                                {ord.pickup_contact_name || ord.customer_name}
-                              </span>
+                          <div className="space-y-1">
+                            <div className="truncate font-semibold text-slate-900">
+                              <span className="text-[10px] text-red-600 font-bold uppercase mr-1">From:</span>
+                              {ord.pickup_address.split(',')[0]}
+                              {ord.pickup_unit && ` (Dock ${ord.pickup_unit})`}
                             </div>
-                            <div>
-                              <span className="text-slate-500 block text-[10px] uppercase font-bold">Direct Phone</span>
-                              <a
-                                href={`tel:${ord.pickup_contact_phone || ord.customer_phone}`}
-                                className="text-emerald-700 hover:text-emerald-800 font-bold flex items-center space-x-1"
-                              >
-                                <Phone className="w-3 h-3 shrink-0" />
-                                <span>{ord.pickup_contact_phone || ord.customer_phone}</span>
-                              </a>
+                            <div className="truncate font-semibold text-slate-900">
+                              <span className="text-[10px] text-emerald-700 font-bold uppercase mr-1">To:</span>
+                              {ord.delivery_address.split(',')[0]}
+                              {ord.delivery_unit && ` (Unit ${ord.delivery_unit})`}
                             </div>
                           </div>
-
-                          {ord.pickup_notes && (
-                            <div className="p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-700 text-[11px]">
-                              <strong className="text-slate-500 block text-[10px] uppercase">Shipper Gate / Dock Notes:</strong>
-                              {ord.pickup_notes}
-                            </div>
-                          )}
                         </div>
 
-                        {/* Pickup Navigation Link */}
-                        <div className="pt-2 border-t border-slate-200">
+                        {/* Column 2: Timing & Customer */}
+                        <div className="bg-white/90 p-3 rounded-2xl border border-slate-200 space-y-1.5">
+                          <div className="text-[10px] uppercase font-bold text-slate-500 flex items-center space-x-1">
+                            <Clock className="w-3 h-3 text-blue-500" />
+                            <span>Schedule & Customer</span>
+                          </div>
+                          <div>
+                            <div className="font-bold text-slate-900">{ord.pickup_date} @ {ord.pickup_time}</div>
+                            <div className="text-slate-600 truncate mt-0.5">
+                              {ord.customer_name} {ord.company_name ? `(${ord.company_name})` : ''}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Column 3: Cargo Details */}
+                        <div className="bg-white/90 p-3 rounded-2xl border border-slate-200 space-y-1.5">
+                          <div className="text-[10px] uppercase font-bold text-slate-500 flex items-center space-x-1">
+                            <Package className="w-3 h-3 text-purple-500" />
+                            <span>Cargo Manifest</span>
+                          </div>
+                          <div>
+                            <div className="font-bold text-emerald-700">
+                              {ord.weight_lbs} lbs &bull; {ord.quantity} units
+                            </div>
+                            <div className="text-slate-600 truncate mt-0.5 capitalize">
+                              {ord.item_type.replace(/_/g, ' ')}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Bottom Action Bar in Selecting Section */}
+                      <div className="flex flex-wrap items-center justify-between gap-3 pt-1 border-t border-slate-200/80">
+                        <div className="flex flex-wrap items-center gap-2">
                           <a
                             href={pickupNavUrl}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="w-full inline-flex items-center justify-center space-x-2 px-4 py-2.5 bg-red-50 hover:bg-red-100 text-red-700 hover:text-red-800 font-bold rounded-xl border border-red-200 transition shadow-xs cursor-pointer text-xs"
+                            onClick={(e) => e.stopPropagation()}
+                            className="inline-flex items-center space-x-1.5 px-3 py-1.5 bg-red-50 hover:bg-red-100 text-red-700 font-bold rounded-xl border border-red-200 transition text-xs cursor-pointer"
                           >
-                            <Navigation className="w-3.5 h-3.5 text-red-600" />
-                            <span>Navigate to Pickup in Google Maps</span>
-                            <ExternalLink className="w-3 h-3 text-red-600" />
+                            <Navigation className="w-3 h-3 text-red-600" />
+                            <span>Pickup GPS ↗</span>
                           </a>
-                        </div>
-                      </div>
 
-                      {/* Delivery Destination & Receiving Contact */}
-                      <div className="bg-white/80 border border-slate-200 rounded-2xl p-5 space-y-3.5 flex flex-col justify-between">
-                        <div className="space-y-3">
-                          <div className="flex items-center justify-between border-b border-slate-200 pb-2.5">
-                            <div className="flex items-center space-x-2 text-emerald-700 font-bold uppercase text-[11px] tracking-wider">
-                              <MapPin className="w-4 h-4" />
-                              <span>2. Drop-Off Destination & Receiver</span>
-                            </div>
-                            <span className="text-[10px] text-blue-700 font-bold">
-                              {ord.distance_km} km ({ord.service_area})
-                            </span>
-                          </div>
-
-                          <div>
-                            <span className="text-slate-500 block text-[10px] uppercase font-bold">Delivery Address</span>
-                            <div className="text-slate-900 font-bold text-sm mt-0.5">{ord.delivery_address}</div>
-                            {ord.delivery_unit && (
-                              <div className="text-blue-900 font-medium mt-1 bg-blue-50 border border-blue-300 px-2 py-0.5 rounded-lg text-[11px] inline-block">
-                                Unit / Suite / Buzzer: {ord.delivery_unit}
-                              </div>
-                            )}
-                          </div>
-
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1 border-t border-slate-200">
-                            <div>
-                              <span className="text-slate-500 block text-[10px] uppercase font-bold">Receiving Contact</span>
-                              <span className="text-slate-800 font-semibold">
-                                {ord.delivery_contact_name || ord.customer_name}
-                              </span>
-                            </div>
-                            <div>
-                              <span className="text-slate-500 block text-[10px] uppercase font-bold">Receiving Phone</span>
-                              <a
-                                href={`tel:${ord.delivery_contact_phone || ord.customer_phone}`}
-                                className="text-emerald-700 hover:text-emerald-800 font-bold flex items-center space-x-1"
-                              >
-                                <Phone className="w-3 h-3 shrink-0" />
-                                <span>{ord.delivery_contact_phone || ord.customer_phone}</span>
-                              </a>
-                            </div>
-                          </div>
-
-                          {ord.delivery_notes && (
-                            <div className="p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-700 text-[11px]">
-                              <strong className="text-slate-500 block text-[10px] uppercase">Receiver Drop-off Notes:</strong>
-                              {ord.delivery_notes}
-                            </div>
-                          )}
-                        </div>
-
-                        {/* Drop-off Navigation Link */}
-                        <div className="pt-2 border-t border-slate-200">
                           <a
                             href={deliveryNavUrl}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="w-full inline-flex items-center justify-center space-x-2 px-4 py-2.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 hover:text-emerald-900 font-bold rounded-xl border border-emerald-200 transition shadow-xs cursor-pointer text-xs"
+                            onClick={(e) => e.stopPropagation()}
+                            className="inline-flex items-center space-x-1.5 px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-bold rounded-xl border border-emerald-200 transition text-xs cursor-pointer"
                           >
-                            <Navigation className="w-3.5 h-3.5 text-emerald-600" />
-                            <span>Navigate to Drop-Off in Google Maps</span>
-                            <ExternalLink className="w-3 h-3 text-emerald-600" />
+                            <Navigation className="w-3 h-3 text-emerald-600" />
+                            <span>Drop-Off GPS ↗</span>
                           </a>
                         </div>
+
+                        <div className="flex items-center space-x-2">
+                          {/* Quick Stage progression button right on the card */}
+                          {(ord.order_status === 'accepted' || ord.order_status === 'assigned') && (
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleUpdateStatus(ord, 'en_route_pickup');
+                              }}
+                              className="px-4 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl transition shadow-xs flex items-center space-x-1 cursor-pointer"
+                            >
+                              <span>1. En Route to Pickup</span>
+                              <ArrowRight className="w-3.5 h-3.5" />
+                            </button>
+                          )}
+
+                          {ord.order_status === 'en_route_pickup' && (
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleUpdateStatus(ord, 'picked_up');
+                              }}
+                              className="px-4 py-1.5 bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs rounded-xl transition shadow-xs flex items-center space-x-1 cursor-pointer"
+                            >
+                              <span>2. Cargo Loaded</span>
+                              <ArrowRight className="w-3.5 h-3.5" />
+                            </button>
+                          )}
+
+                          {ord.order_status === 'picked_up' && (
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleUpdateStatus(ord, 'in_transit');
+                              }}
+                              className="px-4 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl transition shadow-xs flex items-center space-x-1 cursor-pointer"
+                            >
+                              <span>3. In Transit</span>
+                              <ArrowRight className="w-3.5 h-3.5" />
+                            </button>
+                          )}
+
+                          {(ord.order_status === 'in_transit' || ord.order_status === 'picked_up') && (
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setPodOrder(ord);
+                              }}
+                              className="px-4 py-1.5 bg-[#C5161D] hover:bg-[#A51218] text-white font-bold text-xs rounded-xl transition shadow-xs flex items-center space-x-1.5 cursor-pointer"
+                            >
+                              <Camera className="w-3.5 h-3.5" />
+                              <span>4. Capture POD</span>
+                            </button>
+                          )}
+
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              toggleExpand(ord.id);
+                            }}
+                            className="text-xs text-blue-700 hover:text-blue-900 font-bold underline cursor-pointer hidden sm:inline ml-1"
+                          >
+                            {isExpanded ? 'Collapse ▲' : 'All Details ▼'}
+                          </button>
+                        </div>
                       </div>
                     </div>
 
-                    {/* Section 4: Cargo Manifest & Fleet Specifications */}
-                    <div className="bg-white/80 border border-slate-200 rounded-2xl p-5 space-y-3 text-xs">
-                      <div className="flex items-center space-x-2 text-slate-800 font-bold uppercase text-[11px] tracking-wider border-b border-slate-200 pb-2">
-                        <Package className="w-3.5 h-3.5 text-red-500" />
-                        <span>Cargo Manifest & Vehicle Specifications</span>
-                      </div>
-
-                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                        <div className="bg-slate-50 border border-slate-200 p-3 rounded-xl">
-                          <span className="text-slate-500 block text-[10px] uppercase font-bold">Assigned Vehicle</span>
-                          <span className="text-slate-900 font-bold text-sm block mt-0.5">{ord.vehicle_name}</span>
-                          <span className="text-[10px] text-slate-500">Fleet requirement</span>
-                        </div>
-
-                        <div className="bg-slate-50 border border-slate-200 p-3 rounded-xl">
-                          <span className="text-slate-500 block text-[10px] uppercase font-bold">Cargo Type</span>
-                          <span className="text-slate-900 font-bold text-sm block mt-0.5 capitalize">
-                            {ord.item_type.replace(/_/g, ' ')}
+                    {/* ENLARGED DETAILS VIEW (Shown when clicked/enlarged) */}
+                    {isExpanded && (
+                      <div className="pt-4 border-t-2 border-slate-200/80 space-y-5 animate-fade-in">
+                        <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+                          <span className="text-xs font-black uppercase tracking-wider text-slate-800 flex items-center space-x-1.5">
+                            <Maximize2 className="w-3.5 h-3.5 text-blue-600" />
+                            <span>Complete Delivery Manifest & Operational Protocols</span>
                           </span>
-                          <span className="text-[10px] text-slate-500">Classification</span>
+                          <button
+                            type="button"
+                            onClick={() => toggleExpand(ord.id)}
+                            className="text-xs text-slate-500 hover:text-slate-900 font-semibold flex items-center space-x-1 cursor-pointer"
+                          >
+                            <Minimize2 className="w-3.5 h-3.5" />
+                            <span>Collapse View</span>
+                          </button>
                         </div>
 
-                        <div className="bg-slate-50 border border-slate-200 p-3 rounded-xl">
-                          <span className="text-slate-500 block text-[10px] uppercase font-bold">Weight & Quantity</span>
-                          <span className="text-emerald-700 font-black text-sm block mt-0.5">
-                            {ord.weight_lbs} lbs &bull; {ord.quantity} pails / units
-                          </span>
-                          <span className="text-[10px] text-slate-500">Payload weight</span>
-                        </div>
-
-                        <div className="bg-slate-50 border border-slate-200 p-3 rounded-xl">
-                          <span className="text-slate-500 block text-[10px] uppercase font-bold">Cargo Description</span>
-                          <span className="text-slate-800 font-medium text-xs block mt-0.5 truncate">
-                            {ord.item_description || 'Standard packaged cargo manifest'}
-                          </span>
-                          <span className="text-[10px] text-slate-500">Item details</span>
-                        </div>
-                      </div>
-
-                      {ord.custom_instructions && (
-                        <div className="p-3 bg-amber-50 border border-amber-300 rounded-xl text-amber-900 text-xs flex items-start space-x-2">
-                          <AlertCircle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
-                          <div>
-                            <strong className="font-bold text-amber-900 block text-[11px] uppercase">
-                              Special Driver Handling Instructions:
-                            </strong>
-                            <span>{ord.custom_instructions}</span>
+                        {/* Section 1: Customer & Account Contact Information */}
+                        <div className="bg-white/90 border border-slate-200 rounded-2xl p-4.5 space-y-2.5">
+                          <div className="flex items-center space-x-2 text-slate-800 font-bold uppercase text-[11px] tracking-wider border-b border-slate-200 pb-2">
+                            <User className="w-3.5 h-3.5 text-red-500" />
+                            <span>Customer &amp; Account Information</span>
+                          </div>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
+                            <div>
+                              <span className="text-slate-500 block text-[10px] uppercase font-bold">Contact Name</span>
+                              <span className="text-slate-900 font-bold text-sm">{ord.customer_name}</span>
+                            </div>
+                            <div>
+                              <span className="text-slate-500 block text-[10px] uppercase font-bold">Company / Account</span>
+                              <span className="text-slate-800 font-semibold flex items-center">
+                                <Building className="w-3.5 h-3.5 mr-1 text-slate-400" />
+                                {ord.company_name || 'Individual / Commercial Shipper'}
+                              </span>
+                            </div>
+                            <div>
+                              <span className="text-slate-500 block text-[10px] uppercase font-bold">Customer Phone</span>
+                              <a
+                                href={`tel:${ord.customer_phone}`}
+                                onClick={(e) => e.stopPropagation()}
+                                className="text-emerald-700 hover:text-emerald-800 font-bold flex items-center space-x-1.5 hover:underline"
+                              >
+                                <Phone className="w-3.5 h-3.5 shrink-0" />
+                                <span>{ord.customer_phone}</span>
+                              </a>
+                            </div>
+                            <div>
+                              <span className="text-slate-500 block text-[10px] uppercase font-bold">Customer Email</span>
+                              <a
+                                href={`mailto:${ord.customer_email}`}
+                                onClick={(e) => e.stopPropagation()}
+                                className="text-sky-700 hover:text-sky-800 font-semibold flex items-center space-x-1.5 hover:underline truncate"
+                              >
+                                <Mail className="w-3.5 h-3.5 shrink-0" />
+                                <span className="truncate">{ord.customer_email}</span>
+                              </a>
+                            </div>
                           </div>
                         </div>
-                      )}
-                    </div>
 
-                    {/* Section 5: Standard Operating Protocol & Verification (Replaced all financial rates) */}
-                    <div className="bg-white/80 border border-slate-200 rounded-2xl p-4.5 space-y-3 text-xs">
-                      <div className="flex items-center justify-between border-b border-slate-200 pb-2">
-                        <div className="flex items-center space-x-2 text-slate-800 font-bold uppercase text-[11px] tracking-wider">
-                          <Shield className="w-3.5 h-3.5 text-blue-600" />
-                          <span>Standard Delivery Protocol & Quality Verification</span>
-                        </div>
-                        <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
-                          Direct Hand-off &bull; Digital POD
-                        </span>
-                      </div>
+                        {/* Section 2 & 3: Pickup Site & Delivery Site Side-by-Side */}
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 text-xs">
+                          {/* Pickup Location & On-site Contact */}
+                          <div className="bg-white/90 border border-slate-200 rounded-2xl p-5 space-y-3.5 flex flex-col justify-between">
+                            <div className="space-y-3">
+                              <div className="flex items-center justify-between border-b border-slate-200 pb-2.5">
+                                <div className="flex items-center space-x-2 text-red-600 font-bold uppercase text-[11px] tracking-wider">
+                                  <MapPin className="w-4 h-4" />
+                                  <span>1. Pickup Site &amp; Shipper</span>
+                                </div>
+                                <span className="text-[10px] text-slate-500 font-mono">
+                                  {ord.pickup_date} @ {ord.pickup_time}
+                                </span>
+                              </div>
 
-                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                        <div className="bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-1">
-                          <div className="font-bold text-slate-900 flex items-center space-x-1.5 text-xs">
-                            <CheckCircle2 className="w-3.5 h-3.5 text-blue-600" />
-                            <span>1. Safe Cargo Loading</span>
+                              <div>
+                                <span className="text-slate-500 block text-[10px] uppercase font-bold">Street Address</span>
+                                <div className="text-slate-900 font-bold text-sm mt-0.5">{ord.pickup_address}</div>
+                                {ord.pickup_unit && (
+                                  <div className="text-amber-900 font-medium mt-1 bg-amber-50 border border-amber-300 px-2 py-0.5 rounded-lg text-[11px] inline-block">
+                                    Dock / Unit / Bay: {ord.pickup_unit}
+                                  </div>
+                                )}
+                              </div>
+
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1 border-t border-slate-200">
+                                <div>
+                                  <span className="text-slate-500 block text-[10px] uppercase font-bold">On-Site Contact</span>
+                                  <span className="text-slate-800 font-semibold">
+                                    {ord.pickup_contact_name || ord.customer_name}
+                                  </span>
+                                </div>
+                                <div>
+                                  <span className="text-slate-500 block text-[10px] uppercase font-bold">Direct Phone</span>
+                                  <a
+                                    href={`tel:${ord.pickup_contact_phone || ord.customer_phone}`}
+                                    onClick={(e) => e.stopPropagation()}
+                                    className="text-emerald-700 hover:text-emerald-800 font-bold flex items-center space-x-1"
+                                  >
+                                    <Phone className="w-3 h-3 shrink-0" />
+                                    <span>{ord.pickup_contact_phone || ord.customer_phone}</span>
+                                  </a>
+                                </div>
+                              </div>
+
+                              {ord.pickup_notes && (
+                                <div className="p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-700 text-[11px]">
+                                  <strong className="text-slate-500 block text-[10px] uppercase">Shipper Gate / Dock Notes:</strong>
+                                  {ord.pickup_notes}
+                                </div>
+                              )}
+                            </div>
+
+                            {/* Pickup Navigation Link */}
+                            <div className="pt-2 border-t border-slate-200">
+                              <a
+                                href={pickupNavUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                onClick={(e) => e.stopPropagation()}
+                                className="w-full inline-flex items-center justify-center space-x-2 px-4 py-2.5 bg-red-50 hover:bg-red-100 text-red-700 hover:text-red-800 font-bold rounded-xl border border-red-200 transition shadow-xs cursor-pointer text-xs"
+                              >
+                                <Navigation className="w-3.5 h-3.5 text-red-600" />
+                                <span>Navigate to Pickup in Google Maps</span>
+                                <ExternalLink className="w-3 h-3 text-red-600" />
+                              </a>
+                            </div>
                           </div>
-                          <p className="text-[11px] text-slate-600">
-                            Inspect packaging integrity, ensure secure tie-down in vehicle, and verify piece count before leaving shipper.
-                          </p>
-                        </div>
-                        <div className="bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-1">
-                          <div className="font-bold text-slate-900 flex items-center space-x-1.5 text-xs">
-                            <Navigation className="w-3.5 h-3.5 text-amber-600" />
-                            <span>2. Direct Route Transit</span>
+
+                          {/* Delivery Destination & Receiving Contact */}
+                          <div className="bg-white/90 border border-slate-200 rounded-2xl p-5 space-y-3.5 flex flex-col justify-between">
+                            <div className="space-y-3">
+                              <div className="flex items-center justify-between border-b border-slate-200 pb-2.5">
+                                <div className="flex items-center space-x-2 text-emerald-700 font-bold uppercase text-[11px] tracking-wider">
+                                  <MapPin className="w-4 h-4" />
+                                  <span>2. Drop-Off Destination &amp; Receiver</span>
+                                </div>
+                                <span className="text-[10px] text-blue-700 font-bold">
+                                  {ord.distance_km} km ({ord.service_area})
+                                </span>
+                              </div>
+
+                              <div>
+                                <span className="text-slate-500 block text-[10px] uppercase font-bold">Delivery Address</span>
+                                <div className="text-slate-900 font-bold text-sm mt-0.5">{ord.delivery_address}</div>
+                                {ord.delivery_unit && (
+                                  <div className="text-blue-900 font-medium mt-1 bg-blue-50 border border-blue-300 px-2 py-0.5 rounded-lg text-[11px] inline-block">
+                                    Unit / Suite / Buzzer: {ord.delivery_unit}
+                                  </div>
+                                )}
+                              </div>
+
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1 border-t border-slate-200">
+                                <div>
+                                  <span className="text-slate-500 block text-[10px] uppercase font-bold">Receiving Contact</span>
+                                  <span className="text-slate-800 font-semibold">
+                                    {ord.delivery_contact_name || ord.customer_name}
+                                  </span>
+                                </div>
+                                <div>
+                                  <span className="text-slate-500 block text-[10px] uppercase font-bold">Receiving Phone</span>
+                                  <a
+                                    href={`tel:${ord.delivery_contact_phone || ord.customer_phone}`}
+                                    onClick={(e) => e.stopPropagation()}
+                                    className="text-emerald-700 hover:text-emerald-800 font-bold flex items-center space-x-1"
+                                  >
+                                    <Phone className="w-3 h-3 shrink-0" />
+                                    <span>{ord.delivery_contact_phone || ord.customer_phone}</span>
+                                  </a>
+                                </div>
+                              </div>
+
+                              {ord.delivery_notes && (
+                                <div className="p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-700 text-[11px]">
+                                  <strong className="text-slate-500 block text-[10px] uppercase">Receiver Drop-off Notes:</strong>
+                                  {ord.delivery_notes}
+                                </div>
+                              )}
+                            </div>
+
+                            {/* Drop-off Navigation Link */}
+                            <div className="pt-2 border-t border-slate-200">
+                              <a
+                                href={deliveryNavUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                onClick={(e) => e.stopPropagation()}
+                                className="w-full inline-flex items-center justify-center space-x-2 px-4 py-2.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 hover:text-emerald-900 font-bold rounded-xl border border-emerald-200 transition shadow-xs cursor-pointer text-xs"
+                              >
+                                <Navigation className="w-3.5 h-3.5 text-emerald-600" />
+                                <span>Navigate to Drop-Off in Google Maps</span>
+                                <ExternalLink className="w-3 h-3 text-emerald-600" />
+                              </a>
+                            </div>
                           </div>
-                          <p className="text-[11px] text-slate-600">
-                            Follow GPS route without unauthorized detours to maintain client SLA delivery promise and live dispatch tracking.
-                          </p>
                         </div>
-                        <div className="bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-1">
-                          <div className="font-bold text-slate-900 flex items-center space-x-1.5 text-xs">
-                            <Camera className="w-3.5 h-3.5 text-emerald-600" />
-                            <span>3. Digital POD Capture</span>
+
+                        {/* Section 4: Cargo Manifest & Fleet Specifications */}
+                        <div className="bg-white/90 border border-slate-200 rounded-2xl p-5 space-y-3 text-xs">
+                          <div className="flex items-center space-x-2 text-slate-800 font-bold uppercase text-[11px] tracking-wider border-b border-slate-200 pb-2">
+                            <Package className="w-3.5 h-3.5 text-red-500" />
+                            <span>Cargo Manifest &amp; Vehicle Specifications</span>
                           </div>
-                          <p className="text-[11px] text-slate-600">
-                            Capture clear photo of dropped cargo at receiver dock/door and enter recipient sign-off name to finalize delivery.
-                          </p>
+
+                          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                            <div className="bg-slate-50 border border-slate-200 p-3 rounded-xl">
+                              <span className="text-slate-500 block text-[10px] uppercase font-bold">Assigned Vehicle</span>
+                              <span className="text-slate-900 font-bold text-sm block mt-0.5">{ord.vehicle_name}</span>
+                              <span className="text-[10px] text-slate-500">Fleet requirement</span>
+                            </div>
+
+                            <div className="bg-slate-50 border border-slate-200 p-3 rounded-xl">
+                              <span className="text-slate-500 block text-[10px] uppercase font-bold">Cargo Type</span>
+                              <span className="text-slate-900 font-bold text-sm block mt-0.5 capitalize">
+                                {ord.item_type.replace(/_/g, ' ')}
+                              </span>
+                              <span className="text-[10px] text-slate-500">Classification</span>
+                            </div>
+
+                            <div className="bg-slate-50 border border-slate-200 p-3 rounded-xl">
+                              <span className="text-slate-500 block text-[10px] uppercase font-bold">Weight &amp; Quantity</span>
+                              <span className="text-emerald-700 font-black text-sm block mt-0.5">
+                                {ord.weight_lbs} lbs &bull; {ord.quantity} pails / units
+                              </span>
+                              <span className="text-[10px] text-slate-500">Payload weight</span>
+                            </div>
+
+                            <div className="bg-slate-50 border border-slate-200 p-3 rounded-xl">
+                              <span className="text-slate-500 block text-[10px] uppercase font-bold">Cargo Description</span>
+                              <span className="text-slate-800 font-medium text-xs block mt-0.5 truncate">
+                                {ord.item_description || 'Standard packaged cargo manifest'}
+                              </span>
+                              <span className="text-[10px] text-slate-500">Item details</span>
+                            </div>
+                          </div>
+
+                          {ord.custom_instructions && (
+                            <div className="p-3 bg-amber-50 border border-amber-300 rounded-xl text-amber-900 text-xs flex items-start space-x-2">
+                              <AlertCircle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                              <div>
+                                <strong className="font-bold text-amber-900 block text-[11px] uppercase">
+                                  Special Driver Handling Instructions:
+                                </strong>
+                                <span>{ord.custom_instructions}</span>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Section 5: Standard Operating Protocol & Verification (Replaced all financial rates) */}
+                        <div className="bg-white/90 border border-slate-200 rounded-2xl p-4.5 space-y-3 text-xs">
+                          <div className="flex items-center justify-between border-b border-slate-200 pb-2">
+                            <div className="flex items-center space-x-2 text-slate-800 font-bold uppercase text-[11px] tracking-wider">
+                              <Shield className="w-3.5 h-3.5 text-blue-600" />
+                              <span>Standard Delivery Protocol &amp; Quality Verification</span>
+                            </div>
+                            <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                              Direct Hand-off &bull; Digital POD
+                            </span>
+                          </div>
+
+                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                            <div className="bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-1">
+                              <div className="font-bold text-slate-900 flex items-center space-x-1.5 text-xs">
+                                <CheckCircle2 className="w-3.5 h-3.5 text-blue-600" />
+                                <span>1. Safe Cargo Loading</span>
+                              </div>
+                              <p className="text-[11px] text-slate-600">
+                                Inspect packaging integrity, ensure secure tie-down in vehicle, and verify piece count before leaving shipper.
+                              </p>
+                            </div>
+                            <div className="bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-1">
+                              <div className="font-bold text-slate-900 flex items-center space-x-1.5 text-xs">
+                                <Navigation className="w-3.5 h-3.5 text-amber-600" />
+                                <span>2. Direct Route Transit</span>
+                              </div>
+                              <p className="text-[11px] text-slate-600">
+                                Follow GPS route without unauthorized detours to maintain client SLA delivery promise and live dispatch tracking.
+                              </p>
+                            </div>
+                            <div className="bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-1">
+                              <div className="font-bold text-slate-900 flex items-center space-x-1.5 text-xs">
+                                <Camera className="w-3.5 h-3.5 text-emerald-600" />
+                                <span>3. Digital POD Capture</span>
+                              </div>
+                              <p className="text-[11px] text-slate-600">
+                                Capture clear photo of dropped cargo at receiver dock/door and enter recipient sign-off name to finalize delivery.
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Driver Action Stepper Buttons & Bottom Collapse Bar */}
+                        <div className="pt-3 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200">
+                          <div className="flex flex-wrap items-center gap-3">
+                            {(ord.order_status === 'accepted' || ord.order_status === 'assigned') && (
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleUpdateStatus(ord, 'en_route_pickup');
+                                }}
+                                className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl transition shadow-lg shadow-blue-950/50 flex items-center space-x-2 cursor-pointer"
+                              >
+                                <span>1. Start En Route to Pickup</span>
+                                <ArrowRight className="w-4 h-4" />
+                              </button>
+                            )}
+
+                            {ord.order_status === 'en_route_pickup' && (
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleUpdateStatus(ord, 'picked_up');
+                                }}
+                                className="px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs rounded-xl transition shadow-lg shadow-purple-950/50 flex items-center space-x-2 cursor-pointer"
+                              >
+                                <span>2. Cargo Picked Up &amp; Loaded</span>
+                                <ArrowRight className="w-4 h-4" />
+                              </button>
+                            )}
+
+                            {ord.order_status === 'picked_up' && (
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleUpdateStatus(ord, 'in_transit');
+                                }}
+                                className="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl transition shadow-lg shadow-indigo-950/50 flex items-center space-x-2 cursor-pointer"
+                              >
+                                <span>3. In Transit to Destination</span>
+                                <ArrowRight className="w-4 h-4" />
+                              </button>
+                            )}
+
+                            {(ord.order_status === 'in_transit' || ord.order_status === 'picked_up') && (
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setPodOrder(ord);
+                                }}
+                                className="px-6 py-3 bg-[#C5161D] hover:bg-[#A51218] text-white font-bold text-xs rounded-xl transition shadow-xl shadow-red-950/60 flex items-center space-x-2 cursor-pointer"
+                              >
+                                <Camera className="w-4 h-4" />
+                                <span>4. Complete Delivery &amp; Capture Digital POD</span>
+                              </button>
+                            )}
+                          </div>
+
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              toggleExpand(ord.id);
+                            }}
+                            className="text-xs text-slate-500 hover:text-slate-900 font-bold flex items-center space-x-1 underline cursor-pointer"
+                          >
+                            <ChevronUp className="w-3.5 h-3.5" />
+                            <span>Collapse Order Details</span>
+                          </button>
                         </div>
                       </div>
-                    </div>
-
-                    {/* Driver Action Stepper Buttons */}
-                    <div className="pt-2 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200">
-                      <div className="flex flex-wrap items-center gap-3">
-                        {(ord.order_status === 'accepted' || ord.order_status === 'assigned') && (
-                          <button
-                            onClick={() => handleUpdateStatus(ord, 'en_route_pickup')}
-                            className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl transition shadow-lg shadow-blue-950/50 flex items-center space-x-2 cursor-pointer"
-                          >
-                            <span>1. Start En Route to Pickup</span>
-                            <ArrowRight className="w-4 h-4" />
-                          </button>
-                        )}
-
-                        {ord.order_status === 'en_route_pickup' && (
-                          <button
-                            onClick={() => handleUpdateStatus(ord, 'picked_up')}
-                            className="px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs rounded-xl transition shadow-lg shadow-purple-950/50 flex items-center space-x-2 cursor-pointer"
-                          >
-                            <span>2. Cargo Picked Up & Loaded</span>
-                            <ArrowRight className="w-4 h-4" />
-                          </button>
-                        )}
-
-                        {ord.order_status === 'picked_up' && (
-                          <button
-                            onClick={() => handleUpdateStatus(ord, 'in_transit')}
-                            className="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl transition shadow-lg shadow-indigo-950/50 flex items-center space-x-2 cursor-pointer"
-                          >
-                            <span>3. In Transit to Destination</span>
-                            <ArrowRight className="w-4 h-4" />
-                          </button>
-                        )}
-
-                        {(ord.order_status === 'in_transit' || ord.order_status === 'picked_up') && (
-                          <button
-                            onClick={() => setPodOrder(ord)}
-                            className="px-6 py-3 bg-[#C5161D] hover:bg-[#A51218] text-white font-bold text-xs rounded-xl transition shadow-xl shadow-red-950/60 flex items-center space-x-2 cursor-pointer"
-                          >
-                            <Camera className="w-4 h-4" />
-                            <span>4. Complete Delivery & Capture Digital POD</span>
-                          </button>
-                        )}
-                      </div>
-
-                      <div className="text-[11px] text-slate-500 font-mono">
-                        Shift dispatch verification &bull; Real-time tracking active
-                      </div>
-                    </div>
+                    )}
                   </div>
                 );
               })}
@@ -1208,35 +1557,83 @@ export const DriverDashboard: React.FC<DriverDashboardProps> = ({ onNavigate, in
               No completed deliveries recorded for this shift yet.
             </div>
           ) : (
-            <div className="grid grid-cols-1 gap-4">
-              {completedDeliveries.map((ord) => (
-                <div
-                  key={ord.id}
-                  className="bg-emerald-50/25 border-2 border-emerald-300/80 rounded-2xl p-5 shadow-xs space-y-3 text-xs hover:border-emerald-400 transition"
-                >
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <div className="flex items-center space-x-2">
-                      <span className="font-bold text-slate-900 font-mono text-sm">#{ord.order_number}</span>
-                      <span className="text-[11px] text-slate-600 font-medium">({ord.service_area} • {ord.distance_km} km)</span>
+            <div className="grid grid-cols-1 gap-3">
+              {completedDeliveries.map((ord) => {
+                const isExpandedCompleted = expandedCompletedIds.has(ord.id);
+                return (
+                  <div
+                    key={ord.id}
+                    className={`bg-emerald-50/25 border-2 border-emerald-300/80 rounded-2xl p-5 shadow-xs space-y-3 text-xs hover:border-emerald-400 transition cursor-pointer ${
+                      isExpandedCompleted ? 'ring-2 ring-emerald-400/50 shadow-md' : ''
+                    }`}
+                    onClick={() => toggleExpandCompleted(ord.id)}
+                  >
+                    <div className="flex flex-wrap items-center justify-between gap-2 border-b border-emerald-100 pb-2">
+                      <div className="flex items-center space-x-2">
+                        <span className="font-bold text-slate-900 font-mono text-sm">#{ord.order_number}</span>
+                        <span className="text-[11px] text-slate-600 font-medium">({ord.service_area} • {ord.distance_km} km)</span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        {getOrderStatusBadge(ord.order_status, 'sm')}
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toggleExpandCompleted(ord.id);
+                          }}
+                          className="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-emerald-100 hover:bg-emerald-200 text-emerald-900 border border-emerald-300 transition flex items-center space-x-1 cursor-pointer"
+                        >
+                          <span>{isExpandedCompleted ? 'Collapse POD' : 'View POD'}</span>
+                          {isExpandedCompleted ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+                        </button>
+                      </div>
                     </div>
-                    {getOrderStatusBadge(ord.order_status, 'sm')}
-                  </div>
-                  <div className="text-slate-700 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 pt-1 font-medium">
-                    <span><strong>From:</strong> {ord.pickup_address}</span>
-                    <span><strong>To:</strong> {ord.delivery_address}</span>
-                  </div>
-                  {ord.proof_of_delivery && (
-                    <div className="text-[11px] text-emerald-900 bg-emerald-100/60 border border-emerald-200 px-3 py-1.5 rounded-xl flex flex-wrap items-center justify-between gap-2">
-                      <span>
-                        <strong>POD Confirmed:</strong> Receiver {ord.proof_of_delivery.recipient_name}
-                      </span>
-                      <span className="text-slate-500 font-mono text-[10px]">
-                        Delivered {new Date(ord.proof_of_delivery.delivered_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                      </span>
+
+                    <div className="text-slate-700 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 pt-0.5 font-medium">
+                      <span><strong>From:</strong> {ord.pickup_address}</span>
+                      <span><strong>To:</strong> {ord.delivery_address}</span>
                     </div>
-                  )}
-                </div>
-              ))}
+
+                    {ord.proof_of_delivery && (
+                      <div className="text-[11px] text-emerald-900 bg-emerald-100/60 border border-emerald-200 px-3 py-1.5 rounded-xl flex flex-wrap items-center justify-between gap-2">
+                        <span>
+                          <strong>POD Confirmed:</strong> Receiver {ord.proof_of_delivery.recipient_name}
+                        </span>
+                        <span className="text-slate-500 font-mono text-[10px]">
+                          Delivered {new Date(ord.proof_of_delivery.delivered_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </span>
+                      </div>
+                    )}
+
+                    {/* Expanded POD Details & Photo Thumbnail */}
+                    {isExpandedCompleted && (
+                      <div className="pt-3 border-t border-emerald-200/80 space-y-3 animate-fade-in">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs bg-white/80 p-3 rounded-xl border border-emerald-200">
+                          <div>
+                            <span className="text-slate-500 text-[10px] uppercase font-bold block">Sign-off Recipient</span>
+                            <span className="text-slate-900 font-bold">{ord.proof_of_delivery?.recipient_name || ord.customer_name}</span>
+                          </div>
+                          <div>
+                            <span className="text-slate-500 text-[10px] uppercase font-bold block">Driver Drop-Off Notes</span>
+                            <span className="text-slate-700">{ord.proof_of_delivery?.driver_notes || 'Delivered directly to receiver dock/door.'}</span>
+                          </div>
+                        </div>
+
+                        {ord.proof_of_delivery?.photo_url && (
+                          <div className="space-y-1">
+                            <span className="text-slate-600 font-bold text-[10px] uppercase block">Proof of Delivery Photo</span>
+                            <img
+                              src={ord.proof_of_delivery.photo_url}
+                              alt="Proof of Delivery"
+                              className="max-h-56 rounded-xl border border-emerald-300 object-cover shadow-xs"
+                            />
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           )}
         </div>
