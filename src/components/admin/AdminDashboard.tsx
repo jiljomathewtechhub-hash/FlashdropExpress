@@ -70,6 +70,7 @@ import { supabase, isSupabaseConfigured, createUnpersistedClient } from '../../l
 import { notificationService } from '../../lib/notificationService';
 import { inAppNotificationService, InAppNotification } from '../../lib/inAppNotificationService';
 import { getOrderStatusBadge } from '../../lib/statusHelper';
+import { formatScheduleDate, formatDateTime } from '../../lib/dateUtils';
 import { AdminAnalytics } from './AdminAnalytics';
 
 interface AdminDashboardProps {
@@ -1141,6 +1142,19 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
                               <span>#{ord.order_number}</span>
                               <Eye className="w-3 h-3 text-slate-400 group-hover:text-blue-600 transition" />
                             </button>
+                            {/* Schedule & Booking Dates */}
+                            <div className="font-sans font-normal mt-1 space-y-0.5">
+                              <div className="text-[11px] text-slate-700 flex items-center space-x-1" title="Scheduled Pickup Date & Time">
+                                <Calendar className="w-3 h-3 text-blue-600 shrink-0" />
+                                <span className="font-semibold text-slate-800">
+                                  {ord.pickup_date ? formatScheduleDate(ord.pickup_date) : formatScheduleDate(ord.created_at)}
+                                </span>
+                                {ord.pickup_time && <span className="text-slate-500 font-normal">({ord.pickup_time})</span>}
+                              </div>
+                              <div className="text-[10px] text-slate-400 pl-4" title="Order Created / Booked Timestamp">
+                                Booked: {formatScheduleDate(ord.created_at)}
+                              </div>
+                            </div>
                             {ord.proof_of_delivery?.photo_url && (
                               <button
                                 type="button"
@@ -1397,6 +1411,18 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
                                 )}
                               </div>
                               {getOrderStatusBadge(ord.order_status, 'sm')}
+                            </div>
+
+                            {/* Scheduled / Order Date Badge */}
+                            <div className="flex items-center justify-between text-[11px] text-slate-600 bg-slate-50 px-2.5 py-1 rounded-lg border border-slate-200/70">
+                              <div className="flex items-center space-x-1.5 font-semibold text-slate-800">
+                                <Calendar className="w-3 h-3 text-blue-600 shrink-0" />
+                                <span>{ord.pickup_date ? formatScheduleDate(ord.pickup_date) : formatScheduleDate(ord.created_at)}</span>
+                                {ord.pickup_time && <span className="text-slate-500 font-normal">({ord.pickup_time})</span>}
+                              </div>
+                              <span className="text-[10px] text-slate-400" title={`Booked: ${formatScheduleDate(ord.created_at)}`}>
+                                {formatScheduleDate(ord.created_at)}
+                              </span>
                             </div>
 
                             {/* Customer & Cargo Info */}

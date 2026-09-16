@@ -40,6 +40,7 @@ import { store, UserSession } from '../../lib/store';
 import { inAppNotificationService } from '../../lib/inAppNotificationService';
 import { NotificationBell } from '../common/NotificationBell';
 import { getOrderStatusBadge, ORDER_STATUS_CONFIG } from '../../lib/statusHelper';
+import { formatScheduleDate, formatDateTime } from '../../lib/dateUtils';
 
 // High-performance client-side photo compression utility for mobile and desktop uploads
 const compressImageFile = (file: File, maxDimension = 1280, quality = 0.82): Promise<string> => {
@@ -732,6 +733,10 @@ export const DriverDashboard: React.FC<DriverDashboardProps> = ({ onNavigate, in
                             <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-slate-100 text-slate-700 border border-slate-200">
                               Required: {ord.vehicle_name}
                             </span>
+                            <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-100/90 text-amber-950 border border-amber-300 flex items-center space-x-1">
+                              <Calendar className="w-3 h-3 text-amber-700" />
+                              <span>Pickup: {ord.pickup_date ? formatScheduleDate(ord.pickup_date) : formatScheduleDate(ord.created_at)} {ord.pickup_time ? `@ ${ord.pickup_time}` : ''}</span>
+                            </span>
                           </div>
 
                           <div className="flex items-center space-x-2 self-start sm:self-auto shrink-0">
@@ -762,9 +767,9 @@ export const DriverDashboard: React.FC<DriverDashboardProps> = ({ onNavigate, in
                               <span>Pickup Window</span>
                             </span>
                             <div className="font-bold text-slate-900 mt-0.5">
-                              {ord.pickup_date} at {ord.pickup_time}
+                              {ord.pickup_date ? formatScheduleDate(ord.pickup_date) : formatScheduleDate(ord.created_at)} {ord.pickup_time ? `at ${ord.pickup_time}` : ''}
                             </div>
-                            <span className="text-[10px] text-slate-500">Service SLA Scheduled</span>
+                            <span className="text-[10px] text-slate-500">Booked: {formatScheduleDate(ord.created_at)}</span>
                           </div>
 
                           <div className="bg-amber-50/50 p-3 rounded-2xl border border-amber-200/70">
@@ -995,6 +1000,10 @@ export const DriverDashboard: React.FC<DriverDashboardProps> = ({ onNavigate, in
                           <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-slate-100 text-slate-700 border border-slate-200">
                             Required: {ord.vehicle_name}
                           </span>
+                          <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-blue-50 text-blue-900 border border-blue-200 flex items-center space-x-1">
+                            <Calendar className="w-3 h-3 text-blue-600" />
+                            <span>Pickup: {ord.pickup_date ? formatScheduleDate(ord.pickup_date) : formatScheduleDate(ord.created_at)} {ord.pickup_time ? `@ ${ord.pickup_time}` : ''}</span>
+                          </span>
                         </div>
 
                         <div className="flex items-center space-x-2 self-start sm:self-auto shrink-0">
@@ -1046,7 +1055,8 @@ export const DriverDashboard: React.FC<DriverDashboardProps> = ({ onNavigate, in
                             <span>Schedule & Customer</span>
                           </div>
                           <div>
-                            <div className="font-bold text-slate-900">{ord.pickup_date} @ {ord.pickup_time}</div>
+                            <div className="font-bold text-slate-900">{ord.pickup_date ? formatScheduleDate(ord.pickup_date) : formatScheduleDate(ord.created_at)} @ {ord.pickup_time || 'Standard'}</div>
+                            <div className="text-[10px] text-slate-500">Booked: {formatScheduleDate(ord.created_at)}</div>
                             <div className="text-slate-600 truncate mt-0.5">
                               {ord.customer_name} {ord.company_name ? `(${ord.company_name})` : ''}
                             </div>
@@ -1240,7 +1250,7 @@ export const DriverDashboard: React.FC<DriverDashboardProps> = ({ onNavigate, in
                                   <span>1. Pickup Site &amp; Shipper</span>
                                 </div>
                                 <span className="text-[10px] text-slate-500 font-mono">
-                                  {ord.pickup_date} @ {ord.pickup_time}
+                                  {formatScheduleDate(ord.pickup_date || ord.created_at)} @ {ord.pickup_time || 'Standard'}
                                 </span>
                               </div>
 
@@ -1569,9 +1579,13 @@ export const DriverDashboard: React.FC<DriverDashboardProps> = ({ onNavigate, in
                     onClick={() => toggleExpandCompleted(ord.id)}
                   >
                     <div className="flex flex-wrap items-center justify-between gap-2 border-b border-emerald-100 pb-2">
-                      <div className="flex items-center space-x-2">
+                      <div className="flex flex-wrap items-center gap-2">
                         <span className="font-bold text-slate-900 font-mono text-sm">#{ord.order_number}</span>
                         <span className="text-[11px] text-slate-600 font-medium">({ord.service_area} • {ord.distance_km} km)</span>
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-900 border border-emerald-300 flex items-center space-x-1">
+                          <Calendar className="w-2.5 h-2.5 text-emerald-700" />
+                          <span>Delivered: {formatScheduleDate(ord.proof_of_delivery?.delivered_at || ord.updated_at || ord.created_at)}</span>
+                        </span>
                       </div>
                       <div className="flex items-center space-x-2">
                         {getOrderStatusBadge(ord.order_status, 'sm')}
@@ -1594,13 +1608,19 @@ export const DriverDashboard: React.FC<DriverDashboardProps> = ({ onNavigate, in
                       <span><strong>To:</strong> {ord.delivery_address}</span>
                     </div>
 
+                    <div className="text-[11px] text-slate-500 flex items-center space-x-2">
+                      <span>Scheduled: {formatScheduleDate(ord.pickup_date || ord.created_at)} {ord.pickup_time ? `@ ${ord.pickup_time}` : ''}</span>
+                      <span>&bull;</span>
+                      <span>Booked: {formatScheduleDate(ord.created_at)}</span>
+                    </div>
+
                     {ord.proof_of_delivery && (
                       <div className="text-[11px] text-emerald-900 bg-emerald-100/60 border border-emerald-200 px-3 py-1.5 rounded-xl flex flex-wrap items-center justify-between gap-2">
                         <span>
                           <strong>POD Confirmed:</strong> Receiver {ord.proof_of_delivery.recipient_name}
                         </span>
-                        <span className="text-slate-500 font-mono text-[10px]">
-                          Delivered {new Date(ord.proof_of_delivery.delivered_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        <span className="text-emerald-800 font-mono text-[10px]">
+                          Delivered on {formatDateTime(ord.proof_of_delivery.delivered_at)}
                         </span>
                       </div>
                     )}
