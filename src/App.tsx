@@ -166,20 +166,40 @@ export default function App() {
     };
   }, []);
 
-  // Strict route protection for dashboards: redirect unauthorized users to login
+  // Strict route protection for dashboards: redirect unauthorized users to login or their designated portal
   useEffect(() => {
     const user = store.getCurrentUser();
     if (currentTab === 'admin' || currentTab === 'owner') {
-      if (!user || (user.role !== 'admin' && user.role !== 'owner')) {
+      if (!user) {
         handleNavigate('login', { role: 'admin', error: 'Administrator credentials required to access this portal.' }, true);
+      } else if (user.role !== 'admin' && user.role !== 'owner') {
+        // Bounce unauthorized users back to their own portal
+        handleNavigate(user.role === 'driver' || user.role === 'dispatcher' ? 'driver' : 'customer', {
+          error: 'Access Denied: You do not have Administrator privileges.',
+        }, true);
       }
     } else if (currentTab === 'driver') {
-      if (!user || (user.role !== 'driver' && user.role !== 'dispatcher' && user.role !== 'admin' && user.role !== 'owner')) {
+      if (!user) {
         handleNavigate('login', { role: 'driver', error: 'Staff credentials required to access this portal.' }, true);
+      } else if (user.role === 'customer') {
+        // Customer accounts cannot access driver portal
+        handleNavigate('customer', {
+          error: 'Access Denied: The Fleet Portal is restricted to FlashDrop staff and drivers.',
+        }, true);
       }
     } else if (currentTab === 'customer') {
       if (!user) {
         handleNavigate('login', { role: 'customer', error: 'Please sign in or register to access the Customer Portal.' }, true);
+      } else if (user.role === 'driver' || user.role === 'dispatcher') {
+        // Driver accounts cannot access customer portal
+        handleNavigate('driver', {
+          error: 'Access Denied: Drivers and staff cannot access the Customer Portal. You have been redirected to your Fleet Portal.',
+        }, true);
+      } else if (user.role === 'admin' || user.role === 'owner') {
+        // Admin accounts should use Admin portal
+        handleNavigate('admin', {
+          error: 'Access Denied: Please use the Dispatch Command Center.',
+        }, true);
       }
     }
   }, [currentTab, currentUser]);
@@ -225,7 +245,9 @@ export default function App() {
         )}
         {currentTab === 'contact' && <ContactPage onNavigate={handleNavigate} />}
         {currentTab === 'login' && <LoginPage onNavigate={handleNavigate} initialParams={navParam} />}
-        {currentTab === 'customer' && currentUser && <CustomerPortal onNavigate={handleNavigate} />}
+        {currentTab === 'customer' && currentUser && currentUser.role === 'customer' && (
+          <CustomerPortal onNavigate={handleNavigate} />
+        )}
         {currentTab === 'driver' && currentUser && (currentUser.role === 'driver' || currentUser.role === 'dispatcher' || currentUser.role === 'admin' || currentUser.role === 'owner') && (
           <DriverDashboard onNavigate={handleNavigate} initialParams={navParam} />
         )}

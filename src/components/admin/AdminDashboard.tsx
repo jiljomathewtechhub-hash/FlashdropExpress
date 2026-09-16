@@ -213,6 +213,18 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
     };
   }, []);
 
+  // Strict role guard: only admin/owner accounts can access AdminDashboard
+  useEffect(() => {
+    const currentUser = store.getCurrentUser();
+    if (!currentUser) {
+      onNavigate('login', { role: 'admin', error: 'Administrator credentials required to access Dispatch Command Center.' });
+    } else if (currentUser.role !== 'admin' && currentUser.role !== 'owner') {
+      onNavigate(currentUser.role === 'driver' || currentUser.role === 'dispatcher' ? 'driver' : 'customer', {
+        error: 'Access Denied: Administrator privileges required.'
+      });
+    }
+  }, [user, onNavigate]);
+
   useEffect(() => {
     if (initialParams?.orderNumber) {
       setActiveTab('orders');
@@ -592,6 +604,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
       };
     }
   }, [isAnyModalOpen]);
+
+  if (!user || (user.role !== 'admin' && user.role !== 'owner')) {
+    return null;
+  }
 
   return (
     <div className="py-8 px-4 sm:px-6 max-w-7xl mx-auto space-y-7">

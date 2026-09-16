@@ -58,12 +58,34 @@ export const CustomerPortal: React.FC<CustomerPortalProps> = ({ onNavigate }) =>
   const [newAddrText, setNewAddrText] = useState('');
   const [showAddAddress, setShowAddAddress] = useState(false);
 
+  // Immediate role guard: if user is not customer, redirect immediately
+  useEffect(() => {
+    const currentUser = store.getCurrentUser();
+    if (currentUser && currentUser.role !== 'customer') {
+      onNavigate(currentUser.role === 'admin' || currentUser.role === 'owner' ? 'admin' : 'driver');
+    }
+  }, [user, onNavigate]);
+
   useEffect(() => {
     const refreshData = () => {
       const currentUser = store.getCurrentUser();
       setUser(currentUser);
+
+      if (!currentUser || currentUser.role !== 'customer') {
+        setOrders([]);
+        return;
+      }
+
       const allOrders = store.getOrders();
-      setOrders(allOrders);
+      const customerEmail = (currentUser.email || '').toLowerCase().trim();
+
+      // Strictly filter orders to only those placed by or assigned to this customer
+      const customerOrders = allOrders.filter((o) => {
+        const orderEmail = (o.customer_email || '').toLowerCase().trim();
+        return orderEmail && customerEmail && orderEmail === customerEmail;
+      });
+
+      setOrders(customerOrders);
     };
 
     refreshData();
@@ -133,6 +155,10 @@ export const CustomerPortal: React.FC<CustomerPortalProps> = ({ onNavigate }) =>
     setNewAddrText('');
     setShowAddAddress(false);
   };
+
+  if (!user || user.role !== 'customer') {
+    return null;
+  }
 
   return (
     <div className="py-10 px-4 sm:px-6 max-w-7xl mx-auto space-y-8">

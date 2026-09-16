@@ -297,33 +297,20 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate, initialParams 
         localStorage.removeItem(`flashdrop_pwd_reset_${emailTrimmed}`);
       } catch {}
 
-      // 3. Fetch profile or establish active session
-      let userName = 'Valued Customer';
-      let userPhone = '';
+      // 3. Clear any active session so the user signs in to their designated portal
       if (supabase) {
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('email', emailTrimmed)
-          .maybeSingle();
-
-        if (profile) {
-          userName = profile.full_name || profile.company_name || userName;
-          userPhone = profile.phone || '';
-        }
+        try {
+          await supabase.auth.signOut();
+        } catch {}
       }
+      store.setCurrentUser(null);
 
-      store.setCurrentUser({
-        role: 'customer',
-        email: emailTrimmed,
-        name: userName,
-        phone: userPhone,
-      });
-
-      setSuccessMessage('Password successfully updated! Redirecting to your Customer Portal...');
-      setTimeout(() => {
-        onNavigate('customer');
-      }, 1000);
+      setSuccessMessage('Password successfully updated! Please select your account type above and sign in with your new password.');
+      setMode('login');
+      setPassword('');
+      setNewPassword('');
+      setConfirmNewPassword('');
+      setResetCode('');
     } catch (err: any) {
       console.error('Error saving new password:', err);
       setErrorMessage(err?.message || 'Failed to update password. Please try again.');
@@ -353,6 +340,13 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate, initialParams 
       if (mode === 'register') {
         if (selectedRole !== 'customer') {
           throw new Error('Registration is strictly for customer accounts. Staff accounts must be provisioned by the Administrator.');
+        }
+
+        // Security check: ensure email is not an admin or existing driver/staff
+        const isAdminEmail = checkIsAdminEmail(emailTrimmed);
+        const isDriverEmail = store.getDrivers().some((d) => d.email && d.email.toLowerCase() === emailTrimmed);
+        if (isAdminEmail || isDriverEmail) {
+          throw new Error('This email address is reserved for FlashDrop staff and fleet operations. It cannot be used to register a customer account.');
         }
 
         if (!fullName.trim()) throw new Error('Full Name is required.');
@@ -466,46 +460,21 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate, initialParams 
         .from('profiles')
         .select('*')
         .eq('id', authData.user.id)
-        .single();
+        .maybeSingle();
 
-      const userEmail = authData.user.email || emailTrimmed;
+      const userEmail = (authData.user.email || emailTrimmed).toLowerCase().trim();
       const isAdminUser = checkIsAdminEmail(userEmail) || profile?.role === 'admin' || profile?.role === 'owner';
-      const isStaffUser = profile?.role === 'driver' || profile?.role === 'dispatcher' || isAdminUser;
 
-      // 1. Admin Guard
-      if (selectedRole === 'admin') {
-        if (!isAdminUser) {
-          await supabase.auth.signOut();
-          throw new Error('Access Denied: This account does not have Administrator privileges.');
-        }
+      // Look up driver record in memory or remote drivers table
+      let matchingDriver = store.getDrivers().find(
+        (d) =>
+          (d.email && d.email.toLowerCase() === userEmail) ||
+          (d.user_id && d.user_id === authData.user.id) ||
+          d.id === authData.user.id
+      );
 
-        store.setCurrentUser({
-          role: 'admin',
-          email: userEmail,
-          name: profile?.full_name || authData.user.user_metadata?.full_name || 'Administrator',
-          phone: profile?.phone || '',
-        });
-
-        setSuccessMessage('Administrator authenticated. Loading Dispatch Command Center...');
-        setTimeout(() => onNavigate('admin'), 500);
-        return;
-      }
-
-      // 2. Staff / Driver Guard
-      if (selectedRole === 'driver') {
-        if (!isStaffUser) {
-          await supabase.auth.signOut();
-          throw new Error('Access Denied: This account is not authorized as FlashDrop staff. Accounts must be provisioned by the Administrator.');
-        }
-
-        let matchingDriver = store.getDrivers().find(
-          (d) =>
-            (d.email && d.email.toLowerCase() === userEmail.toLowerCase()) ||
-            (d.user_id && d.user_id === authData.user.id) ||
-            d.id === authData.user.id
-        );
-
-        if (!matchingDriver && supabase) {
+      if (!matchingDriver && supabase) {
+        try {
           const { data: dbDriver } = await supabase
             .from('drivers')
             .select('*')
@@ -526,10 +495,46 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate, initialParams 
               staff_role: dbDriver.staff_role || 'driver',
             });
           }
+        } catch (drvErr) {
+          console.warn('Driver lookup notice:', drvErr);
+        }
+      }
+
+      const isDriverUser = Boolean(matchingDriver) || profile?.role === 'driver' || profile?.role === 'dispatcher';
+
+      // 1. Admin Guard
+      if (selectedRole === 'admin') {
+        if (!isAdminUser) {
+          await supabase.auth.signOut();
+          store.setCurrentUser(null);
+          if (isDriverUser) {
+            throw new Error('Access Denied: Staff/Driver credentials cannot be used to access the Administrator Command Center. Please select "Staff / Fleet" above to sign in.');
+          }
+          throw new Error('Access Denied: Customer accounts cannot access the Administrator Command Center. Please select "Customer" above to sign in.');
         }
 
         store.setCurrentUser({
-          role: isAdminUser ? 'admin' : 'driver',
+          role: 'admin',
+          email: userEmail,
+          name: profile?.full_name || authData.user.user_metadata?.full_name || 'Administrator',
+          phone: profile?.phone || '',
+        });
+
+        setSuccessMessage('Administrator authenticated. Loading Dispatch Command Center...');
+        setTimeout(() => onNavigate('admin'), 500);
+        return;
+      }
+
+      // 2. Staff / Driver Guard
+      if (selectedRole === 'driver') {
+        if (!isDriverUser && !isAdminUser) {
+          await supabase.auth.signOut();
+          store.setCurrentUser(null);
+          throw new Error('Access Denied: This account is registered as a Customer. Customer accounts cannot access the Staff / Fleet Portal. Please select "Customer" above to sign in.');
+        }
+
+        store.setCurrentUser({
+          role: isAdminUser && !matchingDriver ? 'admin' : 'driver',
           email: userEmail,
           name: profile?.full_name || matchingDriver?.name || authData.user.user_metadata?.full_name || 'Staff Member',
           phone: profile?.phone || matchingDriver?.phone || '',
@@ -541,43 +546,59 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate, initialParams 
         return;
       }
 
-      // 3. Customer Portal
-      let cachedProf: any = null;
-      try {
-        const stored = localStorage.getItem(`flashdrop_profile_${userEmail}`);
-        if (stored) cachedProf = JSON.parse(stored);
-      } catch {}
+      // 3. Customer Guard
+      if (selectedRole === 'customer') {
+        // STRICT SECURITY GUARD: Block Staff / Drivers and Admins from logging in as customers!
+        if (isDriverUser) {
+          await supabase.auth.signOut();
+          store.setCurrentUser(null);
+          throw new Error('Access Denied: This email address is registered as an active FlashDrop Staff / Driver account. Staff members cannot access the Customer Portal. Please select "Staff / Fleet" above to sign in to your Driver Portal.');
+        }
 
-      const userAccountType =
-        authData.user.user_metadata?.account_type ||
-        profile?.account_type ||
-        cachedProf?.accountType ||
-        (profile?.company_name && profile.company_name !== 'Personal Account' ? 'commercial' : 'personal');
+        if (isAdminUser) {
+          await supabase.auth.signOut();
+          store.setCurrentUser(null);
+          throw new Error('Access Denied: This email address belongs to an Administrator account. Administrator accounts cannot access the Customer Portal. Please select "Admin / Dispatch" above to sign in.');
+        }
 
-      const userHstNumber =
-        authData.user.user_metadata?.hst_number ||
-        profile?.hst_number ||
-        cachedProf?.hstNumber ||
-        '';
+        let cachedProf: any = null;
+        try {
+          const stored = localStorage.getItem(`flashdrop_profile_${userEmail}`);
+          if (stored) cachedProf = JSON.parse(stored);
+        } catch {}
 
-      const userCompanyName =
-        profile?.company_name ||
-        authData.user.user_metadata?.company_name ||
-        cachedProf?.companyName ||
-        '';
+        const userAccountType =
+          authData.user.user_metadata?.account_type ||
+          profile?.account_type ||
+          cachedProf?.accountType ||
+          (profile?.company_name && profile.company_name !== 'Personal Account' ? 'commercial' : 'personal');
 
-      store.setCurrentUser({
-        role: (profile?.role as UserRole) || 'customer',
-        email: userEmail,
-        name: profile?.full_name || userCompanyName || authData.user.user_metadata?.full_name || 'Customer',
-        phone: profile?.phone || authData.user.user_metadata?.phone || '',
-        accountType: userAccountType,
-        hstNumber: userHstNumber,
-        companyName: userCompanyName,
-      });
+        const userHstNumber =
+          authData.user.user_metadata?.hst_number ||
+          profile?.hst_number ||
+          cachedProf?.hstNumber ||
+          '';
 
-      setSuccessMessage('Welcome back! Loading Customer Portal...');
-      setTimeout(() => onNavigate('customer'), 500);
+        const userCompanyName =
+          profile?.company_name ||
+          authData.user.user_metadata?.company_name ||
+          cachedProf?.companyName ||
+          '';
+
+        store.setCurrentUser({
+          role: 'customer',
+          email: userEmail,
+          name: profile?.full_name || userCompanyName || authData.user.user_metadata?.full_name || 'Customer',
+          phone: profile?.phone || authData.user.user_metadata?.phone || '',
+          accountType: userAccountType,
+          hstNumber: userHstNumber,
+          companyName: userCompanyName,
+        });
+
+        setSuccessMessage('Welcome back! Loading Customer Portal...');
+        setTimeout(() => onNavigate('customer'), 500);
+        return;
+      }
     } catch (err: any) {
       console.error('Authentication error:', err);
       let msg = err?.message || 'Authentication failed. Please verify your credentials.';

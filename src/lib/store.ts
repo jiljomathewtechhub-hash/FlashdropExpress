@@ -188,23 +188,31 @@ class FlashDropStore {
           .eq('id', session.user.id)
           .single();
 
-        const emailLower = (session.user.email || '').toLowerCase();
-        const role = (profile?.role as UserRole) || 
-          (emailLower.includes('admin') || emailLower.includes('@flashdropexpress.com') || emailLower === 'shyswashiinc@gmail.com' || emailLower === 'jiljomathew.techhub@gmail.com' ? 'admin' : 'customer');
-
+        const emailLower = (session.user.email || '').toLowerCase().trim();
         const matchingDriver = this.drivers.find(
           (d) =>
-            (d.email && d.email.toLowerCase() === emailLower) ||
+            (d.email && d.email.toLowerCase().trim() === emailLower) ||
             (d.user_id && d.user_id === session.user.id) ||
             d.id === session.user.id
         );
 
+        const isAdmin = 
+          profile?.role === 'admin' || 
+          profile?.role === 'owner' || 
+          emailLower.includes('admin@') || 
+          emailLower.endsWith('@flashdropexpress.com') ||
+          emailLower === 'support@flashdropexpress.com' ||
+          emailLower === 'jiljomathew.techhub@gmail.com';
+
+        const isDriver = !isAdmin && (Boolean(matchingDriver) || profile?.role === 'driver' || profile?.role === 'dispatcher');
+        const resolvedRole: UserRole = isAdmin ? 'admin' : isDriver ? 'driver' : 'customer';
+
         this.currentUser = {
-          role,
+          role: resolvedRole,
           email: session.user.email || '',
           name: profile?.full_name || matchingDriver?.name || session.user.user_metadata?.full_name || session.user.email?.split('@')[0] || 'User',
           phone: profile?.phone || matchingDriver?.phone || session.user.user_metadata?.phone,
-          driverId: role === 'driver' ? (matchingDriver?.id || profile?.id || session.user.id) : undefined,
+          driverId: resolvedRole === 'driver' ? (matchingDriver?.id || profile?.id || session.user.id) : undefined,
         };
         this.notify();
       }
@@ -218,23 +226,31 @@ class FlashDropStore {
             .eq('id', session.user.id)
             .single();
 
-          const emailLower = (session.user.email || '').toLowerCase();
-          const role = (profile?.role as UserRole) || 
-            (emailLower.includes('admin') || emailLower.includes('@flashdropexpress.com') || emailLower === 'shyswashiinc@gmail.com' || emailLower === 'jiljomathew.techhub@gmail.com' ? 'admin' : 'customer');
-
+          const emailLower = (session.user.email || '').toLowerCase().trim();
           const matchingDriver = this.drivers.find(
             (d) =>
-              (d.email && d.email.toLowerCase() === emailLower) ||
+              (d.email && d.email.toLowerCase().trim() === emailLower) ||
               (d.user_id && d.user_id === session.user.id) ||
               d.id === session.user.id
           );
 
+          const isAdmin = 
+            profile?.role === 'admin' || 
+            profile?.role === 'owner' || 
+            emailLower.includes('admin@') || 
+            emailLower.endsWith('@flashdropexpress.com') ||
+            emailLower === 'support@flashdropexpress.com' ||
+            emailLower === 'jiljomathew.techhub@gmail.com';
+
+          const isDriver = !isAdmin && (Boolean(matchingDriver) || profile?.role === 'driver' || profile?.role === 'dispatcher');
+          const resolvedRole: UserRole = isAdmin ? 'admin' : isDriver ? 'driver' : 'customer';
+
           this.currentUser = {
-            role,
+            role: resolvedRole,
             email: session.user.email || '',
             name: profile?.full_name || matchingDriver?.name || session.user.user_metadata?.full_name || session.user.email?.split('@')[0] || 'User',
             phone: profile?.phone || matchingDriver?.phone || session.user.user_metadata?.phone,
-            driverId: role === 'driver' ? (matchingDriver?.id || profile?.id || session.user.id) : undefined,
+            driverId: resolvedRole === 'driver' ? (matchingDriver?.id || profile?.id || session.user.id) : undefined,
           };
           this.saveToStorage();
         } else if (event === 'SIGNED_OUT') {

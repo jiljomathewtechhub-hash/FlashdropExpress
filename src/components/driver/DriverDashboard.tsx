@@ -182,6 +182,16 @@ export const DriverDashboard: React.FC<DriverDashboardProps> = ({ onNavigate, in
   const [isDrawing, setIsDrawing] = useState(false);
   const [hasSignature, setHasSignature] = useState(false);
 
+  // Strict role guard: non-staff/customers cannot access DriverDashboard
+  useEffect(() => {
+    const currentUser = store.getCurrentUser();
+    if (!currentUser) {
+      onNavigate('login', { role: 'driver', error: 'Staff credentials required to access Fleet Portal.' });
+    } else if (currentUser.role === 'customer') {
+      onNavigate('customer', { error: 'Access Denied: The Fleet Portal is restricted to FlashDrop staff and drivers.' });
+    }
+  }, [user, onNavigate]);
+
   useEffect(() => {
     const refreshData = () => {
       const currentUser = store.getCurrentUser();
@@ -303,6 +313,10 @@ export const DriverDashboard: React.FC<DriverDashboardProps> = ({ onNavigate, in
   };
 
   const isAdminOrOwner = user?.role === 'admin' || user?.role === 'owner';
+
+  if (!user || user.role === 'customer') {
+    return null;
+  }
 
   return (
     <div className="py-8 px-4 sm:px-6 max-w-6xl mx-auto space-y-6">
