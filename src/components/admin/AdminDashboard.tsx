@@ -69,7 +69,6 @@ import { generateOrderPdf } from '../../lib/pdf';
 import { supabase, isSupabaseConfigured, createUnpersistedClient } from '../../lib/supabase';
 import { notificationService } from '../../lib/notificationService';
 import { inAppNotificationService, InAppNotification } from '../../lib/inAppNotificationService';
-import { NotificationBell } from '../common/NotificationBell';
 import { getOrderStatusBadge } from '../../lib/statusHelper';
 import { AdminAnalytics } from './AdminAnalytics';
 
@@ -696,7 +695,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
         </div>
 
         <div className="flex items-center space-x-2 w-full md:w-auto justify-end">
-          <NotificationBell onNavigate={onNavigate} />
           <button
             onClick={() => onNavigate('home')}
             className="flex items-center space-x-1.5 px-3.5 py-2 bg-slate-50 hover:bg-slate-100 text-slate-700 hover:text-slate-900 border border-slate-200 text-xs font-semibold rounded-xl transition cursor-pointer"
@@ -874,12 +872,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
           { id: 'orders', label: 'Orders Queue', count: orders.length, icon: Package },
           { id: 'drivers', label: 'Staff & Drivers', count: drivers.length, icon: Users },
           { id: 'reports', label: 'Reports & Analytics', icon: BarChart3 },
-          {
-            id: 'notifications',
-            label: 'Notifications & Alerts',
-            badge: inAppNotifications.filter((n) => !n.is_read).length,
-            icon: Bell,
-          },
           { id: 'requests', label: 'Customer Requests', count: pendingRequests, alertCount: pendingRequests, icon: AlertCircle },
           { id: 'pricing', label: 'Pricing Matrix & Tiers', icon: DollarSign },
           { id: 'settings', label: 'Business & Operating Hours', icon: Sliders },
@@ -903,13 +895,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
                   isActive ? 'bg-white/20 text-white' : tab.alertCount ? 'bg-amber-100 text-amber-900' : 'bg-slate-100 text-slate-700'
                 }`}>
                   {tab.count}
-                </span>
-              )}
-              {tab.badge !== undefined && tab.badge > 0 && (
-                <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
-                  isActive ? 'bg-white text-red-700' : 'bg-red-500 text-white animate-pulse'
-                }`}>
-                  {tab.badge}
                 </span>
               )}
             </button>

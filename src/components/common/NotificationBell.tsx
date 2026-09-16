@@ -394,12 +394,25 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({
           </div>
 
           {/* Footer Bar */}
-          <div className="p-2.5 bg-slate-50 text-center border-t border-slate-200">
+          <div className="p-2.5 bg-slate-50 flex items-center justify-between border-t border-slate-200 text-xs px-3">
             <span className="text-[10px] text-slate-500">
               {user.role === 'admin' || user.role === 'owner'
-                ? 'Full GTA Operations Dispatch Monitor'
+                ? 'GTA Operations Dispatch Monitor'
                 : 'Assigned Courier & Dispatch Channel'}
             </span>
+            {(user.role === 'admin' || user.role === 'owner') && onNavigate && (
+              <button
+                type="button"
+                onClick={() => {
+                  setIsOpen(false);
+                  onNavigate('admin', { tab: 'notifications' });
+                }}
+                className="text-[10px] text-red-600 hover:text-red-800 font-bold hover:underline cursor-pointer"
+                title="View SMS and Email Dispatch Gateway Logs"
+              >
+                Gateway Logs &rarr;
+              </button>
+            )}
           </div>
         </div>
       )}
