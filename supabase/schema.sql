@@ -143,9 +143,14 @@ CREATE TABLE IF NOT EXISTS public.orders (
   after_hours_charge NUMERIC(10,2) NOT NULL DEFAULT 0.00,
   waiting_charge NUMERIC(10,2) NOT NULL DEFAULT 0.00,
   labor_charge NUMERIC(10,2) NOT NULL DEFAULT 0.00,
+  discount_amount NUMERIC(10,2) NOT NULL DEFAULT 0.00,
+  discount_type TEXT DEFAULT 'Loyalty Reward Discount',
+  discount_notes TEXT,
   subtotal NUMERIC(10,2) NOT NULL DEFAULT 0.00,
   tax_amount NUMERIC(10,2) NOT NULL DEFAULT 0.00,
   total_price NUMERIC(10,2) NOT NULL DEFAULT 0.00,
+  quote_notes TEXT,
+  quote_sent_at TIMESTAMPTZ,
   
   -- Status & Fulfillment
   payment_status payment_status NOT NULL DEFAULT 'pay_later',

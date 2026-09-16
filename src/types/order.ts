@@ -123,6 +123,9 @@ export interface Order {
   waiting_charge: number;
   labor_charge: number;
   delivery_type_charge?: number;
+  discount_amount?: number;
+  discount_type?: string;
+  discount_notes?: string;
   subtotal: number;
   tax_amount: number;
   total_price: number;

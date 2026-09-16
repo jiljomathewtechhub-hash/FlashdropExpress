@@ -44,6 +44,8 @@ import {
   VolumeX,
   CheckCheck,
   Filter,
+  Tag,
+  Percent,
 } from 'lucide-react';
 import { NotificationLog } from '../../types/notification';
 import { Order, Driver, Vehicle, OrderRequestItem, OrderStatus, BusinessSettings } from '../../types/order';
@@ -94,6 +96,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
     excess_km_charge: number;
     urgency_surcharge: number;
     after_hours_charge: number;
+    discount_amount: number;
+    discount_type: string;
+    discount_notes: string;
     subtotal: number;
     tax_amount: number;
     total_price: number;
@@ -103,6 +108,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
     excess_km_charge: 0,
     urgency_surcharge: 0,
     after_hours_charge: 0,
+    discount_amount: 0,
+    discount_type: 'Loyalty Reward Discount',
+    discount_notes: '',
     subtotal: 0,
     tax_amount: 0,
     total_price: 0,
@@ -398,7 +406,12 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
     } else if (order.delivery_time_option === 'urgent') {
       urgency = Number((base * 0.50).toFixed(2));
     }
-    const sub = order.subtotal > 0 ? Number(order.subtotal) : Number((base + excess + urgency + after).toFixed(2));
+    const discount = Number(order.discount_amount || 0);
+    const discountType = order.discount_type || 'Loyalty Reward Discount';
+    const discountNotes = order.discount_notes || '';
+
+    const gross = Number((base + excess + urgency + after).toFixed(2));
+    const sub = order.subtotal > 0 ? Number(order.subtotal) : Math.max(0, Number((gross - discount).toFixed(2)));
     const tax = order.tax_amount > 0 ? Number(order.tax_amount) : Number((sub * 0.13).toFixed(2));
     const total = order.total_price > 0 ? Number(order.total_price) : Number((sub + tax).toFixed(2));
 
@@ -407,6 +420,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
       excess_km_charge: excess,
       urgency_surcharge: urgency,
       after_hours_charge: after,
+      discount_amount: discount,
+      discount_type: discountType,
+      discount_notes: discountNotes,
       subtotal: sub,
       tax_amount: tax,
       total_price: total,
@@ -417,16 +433,19 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
 
   const handleRecalculateQuoteTotals = (updates: Partial<typeof quoteFormData>) => {
     const updated = { ...quoteFormData, ...updates };
-    const sub = Number((
+    const gross = Number((
       Number(updated.base_price || 0) +
       Number(updated.excess_km_charge || 0) +
       Number(updated.urgency_surcharge || 0) +
       Number(updated.after_hours_charge || 0)
     ).toFixed(2));
+    const discount = Math.max(0, Number(updated.discount_amount || 0));
+    const sub = Math.max(0, Number((gross - discount).toFixed(2)));
     const tax = Number((sub * 0.13).toFixed(2));
     const total = Number((sub + tax).toFixed(2));
     setQuoteFormData({
       ...updated,
+      discount_amount: discount,
       subtotal: sub,
       tax_amount: tax,
       total_price: total,
@@ -443,6 +462,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
         base_price: quoteFormData.base_price,
         excess_km_charge: quoteFormData.excess_km_charge,
         after_hours_charge: quoteFormData.after_hours_charge,
+        discount_amount: quoteFormData.discount_amount,
+        discount_type: quoteFormData.discount_type,
+        discount_notes: quoteFormData.discount_notes,
         subtotal: quoteFormData.subtotal,
         tax_amount: quoteFormData.tax_amount,
         total_price: quoteFormData.total_price,
@@ -815,6 +837,11 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
                           ) : (
                             <div>
                               <span className="font-bold text-slate-900">${ord.total_price.toFixed(2)}</span>
+                              {ord.discount_amount && ord.discount_amount > 0 ? (
+                                <span className="block text-[10px] text-emerald-700 font-bold" title={`${ord.discount_type || 'Discount'}: -$${ord.discount_amount.toFixed(2)} CAD`}>
+                                  -${ord.discount_amount.toFixed(2)} off
+                                </span>
+                              ) : null}
                               {ord.order_status === 'quote_sent' && (
                                 <span className="block text-[9px] text-purple-700 font-bold uppercase">Quotation Sent</span>
                               )}
@@ -3278,7 +3305,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
                   <DollarSign className="w-3.5 h-3.5 text-emerald-600" />
                   <span>Financial Breakdown & Pricing (CAD)</span>
                 </div>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
                   <div>
                     <label className="block text-slate-700 mb-1 font-semibold">Base Price ($)</label>
                     <input
@@ -3290,7 +3317,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
                     />
                   </div>
                   <div>
-                    <label className="block text-slate-700 mb-1 font-semibold">Excess KM Surcharge ($)</label>
+                    <label className="block text-slate-700 mb-1 font-semibold">Excess KM ($)</label>
                     <input
                       type="number"
                       step="0.01"
@@ -3307,6 +3334,17 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
                       value={editFormData.after_hours_charge ?? (editingOrder.after_hours_charge || 0)}
                       onChange={(e) => setEditFormData({ ...editFormData, after_hours_charge: Number(e.target.value) })}
                       className="w-full bg-white border border-slate-300 px-3 py-2 rounded-xl text-slate-900 focus:outline-none focus:border-red-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-slate-700 mb-1 font-semibold">Discount ($ CAD)</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      placeholder="0.00"
+                      value={editFormData.discount_amount ?? (editingOrder.discount_amount || 0)}
+                      onChange={(e) => setEditFormData({ ...editFormData, discount_amount: Number(e.target.value) })}
+                      className="w-full bg-emerald-50/50 border border-emerald-300 px-3 py-2 rounded-xl text-emerald-800 font-bold focus:outline-none focus:border-emerald-600"
                     />
                   </div>
                   <div>
@@ -3779,12 +3817,150 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
                 </div>
               </div>
 
-              {/* Subtotal, Tax & Total Live Cards */}
-              <div className="grid grid-cols-3 gap-3 pt-2">
-                <div className="bg-white p-3 rounded-xl border border-slate-200 text-center">
-                  <span className="text-slate-500 text-[10px] uppercase font-bold block">Subtotal</span>
-                  <span className="text-base font-black text-slate-900 font-mono">${quoteFormData.subtotal.toFixed(2)}</span>
+              {/* Customer Discount & Retention Incentive Section */}
+              <div className="bg-emerald-50/70 border border-emerald-300/80 rounded-2xl p-4 space-y-3 shadow-xs">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div className="flex items-center space-x-2">
+                    <div className="p-1.5 bg-emerald-600 rounded-lg text-white">
+                      <Tag className="w-3.5 h-3.5" />
+                    </div>
+                    <div>
+                      <span className="text-xs font-bold text-emerald-950 uppercase tracking-wide block">
+                        Customer Retention & Promotional Discount (CAD)
+                      </span>
+                      <span className="text-[10px] text-emerald-700 block">
+                        Apply a custom discount to reward loyalty or retain clients. Appears as a promotional credit on the quotation & bill.
+                      </span>
+                    </div>
+                  </div>
+                  {quoteFormData.discount_amount > 0 && (
+                    <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-black bg-emerald-200 text-emerald-900 border border-emerald-400">
+                      -${quoteFormData.discount_amount.toFixed(2)} CAD Applied
+                    </span>
+                  )}
                 </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div>
+                    <label className="block text-slate-700 text-xs mb-1 font-semibold">Discount Category / Reason</label>
+                    <select
+                      value={quoteFormData.discount_type}
+                      onChange={(e) => setQuoteFormData({ ...quoteFormData, discount_type: e.target.value })}
+                      className="w-full bg-white border border-slate-300 px-3 py-2 rounded-xl text-slate-900 text-xs font-medium focus:outline-none focus:border-emerald-500"
+                    >
+                      <option value="Loyalty Reward Discount">🎁 Loyalty Reward Discount</option>
+                      <option value="Promotional Discount">🏷️ Promotional / Welcome Discount</option>
+                      <option value="Commercial Volume Discount">🏢 Commercial Partner / Volume</option>
+                      <option value="VIP Courtesy Discount">⭐ VIP Courtesy Discount</option>
+                      <option value="Competitive Price Match">🎯 Competitive Price Match</option>
+                      <option value="Special Courtesy Discount">🤝 Special Courtesy Discount</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <div className="flex justify-between items-center mb-1">
+                      <label className="block text-slate-700 text-xs font-semibold">Discount Value ($ CAD)</label>
+                      {quoteFormData.discount_amount > 0 && (
+                        <button
+                          type="button"
+                          onClick={() => handleRecalculateQuoteTotals({ discount_amount: 0 })}
+                          className="text-[10px] text-red-600 hover:text-red-700 font-semibold underline cursor-pointer"
+                        >
+                          Clear Discount
+                        </button>
+                      )}
+                    </div>
+                    <div className="relative">
+                      <span className="absolute left-3 top-2 text-emerald-600 font-bold font-mono text-sm">-$</span>
+                      <input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        placeholder="0.00"
+                        value={quoteFormData.discount_amount === 0 ? '' : quoteFormData.discount_amount}
+                        onChange={(e) => handleRecalculateQuoteTotals({ discount_amount: Number(e.target.value) || 0 })}
+                        className="w-full bg-white border border-emerald-300 pl-8 pr-3 py-2 rounded-xl text-emerald-900 font-bold font-mono text-sm focus:outline-none focus:border-emerald-600 focus:ring-1 focus:ring-emerald-500"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-slate-700 text-xs mb-1 font-semibold">Customer Note / Memo (Optional)</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Valued return client / Spring promo"
+                      value={quoteFormData.discount_notes}
+                      onChange={(e) => setQuoteFormData({ ...quoteFormData, discount_notes: e.target.value })}
+                      className="w-full bg-white border border-slate-300 px-3 py-2 rounded-xl text-slate-900 text-xs focus:outline-none focus:border-emerald-500"
+                    />
+                  </div>
+                </div>
+
+                {/* Quick Discount Shortcut Presets */}
+                <div className="flex flex-wrap items-center gap-1.5 pt-1 text-[11px]">
+                  <span className="text-emerald-900 font-bold mr-1">Quick Apply:</span>
+                  {[10, 20, 25, 50].map((amt) => (
+                    <button
+                      key={amt}
+                      type="button"
+                      onClick={() => handleRecalculateQuoteTotals({ discount_amount: amt })}
+                      className={`px-2 py-0.5 rounded-lg border font-mono font-bold text-xs transition cursor-pointer ${
+                        quoteFormData.discount_amount === amt
+                          ? 'bg-emerald-700 text-white border-emerald-700 shadow-xs'
+                          : 'bg-white text-emerald-900 border-emerald-300 hover:bg-emerald-100 hover:border-emerald-500'
+                      }`}
+                    >
+                      -${amt}
+                    </button>
+                  ))}
+                  {[5, 10, 15, 20].map((pct) => {
+                    const gross = Number(quoteFormData.base_price || 0) + Number(quoteFormData.excess_km_charge || 0) + Number(quoteFormData.urgency_surcharge || 0) + Number(quoteFormData.after_hours_charge || 0);
+                    const calcAmt = Number((gross * (pct / 100)).toFixed(2));
+                    return (
+                      <button
+                        key={`${pct}%`}
+                        type="button"
+                        onClick={() => handleRecalculateQuoteTotals({ discount_amount: calcAmt })}
+                        className={`px-2 py-0.5 rounded-lg border font-semibold text-xs transition cursor-pointer ${
+                          quoteFormData.discount_amount === calcAmt && calcAmt > 0
+                            ? 'bg-emerald-700 text-white border-emerald-700 shadow-xs'
+                            : 'bg-white text-emerald-900 border-emerald-300 hover:bg-emerald-100 hover:border-emerald-500'
+                        }`}
+                        title={`Apply ${pct}% off gross ($${calcAmt.toFixed(2)} CAD)`}
+                      >
+                        {pct}% Off
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Subtotal, Discount, Tax & Total Live Cards */}
+              <div className={`grid ${quoteFormData.discount_amount > 0 ? 'grid-cols-2 sm:grid-cols-4' : 'grid-cols-3'} gap-3 pt-2`}>
+                <div className="bg-white p-3 rounded-xl border border-slate-200 text-center">
+                  <span className="text-slate-500 text-[10px] uppercase font-bold block">
+                    {quoteFormData.discount_amount > 0 ? 'Gross Subtotal' : 'Subtotal'}
+                  </span>
+                  <span className="text-base font-black text-slate-900 font-mono">
+                    ${(
+                      Number(quoteFormData.base_price || 0) +
+                      Number(quoteFormData.excess_km_charge || 0) +
+                      Number(quoteFormData.urgency_surcharge || 0) +
+                      Number(quoteFormData.after_hours_charge || 0)
+                    ).toFixed(2)}
+                  </span>
+                </div>
+
+                {quoteFormData.discount_amount > 0 && (
+                  <div className="bg-emerald-50 p-3 rounded-xl border border-emerald-300 text-center">
+                    <span className="text-emerald-800 text-[10px] uppercase font-bold block truncate">
+                      {quoteFormData.discount_type || 'Discount'}
+                    </span>
+                    <span className="text-base font-black text-emerald-800 font-mono">
+                      -${quoteFormData.discount_amount.toFixed(2)}
+                    </span>
+                  </div>
+                )}
 
                 <div className="bg-white p-3 rounded-xl border border-slate-200 text-center">
                   <span className="text-slate-500 text-[10px] uppercase font-bold block">HST (13%)</span>

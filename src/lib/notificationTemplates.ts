@@ -252,6 +252,10 @@ export const createCustomerQuoteReadyEmail = (order: Order, settings: BusinessSe
       <div style="font-size: 12px; color: #059669; font-weight: 600; margin-top: 4px;">
         Ontario HST Included (13%) &bull; Pay Later Upon Delivery
       </div>
+      ${order.discount_amount && order.discount_amount > 0 ? `
+      <div style="margin-top: 8px; display: inline-block; background-color: #047857; color: #FFFFFF; font-size: 11px; font-weight: 800; padding: 4px 12px; border-radius: 9999px; letter-spacing: 0.5px; text-transform: uppercase;">
+        🎉 Special Customer Savings: You Save $${order.discount_amount.toFixed(2)} CAD
+      </div>` : ''}
     </div>
 
     <!-- Order Header Card -->
@@ -326,6 +330,13 @@ export const createCustomerQuoteReadyEmail = (order: Order, settings: BusinessSe
       <div class="row">
         <span class="row-label">Additional Helper / Crew Labor</span>
         <span class="row-value">+$${order.labor_charge.toFixed(2)} CAD</span>
+      </div>` : ''}
+      ${order.discount_amount && order.discount_amount > 0 ? `
+      <div class="row" style="background-color: #ECFDF5; padding: 6px 10px; border-radius: 6px; margin: 6px 0; border: 1px dashed #10B981;">
+        <span class="row-label" style="color: #047857; font-weight: 800;">
+          🎁 ${order.discount_type || 'Special Loyalty Discount'}${order.discount_notes ? ` &bull; <span style="font-weight: normal; color: #065F46;">${order.discount_notes}</span>` : ''}
+        </span>
+        <span class="row-value" style="color: #047857; font-weight: 900; font-size: 13px;">-$${order.discount_amount.toFixed(2)} CAD</span>
       </div>` : ''}
       <div class="divider"></div>
       <div class="row">
@@ -481,6 +492,13 @@ export const createCustomerStatusEmail = (order: Order, prevStatus: OrderStatus,
       <div class="row">
         <span class="row-label">Additional Helper / Crew Labor</span>
         <span class="row-value">+$${order.labor_charge.toFixed(2)} CAD</span>
+      </div>` : ''}
+      ${order.discount_amount && order.discount_amount > 0 ? `
+      <div class="row" style="background-color: #ECFDF5; padding: 6px 10px; border-radius: 6px; margin: 6px 0; border: 1px dashed #10B981;">
+        <span class="row-label" style="color: #047857; font-weight: 800;">
+          🎁 ${order.discount_type || 'Special Loyalty Discount'}${order.discount_notes ? ` &bull; <span style="font-weight: normal; color: #065F46;">${order.discount_notes}</span>` : ''}
+        </span>
+        <span class="row-value" style="color: #047857; font-weight: 900; font-size: 13px;">-$${order.discount_amount.toFixed(2)} CAD</span>
       </div>` : ''}
       <div class="divider"></div>
       <div class="row">

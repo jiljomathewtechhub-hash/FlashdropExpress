@@ -290,6 +290,19 @@ class FlashDropStore {
               (d.email && row.assigned_driver_id && d.email.toLowerCase() === row.assigned_driver_id.toLowerCase())
           );
 
+          const existing = this.orders.find((o) => o.id === row.id || o.order_number === row.order_number);
+          const base = Number(row.base_price || 0);
+          const excess = Number(row.excess_km_charge || 0);
+          const after = Number(row.after_hours_charge || 0);
+          const waiting = Number(row.waiting_charge || 0);
+          const labor = Number(row.labor_charge || 0);
+          const sub = Number(row.subtotal || 0);
+          const gross = Number((base + excess + after + waiting + labor).toFixed(2));
+          let discountAmt = existing?.discount_amount;
+          if (discountAmt === undefined && gross > sub && sub > 0) {
+            discountAmt = Number((gross - sub).toFixed(2));
+          }
+
           return {
             id: row.id,
             order_number: row.order_number,
@@ -325,12 +338,17 @@ class FlashDropStore {
             quantity: Number(row.quantity),
             distance_km: Number(row.distance_km),
             custom_instructions: row.custom_instructions,
-            base_price: Number(row.base_price),
-            excess_km_charge: Number(row.excess_km_charge),
-            after_hours_charge: Number(row.after_hours_charge),
-            waiting_charge: Number(row.waiting_charge),
-            labor_charge: Number(row.labor_charge),
-            subtotal: Number(row.subtotal),
+            base_price: base,
+            excess_km_charge: excess,
+            after_hours_charge: after,
+            waiting_charge: waiting,
+            labor_charge: labor,
+            discount_amount: discountAmt ?? existing?.discount_amount,
+            discount_type: existing?.discount_type,
+            discount_notes: existing?.discount_notes,
+            quote_notes: existing?.quote_notes,
+            quote_sent_at: existing?.quote_sent_at,
+            subtotal: sub,
             tax_amount: Number(row.tax_amount),
             total_price: Number(row.total_price),
             payment_status: row.payment_status,
@@ -339,8 +357,8 @@ class FlashDropStore {
             assigned_driver_name: assignedDriver?.name || row.assigned_driver_name || undefined,
             created_at: row.created_at,
             updated_at: row.updated_at,
-            status_history: row.order_status_history || [],
-            proof_of_delivery: row.proof_of_delivery?.[0] || undefined,
+            status_history: row.order_status_history || existing?.status_history || [],
+            proof_of_delivery: row.proof_of_delivery?.[0] || existing?.proof_of_delivery || undefined,
           };
         });
         this.saveToStorage();

@@ -539,6 +539,11 @@ export const OrderTracker: React.FC<OrderTrackerProps> = ({ initialOrderNumber, 
                   <span className="text-2xl sm:text-3xl font-black text-emerald-700 font-['Outfit']">
                     ${(order.total_price || 0).toFixed(2)} CAD
                   </span>
+                  {order.discount_amount && order.discount_amount > 0 ? (
+                    <span className="block text-[11px] text-emerald-700 font-bold">
+                      🎉 You Save ${order.discount_amount.toFixed(2)} CAD ({order.discount_type || 'Special Discount'})
+                    </span>
+                  ) : null}
                 </div>
               </div>
 
@@ -582,6 +587,15 @@ export const OrderTracker: React.FC<OrderTrackerProps> = ({ initialOrderNumber, 
                       <span className="font-semibold text-slate-900">+${order.labor_charge.toFixed(2)} CAD</span>
                     </div>
                   )}
+                  {order.discount_amount && order.discount_amount > 0 ? (
+                    <div className="flex justify-between items-center py-1 px-2.5 my-1 rounded-lg bg-emerald-50 border border-emerald-300 text-emerald-900 font-medium">
+                      <span className="flex items-center space-x-1.5">
+                        <span>🎁</span>
+                        <span className="font-bold">{order.discount_type || 'Customer Loyalty Discount'}{order.discount_notes ? ` (${order.discount_notes})` : ''}:</span>
+                      </span>
+                      <span className="font-bold text-emerald-700 font-mono text-xs">-${order.discount_amount.toFixed(2)} CAD</span>
+                    </div>
+                  ) : null}
                   <div className="border-t border-slate-200 my-1 pt-1.5 flex justify-between items-center text-slate-500">
                     <span>Subtotal (Net Before HST):</span>
                     <span className="font-semibold text-slate-800">${(order.subtotal || (order.total_price / 1.13)).toFixed(2)} CAD</span>
@@ -819,6 +833,12 @@ export const OrderTracker: React.FC<OrderTrackerProps> = ({ initialOrderNumber, 
                           <span className="text-slate-900 font-semibold">+${order.labor_charge.toFixed(2)}</span>
                         </div>
                       )}
+                      {order.discount_amount && order.discount_amount > 0 ? (
+                        <div className="flex justify-between text-emerald-700 font-semibold bg-emerald-50 px-2 py-0.5 rounded">
+                          <span>🎁 {order.discount_type || 'Special Discount'}:</span>
+                          <span>-${order.discount_amount.toFixed(2)}</span>
+                        </div>
+                      ) : null}
                       <div className="border-t border-slate-200 pt-1 flex justify-between text-slate-500">
                         <span>Subtotal (Net):</span>
                         <span className="text-slate-800">${(order.subtotal || (order.total_price / 1.13)).toFixed(2)}</span>

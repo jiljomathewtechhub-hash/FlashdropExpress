@@ -243,8 +243,10 @@ export function generateOrderPdf(
 
   // Rows
   y += 8;
-  const addRow = (label: string, specs: string, amount: number, isSub = false) => {
-    if (isSub) {
+  const addRow = (label: string, specs: string, amount: number, isSub = false, isDiscount = false) => {
+    if (isDiscount) {
+      doc.setFillColor(240, 253, 244);
+    } else if (isSub) {
       doc.setFillColor(252, 253, 255);
     } else {
       doc.setFillColor(255, 255, 255);
@@ -257,16 +259,29 @@ export function generateOrderPdf(
 
     doc.setFontSize(8.5);
     doc.setFont('helvetica', isSub ? 'normal' : 'bold');
-    doc.setTextColor(textDark[0], textDark[1], textDark[2]);
+    if (isDiscount) {
+      doc.setTextColor(4, 120, 87);
+    } else {
+      doc.setTextColor(textDark[0], textDark[1], textDark[2]);
+    }
     doc.text(label, 20, y + 5.2);
 
     doc.setFont('helvetica', 'normal');
-    doc.setTextColor(mutedText[0], mutedText[1], mutedText[2]);
+    if (isDiscount) {
+      doc.setTextColor(5, 150, 105);
+    } else {
+      doc.setTextColor(mutedText[0], mutedText[1], mutedText[2]);
+    }
     doc.text(specs, 120, y + 5.2);
 
     doc.setFont('helvetica', 'bold');
-    doc.setTextColor(textDark[0], textDark[1], textDark[2]);
-    doc.text(`$${amount.toFixed(2)}`, 190, y + 5.2, { align: 'right' });
+    if (isDiscount) {
+      doc.setTextColor(4, 120, 87);
+      doc.text(`-$${Math.abs(amount).toFixed(2)}`, 190, y + 5.2, { align: 'right' });
+    } else {
+      doc.setTextColor(textDark[0], textDark[1], textDark[2]);
+      doc.text(`$${amount.toFixed(2)}`, 190, y + 5.2, { align: 'right' });
+    }
     y += 7.5;
   };
 
@@ -300,6 +315,12 @@ export function generateOrderPdf(
 
   if (order.labor_charge > 0) {
     addRow('Additional Labor & Handling', 'Driver heavy lift assist', order.labor_charge, true);
+  }
+
+  if (order.discount_amount && order.discount_amount > 0) {
+    const discLabel = order.discount_type || 'Customer Loyalty Discount';
+    const discSpecs = order.discount_notes ? order.discount_notes : 'Special customer discount';
+    addRow(discLabel, discSpecs, order.discount_amount, false, true);
   }
 
   // Outer border around entire table
