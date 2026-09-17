@@ -206,8 +206,10 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] text-slate-800 flex flex-col justify-between selection:bg-red-500 selection:text-white relative">
-      {/* Full-Website Moving Highway & Vehicle Experience */}
-      <FullPage3DHighway />
+      {/* Full-Website Moving Highway & Vehicle Experience (active on public pages, hidden on portals for optimal visual clarity) */}
+      {!['admin', 'owner', 'driver', 'customer'].includes(currentTab) && (
+        <FullPage3DHighway />
+      )}
 
       {/* Top Navbar */}
       <Navbar currentTab={currentTab} onNavigate={handleNavigate} />

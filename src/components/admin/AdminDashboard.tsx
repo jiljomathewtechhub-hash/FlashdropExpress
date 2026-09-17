@@ -60,6 +60,7 @@ import {
   Zap,
   Activity,
   ChevronRight,
+  LayoutDashboard,
 } from 'lucide-react';
 import { NotificationLog } from '../../types/notification';
 import { Order, Driver, Vehicle, Customer, OrderRequestItem, OrderStatus, BusinessSettings } from '../../types/order';
@@ -714,6 +715,24 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
 
         <div className="flex items-center space-x-2 w-full md:w-auto justify-end">
           <button
+            type="button"
+            onClick={() => setActiveTab('notifications')}
+            className={`flex items-center space-x-1.5 px-3 py-2 text-xs font-bold rounded-xl transition cursor-pointer border ${
+              activeTab === 'notifications'
+                ? 'bg-[#C5161D] text-white border-[#800C10] shadow-sm'
+                : 'bg-slate-50 hover:bg-slate-100 text-slate-700 hover:text-slate-900 border-slate-200'
+            }`}
+            title="Activity Feed & Live Audio Alerts"
+          >
+            <Bell className={`w-3.5 h-3.5 ${activeTab === 'notifications' ? 'text-white' : 'text-amber-600'}`} />
+            <span className="hidden sm:inline">Alerts</span>
+            {inAppNotifications.filter((n) => !n.is_read).length > 0 && (
+              <span className="bg-red-600 text-white text-[10px] font-black px-1.5 py-0.2 rounded-full animate-pulse">
+                {inAppNotifications.filter((n) => !n.is_read).length}
+              </span>
+            )}
+          </button>
+          <button
             onClick={() => onNavigate('home')}
             className="flex items-center space-x-1.5 px-3.5 py-2 bg-slate-50 hover:bg-slate-100 text-slate-700 hover:text-slate-900 border border-slate-200 text-xs font-semibold rounded-xl transition cursor-pointer"
             title="Go to customer-facing website"
@@ -750,23 +769,23 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
             setStatusFilter('all');
             setSearchQuery('');
           }}
-          className={`bg-white border rounded-2xl p-4 transition-all duration-200 cursor-pointer group shadow-2xs hover:shadow-md ${
+          className={`bg-white border-2 rounded-2xl p-4 sm:p-5 transition-all duration-200 cursor-pointer group shadow-sm hover:shadow-md ${
             activeTab === 'orders' && statusFilter === 'all' && !searchQuery
-              ? 'border-slate-900 ring-2 ring-slate-900/10'
-              : 'border-slate-200 hover:border-slate-300'
+              ? 'border-slate-900 ring-4 ring-slate-900/10 bg-slate-50/70'
+              : 'border-slate-200 hover:border-slate-400'
           }`}
           title="Click to view All Orders"
         >
           <div className="flex items-center justify-between">
-            <span className="text-[11px] font-bold text-slate-600 uppercase tracking-wider">Total Shipments</span>
-            <div className="w-7 h-7 rounded-xl bg-slate-100 group-hover:bg-slate-200 flex items-center justify-center text-slate-700 transition">
-              <Package className="w-3.5 h-3.5" />
+            <span className="text-xs font-black text-slate-600 uppercase tracking-wider">Total Shipments</span>
+            <div className="w-9 h-9 rounded-xl bg-slate-100 border border-slate-200 group-hover:bg-slate-200 flex items-center justify-center text-slate-800 transition">
+              <Package className="w-4 h-4" />
             </div>
           </div>
-          <div className="text-2xl font-black text-slate-900 font-['Outfit'] mt-2 tracking-tight">
+          <div className="text-3xl font-black text-slate-950 font-['Outfit'] mt-2 tracking-tight">
             {orders.length}
           </div>
-          <div className="text-[10px] font-semibold text-slate-500 mt-1 flex items-center">
+          <div className="text-xs font-semibold text-slate-500 mt-1 flex items-center">
             <span>All time dispatches</span>
           </div>
         </div>
@@ -777,24 +796,24 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
             setActiveTab('orders');
             setStatusFilter('pending');
           }}
-          className={`bg-amber-500/[0.04] border rounded-2xl p-4 transition-all duration-200 cursor-pointer group shadow-2xs hover:shadow-md ${
+          className={`bg-white border-2 rounded-2xl p-4 sm:p-5 transition-all duration-200 cursor-pointer group shadow-sm hover:shadow-md ${
             activeTab === 'orders' && (statusFilter === 'pending' || statusFilter === 'submitted')
-              ? 'border-amber-500 ring-2 ring-amber-500/20 bg-amber-500/10'
-              : 'border-amber-200/80 hover:border-amber-300'
+              ? 'border-amber-500 ring-4 ring-amber-500/15 bg-amber-50/40'
+              : 'border-slate-200 hover:border-amber-400'
           }`}
           title="Click to filter by Pending Quotes & Dispatch"
         >
           <div className="flex items-center justify-between">
-            <span className="text-[11px] font-bold text-amber-900 uppercase tracking-wider">Pending Dispatch</span>
-            <div className="w-7 h-7 rounded-xl bg-amber-100 group-hover:bg-amber-200 flex items-center justify-center text-amber-800 transition">
-              <Clock className="w-3.5 h-3.5" />
+            <span className="text-xs font-black text-amber-900 uppercase tracking-wider">Pending Dispatch</span>
+            <div className="w-9 h-9 rounded-xl bg-amber-100 border border-amber-300 group-hover:bg-amber-200 flex items-center justify-center text-amber-900 transition">
+              <Clock className="w-4 h-4" />
             </div>
           </div>
-          <div className="text-2xl font-black text-amber-950 font-['Outfit'] mt-2 tracking-tight">
+          <div className="text-3xl font-black text-amber-950 font-['Outfit'] mt-2 tracking-tight">
             {pendingOrders}
           </div>
-          <div className="text-[10px] font-semibold text-amber-700 mt-1 flex items-center">
-            <span>Quotes & allocations</span>
+          <div className="text-xs font-bold text-amber-700 mt-1 flex items-center">
+            <span>Quotes &amp; allocations</span>
           </div>
         </div>
 
@@ -804,29 +823,29 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
             setActiveTab('orders');
             setStatusFilter('in_transit');
           }}
-          className={`bg-blue-500/[0.04] border rounded-2xl p-4 transition-all duration-200 cursor-pointer group shadow-2xs hover:shadow-md ${
+          className={`bg-white border-2 rounded-2xl p-4 sm:p-5 transition-all duration-200 cursor-pointer group shadow-sm hover:shadow-md ${
             activeTab === 'orders' && statusFilter === 'in_transit'
-              ? 'border-blue-500 ring-2 ring-blue-500/20 bg-blue-500/10'
-              : 'border-blue-200/80 hover:border-blue-300'
+              ? 'border-blue-500 ring-4 ring-blue-500/15 bg-blue-50/40'
+              : 'border-slate-200 hover:border-blue-400'
           }`}
           title="Click to filter by Active In-Transit"
         >
           <div className="flex items-center justify-between">
-            <span className="text-[11px] font-bold text-blue-900 uppercase tracking-wider">Active In-Transit</span>
-            <div className="w-7 h-7 rounded-xl bg-blue-100 group-hover:bg-blue-200 flex items-center justify-center text-blue-800 transition">
-              <Truck className="w-3.5 h-3.5" />
+            <span className="text-xs font-black text-blue-900 uppercase tracking-wider">Active In-Transit</span>
+            <div className="w-9 h-9 rounded-xl bg-blue-100 border border-blue-300 group-hover:bg-blue-200 flex items-center justify-center text-blue-900 transition">
+              <Truck className="w-4 h-4" />
             </div>
           </div>
-          <div className="text-2xl font-black text-blue-950 font-['Outfit'] mt-2 tracking-tight flex items-center justify-between">
+          <div className="text-3xl font-black text-blue-950 font-['Outfit'] mt-2 tracking-tight flex items-center justify-between">
             <span>{inTransitOrders}</span>
             {inTransitOrders > 0 && (
-              <span className="flex h-2 w-2 relative">
+              <span className="flex h-2.5 w-2.5 relative">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-600"></span>
+                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-blue-600"></span>
               </span>
             )}
           </div>
-          <div className="text-[10px] font-semibold text-blue-700 mt-1 flex items-center">
+          <div className="text-xs font-bold text-blue-700 mt-1 flex items-center">
             <span>Live on the road</span>
           </div>
         </div>
@@ -837,23 +856,23 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
             setActiveTab('orders');
             setStatusFilter('delivered');
           }}
-          className={`bg-emerald-500/[0.04] border rounded-2xl p-4 transition-all duration-200 cursor-pointer group shadow-2xs hover:shadow-md ${
+          className={`bg-white border-2 rounded-2xl p-4 sm:p-5 transition-all duration-200 cursor-pointer group shadow-sm hover:shadow-md ${
             activeTab === 'orders' && statusFilter === 'delivered'
-              ? 'border-emerald-500 ring-2 ring-emerald-500/20 bg-emerald-500/10'
-              : 'border-emerald-200/80 hover:border-emerald-300'
+              ? 'border-emerald-500 ring-4 ring-emerald-500/15 bg-emerald-50/40'
+              : 'border-slate-200 hover:border-emerald-400'
           }`}
           title="Click to filter by Completed Deliveries"
         >
           <div className="flex items-center justify-between">
-            <span className="text-[11px] font-bold text-emerald-900 uppercase tracking-wider">Completed Delivered</span>
-            <div className="w-7 h-7 rounded-xl bg-emerald-100 group-hover:bg-emerald-200 flex items-center justify-center text-emerald-800 transition">
-              <CheckCircle2 className="w-3.5 h-3.5" />
+            <span className="text-xs font-black text-emerald-900 uppercase tracking-wider">Completed Delivered</span>
+            <div className="w-9 h-9 rounded-xl bg-emerald-100 border border-emerald-300 group-hover:bg-emerald-200 flex items-center justify-center text-emerald-900 transition">
+              <CheckCircle2 className="w-4 h-4" />
             </div>
           </div>
-          <div className="text-2xl font-black text-emerald-950 font-['Outfit'] mt-2 tracking-tight">
+          <div className="text-3xl font-black text-emerald-950 font-['Outfit'] mt-2 tracking-tight">
             {deliveredOrders}
           </div>
-          <div className="text-[10px] font-semibold text-emerald-700 mt-1 flex items-center">
+          <div className="text-xs font-bold text-emerald-700 mt-1 flex items-center">
             <span>{orders.length > 0 ? `${((deliveredOrders / orders.length) * 100).toFixed(0)}% completion rate` : '100% target'}</span>
           </div>
         </div>
@@ -861,36 +880,45 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
         {/* Total Billed Revenue */}
         <div
           onClick={() => setActiveTab('reports')}
-          className={`bg-rose-500/[0.04] border rounded-2xl p-4 transition-all duration-200 cursor-pointer group shadow-2xs hover:shadow-md ${
+          className={`bg-white border-2 rounded-2xl p-4 sm:p-5 transition-all duration-200 cursor-pointer group shadow-sm hover:shadow-md ${
             activeTab === 'reports'
-              ? 'border-rose-500 ring-2 ring-rose-500/20 bg-rose-500/10'
-              : 'border-rose-200/80 hover:border-rose-300'
+              ? 'border-rose-500 ring-4 ring-rose-500/15 bg-rose-50/40'
+              : 'border-slate-200 hover:border-rose-400'
           }`}
           title="Click to open Reports & Analytics"
         >
           <div className="flex items-center justify-between">
-            <span className="text-[11px] font-bold text-rose-900 uppercase tracking-wider">Gross Billed</span>
-            <div className="w-7 h-7 rounded-xl bg-rose-100 group-hover:bg-rose-200 flex items-center justify-center text-rose-800 transition">
-              <DollarSign className="w-3.5 h-3.5" />
+            <span className="text-xs font-black text-rose-900 uppercase tracking-wider">Gross Billed</span>
+            <div className="w-9 h-9 rounded-xl bg-rose-100 border border-rose-300 group-hover:bg-rose-200 flex items-center justify-center text-rose-900 transition">
+              <DollarSign className="w-4 h-4" />
             </div>
           </div>
-          <div className="text-2xl font-black text-slate-900 font-['Outfit'] mt-2 tracking-tight">
+          <div className="text-3xl font-black text-slate-950 font-['Outfit'] mt-2 tracking-tight">
             ${totalRevenue.toFixed(0)} <span className="text-xs font-semibold text-slate-500">CAD</span>
           </div>
-          <div className="text-[10px] font-semibold text-rose-700 mt-1 flex items-center justify-between">
+          <div className="text-xs font-bold text-rose-700 mt-1 flex items-center justify-between">
             <span>All time volume</span>
-            <span className="text-[10px] text-rose-600 font-bold group-hover:translate-x-0.5 transition">&rarr; Reports</span>
+            <span className="text-xs text-rose-600 font-bold group-hover:translate-x-0.5 transition">&rarr; Reports</span>
           </div>
         </div>
       </div>
 
-      {/* OPERATIONS ACTION CENTER (One-Click Dispatch Alerts & Filter Strip) */}
-      <div className="bg-white border border-slate-200/90 rounded-2xl p-3 sm:p-4 shadow-2xs flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center space-x-2">
-          <div className="w-2 h-2 rounded-full bg-red-600 animate-ping" />
-          <span className="text-[11px] font-black uppercase tracking-wider text-slate-800 font-['Outfit']">
-            Operations Action Center
-          </span>
+      {/* OPERATIONS ACTION CENTER (One-Click Priority Dispatch Queues) */}
+      <div className="bg-white border-2 border-slate-200 rounded-2xl p-4 sm:p-5 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-3.5">
+        <div className="flex items-center space-x-3">
+          <div className="relative flex h-3.5 w-3.5">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-500 opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-[#C5161D]"></span>
+          </div>
+          <div>
+            <div className="text-xs sm:text-sm font-black uppercase tracking-wider text-slate-950 font-['Outfit'] flex items-center gap-2">
+              <span>Operations Action Center</span>
+              <span className="text-[10px] font-black text-red-800 bg-red-50 border border-red-200 px-2 py-0.2 rounded-full normal-case">
+                Live Dispatch Queues
+              </span>
+            </div>
+            <p className="text-xs text-slate-600 font-medium mt-0.5">Quick 1-tap filters for items requiring immediate attention</p>
+          </div>
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
@@ -902,15 +930,19 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
               setStatusFilter('submitted');
               setSearchQuery('');
             }}
-            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center space-x-1.5 cursor-pointer border ${
+            className={`px-3.5 py-2 rounded-xl text-xs sm:text-sm font-black transition-all flex items-center space-x-2 cursor-pointer border-2 ${
               activeTab === 'orders' && statusFilter === 'submitted'
-                ? 'bg-amber-600 text-white border-amber-600 shadow-xs'
-                : 'bg-amber-50 text-amber-900 border-amber-200 hover:bg-amber-100'
+                ? 'bg-amber-600 text-white border-amber-700 shadow-sm ring-2 ring-amber-500/20'
+                : 'bg-amber-50 text-amber-950 border-amber-300/80 hover:bg-amber-100 hover:border-amber-400'
             }`}
           >
-            <Clock className="w-3.5 h-3.5 text-amber-600" />
+            <Clock className={`w-4 h-4 ${activeTab === 'orders' && statusFilter === 'submitted' ? 'text-white' : 'text-amber-700'}`} />
             <span>Quotes to Price:</span>
-            <span className="bg-amber-200/80 text-amber-950 px-1.5 py-0.2 rounded-full text-[10px] font-black">
+            <span className={`px-2 py-0.5 rounded-full text-xs font-black ${
+              activeTab === 'orders' && statusFilter === 'submitted'
+                ? 'bg-white text-amber-900'
+                : 'bg-amber-200 text-amber-950'
+            }`}>
               {quotesToPrice}
             </span>
           </button>
@@ -923,15 +955,19 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
               setStatusFilter('confirmed');
               setSearchQuery('');
             }}
-            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center space-x-1.5 cursor-pointer border ${
+            className={`px-3.5 py-2 rounded-xl text-xs sm:text-sm font-black transition-all flex items-center space-x-2 cursor-pointer border-2 ${
               activeTab === 'orders' && statusFilter === 'confirmed'
-                ? 'bg-emerald-700 text-white border-emerald-700 shadow-xs'
-                : 'bg-emerald-50 text-emerald-900 border-emerald-200 hover:bg-emerald-100'
+                ? 'bg-emerald-600 text-white border-emerald-700 shadow-sm ring-2 ring-emerald-500/20'
+                : 'bg-emerald-50 text-emerald-950 border-emerald-300/80 hover:bg-emerald-100 hover:border-emerald-400'
             }`}
           >
-            <Truck className="w-3.5 h-3.5 text-emerald-600" />
+            <Truck className={`w-4 h-4 ${activeTab === 'orders' && statusFilter === 'confirmed' ? 'text-white' : 'text-emerald-700'}`} />
             <span>Needs Courier Dispatch:</span>
-            <span className="bg-emerald-200 text-emerald-950 px-1.5 py-0.2 rounded-full text-[10px] font-black">
+            <span className={`px-2 py-0.5 rounded-full text-xs font-black ${
+              activeTab === 'orders' && statusFilter === 'confirmed'
+                ? 'bg-white text-emerald-900'
+                : 'bg-emerald-200 text-emerald-950'
+            }`}>
               {quotesNeedingDriver}
             </span>
           </button>
@@ -944,15 +980,19 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
               setStatusFilter('in_transit');
               setSearchQuery('');
             }}
-            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center space-x-1.5 cursor-pointer border ${
+            className={`px-3.5 py-2 rounded-xl text-xs sm:text-sm font-black transition-all flex items-center space-x-2 cursor-pointer border-2 ${
               activeTab === 'orders' && statusFilter === 'in_transit'
-                ? 'bg-blue-600 text-white border-blue-600 shadow-xs'
-                : 'bg-blue-50 text-blue-900 border-blue-200 hover:bg-blue-100'
+                ? 'bg-blue-600 text-white border-blue-700 shadow-sm ring-2 ring-blue-500/20'
+                : 'bg-blue-50 text-blue-950 border-blue-300/80 hover:bg-blue-100 hover:border-blue-400'
             }`}
           >
-            <Navigation className="w-3.5 h-3.5 text-blue-600" />
+            <Navigation className={`w-4 h-4 ${activeTab === 'orders' && statusFilter === 'in_transit' ? 'text-white' : 'text-blue-700'}`} />
             <span>Live on Road:</span>
-            <span className="bg-blue-200 text-blue-950 px-1.5 py-0.2 rounded-full text-[10px] font-black">
+            <span className={`px-2 py-0.5 rounded-full text-xs font-black ${
+              activeTab === 'orders' && statusFilter === 'in_transit'
+                ? 'bg-white text-blue-900'
+                : 'bg-blue-200 text-blue-950'
+            }`}>
               {inTransitOrders}
             </span>
           </button>
@@ -961,151 +1001,338 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
           <button
             type="button"
             onClick={() => setActiveTab('requests')}
-            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center space-x-1.5 cursor-pointer border ${
+            className={`px-3.5 py-2 rounded-xl text-xs sm:text-sm font-black transition-all flex items-center space-x-2 cursor-pointer border-2 ${
               activeTab === 'requests'
-                ? 'bg-purple-700 text-white border-purple-700 shadow-xs'
-                : 'bg-purple-50 text-purple-900 border-purple-200 hover:bg-purple-100'
+                ? 'bg-purple-600 text-white border-purple-700 shadow-sm ring-2 ring-purple-500/20'
+                : 'bg-purple-50 text-purple-950 border-purple-300/80 hover:bg-purple-100 hover:border-purple-400'
             }`}
           >
-            <AlertCircle className="w-3.5 h-3.5 text-purple-600" />
+            <AlertCircle className={`w-4 h-4 ${activeTab === 'requests' ? 'text-white' : 'text-purple-700'}`} />
             <span>Inquiries:</span>
-            <span className="bg-purple-200 text-purple-950 px-1.5 py-0.2 rounded-full text-[10px] font-black">
+            <span className={`px-2 py-0.5 rounded-full text-xs font-black ${
+              activeTab === 'requests'
+                ? 'bg-white text-purple-900'
+                : 'bg-purple-200 text-purple-950'
+            }`}>
               {pendingRequests}
             </span>
           </button>
         </div>
       </div>
 
-      {/* Grouped Operational Category Tabs Navigation */}
-      <div className="bg-slate-100/70 p-1.5 sm:p-2 rounded-2xl border border-slate-200/90 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-2 overflow-x-auto">
-        {/* Category 1: Dispatch Desk */}
-        <div className="flex items-center space-x-1 bg-white p-1 rounded-xl border border-slate-200 shadow-2xs">
-          <span className="text-[10px] font-black uppercase text-slate-600 px-2 py-1 tracking-wider hidden lg:inline">
-            Dispatch Desk:
-          </span>
+      {/* EXECUTIVE OPERATIONAL WORKSPACE TABS */}
+      <div className="bg-white border-2 border-slate-200/90 rounded-2xl p-3 sm:p-4 shadow-sm space-y-3">
+        {/* Department Clusters & Workspace Context */}
+        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-2.5">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-xs font-black uppercase tracking-wider text-slate-900 font-['Outfit'] flex items-center gap-1.5">
+              <LayoutDashboard className="w-4 h-4 text-[#C5161D]" />
+              Workspaces:
+            </span>
+            <span className="inline-flex items-center gap-1.5 text-[11px] font-bold text-red-800 bg-red-50 border border-red-200 px-2.5 py-0.5 rounded-lg">
+              <span className="w-1.5 h-1.5 rounded-full bg-red-600" />
+              Dispatch Desk
+            </span>
+            <span className="inline-flex items-center gap-1.5 text-[11px] font-bold text-blue-800 bg-blue-50 border border-blue-200 px-2.5 py-0.5 rounded-lg">
+              <span className="w-1.5 h-1.5 rounded-full bg-blue-600" />
+              Directory &amp; CRM
+            </span>
+            <span className="inline-flex items-center gap-1.5 text-[11px] font-bold text-purple-800 bg-purple-50 border border-purple-200 px-2.5 py-0.5 rounded-lg">
+              <span className="w-1.5 h-1.5 rounded-full bg-purple-600" />
+              Finance &amp; Operations
+            </span>
+          </div>
+
+          <div className="text-xs font-bold text-slate-500 hidden md:flex items-center space-x-2">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+            <span>Active Desk:</span>
+            <span className="text-slate-950 font-black">
+              {activeTab === 'orders' && 'Orders Queue & Dispatch'}
+              {activeTab === 'requests' && 'Customer Requests & Queries'}
+              {activeTab === 'customers' && 'Customer Accounts & CRM'}
+              {activeTab === 'drivers' && 'Staff & Driver Fleet'}
+              {activeTab === 'reports' && 'Business Analytics & Reports'}
+              {activeTab === 'pricing' && 'Pricing Rules Matrix'}
+              {activeTab === 'settings' && 'Operating Settings & Hours'}
+              {activeTab === 'notifications' && 'Activity Logs & Alerts'}
+            </span>
+          </div>
+        </div>
+
+        {/* 8 Prominent, High-Contrast Grid Tabs */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 xl:grid-cols-8 gap-2">
+          {/* Tab 1: Orders Queue */}
           <button
             type="button"
             onClick={() => setActiveTab('orders')}
-            className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
+            className={`group p-2.5 sm:p-3 rounded-xl border-2 transition-all duration-150 flex items-center space-x-2.5 cursor-pointer text-left ${
               activeTab === 'orders'
-                ? 'bg-gradient-to-r from-[#C5161D] to-[#9E1218] text-white shadow-xs'
-                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+                ? 'bg-gradient-to-r from-[#C5161D] to-[#A31217] text-white border-[#800C10] shadow-md shadow-red-900/20 ring-2 ring-red-500/20'
+                : 'bg-white hover:bg-slate-50 text-slate-900 hover:text-black border-slate-200 hover:border-slate-400 shadow-2xs'
             }`}
+            title="Orders Queue: view, assign, edit, and dispatch shipments"
           >
-            <Package className="w-3.5 h-3.5" />
-            <span>Orders Queue</span>
-            <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
-              activeTab === 'orders' ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-700'
+            <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 transition ${
+              activeTab === 'orders' ? 'bg-white/20 text-white' : 'bg-red-50 text-[#C5161D] border border-red-100 group-hover:bg-red-100'
             }`}>
-              {orders.length}
-            </span>
+              <Package className="w-4 h-4" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className={`text-[9px] font-black uppercase tracking-wider leading-none ${
+                activeTab === 'orders' ? 'text-red-200' : 'text-slate-600'
+              }`}>
+                Dispatch
+              </div>
+              <div className="flex items-center justify-between gap-1 mt-0.5">
+                <span className="text-xs sm:text-sm font-black truncate">Orders</span>
+                <span className={`text-[10px] font-black px-1.5 py-0.2 rounded-full ${
+                  activeTab === 'orders' ? 'bg-white/25 text-white' : 'bg-slate-100 text-slate-800 border border-slate-200'
+                }`}>
+                  {orders.length}
+                </span>
+              </div>
+            </div>
           </button>
 
+          {/* Tab 2: Customer Requests */}
           <button
             type="button"
             onClick={() => setActiveTab('requests')}
-            className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
+            className={`group p-2.5 sm:p-3 rounded-xl border-2 transition-all duration-150 flex items-center space-x-2.5 cursor-pointer text-left ${
               activeTab === 'requests'
-                ? 'bg-gradient-to-r from-[#C5161D] to-[#9E1218] text-white shadow-xs'
-                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+                ? 'bg-gradient-to-r from-[#C5161D] to-[#A31217] text-white border-[#800C10] shadow-md shadow-red-900/20 ring-2 ring-red-500/20'
+                : 'bg-white hover:bg-slate-50 text-slate-900 hover:text-black border-slate-200 hover:border-slate-400 shadow-2xs'
             }`}
+            title="Customer Requests: quote requests and inquiries"
           >
-            <AlertCircle className="w-3.5 h-3.5" />
-            <span>Requests</span>
-            {pendingRequests > 0 && (
-              <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-black ${
-                activeTab === 'requests' ? 'bg-white/20 text-white' : 'bg-amber-100 text-amber-900'
+            <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 transition ${
+              activeTab === 'requests' ? 'bg-white/20 text-white' : 'bg-amber-50 text-amber-700 border border-amber-100 group-hover:bg-amber-100'
+            }`}>
+              <AlertCircle className="w-4 h-4" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className={`text-[9px] font-black uppercase tracking-wider leading-none ${
+                activeTab === 'requests' ? 'text-red-200' : 'text-slate-600'
               }`}>
-                {pendingRequests}
-              </span>
-            )}
+                Dispatch
+              </div>
+              <div className="flex items-center justify-between gap-1 mt-0.5">
+                <span className="text-xs sm:text-sm font-black truncate">Requests</span>
+                <span className={`text-[10px] font-black px-1.5 py-0.2 rounded-full ${
+                  activeTab === 'requests'
+                    ? 'bg-white/25 text-white'
+                    : pendingRequests > 0
+                      ? 'bg-amber-100 text-amber-900 border border-amber-300 animate-pulse'
+                      : 'bg-slate-100 text-slate-700 border border-slate-200'
+                }`}>
+                  {pendingRequests > 0 ? pendingRequests : requests.length}
+                </span>
+              </div>
+            </div>
           </button>
-        </div>
 
-        {/* Category 2: Directory & CRM */}
-        <div className="flex items-center space-x-1 bg-white p-1 rounded-xl border border-slate-200 shadow-2xs">
-          <span className="text-[10px] font-black uppercase text-slate-600 px-2 py-1 tracking-wider hidden lg:inline">
-            Directory:
-          </span>
+          {/* Tab 3: Customer Accounts */}
           <button
             type="button"
             onClick={() => setActiveTab('customers')}
-            className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
+            className={`group p-2.5 sm:p-3 rounded-xl border-2 transition-all duration-150 flex items-center space-x-2.5 cursor-pointer text-left ${
               activeTab === 'customers'
-                ? 'bg-gradient-to-r from-[#C5161D] to-[#9E1218] text-white shadow-xs'
-                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+                ? 'bg-gradient-to-r from-[#C5161D] to-[#A31217] text-white border-[#800C10] shadow-md shadow-red-900/20 ring-2 ring-red-500/20'
+                : 'bg-white hover:bg-slate-50 text-slate-900 hover:text-black border-slate-200 hover:border-slate-400 shadow-2xs'
             }`}
+            title="Customer Accounts & CRM management"
           >
-            <Building className="w-3.5 h-3.5" />
-            <span>Customers &amp; CRM</span>
-            <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
-              activeTab === 'customers' ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-700'
+            <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 transition ${
+              activeTab === 'customers' ? 'bg-white/20 text-white' : 'bg-blue-50 text-blue-700 border border-blue-100 group-hover:bg-blue-100'
             }`}>
-              {customers.length}
-            </span>
+              <Building className="w-4 h-4" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className={`text-[9px] font-black uppercase tracking-wider leading-none ${
+                activeTab === 'customers' ? 'text-red-200' : 'text-slate-600'
+              }`}>
+                Directory
+              </div>
+              <div className="flex items-center justify-between gap-1 mt-0.5">
+                <span className="text-xs sm:text-sm font-black truncate">Customers</span>
+                <span className={`text-[10px] font-black px-1.5 py-0.2 rounded-full ${
+                  activeTab === 'customers' ? 'bg-white/25 text-white' : 'bg-slate-100 text-slate-800 border border-slate-200'
+                }`}>
+                  {customers.length}
+                </span>
+              </div>
+            </div>
           </button>
 
+          {/* Tab 4: Staff & Fleet */}
           <button
             type="button"
             onClick={() => setActiveTab('drivers')}
-            className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
+            className={`group p-2.5 sm:p-3 rounded-xl border-2 transition-all duration-150 flex items-center space-x-2.5 cursor-pointer text-left ${
               activeTab === 'drivers'
-                ? 'bg-gradient-to-r from-[#C5161D] to-[#9E1218] text-white shadow-xs'
-                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+                ? 'bg-gradient-to-r from-[#C5161D] to-[#A31217] text-white border-[#800C10] shadow-md shadow-red-900/20 ring-2 ring-red-500/20'
+                : 'bg-white hover:bg-slate-50 text-slate-900 hover:text-black border-slate-200 hover:border-slate-400 shadow-2xs'
             }`}
+            title="Staff & Driver Fleet management"
           >
-            <Users className="w-3.5 h-3.5" />
-            <span>Staff &amp; Fleet</span>
-            <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
-              activeTab === 'drivers' ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-700'
+            <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 transition ${
+              activeTab === 'drivers' ? 'bg-white/20 text-white' : 'bg-indigo-50 text-indigo-700 border border-indigo-100 group-hover:bg-indigo-100'
             }`}>
-              {drivers.length}
-            </span>
+              <Users className="w-4 h-4" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className={`text-[9px] font-black uppercase tracking-wider leading-none ${
+                activeTab === 'drivers' ? 'text-red-200' : 'text-slate-600'
+              }`}>
+                Directory
+              </div>
+              <div className="flex items-center justify-between gap-1 mt-0.5">
+                <span className="text-xs sm:text-sm font-black truncate">Staff / Fleet</span>
+                <span className={`text-[10px] font-black px-1.5 py-0.2 rounded-full ${
+                  activeTab === 'drivers' ? 'bg-white/25 text-white' : 'bg-slate-100 text-slate-800 border border-slate-200'
+                }`}>
+                  {drivers.length}
+                </span>
+              </div>
+            </div>
           </button>
-        </div>
 
-        {/* Category 3: Finance & Operations */}
-        <div className="flex items-center space-x-1 bg-white p-1 rounded-xl border border-slate-200 shadow-2xs">
-          <span className="text-[10px] font-black uppercase text-slate-600 px-2 py-1 tracking-wider hidden lg:inline">
-            Finance &amp; Ops:
-          </span>
+          {/* Tab 5: Analytics */}
           <button
             type="button"
             onClick={() => setActiveTab('reports')}
-            className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
+            className={`group p-2.5 sm:p-3 rounded-xl border-2 transition-all duration-150 flex items-center space-x-2.5 cursor-pointer text-left ${
               activeTab === 'reports'
-                ? 'bg-gradient-to-r from-[#C5161D] to-[#9E1218] text-white shadow-xs'
-                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+                ? 'bg-gradient-to-r from-[#C5161D] to-[#A31217] text-white border-[#800C10] shadow-md shadow-red-900/20 ring-2 ring-red-500/20'
+                : 'bg-white hover:bg-slate-50 text-slate-900 hover:text-black border-slate-200 hover:border-slate-400 shadow-2xs'
             }`}
+            title="Business Analytics & Financial Reports"
           >
-            <BarChart3 className="w-3.5 h-3.5" />
-            <span>Analytics</span>
+            <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 transition ${
+              activeTab === 'reports' ? 'bg-white/20 text-white' : 'bg-emerald-50 text-emerald-700 border border-emerald-100 group-hover:bg-emerald-100'
+            }`}>
+              <BarChart3 className="w-4 h-4" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className={`text-[9px] font-black uppercase tracking-wider leading-none ${
+                activeTab === 'reports' ? 'text-red-200' : 'text-slate-600'
+              }`}>
+                Finance
+              </div>
+              <div className="flex items-center justify-between gap-1 mt-0.5">
+                <span className="text-xs sm:text-sm font-black truncate">Analytics</span>
+                <span className={`text-[10px] font-black px-1.5 py-0.2 rounded-full ${
+                  activeTab === 'reports' ? 'bg-white/25 text-white' : 'bg-slate-100 text-slate-700 border border-slate-200'
+                }`}>
+                  Reports
+                </span>
+              </div>
+            </div>
           </button>
 
+          {/* Tab 6: Pricing Matrix */}
           <button
             type="button"
             onClick={() => setActiveTab('pricing')}
-            className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
+            className={`group p-2.5 sm:p-3 rounded-xl border-2 transition-all duration-150 flex items-center space-x-2.5 cursor-pointer text-left ${
               activeTab === 'pricing'
-                ? 'bg-gradient-to-r from-[#C5161D] to-[#9E1218] text-white shadow-xs'
-                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+                ? 'bg-gradient-to-r from-[#C5161D] to-[#A31217] text-white border-[#800C10] shadow-md shadow-red-900/20 ring-2 ring-red-500/20'
+                : 'bg-white hover:bg-slate-50 text-slate-900 hover:text-black border-slate-200 hover:border-slate-400 shadow-2xs'
             }`}
+            title="Distance tiers, vehicle multipliers, and rate matrix"
           >
-            <DollarSign className="w-3.5 h-3.5" />
-            <span>Pricing Matrix</span>
+            <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 transition ${
+              activeTab === 'pricing' ? 'bg-white/20 text-white' : 'bg-purple-50 text-purple-700 border border-purple-100 group-hover:bg-purple-100'
+            }`}>
+              <DollarSign className="w-4 h-4" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className={`text-[9px] font-black uppercase tracking-wider leading-none ${
+                activeTab === 'pricing' ? 'text-red-200' : 'text-slate-600'
+              }`}>
+                Finance
+              </div>
+              <div className="flex items-center justify-between gap-1 mt-0.5">
+                <span className="text-xs sm:text-sm font-black truncate">Pricing</span>
+                <span className={`text-[10px] font-black px-1.5 py-0.2 rounded-full ${
+                  activeTab === 'pricing' ? 'bg-white/25 text-white' : 'bg-slate-100 text-slate-700 border border-slate-200'
+                }`}>
+                  Matrix
+                </span>
+              </div>
+            </div>
           </button>
 
+          {/* Tab 7: Operating Settings */}
           <button
             type="button"
             onClick={() => setActiveTab('settings')}
-            className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
+            className={`group p-2.5 sm:p-3 rounded-xl border-2 transition-all duration-150 flex items-center space-x-2.5 cursor-pointer text-left ${
               activeTab === 'settings'
-                ? 'bg-gradient-to-r from-[#C5161D] to-[#9E1218] text-white shadow-xs'
-                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+                ? 'bg-gradient-to-r from-[#C5161D] to-[#A31217] text-white border-[#800C10] shadow-md shadow-red-900/20 ring-2 ring-red-500/20'
+                : 'bg-white hover:bg-slate-50 text-slate-900 hover:text-black border-slate-200 hover:border-slate-400 shadow-2xs'
             }`}
+            title="Business hours, surcharges, HST, and operational settings"
           >
-            <Sliders className="w-3.5 h-3.5" />
-            <span>Operating Settings</span>
+            <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 transition ${
+              activeTab === 'settings' ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-700 border border-slate-200 group-hover:bg-slate-200'
+            }`}>
+              <Sliders className="w-4 h-4" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className={`text-[9px] font-black uppercase tracking-wider leading-none ${
+                activeTab === 'settings' ? 'text-red-200' : 'text-slate-600'
+              }`}>
+                Ops
+              </div>
+              <div className="flex items-center justify-between gap-1 mt-0.5">
+                <span className="text-xs sm:text-sm font-black truncate">Settings</span>
+                <span className={`text-[10px] font-black px-1.5 py-0.2 rounded-full ${
+                  activeTab === 'settings' ? 'bg-white/25 text-white' : 'bg-slate-100 text-slate-700 border border-slate-200'
+                }`}>
+                  Config
+                </span>
+              </div>
+            </div>
+          </button>
+
+          {/* Tab 8: Activity & Alerts */}
+          <button
+            type="button"
+            onClick={() => setActiveTab('notifications')}
+            className={`group p-2.5 sm:p-3 rounded-xl border-2 transition-all duration-150 flex items-center space-x-2.5 cursor-pointer text-left ${
+              activeTab === 'notifications'
+                ? 'bg-gradient-to-r from-[#C5161D] to-[#A31217] text-white border-[#800C10] shadow-md shadow-red-900/20 ring-2 ring-red-500/20'
+                : 'bg-white hover:bg-slate-50 text-slate-900 hover:text-black border-slate-200 hover:border-slate-400 shadow-2xs'
+            }`}
+            title="Live notification logs, activity stream, and chime settings"
+          >
+            <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 transition ${
+              activeTab === 'notifications' ? 'bg-white/20 text-white' : 'bg-rose-50 text-rose-700 border border-rose-100 group-hover:bg-rose-100'
+            }`}>
+              <Bell className="w-4 h-4" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className={`text-[9px] font-black uppercase tracking-wider leading-none ${
+                activeTab === 'notifications' ? 'text-red-200' : 'text-slate-600'
+              }`}>
+                Ops
+              </div>
+              <div className="flex items-center justify-between gap-1 mt-0.5">
+                <span className="text-xs sm:text-sm font-black truncate">Alerts</span>
+                <span className={`text-[10px] font-black px-1.5 py-0.2 rounded-full ${
+                  activeTab === 'notifications'
+                    ? 'bg-white/25 text-white'
+                    : inAppNotifications.filter((n) => !n.is_read).length > 0
+                      ? 'bg-red-600 text-white animate-pulse'
+                      : 'bg-slate-100 text-slate-700 border border-slate-200'
+                }`}>
+                  {inAppNotifications.filter((n) => !n.is_read).length > 0
+                    ? inAppNotifications.filter((n) => !n.is_read).length
+                    : 'Log'}
+                </span>
+              </div>
+            </div>
           </button>
         </div>
       </div>
