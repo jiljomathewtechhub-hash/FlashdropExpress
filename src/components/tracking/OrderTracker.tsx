@@ -110,6 +110,25 @@ export const OrderTracker: React.FC<OrderTrackerProps> = ({ initialOrderNumber, 
       return;
     }
 
+    // Ensure quotation financials strictly honor any applied discount
+    const base = Number(ord.base_price || 0);
+    const excess = Number(ord.excess_km_charge || 0);
+    const speed = Number(ord.delivery_type_charge || 0);
+    const after = Number(ord.after_hours_charge || 0);
+    const waiting = Number(ord.waiting_charge || 0);
+    const labor = Number(ord.labor_charge || 0);
+    const gross = Number((base + excess + speed + after + waiting + labor).toFixed(2));
+    const discount = Number(ord.discount_amount || 0);
+
+    if (discount > 0) {
+      const expectedSub = Math.max(0, Number((gross - discount).toFixed(2)));
+      if (ord.subtotal > expectedSub || ord.subtotal === 0) {
+        ord.subtotal = expectedSub;
+        ord.tax_amount = Number((expectedSub * 0.13).toFixed(2));
+        ord.total_price = Number((expectedSub + ord.tax_amount).toFixed(2));
+      }
+    }
+
     setIsConfirmingQuote(true);
     try {
       const updated = store.updateOrderStatus(

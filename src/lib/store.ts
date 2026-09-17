@@ -376,11 +376,48 @@ class FlashDropStore {
           const after = Number(row.after_hours_charge || 0);
           const waiting = Number(row.waiting_charge || 0);
           const labor = Number(row.labor_charge || 0);
-          const sub = Number(row.subtotal || 0);
-          const gross = Number((base + excess + after + waiting + labor).toFixed(2));
-          let discountAmt = existing?.discount_amount;
-          if (discountAmt === undefined && gross > sub && sub > 0) {
-            discountAmt = Number((gross - sub).toFixed(2));
+          const deliveryTypeCharge = Number(row.delivery_type_charge || 0) || existing?.delivery_type_charge || 0;
+
+          // Read quote & discount fields from DB row, falling back to existing in-memory state
+          const quoteSentAt = row.quote_sent_at || existing?.quote_sent_at || undefined;
+          const quoteAcceptedAt = row.quote_accepted_at || existing?.quote_accepted_at || undefined;
+          const quoteNotes = row.quote_notes || existing?.quote_notes || undefined;
+
+          let discountAmt = (row.discount_amount !== null && row.discount_amount !== undefined)
+            ? Number(row.discount_amount)
+            : existing?.discount_amount;
+          const discountType = row.discount_type || existing?.discount_type || undefined;
+          const discountNotes = row.discount_notes || existing?.discount_notes || undefined;
+
+          const gross = Number((base + excess + deliveryTypeCharge + after + waiting + labor).toFixed(2));
+          if (discountAmt === undefined && gross > Number(row.subtotal || 0) && Number(row.subtotal || 0) > 0) {
+            discountAmt = Number((gross - Number(row.subtotal || 0)).toFixed(2));
+          }
+
+          let sub = Number(row.subtotal || 0);
+          let tax = Number(row.tax_amount || 0);
+          let total = Number(row.total_price || 0);
+
+          // Enforce financial integrity: If a discount exists, ensure subtotal strictly reflects it
+          if (discountAmt && discountAmt > 0) {
+            const expectedSub = Math.max(0, Number((gross - discountAmt).toFixed(2)));
+            if (sub > expectedSub || sub === 0) {
+              sub = expectedSub;
+              tax = Number((sub * 0.13).toFixed(2));
+              total = Number((sub + tax).toFixed(2));
+            }
+          }
+
+          // Resolve order status accurately:
+          // If a quote was sent (quoteSentAt exists), but not yet accepted (quoteAcceptedAt is falsy)
+          // and DB status is 'submitted' (or row.order_status is 'quote_sent'), runtime status MUST BE 'quote_sent'
+          let resolvedStatus: OrderStatus = (row.order_status as OrderStatus) || existing?.order_status || 'submitted';
+          if (quoteSentAt && !quoteAcceptedAt) {
+            if (resolvedStatus === 'submitted' || !resolvedStatus || existing?.order_status === 'quote_sent') {
+              resolvedStatus = 'quote_sent';
+            }
+          } else if (quoteAcceptedAt && (resolvedStatus === 'quote_sent' || resolvedStatus === 'submitted')) {
+            resolvedStatus = 'confirmed';
           }
 
           return {
@@ -423,17 +460,18 @@ class FlashDropStore {
             after_hours_charge: after,
             waiting_charge: waiting,
             labor_charge: labor,
+            delivery_type_charge: deliveryTypeCharge,
             discount_amount: discountAmt ?? existing?.discount_amount,
-            discount_type: existing?.discount_type,
-            discount_notes: existing?.discount_notes,
-            quote_notes: existing?.quote_notes,
-            quote_sent_at: existing?.quote_sent_at,
-            quote_accepted_at: existing?.quote_accepted_at,
+            discount_type: discountType,
+            discount_notes: discountNotes,
+            quote_notes: quoteNotes,
+            quote_sent_at: quoteSentAt,
+            quote_accepted_at: quoteAcceptedAt,
             subtotal: sub,
-            tax_amount: Number(row.tax_amount),
-            total_price: Number(row.total_price),
+            tax_amount: tax,
+            total_price: total,
             payment_status: row.payment_status,
-            order_status: row.order_status,
+            order_status: resolvedStatus,
             assigned_driver_id: row.assigned_driver_id,
             assigned_driver_name: assignedDriver?.name || row.assigned_driver_name || undefined,
             created_at: row.created_at,
@@ -991,7 +1029,8 @@ class FlashDropStore {
       }
     }
 
-    if (isSupabaseConfigured && supabase) {
+    const sb = supabase;
+    if (isSupabaseConfigured && sb) {
       const matchFilter = updatedOrder.id.length === 36 ? { id: updatedOrder.id } : { order_number: updatedOrder.order_number };
       const driverUUID =
         updatedOrder.assigned_driver_id && updatedOrder.assigned_driver_id.length === 36
@@ -1025,9 +1064,16 @@ class FlashDropStore {
         custom_instructions: updatedOrder.custom_instructions || null,
         base_price: updatedOrder.base_price,
         excess_km_charge: updatedOrder.excess_km_charge || 0,
+        delivery_type_charge: updatedOrder.delivery_type_charge || 0,
         after_hours_charge: updatedOrder.after_hours_charge || 0,
         waiting_charge: updatedOrder.waiting_charge || 0,
         labor_charge: updatedOrder.labor_charge || 0,
+        discount_amount: updatedOrder.discount_amount || 0,
+        discount_type: updatedOrder.discount_type || null,
+        discount_notes: updatedOrder.discount_notes || null,
+        quote_notes: updatedOrder.quote_notes || null,
+        quote_sent_at: updatedOrder.quote_sent_at || null,
+        quote_accepted_at: updatedOrder.quote_accepted_at || null,
         subtotal: updatedOrder.subtotal,
         tax_amount: updatedOrder.tax_amount,
         total_price: updatedOrder.total_price,
@@ -1037,22 +1083,48 @@ class FlashDropStore {
         updated_at: updatedOrder.updated_at,
       };
 
-      supabase
+      sb
         .from('orders')
         .update(payload)
         .match(matchFilter)
-        .then(({ error }) => {
-          if (error) console.warn('Supabase updateOrder notice:', error.message);
+        .then(async ({ error }) => {
+          if (error) {
+            console.warn('Supabase updateOrder notice:', error.message);
+            // If PostgreSQL enum rejects 'quote_sent' or 'accepted', fallback gracefully to DB-safe status
+            // while preserving all financial columns, discounts, and quote timestamps in Supabase
+            if (error.message?.includes('order_status') || error.message?.includes('enum')) {
+              const fallbackStatus =
+                payload.order_status === 'quote_sent'
+                  ? 'submitted'
+                  : payload.order_status === 'accepted'
+                  ? 'en_route_pickup'
+                  : 'submitted';
+              const { error: retryErr } = await sb
+                .from('orders')
+                .update({ ...payload, order_status: fallbackStatus })
+                .match(matchFilter);
+              if (retryErr) console.warn('Supabase updateOrder fallback notice:', retryErr.message);
+            }
+          }
         });
 
       if (updatedOrder.id.length === 36) {
-        supabase
+        const histStatus =
+          updatedOrder.order_status === 'accepted'
+            ? 'en_route_pickup'
+            : updatedOrder.order_status === 'quote_sent'
+            ? 'submitted'
+            : updatedOrder.order_status;
+        sb
           .from('order_status_history')
           .insert([
             {
               order_id: updatedOrder.id,
-              status: updatedOrder.order_status,
-              notes: 'Order updated by Dispatch Command Desk',
+              status: histStatus,
+              notes:
+                updatedOrder.order_status === 'quote_sent'
+                  ? `Official price quote of $${updatedOrder.total_price.toFixed(2)} CAD dispatched to customer`
+                  : 'Order updated by Dispatch Command Desk',
             },
           ])
           .then();
@@ -1156,25 +1228,59 @@ class FlashDropStore {
     }
 
     // Supabase update
-    if (isSupabaseConfigured && supabase) {
+    const sb = supabase;
+    if (isSupabaseConfigured && sb) {
       const matchFilter = order.id.length === 36 ? { id: order.id } : { order_number: order.order_number };
-      // Map 'accepted' to 'en_route_pickup' to match PostgreSQL enum in Supabase
-      const dbStatus = status === 'accepted' ? 'en_route_pickup' : status;
-      supabase
+      const statusPayload: Record<string, any> = {
+        order_status: status === 'accepted' ? 'en_route_pickup' : status,
+        updated_at: order.updated_at,
+        subtotal: order.subtotal,
+        tax_amount: order.tax_amount,
+        total_price: order.total_price,
+        discount_amount: order.discount_amount || 0,
+        discount_type: order.discount_type || null,
+        discount_notes: order.discount_notes || null,
+        quote_notes: order.quote_notes || null,
+        quote_sent_at: order.quote_sent_at || null,
+        quote_accepted_at: order.quote_accepted_at || null,
+      };
+
+      sb
         .from('orders')
-        .update({ order_status: dbStatus, updated_at: order.updated_at })
+        .update(statusPayload)
         .match(matchFilter)
-        .then(({ error }) => {
-          if (error) console.warn('Supabase updateOrderStatus warning:', error.message);
+        .then(async ({ error }) => {
+          if (error) {
+            console.warn('Supabase updateOrderStatus warning:', error.message);
+            if (error.message?.includes('order_status') || error.message?.includes('enum')) {
+              const safeStatus =
+                status === 'quote_sent'
+                  ? 'submitted'
+                  : status === 'accepted'
+                  ? 'en_route_pickup'
+                  : 'submitted';
+              const { error: retryErr } = await sb
+                .from('orders')
+                .update({ ...statusPayload, order_status: safeStatus })
+                .match(matchFilter);
+              if (retryErr) console.warn('Supabase updateOrderStatus fallback warning:', retryErr.message);
+            }
+          }
         });
 
       if (order.id.length === 36) {
-        supabase
+        const histStatus =
+          status === 'accepted'
+            ? 'en_route_pickup'
+            : status === 'quote_sent'
+            ? 'submitted'
+            : status;
+        sb
           .from('order_status_history')
           .insert([
             {
               order_id: order.id,
-              status: dbStatus,
+              status: histStatus,
               notes: historyItem.notes,
             },
           ])

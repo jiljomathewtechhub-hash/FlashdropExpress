@@ -10,6 +10,7 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE TYPE user_role AS ENUM ('customer', 'driver', 'admin', 'owner');
 CREATE TYPE order_status AS ENUM (
   'submitted',
+  'quote_sent',
   'confirmed',
   'assigned',
   'en_route_pickup',

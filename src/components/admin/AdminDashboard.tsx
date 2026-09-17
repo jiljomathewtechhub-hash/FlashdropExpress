@@ -470,20 +470,22 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
     const base = Number(order.base_price || 0);
     const excess = Number(order.excess_km_charge || 0);
     const after = Number(order.after_hours_charge || 0);
-    let urgency = 0;
-    if (order.delivery_time_option === 'direct') {
-      urgency = Number((base * 0.25).toFixed(2));
-    } else if (order.delivery_time_option === 'urgent') {
-      urgency = Number((base * 0.50).toFixed(2));
+    let urgency = Number(order.delivery_type_charge || 0);
+    if (!urgency) {
+      if (order.delivery_time_option === 'direct') {
+        urgency = Number((base * 0.25).toFixed(2));
+      } else if (order.delivery_time_option === 'urgent') {
+        urgency = Number((base * 0.50).toFixed(2));
+      }
     }
     const discount = Number(order.discount_amount || 0);
     const discountType = order.discount_type || 'Loyalty Reward Discount';
     const discountNotes = order.discount_notes || '';
 
     const gross = Number((base + excess + urgency + after).toFixed(2));
-    const sub = order.subtotal > 0 ? Number(order.subtotal) : Math.max(0, Number((gross - discount).toFixed(2)));
-    const tax = order.tax_amount > 0 ? Number(order.tax_amount) : Number((sub * 0.13).toFixed(2));
-    const total = order.total_price > 0 ? Number(order.total_price) : Number((sub + tax).toFixed(2));
+    const sub = Math.max(0, Number((gross - discount).toFixed(2)));
+    const tax = Number((sub * 0.13).toFixed(2));
+    const total = Number((sub + tax).toFixed(2));
 
     setQuoteFormData({
       base_price: base,
@@ -531,6 +533,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
       const updatedData: Partial<Order> = {
         base_price: quoteFormData.base_price,
         excess_km_charge: quoteFormData.excess_km_charge,
+        delivery_type_charge: quoteFormData.urgency_surcharge,
         after_hours_charge: quoteFormData.after_hours_charge,
         discount_amount: quoteFormData.discount_amount,
         discount_type: quoteFormData.discount_type,
