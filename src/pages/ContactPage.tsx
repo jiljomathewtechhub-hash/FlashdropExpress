@@ -166,6 +166,9 @@ export const ContactPage: React.FC<ContactPageProps> = ({ onNavigate }) => {
               <div className="text-[10px] text-slate-500 mt-0.5">
                 Suite 108, 3064 Jaguar Valley Dr, Mississauga, ON L5A 2J3
               </div>
+              <div className="text-[10px] font-medium text-slate-600 mt-0.5">
+                CRA GST/HST Reg: <span className="font-mono font-semibold text-slate-800">78750 1444 RT0001</span>
+              </div>
             </div>
           </div>
         </div>

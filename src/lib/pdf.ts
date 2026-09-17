@@ -67,7 +67,7 @@ export function generateOrderPdf(
   doc.text('COMMERCIAL COURIER & EXPEDITED FREIGHT', brandX, 24.5);
 
   // Company contact details below brand emblem
-  const hstRegNo = settings.hst_number || '78492 1038 RT0001';
+  const hstRegNo = settings.hst_number || '78750 1444 RT0001';
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(textBody[0], textBody[1], textBody[2]);
   doc.setFontSize(7.5);
