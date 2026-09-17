@@ -190,8 +190,14 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
     const refresh = () => {
       const currentUser = store.getCurrentUser();
       const currentDrivers = store.getDrivers();
+      const allOrders = store.getOrders();
       setUser(currentUser);
-      setOrders(store.getOrders());
+      setOrders(allOrders);
+      setSelectedOrderDetails((prev) => {
+        if (!prev) return null;
+        const fresh = allOrders.find((o) => o.id === prev.id || o.order_number === prev.order_number);
+        return fresh || prev;
+      });
       setDrivers(currentDrivers);
       setCustomers(store.getCustomers());
       setVehicles(store.getVehicles());
@@ -1190,7 +1196,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
                             <div className="text-[10px] text-slate-500">{ord.weight_lbs} lbs ({ord.quantity} pails/units)</div>
                           </td>
                           <td className="py-3 px-4">
-                            {ord.quote_accepted_at || (ord.order_status === 'confirmed' && ord.quote_sent_at) ? (
+                            {ord.order_status === 'confirmed' && (ord.quote_accepted_at || ord.quote_sent_at) ? (
                               <div className="space-y-1">
                                 <span className="inline-flex items-center space-x-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-900 border border-emerald-300 shadow-2xs">
                                   <CheckCircle2 className="w-3 h-3 text-emerald-700 shrink-0" />
@@ -1224,7 +1230,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
                                   Reassign
                                 </button>
                               </div>
-                            ) : ord.quote_accepted_at || (ord.order_status === 'confirmed' && ord.quote_sent_at) ? (
+                            ) : ord.order_status === 'confirmed' && (ord.quote_accepted_at || ord.quote_sent_at) ? (
                               <button
                                 onClick={() => {
                                   setSelectedDriverForAssign(drivers[0]?.id || '');
@@ -1448,7 +1454,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
                                   </button>
                                 )}
                               </div>
-                              {ord.quote_accepted_at || (ord.order_status === 'confirmed' && ord.quote_sent_at) ? (
+                              {ord.order_status === 'confirmed' && (ord.quote_accepted_at || ord.quote_sent_at) ? (
                                 <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-900 border border-emerald-300">
                                   <CheckCircle2 className="w-2.5 h-2.5 text-emerald-700" />
                                   <span>Quote Accepted</span>
@@ -1459,7 +1465,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
                             </div>
 
                             {/* Quote Acceptance Highlight */}
-                            {(ord.quote_accepted_at || (ord.order_status === 'confirmed' && ord.quote_sent_at)) && (
+                            {ord.order_status === 'confirmed' && (ord.quote_accepted_at || ord.quote_sent_at) && (
                               <div className="bg-emerald-50/90 border border-emerald-300/80 rounded-lg px-2.5 py-1 text-[11px] text-emerald-900 flex items-center justify-between font-semibold">
                                 <span className="flex items-center space-x-1">
                                   <Check className="w-3 h-3 text-emerald-700" />
@@ -1522,7 +1528,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
                                       {ord.assigned_driver_name}
                                     </span>
                                   </div>
-                                ) : ord.quote_accepted_at || (ord.order_status === 'confirmed' && ord.quote_sent_at) ? (
+                                ) : ord.order_status === 'confirmed' && (ord.quote_accepted_at || ord.quote_sent_at) ? (
                                   <button
                                     onClick={() => {
                                       setSelectedDriverForAssign(drivers[0]?.id || '');
@@ -5019,7 +5025,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
                       <Copy className="w-3.5 h-3.5" />
                     )}
                   </button>
-                  {selectedOrderDetails.quote_accepted_at || (selectedOrderDetails.quote_sent_at && (selectedOrderDetails.order_status === 'confirmed' || selectedOrderDetails.order_status === 'assigned')) ? (
+                  {selectedOrderDetails.order_status === 'confirmed' && (selectedOrderDetails.quote_accepted_at || selectedOrderDetails.quote_sent_at) ? (
                     <span className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-900 border border-emerald-300 shadow-2xs">
                       <CheckCircle2 className="w-3.5 h-3.5 text-emerald-700" />
                       <span>Quote Accepted</span>
@@ -5089,7 +5095,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
             {/* Modal Body */}
             <div className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-6">
               {/* QUOTATION ACCEPTANCE AUDIT BANNER */}
-              {(selectedOrderDetails.quote_accepted_at || (selectedOrderDetails.quote_sent_at && selectedOrderDetails.order_status !== 'submitted' && selectedOrderDetails.order_status !== 'quote_sent')) && (
+              {(selectedOrderDetails.order_status === 'confirmed' || (selectedOrderDetails.order_status === 'assigned' && !selectedOrderDetails.proof_of_delivery)) && (selectedOrderDetails.quote_accepted_at || selectedOrderDetails.quote_sent_at) && (
                 <div className="bg-gradient-to-r from-emerald-50 via-teal-50 to-emerald-50/70 border-2 border-emerald-300 rounded-2xl p-4 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                   <div className="flex items-start space-x-3">
                     <div className="p-2.5 bg-emerald-600 text-white rounded-xl shadow-xs mt-0.5 shrink-0">

@@ -32,6 +32,21 @@ export interface UserSession {
   defaultPickupContactPhone?: string;
 }
 
+export const STATUS_PROGRESSION_RANK: Record<OrderStatus, number> = {
+  submitted: 0,
+  quote_sent: 1,
+  confirmed: 2,
+  assigned: 3,
+  accepted: 4,
+  en_route_pickup: 5,
+  picked_up: 6,
+  in_transit: 7,
+  delivered: 8,
+  cancellation_requested: 9,
+  change_requested: 9,
+  cancelled: 10,
+};
+
 // Initial vehicles matching blueprint
 export const INITIAL_VEHICLES: Vehicle[] = [
   {
@@ -408,16 +423,36 @@ class FlashDropStore {
             }
           }
 
+          const pod = row.proof_of_delivery?.[0] || existing?.proof_of_delivery || undefined;
+
           // Resolve order status accurately:
-          // If a quote was sent (quoteSentAt exists), but not yet accepted (quoteAcceptedAt is falsy)
-          // and DB status is 'submitted' (or row.order_status is 'quote_sent'), runtime status MUST BE 'quote_sent'
-          let resolvedStatus: OrderStatus = (row.order_status as OrderStatus) || existing?.order_status || 'submitted';
-          if (quoteSentAt && !quoteAcceptedAt) {
-            if (resolvedStatus === 'submitted' || !resolvedStatus || existing?.order_status === 'quote_sent') {
-              resolvedStatus = 'quote_sent';
+          // 1. If proof of delivery exists or order was marked delivered, it is ALWAYS delivered!
+          const rawRowStatus = (row.order_status as OrderStatus) || undefined;
+          const existingStatus = existing?.order_status || undefined;
+          let resolvedStatus: OrderStatus = 'submitted';
+
+          if (pod || rawRowStatus === 'delivered' || existingStatus === 'delivered') {
+            resolvedStatus = 'delivered';
+          } else if (rawRowStatus === 'cancelled' || existingStatus === 'cancelled') {
+            resolvedStatus = 'cancelled';
+          } else {
+            // Pick the more progressed status between remote and local so stale DB responses do not revert live active dispatch
+            const rowRank = rawRowStatus ? (STATUS_PROGRESSION_RANK[rawRowStatus] ?? 0) : 0;
+            const existingRank = existingStatus ? (STATUS_PROGRESSION_RANK[existingStatus] ?? 0) : 0;
+
+            if (existingRank > rowRank && existingRank < 9) {
+              resolvedStatus = existingStatus!;
+            } else {
+              resolvedStatus = rawRowStatus || existingStatus || 'submitted';
             }
-          } else if (quoteAcceptedAt && (resolvedStatus === 'quote_sent' || resolvedStatus === 'submitted')) {
-            resolvedStatus = 'confirmed';
+
+            if (quoteSentAt && !quoteAcceptedAt) {
+              if (resolvedStatus === 'submitted' || !resolvedStatus || existingStatus === 'quote_sent') {
+                resolvedStatus = 'quote_sent';
+              }
+            } else if (quoteAcceptedAt && (resolvedStatus === 'quote_sent' || resolvedStatus === 'submitted')) {
+              resolvedStatus = 'confirmed';
+            }
           }
 
           return {
@@ -984,6 +1019,7 @@ class FlashDropStore {
 
     this.orders[orderIndex] = updatedOrder;
     this.saveToStorage();
+    this.notify();
 
     // Trigger status change notification if order_status changed (quote_sent has dedicated branded quote email)
     if (updates.order_status && updates.order_status !== oldOrder.order_status) {
@@ -1141,6 +1177,7 @@ class FlashDropStore {
     const targetOrder = this.orders[orderIndex];
     this.orders = this.orders.filter((o) => o.id !== targetOrder.id && o.order_number !== targetOrder.order_number);
     this.saveToStorage();
+    this.notify();
 
     inAppNotificationService.dispatch({
       title: `Order Deleted: #${targetOrder.order_number}`,
@@ -1325,6 +1362,7 @@ class FlashDropStore {
 
     this.orders[orderIndex] = order;
     this.saveToStorage();
+    this.notify();
 
     // Multi-channel notification: Customer Email + Admin Email & SMS
     notificationService.notifyOrderStatusChanged(
@@ -1426,6 +1464,7 @@ class FlashDropStore {
 
     this.orders[orderIndex] = order;
     this.saveToStorage();
+    this.notify();
 
     // Multi-channel notification: Customer Email + Admin Email & SMS
     notificationService.notifyOrderStatusChanged(
