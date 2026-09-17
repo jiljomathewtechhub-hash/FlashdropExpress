@@ -197,7 +197,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate, initialParams 
 
       const resetUrl = `${window.location.origin}/#reset-password?email=${encodeURIComponent(emailTrimmed)}&code=${securityPin}`;
 
-      // 2. Dispatch branded email via verified Resend domain (dispatch@flashdropexpress.com)
+      // 2. Dispatch branded email via verified Resend domain (support@flashdropexpress.com)
       await notificationService.sendPasswordResetNotification(emailTrimmed, resetUrl, securityPin);
 
       // 3. In parallel, trigger Supabase native password recovery
@@ -763,7 +763,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate, initialParams 
               </div>
               <p>
                 A 6-digit security code and a 1-click recovery link will be dispatched from{' '}
-                <strong className="text-slate-900">dispatch@flashdropexpress.com</strong>.
+                <strong className="text-slate-900">support@flashdropexpress.com</strong>.
               </p>
             </div>
 
@@ -852,7 +852,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate, initialParams 
                 />
               </div>
               <p className="text-[10px] text-slate-500 mt-1">
-                Check your inbox for the 6-digit code sent from dispatch@flashdropexpress.com.
+                Check your inbox for the 6-digit code sent from support@flashdropexpress.com.
               </p>
             </div>
 

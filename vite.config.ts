@@ -74,7 +74,7 @@ function notificationDevServerPlugin(): Plugin {
                 resend_api_key ||
                 getLocalEnv('RESEND_API_KEY');
 
-              const sender = 'FlashDrop Express <dispatch@flashdropexpress.com>';
+              const sender = 'FlashDrop Express <support@flashdropexpress.com>';
 
               if (channel === 'email' && destination) {
                 const toRecipients = typeof destination === 'string' && destination.includes(',')
@@ -90,6 +90,7 @@ function notificationDevServerPlugin(): Plugin {
                   body: JSON.stringify({
                     from: sender,
                     to: toRecipients,
+                    reply_to: 'support@flashdropexpress.com',
                     subject: subject || `FlashDrop Express Order #${order_number || ''}`,
                     html: html_body || `<p>${message}</p>`,
                   }),
@@ -126,6 +127,7 @@ function notificationDevServerPlugin(): Plugin {
                   body: JSON.stringify({
                     from: sender,
                     to: gatewayEmail,
+                    reply_to: 'support@flashdropexpress.com',
                     subject: 'FlashDrop SMS Alert',
                     text: message,
                   }),
@@ -152,6 +154,7 @@ function notificationDevServerPlugin(): Plugin {
                     body: JSON.stringify({
                       from: sender,
                       to: toAdminList,
+                      reply_to: 'support@flashdropexpress.com',
                       subject: `[SMS URGENT ALERT] Order #${order_number || ''}`,
                       text: `[SMS notification alert for ${destination} (${gateway.toUpperCase()})]:\n\n${message}`,
                     }),

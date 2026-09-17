@@ -38,7 +38,7 @@ export const handler = async (event: any) => {
     // 1. Email delivery via Resend
     if (channel === 'email' && apiKey) {
       try {
-        const senderDomain = 'FlashDrop Express <dispatch@flashdropexpress.com>';
+        const senderDomain = 'FlashDrop Express <support@flashdropexpress.com>';
         const toRecipients = typeof destination === 'string' && destination.includes(',')
           ? destination.split(',').map((e: string) => e.trim()).filter(Boolean)
           : destination;
@@ -52,6 +52,7 @@ export const handler = async (event: any) => {
           body: JSON.stringify({
             from: senderDomain,
             to: toRecipients,
+            reply_to: 'support@flashdropexpress.com',
             subject: subject || `FlashDrop Express Order #${order_number || ''}`,
             html: html_body || `<p>${message}</p>`,
           }),
@@ -76,7 +77,7 @@ export const handler = async (event: any) => {
         };
         const domain = gatewayDomains[gateway] || 'txt.freedommobile.ca';
         const targetGatewayEmail = payload.carrier_gateway_email || `${digits}@${domain}`;
-        const senderDomain = 'FlashDrop Express <dispatch@flashdropexpress.com>';
+        const senderDomain = 'FlashDrop Express <support@flashdropexpress.com>';
 
         await fetch('https://api.resend.com/emails', {
           method: 'POST',
@@ -87,6 +88,7 @@ export const handler = async (event: any) => {
           body: JSON.stringify({
             from: senderDomain,
             to: targetGatewayEmail,
+            reply_to: 'support@flashdropexpress.com',
             subject: 'FlashDrop Alert',
             text: message,
           }),
@@ -107,6 +109,7 @@ export const handler = async (event: any) => {
             body: JSON.stringify({
               from: senderDomain,
               to: toAdminList,
+              reply_to: 'support@flashdropexpress.com',
               subject: `[SMS URGENT ALERT] Order #${order_number || ''}`,
               text: `[SMS notification alert for ${destination} (${gateway.toUpperCase()})]:\n\n${message}`,
             }),

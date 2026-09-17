@@ -175,8 +175,9 @@ class NotificationService {
             Authorization: `Bearer ${resendKey}`,
           },
           body: JSON.stringify({
-            from: 'FlashDrop Express <dispatch@flashdropexpress.com>',
+            from: 'FlashDrop Express <support@flashdropexpress.com>',
             to: toList,
+            reply_to: 'support@flashdropexpress.com',
             subject: params.subject || `FlashDrop Express Order #${params.order_number}`,
             html: params.html_body || `<p>${params.message}</p>`,
           }),
