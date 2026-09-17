@@ -330,7 +330,14 @@ export const AboutPage: React.FC<AboutPageProps> = ({ onNavigate }) => {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-xs">
+            <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-2xs space-y-1.5">
+              <Building2 className="w-4 h-4 text-red-600" />
+              <div className="font-bold text-slate-900">Parent Company</div>
+              <div className="text-slate-800 font-semibold">SNM Group International Inc.</div>
+              <span className="text-[11px] text-slate-500">CRA: 78750 1444 RT0001</span>
+            </div>
+
             <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-2xs space-y-1.5">
               <MapPin className="w-4 h-4 text-red-600" />
               <div className="font-bold text-slate-900">Operating Facility</div>

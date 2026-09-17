@@ -504,6 +504,9 @@ class FlashDropStore {
       if (!this.settings.hst_number || this.settings.hst_number === '78492 1038 RT0001') {
         this.settings.hst_number = '78750 1444 RT0001';
       }
+      if (!this.settings.parent_company) {
+        this.settings.parent_company = 'SNM Group International Inc.';
+      }
       this.drivers = this.drivers.map((d) =>
         d.email && d.email.toLowerCase().includes('nidhin@flashdropexpress.com')
           ? { ...d, email: 'support@flashdropexpress.com' }

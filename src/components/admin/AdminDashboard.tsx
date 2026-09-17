@@ -3525,6 +3525,22 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
                 Official Canada Revenue Agency (CRA) business tax registration number printed on all PDF invoices.
               </span>
             </div>
+
+            <div>
+              <label className="block text-slate-700 font-bold mb-1.5">
+                Parent Company Legal Entity
+              </label>
+              <input
+                type="text"
+                value={settings.parent_company || ''}
+                onChange={(e) => setSettings({ ...settings, parent_company: e.target.value })}
+                placeholder="e.g. SNM Group International Inc."
+                className="w-full bg-slate-50 border border-slate-300 p-2.5 rounded-xl text-slate-900 focus:outline-none focus:border-red-600 shadow-xs"
+              />
+              <span className="text-[10px] text-slate-500 mt-1 block">
+                Official incorporated parent corporate name displayed on legal terms and commercial invoices.
+              </span>
+            </div>
           </div>
 
           <div className="pt-4 border-t border-slate-200 flex flex-wrap items-center justify-between gap-4">

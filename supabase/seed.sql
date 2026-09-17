@@ -45,7 +45,7 @@ ON CONFLICT (code) DO NOTHING;
 -- 4. BUSINESS SETTINGS
 INSERT INTO public.settings (key, value, description)
 VALUES
-  ('business_info', '{"name": "FlashDrop Express", "phone": "+1 647 804 9775", "email": "support@flashdropexpress.com", "domain": "flashdropexpress.com", "tagline": "Fast. Reliable. Delivered.", "hst_number": "78750 1444 RT0001"}', 'Core company contact info'),
+  ('business_info', '{"name": "FlashDrop Express", "parent_company": "SNM Group International Inc.", "phone": "+1 647 804 9775", "email": "support@flashdropexpress.com", "domain": "flashdropexpress.com", "tagline": "Fast. Reliable. Delivered.", "hst_number": "78750 1444 RT0001"}', 'Core company contact info'),
   ('operating_hours', '{"start": "08:00", "end": "17:00", "days": "Monday - Saturday", "after_hours_available": true}', 'Operating delivery schedule'),
   ('pricing_parameters', '{"after_hours_multiplier": 1.5, "after_hours_start": "17:00", "after_hours_end": "08:00", "waiting_rate_hourly": 25.0, "labor_rate_hourly": 30.0, "short_redirect_fee": 18.0, "hst_enabled": true, "hst_rate": 0.13, "hst_number": "78750 1444 RT0001"}', 'Pricing rules, taxes, and fees')
 ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value;

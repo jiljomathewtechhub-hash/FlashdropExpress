@@ -158,10 +158,13 @@ export const ContactPage: React.FC<ContactPageProps> = ({ onNavigate }) => {
             />
             <div className="text-left border-l border-slate-300 pl-4">
               <div className="text-xs font-black text-slate-900 uppercase tracking-wide">
-                FlashDrop Express Inc.
+                FlashDrop Express
               </div>
-              <div className="text-[11px] text-slate-500">
-                Ontario Commercial Freight Carrier
+              <div className="text-[11px] font-semibold text-red-700">
+                A Division of SNM Group International Inc.
+              </div>
+              <div className="text-[10px] text-slate-500 mt-0.5">
+                Ontario Commercial Freight &amp; Same-Day Courier Carrier
               </div>
               <div className="text-[10px] text-slate-500 mt-0.5">
                 Suite 108, 3064 Jaguar Valley Dr, Mississauga, ON L5A 2J3

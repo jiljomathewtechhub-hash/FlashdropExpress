@@ -300,8 +300,10 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
         {/* Bottom Bar (High Contrast WCAG AA) */}
         <div className="border-t border-slate-200 mt-10 pt-6 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500">
           <div>
-            &copy; {new Date().getFullYear()} FlashDrop Express. All rights reserved.
-            Domain: flashdropexpress.com
+            &copy; {new Date().getFullYear()} FlashDrop Express &bull; A Division of SNM Group International Inc.
+            <span className="block text-[11px] text-slate-400 mt-0.5">
+              Licensed Ontario Commercial Courier &bull; Domain: flashdropexpress.com
+            </span>
           </div>
           <div className="flex flex-wrap items-center space-x-3 mt-4 sm:mt-0">
             <button

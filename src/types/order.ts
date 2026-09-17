@@ -206,6 +206,7 @@ export interface Driver {
 
 export interface BusinessSettings {
   name: string;
+  parent_company?: string;
   phone: string;
   alt_phone?: string;
   email: string;

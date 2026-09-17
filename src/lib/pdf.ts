@@ -67,11 +67,12 @@ export function generateOrderPdf(
   doc.text('COMMERCIAL COURIER & EXPEDITED FREIGHT', brandX, 24.5);
 
   // Company contact details below brand emblem
+  const parentCo = settings.parent_company || 'SNM Group International Inc.';
   const hstRegNo = settings.hst_number || '78750 1444 RT0001';
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(textBody[0], textBody[1], textBody[2]);
-  doc.setFontSize(7.5);
-  doc.text('Suite 108, 3064 Jaguar Valley Dr, Mississauga, ON L5A 2J3, Canada', 15, 33);
+  doc.setFontSize(7);
+  doc.text(`Operated by ${parentCo}  •  Suite 108, 3064 Jaguar Valley Dr, Mississauga, ON L5A 2J3`, 15, 33);
   doc.text(
     `Dispatch: ${settings.phone || '+1 (647) 804-9775'}  •  Email: ${settings.email || 'support@flashdropexpress.com'}  •  HST/GST Reg: ${hstRegNo}`,
     15,
@@ -422,7 +423,7 @@ export function generateOrderPdf(
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(mutedText[0], mutedText[1], mutedText[2]);
   doc.text(
-    'Toronto & GTA Same-Day & Rush Courier Services  •  www.flashdropexpress.com  •  support@flashdropexpress.com',
+    `A Division of ${settings.parent_company || 'SNM Group International Inc.'}  •  www.flashdropexpress.com  •  support@flashdropexpress.com`,
     105,
     291,
     { align: 'center' }

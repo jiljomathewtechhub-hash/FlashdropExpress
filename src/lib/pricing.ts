@@ -42,6 +42,7 @@ export interface PricingBreakdown {
 
 export const DEFAULT_BUSINESS_SETTINGS: BusinessSettings = {
   name: 'FlashDrop Express',
+  parent_company: 'SNM Group International Inc.',
   phone: '+1 647 804 9775',
   email: 'support@flashdropexpress.com',
   address: 'Suite 108, 3064 Jaguar Valley Dr, Mississauga, ON L5A 2J3, Canada',
