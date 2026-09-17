@@ -63,20 +63,43 @@ export const OrderWizard: React.FC<OrderWizardProps> = ({ initialData, onNavigat
   const [createdOrder, setCreatedOrder] = useState<Order | null>(null);
   const [validationError, setValidationError] = useState<string | null>(null);
 
-  // Form states
-  // 1. Customer Info
-  const [accountType, setAccountType] = useState<'commercial' | 'personal'>('commercial');
-  const [customerName, setCustomerName] = useState('');
-  const [customerPhone, setCustomerPhone] = useState('');
-  const [customerEmail, setCustomerEmail] = useState('');
-  const [companyName, setCompanyName] = useState('');
-  const [customerHstNumber, setCustomerHstNumber] = useState('');
+  // Pre-load user session immediately on mount
+  const loggedInUser = useMemo(() => store.getCurrentUser(), []);
 
-  // 2. Pickup Address (Starts empty for live production)
-  const [pickupAddress, setPickupAddress] = useState('');
-  const [pickupUnit, setPickupUnit] = useState('');
-  const [pickupContactName, setPickupContactName] = useState('');
-  const [pickupContactPhone, setPickupContactPhone] = useState('');
+  // Form states
+  // 1. Customer Info (Auto-filled immediately from customer portal profile)
+  const [accountType, setAccountType] = useState<'commercial' | 'personal'>(() => {
+    return loggedInUser?.accountType || 'commercial';
+  });
+  const [customerName, setCustomerName] = useState(() => {
+    return loggedInUser?.name || '';
+  });
+  const [customerPhone, setCustomerPhone] = useState(() => {
+    return loggedInUser?.phone || '';
+  });
+  const [customerEmail, setCustomerEmail] = useState(() => {
+    return loggedInUser?.email || '';
+  });
+  const [companyName, setCompanyName] = useState(() => {
+    return loggedInUser?.companyName || '';
+  });
+  const [customerHstNumber, setCustomerHstNumber] = useState(() => {
+    return loggedInUser?.hstNumber || '';
+  });
+
+  // 2. Pickup Address (Auto-filled from customer default address if available)
+  const [pickupAddress, setPickupAddress] = useState(() => {
+    return loggedInUser?.defaultPickupAddress || '';
+  });
+  const [pickupUnit, setPickupUnit] = useState(() => {
+    return loggedInUser?.defaultPickupUnit || '';
+  });
+  const [pickupContactName, setPickupContactName] = useState(() => {
+    return loggedInUser?.defaultPickupContactName || loggedInUser?.name || '';
+  });
+  const [pickupContactPhone, setPickupContactPhone] = useState(() => {
+    return loggedInUser?.defaultPickupContactPhone || loggedInUser?.phone || '';
+  });
   const [pickupLat, setPickupLat] = useState<number>(0);
   const [pickupLng, setPickupLng] = useState<number>(0);
 
@@ -118,6 +141,16 @@ export const OrderWizard: React.FC<OrderWizardProps> = ({ initialData, onNavigat
   const [waitingHours, setWaitingHours] = useState<number>(0);
   const [laborHours, setLaborHours] = useState<number>(0);
 
+  // Saved addresses book for quick pickup fill
+  const [savedAddresses] = useState<Array<{ id: string; label: string; address: string }>>(() => {
+    try {
+      const stored = localStorage.getItem('fd_saved_addresses');
+      return stored ? JSON.parse(stored) : [];
+    } catch {
+      return [];
+    }
+  });
+
   // Settings & Tiers from store
   const settings = store.getSettings();
   const pricingTiers = store.getPricingTiers();
@@ -139,16 +172,19 @@ export const OrderWizard: React.FC<OrderWizardProps> = ({ initialData, onNavigat
     dropoffLng: deliveryLng,
   });
 
-  // Populate logged in user info if present
+  // Re-sync logged in user info if user session updates
   useEffect(() => {
     const user = store.getCurrentUser();
     if (user) {
-      if (!customerName) setCustomerName(user.name);
-      if (!customerEmail) setCustomerEmail(user.email);
-      if (user.phone && !customerPhone) setCustomerPhone(user.phone);
+      if (user.name) setCustomerName((prev) => prev || user.name || '');
+      if (user.email) setCustomerEmail((prev) => prev || user.email || '');
+      if (user.phone) setCustomerPhone((prev) => prev || user.phone || '');
       if (user.accountType) setAccountType(user.accountType);
-      if (user.hstNumber && !customerHstNumber) setCustomerHstNumber(user.hstNumber);
-      if (user.companyName && !companyName) setCompanyName(user.companyName);
+      if (user.hstNumber) setCustomerHstNumber((prev) => prev || user.hstNumber || '');
+      if (user.companyName) setCompanyName((prev) => prev || user.companyName || '');
+      if (user.defaultPickupAddress) setPickupAddress((prev) => prev || user.defaultPickupAddress || '');
+      if (user.name) setPickupContactName((prev) => prev || user.name || '');
+      if (user.phone) setPickupContactPhone((prev) => prev || user.phone || '');
     }
   }, []);
 
@@ -325,6 +361,21 @@ export const OrderWizard: React.FC<OrderWizardProps> = ({ initialData, onNavigat
     setCreatedOrder(newOrder);
     setStep(4); // Confirmation step
 
+    // Auto-update customer's profile so any newly entered or verified details are saved for future dispatches
+    if (store.getCurrentUser()?.role === 'customer') {
+      store.updateCustomerProfile({
+        name: customerName.trim(),
+        phone: customerPhone.trim(),
+        companyName: companyName.trim() || undefined,
+        hstNumber: customerHstNumber.trim() || undefined,
+        accountType,
+        defaultPickupAddress: pickupAddress.trim() || undefined,
+        defaultPickupUnit: pickupUnit.trim() || undefined,
+        defaultPickupContactName: pickupContactName.trim() || undefined,
+        defaultPickupContactPhone: pickupContactPhone.trim() || undefined,
+      }).catch(console.warn);
+    }
+
     // Confetti celebration
     try {
       confetti({
@@ -492,6 +543,58 @@ export const OrderWizard: React.FC<OrderWizardProps> = ({ initialData, onNavigat
                     {isPickupGta ? 'Inside GTA' : 'Outside GTA'}
                   </span>
                 </div>
+
+                {/* Quick-fill from Customer Profile or Address Book */}
+                {(loggedInUser?.defaultPickupAddress || savedAddresses.length > 0) && (
+                  <div className="bg-slate-50 border border-slate-200/80 rounded-xl p-2.5 space-y-1.5">
+                    <div className="flex items-center space-x-1.5 text-[11px] font-bold text-slate-700 uppercase tracking-wider">
+                      <Sparkles className="w-3 h-3 text-red-500" />
+                      <span>Quick-Fill Pickup:</span>
+                    </div>
+                    <div className="flex flex-wrap gap-1.5">
+                      {loggedInUser?.defaultPickupAddress && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setPickupAddress(loggedInUser.defaultPickupAddress!);
+                            if (loggedInUser.name && !pickupContactName) setPickupContactName(loggedInUser.name);
+                            if (loggedInUser.phone && !pickupContactPhone) setPickupContactPhone(loggedInUser.phone);
+                            if (loggedInUser.defaultPickupUnit && !pickupUnit) setPickupUnit(loggedInUser.defaultPickupUnit);
+                            setValidationError(null);
+                          }}
+                          className={`text-xs px-2.5 py-1 rounded-lg border font-medium transition flex items-center space-x-1 cursor-pointer ${
+                            pickupAddress === loggedInUser.defaultPickupAddress
+                              ? 'bg-emerald-50 border-emerald-300 text-emerald-800 font-bold'
+                              : 'bg-white border-slate-300 text-slate-700 hover:border-red-300 hover:text-red-700'
+                          }`}
+                        >
+                          <Building className="w-3 h-3 text-slate-500" />
+                          <span className="truncate max-w-[220px]">Profile: {loggedInUser.defaultPickupAddress}</span>
+                        </button>
+                      )}
+                      {savedAddresses.map((addr) => (
+                        <button
+                          key={addr.id}
+                          type="button"
+                          onClick={() => {
+                            setPickupAddress(addr.address);
+                            if (loggedInUser?.name && !pickupContactName) setPickupContactName(loggedInUser.name);
+                            if (loggedInUser?.phone && !pickupContactPhone) setPickupContactPhone(loggedInUser.phone);
+                            setValidationError(null);
+                          }}
+                          className={`text-xs px-2.5 py-1 rounded-lg border font-medium transition flex items-center space-x-1 cursor-pointer ${
+                            pickupAddress === addr.address
+                              ? 'bg-emerald-50 border-emerald-300 text-emerald-800 font-bold'
+                              : 'bg-white border-slate-300 text-slate-700 hover:border-red-300 hover:text-red-700'
+                          }`}
+                        >
+                          <MapPin className="w-3 h-3 text-slate-500" />
+                          <span>{addr.label}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
                 {/* Real-time Photon Autocomplete for Pickup */}
                 <AddressAutocompleteInput
@@ -1059,8 +1162,38 @@ export const OrderWizard: React.FC<OrderWizardProps> = ({ initialData, onNavigat
                   <User className="w-4 h-4 text-red-600" />
                   <span>Sender & Billing Information</span>
                 </span>
-                <span className="text-[11px] text-slate-500 font-medium">Guest Checkout Enabled</span>
+                {loggedInUser ? (
+                  <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full flex items-center space-x-1">
+                    <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                    <span>Auto-filled from Profile</span>
+                  </span>
+                ) : (
+                  <span className="text-[11px] text-slate-500 font-medium">Guest Checkout Enabled</span>
+                )}
               </div>
+
+              {/* Logged-in Customer Verified Auto-fill Banner */}
+              {loggedInUser && (
+                <div className="p-3.5 bg-emerald-50/80 border border-emerald-200 rounded-xl flex items-center justify-between shadow-xs">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-8 h-8 rounded-lg bg-emerald-600 text-white flex items-center justify-center font-black text-xs shadow-xs shrink-0">
+                      ✓
+                    </div>
+                    <div>
+                      <div className="text-xs font-bold text-emerald-950 flex items-center space-x-1.5">
+                        <span>Portal Account: {customerName || loggedInUser.name}</span>
+                        {companyName && <span className="text-emerald-800">({companyName})</span>}
+                      </div>
+                      <div className="text-[11px] text-emerald-700">
+                        Company Name, Phone, Email &amp; CRA GST/HST #{customerHstNumber ? ` (${customerHstNumber})` : ''} automatically populated.
+                      </div>
+                    </div>
+                  </div>
+                  <span className="text-[10px] font-bold uppercase tracking-wider bg-emerald-100 text-emerald-900 px-2.5 py-0.5 rounded-full border border-emerald-300 shrink-0">
+                    Portal Active
+                  </span>
+                </div>
+              )}
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {/* Account Classification: Commercial vs Personal */}
@@ -1123,9 +1256,17 @@ export const OrderWizard: React.FC<OrderWizardProps> = ({ initialData, onNavigat
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1.5">
-                    Company / Organization {accountType === 'commercial' ? <span className="text-red-600 font-bold">*</span> : <span className="text-slate-400 font-normal">(Optional)</span>}
-                  </label>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="block text-xs font-semibold text-slate-700">
+                      Company / Organization {accountType === 'commercial' ? <span className="text-red-600 font-bold">*</span> : <span className="text-slate-400 font-normal">(Optional)</span>}
+                    </label>
+                    {loggedInUser?.companyName && (
+                      <span className="text-[10px] text-emerald-700 font-bold flex items-center space-x-1 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
+                        <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                        <span>Profile linked</span>
+                      </span>
+                    )}
+                  </div>
                   <div className="relative">
                     <Building className="w-4 h-4 text-slate-500 absolute left-3.5 top-3.5" />
                     <input
@@ -1153,6 +1294,12 @@ export const OrderWizard: React.FC<OrderWizardProps> = ({ initialData, onNavigat
                         <span className="text-slate-400 font-normal text-xs">(Optional)</span>
                       )}
                     </label>
+                    {loggedInUser?.hstNumber && (
+                      <span className="text-[10px] text-emerald-700 font-bold flex items-center space-x-1 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
+                        <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                        <span>Profile linked</span>
+                      </span>
+                    )}
                   </div>
                   <div className="relative">
                     <Shield className="w-4 h-4 text-slate-500 absolute left-3.5 top-3.5" />

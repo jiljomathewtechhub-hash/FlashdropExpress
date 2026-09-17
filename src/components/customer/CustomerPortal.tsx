@@ -14,6 +14,11 @@ import {
   LogOut,
   User,
   Calendar,
+  Edit3,
+  Save,
+  Shield,
+  Sparkles,
+  Phone,
 } from 'lucide-react';
 import { Order, OrderRequestItem } from '../../types/order';
 import { store, UserSession } from '../../lib/store';
@@ -37,16 +42,67 @@ export const CustomerPortal: React.FC<CustomerPortalProps> = ({ onNavigate }) =>
   const [requestReason, setRequestReason] = useState('');
   const [requestSent, setRequestSent] = useState(false);
 
-  // Prevent background page scrolling when request modal is open
+  // Profile edit modal
+  const [showEditProfile, setShowEditProfile] = useState(false);
+  const [editCompanyName, setEditCompanyName] = useState(user?.companyName || '');
+  const [editFullName, setEditFullName] = useState(user?.name || '');
+  const [editPhone, setEditPhone] = useState(user?.phone || '');
+  const [editHstNumber, setEditHstNumber] = useState(user?.hstNumber || '');
+  const [editAccountType, setEditAccountType] = useState<'commercial' | 'personal'>(user?.accountType || 'commercial');
+  const [editAddress, setEditAddress] = useState(user?.defaultPickupAddress || '');
+  const [editUnit, setEditUnit] = useState(user?.defaultPickupUnit || '');
+  const [isSavingProfile, setIsSavingProfile] = useState(false);
+  const [profileSuccessMsg, setProfileSuccessMsg] = useState('');
+
+  // Keep edit fields in sync with user changes
   useEffect(() => {
-    if (modalType && modalOrder) {
+    if (user) {
+      setEditCompanyName(user.companyName || '');
+      setEditFullName(user.name || '');
+      setEditPhone(user.phone || '');
+      setEditHstNumber(user.hstNumber || '');
+      setEditAccountType(user.accountType || 'commercial');
+      setEditAddress(user.defaultPickupAddress || '');
+      setEditUnit(user.defaultPickupUnit || '');
+    }
+  }, [user]);
+
+  // Prevent background page scrolling when modals are open
+  useEffect(() => {
+    if ((modalType && modalOrder) || showEditProfile) {
       const originalOverflow = document.body.style.overflow;
       document.body.style.overflow = 'hidden';
       return () => {
         document.body.style.overflow = originalOverflow;
       };
     }
-  }, [modalType, modalOrder]);
+  }, [modalType, modalOrder, showEditProfile]);
+
+  const handleSaveProfile = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSavingProfile(true);
+    try {
+      await store.updateCustomerProfile({
+        name: editFullName.trim(),
+        phone: editPhone.trim(),
+        companyName: editCompanyName.trim() || undefined,
+        hstNumber: editHstNumber.trim() || undefined,
+        accountType: editAccountType,
+        defaultPickupAddress: editAddress.trim() || undefined,
+        defaultPickupUnit: editUnit.trim() || undefined,
+        defaultPickupContactName: editFullName.trim(),
+        defaultPickupContactPhone: editPhone.trim(),
+      });
+      setUser(store.getCurrentUser());
+      setShowEditProfile(false);
+      setProfileSuccessMsg('Profile updated! Your company name, contact, and HST details will auto-fill every delivery order.');
+      setTimeout(() => setProfileSuccessMsg(''), 5000);
+    } catch (err) {
+      console.error('Failed to update customer profile:', err);
+    } finally {
+      setIsSavingProfile(false);
+    }
+  };
 
   // Address book (starts empty, persisted in localStorage)
   const [savedAddresses, setSavedAddresses] = useState<Array<{ id: string; label: string; address: string }>>(() => {
@@ -196,10 +252,18 @@ export const CustomerPortal: React.FC<CustomerPortalProps> = ({ onNavigate }) =>
         <div className="flex flex-wrap items-center gap-3">
           <button
             onClick={() => onNavigate('order')}
-            className="flex items-center space-x-2 px-5 py-2.5 bg-[#C5161D] hover:bg-[#A51218] text-white font-bold text-xs rounded-xl shadow-lg shadow-red-950/40 transition"
+            className="flex items-center space-x-2 px-5 py-2.5 bg-[#C5161D] hover:bg-[#A51218] text-white font-bold text-xs rounded-xl shadow-lg shadow-red-950/40 transition cursor-pointer"
           >
             <Plus className="w-4 h-4" />
             <span>New Delivery Order</span>
+          </button>
+
+          <button
+            onClick={() => setShowEditProfile(true)}
+            className="flex items-center space-x-1.5 px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-semibold rounded-xl border border-slate-300 hover:border-slate-400 transition cursor-pointer"
+          >
+            <Edit3 className="w-3.5 h-3.5 text-slate-600" />
+            <span>Edit Profile</span>
           </button>
 
           <button
@@ -214,6 +278,14 @@ export const CustomerPortal: React.FC<CustomerPortalProps> = ({ onNavigate }) =>
           </button>
         </div>
       </div>
+
+      {/* Profile Updated Success Alert */}
+      {profileSuccessMsg && (
+        <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-300 text-xs text-emerald-900 flex items-center space-x-2.5 shadow-sm">
+          <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+          <span className="font-semibold">{profileSuccessMsg}</span>
+        </div>
+      )}
 
       {/* Orders Management Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
@@ -556,6 +628,196 @@ export const CustomerPortal: React.FC<CustomerPortalProps> = ({ onNavigate }) =>
                   </button>
                 </div>
               )}
+            </form>
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {/* Edit Profile Modal */}
+      {showEditProfile && createPortal(
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto animate-fade-in">
+          <div className="bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 max-w-lg w-full shadow-2xl space-y-5 my-auto">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div>
+                <h3 className="text-lg font-black text-slate-900 font-['Outfit']">
+                  Edit Business &amp; Profile Details
+                </h3>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  These details will automatically populate every time you place a delivery.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowEditProfile(false)}
+                className="text-slate-400 hover:text-slate-700 text-xl font-bold p-1 cursor-pointer"
+              >
+                &times;
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveProfile} className="space-y-4 text-xs">
+              {/* Account Classification */}
+              <div>
+                <label className="block font-semibold text-slate-700 mb-1.5">Account Type</label>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setEditAccountType('commercial')}
+                    className={`py-2 px-3 rounded-xl border font-bold transition flex items-center justify-center space-x-1.5 cursor-pointer ${
+                      editAccountType === 'commercial'
+                        ? 'bg-red-50 border-red-600 text-red-700 shadow-xs'
+                        : 'bg-white border-slate-300 text-slate-600 hover:bg-slate-50'
+                    }`}
+                  >
+                    <Building className="w-3.5 h-3.5" />
+                    <span>Commercial Business</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setEditAccountType('personal')}
+                    className={`py-2 px-3 rounded-xl border font-bold transition flex items-center justify-center space-x-1.5 cursor-pointer ${
+                      editAccountType === 'personal'
+                        ? 'bg-red-50 border-red-600 text-red-700 shadow-xs'
+                        : 'bg-white border-slate-300 text-slate-600 hover:bg-slate-50'
+                    }`}
+                  >
+                    <User className="w-3.5 h-3.5" />
+                    <span>Personal Account</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Company / Business Name */}
+              <div>
+                <label className="block font-semibold text-slate-700 mb-1">
+                  Company / Organization Name {editAccountType === 'commercial' && <span className="text-red-600">*</span>}
+                </label>
+                <div className="relative">
+                  <Building className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
+                  <input
+                    type="text"
+                    value={editCompanyName}
+                    onChange={(e) => setEditCompanyName(e.target.value)}
+                    placeholder="e.g. Apex Industrial Logistics Inc."
+                    className="w-full bg-slate-50 border border-slate-300 pl-9 pr-3 py-2 text-slate-900 rounded-xl focus:border-red-600 focus:bg-white focus:outline-none"
+                    required={editAccountType === 'commercial'}
+                  />
+                </div>
+              </div>
+
+              {/* Contact Name & Phone */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block font-semibold text-slate-700 mb-1">
+                    Contact Person Name *
+                  </label>
+                  <div className="relative">
+                    <User className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
+                    <input
+                      type="text"
+                      value={editFullName}
+                      onChange={(e) => setEditFullName(e.target.value)}
+                      placeholder="e.g. Jane Doe"
+                      className="w-full bg-slate-50 border border-slate-300 pl-9 pr-3 py-2 text-slate-900 rounded-xl focus:border-red-600 focus:bg-white focus:outline-none"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block font-semibold text-slate-700 mb-1">
+                    Direct Phone Number *
+                  </label>
+                  <div className="relative">
+                    <Phone className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
+                    <input
+                      type="tel"
+                      value={editPhone}
+                      onChange={(e) => setEditPhone(e.target.value)}
+                      placeholder="e.g. +1 (647) 555-0199"
+                      className="w-full bg-slate-50 border border-slate-300 pl-9 pr-3 py-2 text-slate-900 rounded-xl focus:border-red-600 focus:bg-white focus:outline-none"
+                      required
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* HST / Business Number */}
+              <div>
+                <label className="block font-semibold text-slate-700 mb-1">
+                  Customer HST / Business Number {editAccountType === 'commercial' ? <span className="text-red-600">*</span> : <span className="text-slate-400 font-normal">(Optional)</span>}
+                </label>
+                <div className="relative">
+                  <Shield className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
+                  <input
+                    type="text"
+                    value={editHstNumber}
+                    onChange={(e) => setEditHstNumber(e.target.value)}
+                    placeholder="e.g. 12345 6789 RT0001"
+                    className="w-full bg-slate-50 border border-slate-300 pl-9 pr-3 py-2 text-slate-900 rounded-xl focus:border-red-600 focus:bg-white focus:outline-none"
+                    required={editAccountType === 'commercial'}
+                  />
+                </div>
+                <p className="text-[10px] text-slate-500 mt-1">
+                  Used for CRA-compliant invoicing with input tax credits.
+                </p>
+              </div>
+
+              {/* Default Pickup / Warehouse Address & Unit */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="sm:col-span-2">
+                  <label className="block font-semibold text-slate-700 mb-1">
+                    Default Pickup Address (Optional)
+                  </label>
+                  <div className="relative">
+                    <MapPin className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
+                    <input
+                      type="text"
+                      value={editAddress}
+                      onChange={(e) => setEditAddress(e.target.value)}
+                      placeholder="e.g. 100 King St W, Toronto, ON"
+                      className="w-full bg-slate-50 border border-slate-300 pl-9 pr-3 py-2 text-slate-900 rounded-xl focus:border-red-600 focus:bg-white focus:outline-none"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="block font-semibold text-slate-700 mb-1">
+                    Dock / Unit #
+                  </label>
+                  <input
+                    type="text"
+                    value={editUnit}
+                    onChange={(e) => setEditUnit(e.target.value)}
+                    placeholder="e.g. Bay 4"
+                    className="w-full bg-slate-50 border border-slate-300 px-3 py-2 text-slate-900 rounded-xl focus:border-red-600 focus:bg-white focus:outline-none"
+                  />
+                </div>
+              </div>
+
+              <div className="flex justify-end space-x-2.5 pt-3 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setShowEditProfile(false)}
+                  className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-semibold transition cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSavingProfile}
+                  className="px-5 py-2 bg-[#C5161D] hover:bg-[#A51218] text-white rounded-xl font-bold shadow-md shadow-red-950/40 transition flex items-center space-x-1.5 cursor-pointer disabled:opacity-50"
+                >
+                  {isSavingProfile ? (
+                    <span>Saving...</span>
+                  ) : (
+                    <>
+                      <Save className="w-3.5 h-3.5" />
+                      <span>Save Profile Details</span>
+                    </>
+                  )}
+                </button>
+              </div>
             </form>
           </div>
         </div>,

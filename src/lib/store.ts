@@ -25,6 +25,10 @@ export interface UserSession {
   accountType?: 'personal' | 'commercial';
   hstNumber?: string;
   companyName?: string;
+  defaultPickupAddress?: string;
+  defaultPickupUnit?: string;
+  defaultPickupContactName?: string;
+  defaultPickupContactPhone?: string;
 }
 
 // Initial vehicles matching blueprint
@@ -547,6 +551,24 @@ class FlashDropStore {
 
       const savedUser = localStorage.getItem(`${STORAGE_KEY_PREFIX}current_user`);
       this.currentUser = savedUser ? JSON.parse(savedUser) : null;
+      if (this.currentUser && this.currentUser.role === 'customer' && this.currentUser.email) {
+        try {
+          const profileKey = `flashdrop_profile_${this.currentUser.email.toLowerCase().trim()}`;
+          const cachedProfileStr = localStorage.getItem(profileKey);
+          if (cachedProfileStr) {
+            const cp = JSON.parse(cachedProfileStr);
+            this.currentUser = {
+              ...this.currentUser,
+              name: this.currentUser.name || cp.fullName || '',
+              phone: this.currentUser.phone || cp.phone || '',
+              companyName: this.currentUser.companyName || cp.companyName || '',
+              hstNumber: this.currentUser.hstNumber || cp.hstNumber || '',
+              accountType: this.currentUser.accountType || cp.accountType || 'commercial',
+              defaultPickupAddress: this.currentUser.defaultPickupAddress || cp.address || '',
+            };
+          }
+        } catch {}
+      }
     } catch {
       this.orders = INITIAL_ORDERS;
       this.drivers = INITIAL_DRIVERS;
@@ -596,6 +618,66 @@ class FlashDropStore {
   public setCurrentUser(user: UserSession | null) {
     this.currentUser = user;
     this.saveToStorage();
+  }
+
+  public async updateCustomerProfile(updates: Partial<UserSession>): Promise<void> {
+    if (!this.currentUser) return;
+    this.currentUser = {
+      ...this.currentUser,
+      ...updates,
+    };
+    this.saveToStorage();
+
+    // Cache locally for offline and session resilience
+    try {
+      const emailKey = this.currentUser.email.toLowerCase().trim();
+      const profileKey = `flashdrop_profile_${emailKey}`;
+      const existingStr = localStorage.getItem(profileKey);
+      const existing = existingStr ? JSON.parse(existingStr) : {};
+      localStorage.setItem(profileKey, JSON.stringify({
+        ...existing,
+        fullName: this.currentUser.name,
+        phone: this.currentUser.phone,
+        companyName: this.currentUser.companyName,
+        hstNumber: this.currentUser.hstNumber,
+        accountType: this.currentUser.accountType,
+        address: this.currentUser.defaultPickupAddress || existing.address || '',
+      }));
+    } catch (e) {
+      console.warn('Failed to cache updated profile locally:', e);
+    }
+
+    // Sync to Supabase auth metadata and profiles table if connected
+    if (isSupabaseConfigured && supabase) {
+      try {
+        const { data: authUser } = await supabase.auth.getUser();
+        if (authUser?.user) {
+          await supabase.auth.updateUser({
+            data: {
+              full_name: this.currentUser.name,
+              phone: this.currentUser.phone,
+              company_name: this.currentUser.companyName,
+              hst_number: this.currentUser.hstNumber,
+              account_type: this.currentUser.accountType,
+              address: this.currentUser.defaultPickupAddress,
+            },
+          });
+
+          await supabase.from('profiles').upsert([
+            {
+              id: authUser.user.id,
+              email: this.currentUser.email,
+              role: 'customer',
+              full_name: this.currentUser.name,
+              phone: this.currentUser.phone,
+              company_name: this.currentUser.companyName,
+            },
+          ]);
+        }
+      } catch (err) {
+        console.warn('Supabase remote profile sync warning:', err);
+      }
+    }
   }
 
   public logout() {

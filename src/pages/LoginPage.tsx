@@ -585,14 +585,33 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate, initialParams 
           cachedProf?.companyName ||
           '';
 
+        const userDefaultAddress =
+          authData.user.user_metadata?.address ||
+          cachedProf?.address ||
+          '';
+
+        const userPhone =
+          profile?.phone ||
+          authData.user.user_metadata?.phone ||
+          cachedProf?.phone ||
+          '';
+
+        const userName =
+          profile?.full_name ||
+          authData.user.user_metadata?.full_name ||
+          cachedProf?.fullName ||
+          userCompanyName ||
+          'Customer';
+
         store.setCurrentUser({
           role: 'customer',
           email: userEmail,
-          name: profile?.full_name || userCompanyName || authData.user.user_metadata?.full_name || 'Customer',
-          phone: profile?.phone || authData.user.user_metadata?.phone || '',
+          name: userName,
+          phone: userPhone,
           accountType: userAccountType,
           hstNumber: userHstNumber,
           companyName: userCompanyName,
+          defaultPickupAddress: userDefaultAddress,
         });
 
         setSuccessMessage('Welcome back! Loading Customer Portal...');
