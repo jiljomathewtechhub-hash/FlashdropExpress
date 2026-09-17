@@ -14,7 +14,17 @@ import {
 import { supabase, isSupabaseConfigured } from './supabase';
 
 const NOTIFICATIONS_STORAGE_KEY = 'flashdrop_notifications_log';
-export const ADMIN_PHONE_DEFAULT = '+1 647 804 9775';
+
+export const normalizePhone = (num?: string): string => {
+  if (!num) return '';
+  const digits = num.replace(/[^\d+]/g, '');
+  if (digits.startsWith('+')) return digits;
+  if (digits.length === 10) return `+1${digits}`;
+  if (digits.length === 11 && digits.startsWith('1')) return `+${digits}`;
+  return digits ? `+${digits}` : '';
+};
+
+export const ADMIN_PHONE_DEFAULT = '+16478049775';
 export const ADMIN_PHONE_TARGET = ADMIN_PHONE_DEFAULT;
 export const ADMIN_EMAIL_TARGET = (import.meta.env.VITE_ADMIN_EMAIL as string) || 'support@flashdropexpress.com';
 export const ADMIN_BACKUP_EMAIL_DEFAULT = (import.meta.env.VITE_ADMIN_BACKUP_EMAIL as string) || 'support@flashdropexpress.com';
@@ -101,6 +111,8 @@ class NotificationService {
     html_body?: string;
     metadata?: Record<string, any>;
   }): Promise<NotificationLog> {
+    const cleanDestination = params.channel === 'sms' ? normalizePhone(params.destination) : params.destination;
+
     const log: NotificationLog = {
       id: `notif-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
       order_id: params.order_id,
@@ -108,7 +120,7 @@ class NotificationService {
       event: params.event,
       channel: params.channel,
       recipient_type: params.recipient_type,
-      destination: params.destination,
+      destination: cleanDestination,
       subject: params.subject,
       message: params.message,
       html_body: params.html_body,
@@ -127,7 +139,7 @@ class NotificationService {
         carrier_gateway: params.metadata?.carrier_gateway || 'freedom',
         twilio_account_sid: params.metadata?.twilio_account_sid || (import.meta.env.VITE_TWILIO_ACCOUNT_SID as string) || '',
         twilio_auth_token: params.metadata?.twilio_auth_token || (import.meta.env.VITE_TWILIO_AUTH_TOKEN as string) || '',
-        twilio_from_phone: params.metadata?.twilio_from_phone || (import.meta.env.VITE_TWILIO_FROM_PHONE as string) || '',
+        twilio_from_phone: normalizePhone(params.metadata?.twilio_from_phone || (import.meta.env.VITE_TWILIO_FROM_PHONE as string) || '+17372508034'),
       };
 
       let delivered = false;
@@ -152,9 +164,9 @@ class NotificationService {
 
       // Fallback: If in an environment where proxy is unavailable, try direct Resend API
       if (!delivered && params.channel === 'email') {
-        const toList = params.destination.includes(',')
-          ? params.destination.split(',').map((s) => s.trim()).filter(Boolean)
-          : params.destination;
+        const toList = cleanDestination.includes(',')
+          ? cleanDestination.split(',').map((s) => s.trim()).filter(Boolean)
+          : cleanDestination;
 
         fetch('https://api.resend.com/emails', {
           method: 'POST',
@@ -169,6 +181,61 @@ class NotificationService {
             html: params.html_body || `<p>${params.message}</p>`,
           }),
         }).catch(() => {});
+      }
+
+      // Direct Twilio Client Fallback if proxy was unreachable
+      if (!delivered && params.channel === 'sms') {
+        const twilioSid = payload.twilio_account_sid;
+        const twilioToken = payload.twilio_auth_token;
+        const twilioFrom = payload.twilio_from_phone;
+
+        if (twilioSid && twilioToken && twilioFrom && cleanDestination) {
+          try {
+            const twilioUrl = `https://api.twilio.com/2010-04-01/Accounts/${twilioSid}/Messages.json`;
+            const authHeader = 'Basic ' + btoa(`${twilioSid}:${twilioToken}`);
+            const bodyParams = new URLSearchParams({
+              To: cleanDestination,
+              From: twilioFrom,
+              Body: params.message,
+            });
+
+            let tRes = await fetch(twilioUrl, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                Authorization: authHeader,
+              },
+              body: bodyParams.toString(),
+            });
+            let tData = await tRes.json();
+
+            // If trial account requires predefined template (error 572006 or 400 parameter rejection)
+            if (tData && (tData.code === 572006 || tData.status === 400)) {
+              const fallbackTemplate = params.event === 'status_changed' ? 'sms_delivery_updates' : 'sms_order_confirmation';
+              const fallbackParams = new URLSearchParams({
+                To: cleanDestination,
+                From: twilioFrom,
+                Body: fallbackTemplate,
+              });
+              tRes = await fetch(twilioUrl, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/x-www-form-urlencoded',
+                  Authorization: authHeader,
+                },
+                body: fallbackParams.toString(),
+              });
+              tData = await tRes.json();
+            }
+
+            if (tData?.sid) {
+              log.status = 'delivered';
+              console.log('%c[Twilio Direct Client SMS SUCCESS]', 'color: #10B981; font-weight: bold;', tData.sid);
+            }
+          } catch (tErr) {
+            console.warn('Twilio direct client SMS warning:', tErr);
+          }
+        }
       }
     }
 
@@ -262,7 +329,7 @@ class NotificationService {
         admin_email: adminEmailStr,
         twilio_account_sid: settings?.twilio_account_sid || (import.meta.env.VITE_TWILIO_ACCOUNT_SID as string) || '',
         twilio_auth_token: settings?.twilio_auth_token || (import.meta.env.VITE_TWILIO_AUTH_TOKEN as string) || '',
-        twilio_from_phone: settings?.twilio_from_phone || (import.meta.env.VITE_TWILIO_FROM_PHONE as string) || '',
+        twilio_from_phone: settings?.twilio_from_phone || (import.meta.env.VITE_TWILIO_FROM_PHONE as string) || '+17372508034',
       },
     });
     logs.push(adminSmsLog);
@@ -394,7 +461,7 @@ class NotificationService {
         admin_email: adminEmailStr,
         twilio_account_sid: settings?.twilio_account_sid || (import.meta.env.VITE_TWILIO_ACCOUNT_SID as string) || '',
         twilio_auth_token: settings?.twilio_auth_token || (import.meta.env.VITE_TWILIO_AUTH_TOKEN as string) || '',
-        twilio_from_phone: settings?.twilio_from_phone || (import.meta.env.VITE_TWILIO_FROM_PHONE as string) || '',
+        twilio_from_phone: settings?.twilio_from_phone || (import.meta.env.VITE_TWILIO_FROM_PHONE as string) || '+17372508034',
       },
     });
     logs.push(adminSmsLog);

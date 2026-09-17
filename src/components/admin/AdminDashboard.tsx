@@ -3041,9 +3041,69 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
                     </div>
                   </div>
                 </div>
-                <span className="text-[11px] text-slate-600 block">
-                  Click <strong>&ldquo;Get a phone number&rdquo;</strong> in your <a href="https://console.twilio.com" target="_blank" rel="noopener noreferrer" className="text-sky-700 underline font-semibold">Twilio Console</a>, then paste the number above. Twilio will deliver real SMS messages directly to +1 647 804 9775.
-                </span>
+
+                <div className="flex flex-wrap items-center justify-between gap-2 pt-1 border-t border-sky-200/60">
+                  <div className="text-[11px] text-slate-600">
+                    Active Twilio Dispatch: <strong className="text-slate-800 font-mono">{settings.twilio_from_phone || '+1 (737) 250-8034'}</strong> &rarr; Target Admin: <strong className="text-slate-800 font-mono">+1 647 804 9775</strong>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <button
+                      type="button"
+                      disabled={testSending}
+                      onClick={async () => {
+                        setTestSending(true);
+                        setTestSuccess(false);
+                        try {
+                          await notificationService.dispatchNotification({
+                            order_id: 'test-sms',
+                            order_number: 'TEST',
+                            event: 'status_changed',
+                            channel: 'sms',
+                            recipient_type: 'admin',
+                            destination: settings.admin_sms_phone || '+16478049775',
+                            message: 'FlashDrop Express SMS Alert: Twilio notification test delivered successfully!',
+                            metadata: {
+                              carrier_gateway: settings.carrier_sms_gateway || 'freedom',
+                              twilio_account_sid: settings.twilio_account_sid,
+                              twilio_auth_token: settings.twilio_auth_token,
+                              twilio_from_phone: settings.twilio_from_phone,
+                            },
+                          });
+                          setTestSuccess(true);
+                          setNotifications(store.getNotificationLogs());
+                          setTimeout(() => setTestSuccess(false), 6000);
+                        } catch {
+                          alert('Failed to send test SMS. Please check Twilio settings.');
+                        } finally {
+                          setTestSending(false);
+                        }
+                      }}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center space-x-1.5 cursor-pointer shadow-sm ${
+                        testSuccess
+                          ? 'bg-emerald-600 text-white'
+                          : testSending
+                          ? 'bg-slate-300 text-slate-600 cursor-wait'
+                          : 'bg-sky-700 hover:bg-sky-800 text-white'
+                      }`}
+                    >
+                      <Phone className="w-3 h-3" />
+                      <span>{testSending ? 'Sending SMS...' : testSuccess ? '✓ Test SMS Sent to +1 647 804 9775' : 'Send Test SMS (+1 647 804 9775)'}</span>
+                    </button>
+                  </div>
+                </div>
+
+                <div className="p-2.5 bg-white/80 border border-sky-200 rounded-lg text-[11px] text-slate-600 space-y-1">
+                  <div className="flex items-center space-x-1.5 text-sky-800 font-bold">
+                    <AlertCircle className="w-3.5 h-3.5 flex-shrink-0" />
+                    <span>Twilio Setup & Delivery Guide:</span>
+                  </div>
+                  <p className="leading-relaxed">
+                    • <strong>Current Trial Mode:</strong> Twilio free trial accounts can only send to your verified number (<code>+1 647 804 9775</code>) using pre-approved SMS templates (<code>sms_order_confirmation</code> and <code>sms_delivery_updates</code>).
+                  </p>
+                  <p className="leading-relaxed">
+                    • <strong>To Send Custom Text to All Customers &amp; Drivers:</strong> Upgrade your account at <a href="https://console.twilio.com" target="_blank" rel="noopener noreferrer" className="text-sky-700 underline font-semibold">console.twilio.com</a> with a $15–$20 balance. This unlocks custom text with order numbers, addresses, and live driver tracking links to any Canadian or US number.
+                  </p>
+                </div>
               </div>
             </div>
           </div>

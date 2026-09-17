@@ -7,22 +7,35 @@ import path from 'path';
 function getLocalEnv(key: string): string {
   if (process.env[key]) return process.env[key]!;
   if (process.env[`VITE_${key}`]) return process.env[`VITE_${key}`]!;
-  try {
-    const envFile = path.resolve(process.cwd(), '.env');
-    if (fs.existsSync(envFile)) {
-      const lines = fs.readFileSync(envFile, 'utf8').split(/\r?\n/);
-      for (const line of lines) {
-        const trimmed = line.trim();
-        if (trimmed.startsWith(`${key}=`)) {
-          return trimmed.replace(`${key}=`, '').trim();
-        }
-        if (trimmed.startsWith(`VITE_${key}=`)) {
-          return trimmed.replace(`VITE_${key}=`, '').trim();
+  for (const file of ['.env.local', '.env']) {
+    try {
+      const envFile = path.resolve(process.cwd(), file);
+      if (fs.existsSync(envFile)) {
+        const lines = fs.readFileSync(envFile, 'utf8').split(/\r?\n/);
+        for (const line of lines) {
+          const trimmed = line.trim();
+          if (trimmed.startsWith(`${key}=`)) {
+            const val = trimmed.replace(`${key}=`, '').trim();
+            if (val) return val;
+          }
+          if (trimmed.startsWith(`VITE_${key}=`)) {
+            const val = trimmed.replace(`VITE_${key}=`, '').trim();
+            if (val) return val;
+          }
         }
       }
-    }
-  } catch {}
+    } catch {}
+  }
   return '';
+}
+
+function normalizePhone(num?: string): string {
+  if (!num) return '';
+  const digits = num.replace(/[^\d+]/g, '');
+  if (digits.startsWith('+')) return digits;
+  if (digits.length === 10) return `+1${digits}`;
+  if (digits.length === 11 && digits.startsWith('1')) return `+${digits}`;
+  return digits ? `+${digits}` : '';
 }
 
 function notificationDevServerPlugin(): Plugin {
@@ -124,7 +137,7 @@ function notificationDevServerPlugin(): Plugin {
                 );
 
                 // Also send priority email alert to admin email so message is never missed
-                const targetAdminEmail = admin_email || process.env.ADMIN_EMAIL || process.env.VITE_ADMIN_EMAIL || 'shyswashiinc@gmail.com';
+                const targetAdminEmail = admin_email || process.env.ADMIN_EMAIL || process.env.VITE_ADMIN_EMAIL || 'support@flashdropexpress.com';
                 if (targetAdminEmail) {
                   const toAdminList = targetAdminEmail.includes(',')
                     ? targetAdminEmail.split(',').map((s: string) => s.trim()).filter(Boolean)
@@ -145,16 +158,18 @@ function notificationDevServerPlugin(): Plugin {
                   }).catch(() => {});
                 }
 
-                // Direct Twilio SMS dispatch if configured
-                const twilioSid = getLocalEnv('TWILIO_ACCOUNT_SID') || payload.twilio_account_sid;
-                const twilioToken = getLocalEnv('TWILIO_AUTH_TOKEN') || payload.twilio_auth_token;
-                const twilioFrom = getLocalEnv('TWILIO_FROM_PHONE') || payload.twilio_from_phone;
+                // Direct Twilio SMS dispatch
+                const twilioSid = getLocalEnv('TWILIO_ACCOUNT_SID') || payload.twilio_account_sid || '';
+                const twilioToken = getLocalEnv('TWILIO_AUTH_TOKEN') || payload.twilio_auth_token || '';
+                const twilioFrom = normalizePhone(getLocalEnv('TWILIO_FROM_PHONE') || payload.twilio_from_phone || '+17372508034');
+                const targetPhone = normalizePhone(destination);
 
-                if (twilioSid && twilioToken && twilioFrom && destination) {
+                if (twilioSid && twilioToken && twilioFrom && targetPhone) {
                   try {
                     const twilioUrl = `https://api.twilio.com/2010-04-01/Accounts/${twilioSid}/Messages.json`;
+                    const authHeader = 'Basic ' + Buffer.from(`${twilioSid}:${twilioToken}`).toString('base64');
                     const bodyParams = new URLSearchParams({
-                      To: destination,
+                      To: targetPhone,
                       From: twilioFrom,
                       Body: message,
                     });
@@ -168,11 +183,11 @@ function notificationDevServerPlugin(): Plugin {
                     });
                     let twilioData = await twilioRes.json();
 
-                    // If trial account requires predefined template (error 572006)
-                    if (twilioData && twilioData.code === 572006) {
+                    // If trial account requires predefined template (error 572006 or 400 parameter rejection)
+                    if (twilioData && (twilioData.code === 572006 || twilioData.status === 400)) {
                       const fallbackTemplate = payload.event === 'status_changed' ? 'sms_delivery_updates' : 'sms_order_confirmation';
                       const fallbackParams = new URLSearchParams({
-                        To: destination,
+                        To: targetPhone,
                         From: twilioFrom,
                         Body: fallbackTemplate,
                       });
@@ -187,7 +202,7 @@ function notificationDevServerPlugin(): Plugin {
                       twilioData = await twilioRes.json();
                     }
 
-                    console.log(`[Vite Dev Server] ✓ Twilio SMS dispatched (${twilioRes.status}):`, twilioData?.status || twilioData?.sid);
+                    console.log(`[Vite Dev Server] ✓ Twilio SMS dispatched (${twilioRes.status}):`, twilioData?.status || twilioData?.sid || twilioData?.message);
                   } catch (err) {
                     console.warn('[Vite Dev Server] Twilio SMS dispatch warning:', err);
                   }

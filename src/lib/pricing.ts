@@ -59,13 +59,13 @@ export const DEFAULT_BUSINESS_SETTINGS: BusinessSettings = {
   hst_enabled: true,
   hst_rate: 0.13,
   hst_number: '78492 1038 RT0001',
-  admin_sms_phone: '+1 647 804 9775',
+  admin_sms_phone: '+16478049775',
   carrier_sms_gateway: 'freedom',
   admin_notification_email: (import.meta.env.VITE_ADMIN_EMAIL as string) || 'support@flashdropexpress.com',
   admin_backup_email: (import.meta.env.VITE_ADMIN_BACKUP_EMAIL as string) || 'support@flashdropexpress.com',
   twilio_account_sid: (import.meta.env.VITE_TWILIO_ACCOUNT_SID as string) || '',
   twilio_auth_token: (import.meta.env.VITE_TWILIO_AUTH_TOKEN as string) || '',
-  twilio_from_phone: (import.meta.env.VITE_TWILIO_FROM_PHONE as string) || '',
+  twilio_from_phone: (import.meta.env.VITE_TWILIO_FROM_PHONE as string) || '+17372508034',
   resend_api_key: (import.meta.env.VITE_RESEND_API_KEY as string) || '',
 };
 
