@@ -1375,15 +1375,15 @@ export const OrderWizard: React.FC<OrderWizardProps> = ({ initialData, onNavigat
             {/* Two-Column Order Recap */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5 text-xs">
               <div className="bg-white border border-slate-200 rounded-xl p-4 space-y-2.5 shadow-xs">
-                <div className="flex items-center justify-between border-b border-slate-800 pb-2">
+                <div className="flex items-center justify-between border-b border-slate-100 pb-2">
                   <span className="font-bold text-slate-900 uppercase text-[11px] flex items-center space-x-1.5">
-                    <MapPin className="w-3.5 h-3.5 text-red-400" />
+                    <MapPin className="w-3.5 h-3.5 text-red-600" />
                     <span>Route & Timing</span>
                   </span>
                   <button
                     type="button"
                     onClick={() => setStep(1)}
-                    className="text-[10px] text-red-400 hover:text-red-300 font-semibold"
+                    className="text-[10px] text-red-600 hover:text-red-700 font-semibold cursor-pointer"
                   >
                     Edit Route
                   </button>
@@ -1458,79 +1458,30 @@ export const OrderWizard: React.FC<OrderWizardProps> = ({ initialData, onNavigat
                   </div>
                 )}
                 <div className="flex justify-between text-slate-600">
+                  <span>Fuel Surcharges:</span>
+                  <span className="font-bold text-slate-900">Zero Hidden Surcharges</span>
+                </div>
+                <div className="flex justify-between text-slate-600">
                   <span>Payment Terms:</span>
                   <span className="font-bold text-emerald-700">Pay Later (Due on Delivery)</span>
                 </div>
               </div>
             </div>
 
-            {/* Custom Quotation & Logistics Specifications Summary Card */}
-            <div className="bg-slate-50 border border-slate-200 rounded-2xl p-5 sm:p-6 space-y-4 shadow-xs">
-              <div className="flex items-center justify-between border-b border-slate-200 pb-3 text-xs">
-                <span className="font-bold text-slate-900 uppercase tracking-wider flex items-center space-x-2">
-                  <FileText className="w-4 h-4 text-red-600" />
-                  <span>Logistics Specifications Summary</span>
-                </span>
-                <span className="font-bold text-red-700 bg-red-50 border border-red-200 px-3 py-1 rounded-lg">
-                  {selectedVeh.name}
-                </span>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
-                <div className="space-y-2.5 text-slate-600">
-                  <div className="flex justify-between">
-                    <span>Route Distance:</span>
-                    <strong className="text-slate-900">{distanceKm} km ({serviceArea})</strong>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Pickup Window:</span>
-                    <strong className="text-slate-900">{pickupDate} at {pickupTime}</strong>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Type of Delivery:</span>
-                    <strong className="text-emerald-700 font-bold">
-                      {deliveryTimeOption === 'urgent' || deliveryTimeOption === 'asap' || deliveryTimeOption === '1-2h'
-                        ? '3) Urgent / ASAP Priority'
-                        : deliveryTimeOption === 'direct' || deliveryTimeOption === '2-3h'
-                        ? '2) On Demand / Direct'
-                        : '1) Standard / Same-Day'}
-                    </strong>
-                  </div>
-                </div>
-
-                <div className="space-y-2.5 text-slate-600">
-                  <div className="flex justify-between">
-                    <span>Cargo Weight:</span>
-                    <strong className="text-slate-900">{weightLbs} lbs ({quantity} units)</strong>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Payment Terms:</span>
-                    <strong className="text-emerald-700 font-semibold">Pay Later (Due on Delivery)</strong>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Fuel Surcharges:</span>
-                    <strong className="text-slate-900 font-semibold">Zero Hidden Surcharges</strong>
-                  </div>
-                </div>
-              </div>
-
-              {/* Confidential Quotation Notice Box */}
-              <div className="mt-4 pt-4 border-t border-slate-200 bg-white border border-red-200 rounded-xl p-4 flex items-start space-x-3 text-xs shadow-xs">
-                <ShieldCheck className="w-5 h-5 text-red-600 shrink-0 mt-0.5" />
-                <div className="space-y-1">
+            {/* Submission Notice & Terms Agreement */}
+            <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 text-[11px] text-slate-600 leading-relaxed space-y-2.5 shadow-2xs">
+              <div className="flex items-start space-x-2.5 text-slate-700">
+                <ShieldCheck className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
+                <div className="space-y-0.5">
                   <div className="font-bold text-slate-900 uppercase tracking-wider text-[11px]">
                     Confidential Custom Rate Review
                   </div>
-                  <p className="text-slate-600 leading-relaxed text-[11px]">
-                    To protect commercial client privacy and provide customized contract rates, our GTA dispatch desk manually reviews your route distance and payload specs. You will receive an official price quote by email at <strong>{customerEmail || 'your email'}</strong> immediately after submission.
+                  <p className="text-slate-600 text-[11px] leading-relaxed">
+                    Our GTA dispatch desk reviews your route distance and payload specs to provide customized contract rates. You will receive an official price quote by email at <strong>{customerEmail || 'your email'}</strong> immediately after submission.
                   </p>
                 </div>
               </div>
-            </div>
-
-            {/* Submission Notice & Terms Agreement */}
-            <div className="p-4 rounded-xl bg-slate-100 border border-slate-200 text-[11px] text-slate-600 leading-relaxed space-y-2">
-              <div>
+              <div className="pt-2 border-t border-slate-200/80">
                 By clicking <strong>&quot;Submit Quote Request&quot;</strong>, you acknowledge and agree to FlashDrop Express&apos;s{' '}
                 <button
                   type="button"
