@@ -492,8 +492,8 @@ class FlashDropStore {
       if (!this.settings.twilio_auth_token) {
         this.settings.twilio_auth_token = DEFAULT_BUSINESS_SETTINGS.twilio_auth_token || (import.meta.env.VITE_TWILIO_AUTH_TOKEN as string) || '';
       }
-      if (!this.settings.twilio_from_phone) {
-        this.settings.twilio_from_phone = DEFAULT_BUSINESS_SETTINGS.twilio_from_phone || (import.meta.env.VITE_TWILIO_FROM_PHONE as string) || '+17372508034';
+      if (!this.settings.twilio_from_phone || this.settings.twilio_from_phone === '+17372508034') {
+        this.settings.twilio_from_phone = DEFAULT_BUSINESS_SETTINGS.twilio_from_phone || (import.meta.env.VITE_TWILIO_FROM_PHONE as string) || '+13653603570';
       }
       if (!this.settings.admin_sms_phone || this.settings.admin_sms_phone.includes(' ')) {
         this.settings.admin_sms_phone = '+16478049775';

@@ -139,7 +139,7 @@ class NotificationService {
         carrier_gateway: params.metadata?.carrier_gateway || 'freedom',
         twilio_account_sid: params.metadata?.twilio_account_sid || (import.meta.env.VITE_TWILIO_ACCOUNT_SID as string) || '',
         twilio_auth_token: params.metadata?.twilio_auth_token || (import.meta.env.VITE_TWILIO_AUTH_TOKEN as string) || '',
-        twilio_from_phone: normalizePhone(params.metadata?.twilio_from_phone || (import.meta.env.VITE_TWILIO_FROM_PHONE as string) || '+17372508034'),
+        twilio_from_phone: normalizePhone(params.metadata?.twilio_from_phone || (import.meta.env.VITE_TWILIO_FROM_PHONE as string) || '+13653603570'),
       };
 
       let delivered = false;
@@ -329,7 +329,7 @@ class NotificationService {
         admin_email: adminEmailStr,
         twilio_account_sid: settings?.twilio_account_sid || (import.meta.env.VITE_TWILIO_ACCOUNT_SID as string) || '',
         twilio_auth_token: settings?.twilio_auth_token || (import.meta.env.VITE_TWILIO_AUTH_TOKEN as string) || '',
-        twilio_from_phone: settings?.twilio_from_phone || (import.meta.env.VITE_TWILIO_FROM_PHONE as string) || '+17372508034',
+        twilio_from_phone: settings?.twilio_from_phone || (import.meta.env.VITE_TWILIO_FROM_PHONE as string) || '+13653603570',
       },
     });
     logs.push(adminSmsLog);
@@ -461,7 +461,7 @@ class NotificationService {
         admin_email: adminEmailStr,
         twilio_account_sid: settings?.twilio_account_sid || (import.meta.env.VITE_TWILIO_ACCOUNT_SID as string) || '',
         twilio_auth_token: settings?.twilio_auth_token || (import.meta.env.VITE_TWILIO_AUTH_TOKEN as string) || '',
-        twilio_from_phone: settings?.twilio_from_phone || (import.meta.env.VITE_TWILIO_FROM_PHONE as string) || '+17372508034',
+        twilio_from_phone: settings?.twilio_from_phone || (import.meta.env.VITE_TWILIO_FROM_PHONE as string) || '+13653603570',
       },
     });
     logs.push(adminSmsLog);

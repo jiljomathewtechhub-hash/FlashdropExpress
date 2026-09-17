@@ -65,7 +65,7 @@ export const DEFAULT_BUSINESS_SETTINGS: BusinessSettings = {
   admin_backup_email: (import.meta.env.VITE_ADMIN_BACKUP_EMAIL as string) || 'support@flashdropexpress.com',
   twilio_account_sid: (import.meta.env.VITE_TWILIO_ACCOUNT_SID as string) || '',
   twilio_auth_token: (import.meta.env.VITE_TWILIO_AUTH_TOKEN as string) || '',
-  twilio_from_phone: (import.meta.env.VITE_TWILIO_FROM_PHONE as string) || '+17372508034',
+  twilio_from_phone: (import.meta.env.VITE_TWILIO_FROM_PHONE as string) || '+13653603570',
   resend_api_key: (import.meta.env.VITE_RESEND_API_KEY as string) || '',
 };
 

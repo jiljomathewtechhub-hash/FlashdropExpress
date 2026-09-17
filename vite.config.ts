@@ -161,7 +161,7 @@ function notificationDevServerPlugin(): Plugin {
                 // Direct Twilio SMS dispatch
                 const twilioSid = getLocalEnv('TWILIO_ACCOUNT_SID') || payload.twilio_account_sid || '';
                 const twilioToken = getLocalEnv('TWILIO_AUTH_TOKEN') || payload.twilio_auth_token || '';
-                const twilioFrom = normalizePhone(getLocalEnv('TWILIO_FROM_PHONE') || payload.twilio_from_phone || '+17372508034');
+                const twilioFrom = normalizePhone(getLocalEnv('TWILIO_FROM_PHONE') || payload.twilio_from_phone || '+13653603570');
                 const targetPhone = normalizePhone(destination);
 
                 if (twilioSid && twilioToken && twilioFrom && targetPhone) {

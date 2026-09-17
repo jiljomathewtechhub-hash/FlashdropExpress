@@ -3044,7 +3044,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
 
                 <div className="flex flex-wrap items-center justify-between gap-2 pt-1 border-t border-sky-200/60">
                   <div className="text-[11px] text-slate-600">
-                    Active Twilio Dispatch: <strong className="text-slate-800 font-mono">{settings.twilio_from_phone || '+1 (737) 250-8034'}</strong> &rarr; Target Admin: <strong className="text-slate-800 font-mono">+1 647 804 9775</strong>
+                    Active Twilio Dispatch: <strong className="text-slate-800 font-mono">{settings.twilio_from_phone || '+1 (365) 360-3570'}</strong> &rarr; Target Admin: <strong className="text-slate-800 font-mono">+1 647 804 9775</strong>
                   </div>
                   <div className="flex items-center space-x-2">
                     <button
@@ -3061,7 +3061,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
                             channel: 'sms',
                             recipient_type: 'admin',
                             destination: settings.admin_sms_phone || '+16478049775',
-                            message: 'FlashDrop Express SMS Alert: Twilio notification test delivered successfully!',
+                            message: 'FlashDrop Express SMS Alert: Twilio notification test delivered successfully from +1 (365) 360-3570!',
                             metadata: {
                               carrier_gateway: settings.carrier_sms_gateway || 'freedom',
                               twilio_account_sid: settings.twilio_account_sid,
@@ -3093,15 +3093,12 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
                 </div>
 
                 <div className="p-2.5 bg-white/80 border border-sky-200 rounded-lg text-[11px] text-slate-600 space-y-1">
-                  <div className="flex items-center space-x-1.5 text-sky-800 font-bold">
-                    <AlertCircle className="w-3.5 h-3.5 flex-shrink-0" />
-                    <span>Twilio Setup & Delivery Guide:</span>
+                  <div className="flex items-center space-x-1.5 text-emerald-800 font-bold">
+                    <CheckCircle2 className="w-3.5 h-3.5 flex-shrink-0 text-emerald-600" />
+                    <span>Twilio Cellular SMS Gateway Active:</span>
                   </div>
                   <p className="leading-relaxed">
-                    • <strong>Current Trial Mode:</strong> Twilio free trial accounts can only send to your verified number (<code>+1 647 804 9775</code>) using pre-approved SMS templates (<code>sms_order_confirmation</code> and <code>sms_delivery_updates</code>).
-                  </p>
-                  <p className="leading-relaxed">
-                    • <strong>To Send Custom Text to All Customers &amp; Drivers:</strong> Upgrade your account at <a href="https://console.twilio.com" target="_blank" rel="noopener noreferrer" className="text-sky-700 underline font-semibold">console.twilio.com</a> with a $15–$20 balance. This unlocks custom text with order numbers, addresses, and live driver tracking links to any Canadian or US number.
+                    • <strong>Upgraded Status:</strong> Twilio full account active. Dispatch phone number <code>+1 (365) 360-3570</code> delivers full custom SMS messages (order details, pickup/dropoff addresses, driver info, and live GPS tracking links) to your admin phone (<code>+1 647 804 9775</code>) as well as all customer and driver numbers.
                   </p>
                 </div>
               </div>

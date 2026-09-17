@@ -120,7 +120,7 @@ export const handler = async (event: any) => {
     // 3. SMS delivery via Twilio if configured
     const twilioSid = process.env.TWILIO_ACCOUNT_SID || payload.twilio_account_sid || (process.env.VITE_TWILIO_ACCOUNT_SID || '');
     const twilioToken = process.env.TWILIO_AUTH_TOKEN || payload.twilio_auth_token || (process.env.VITE_TWILIO_AUTH_TOKEN || '');
-    const twilioFrom = normalizePhone(process.env.TWILIO_FROM_PHONE || payload.twilio_from_phone || process.env.VITE_TWILIO_FROM_PHONE || '+17372508034');
+    const twilioFrom = normalizePhone(process.env.TWILIO_FROM_PHONE || payload.twilio_from_phone || process.env.VITE_TWILIO_FROM_PHONE || '+13653603570');
     const targetPhone = normalizePhone(destination);
 
     if (channel === 'sms' && twilioSid && twilioToken && twilioFrom && targetPhone) {
