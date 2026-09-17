@@ -709,17 +709,29 @@ export const createAdminStatusEmail = (order: Order, prevStatus: OrderStatus, ne
   const origin = getOrigin();
   const adminUrl = `${origin}/admin`;
 
-  const subject = `📋 [STATUS UPDATE] Order #${order.order_number} -> ${newStatus.replace(/_/g, ' ').toUpperCase()}`;
-  const preheader = `Order #${order.order_number} status updated to ${newStatus}. Assigned: ${order.assigned_driver_name || 'Unassigned'}.`;
+  const isQuoteAccepted = (prevStatus === 'quote_sent' && newStatus === 'confirmed') || (newStatus === 'confirmed' && !!order.quote_accepted_at);
+
+  const subject = isQuoteAccepted
+    ? `🎉 [QUOTE ACCEPTED] Order #${order.order_number} - ${order.customer_name} Confirmed ($${order.total_price.toFixed(2)} CAD)`
+    : `📋 [STATUS UPDATE] Order #${order.order_number} -> ${newStatus.replace(/_/g, ' ').toUpperCase()}`;
+
+  const preheader = isQuoteAccepted
+    ? `Customer ${order.customer_name} accepted the price quotation of $${order.total_price.toFixed(2)} CAD for Order #${order.order_number}. Ready for driver assignment!`
+    : `Order #${order.order_number} status updated to ${newStatus}. Assigned: ${order.assigned_driver_name || 'Unassigned'}.`;
 
   const contentHtml = `
     <div style="text-align: center; margin-bottom: 24px;">
-      <span class="badge badge-blue">Dispatch Status Changed</span>
+      <span class="badge ${isQuoteAccepted ? 'badge-green' : 'badge-blue'}">
+        ${isQuoteAccepted ? '✓ Price Quotation Accepted by Client' : 'Dispatch Status Changed'}
+      </span>
       <h2 style="color: #0F172A; font-size: 20px; font-weight: 900; margin: 12px 0 4px 0;">
-        #${order.order_number}: ${newStatus.replace(/_/g, ' ').toUpperCase()}
+        ${isQuoteAccepted ? `Quotation Accepted • #${order.order_number}` : `#${order.order_number}: ${newStatus.replace(/_/g, ' ').toUpperCase()}`}
       </h2>
       <p style="color: #64748B; font-size: 12px; margin: 0;">
-        Previous state: ${prevStatus.replace(/_/g, ' ')} &rarr; Current: ${newStatus.replace(/_/g, ' ')}
+        ${isQuoteAccepted
+          ? `Customer officially accepted your quotation of $${order.total_price.toFixed(2)} CAD. Order is confirmed & ready for driver assignment.`
+          : `Previous state: ${prevStatus.replace(/_/g, ' ')} &rarr; Current: ${newStatus.replace(/_/g, ' ')}`
+        }
       </p>
     </div>
 
@@ -730,11 +742,13 @@ export const createAdminStatusEmail = (order: Order, prevStatus: OrderStatus, ne
       </div>
       <div class="row">
         <span class="row-label">Current Status</span>
-        <span class="row-value" style="color: #059669; font-weight: 700; text-transform: uppercase;">${newStatus.replace(/_/g, ' ')}</span>
+        <span class="row-value" style="color: #059669; font-weight: 700; text-transform: uppercase;">
+          ${isQuoteAccepted ? 'Quote Accepted (Confirmed)' : newStatus.replace(/_/g, ' ')}
+        </span>
       </div>
       <div class="row">
         <span class="row-label">Assigned Courier</span>
-        <span class="row-value">${order.assigned_driver_name || 'Unassigned / Queue'}</span>
+        <span class="row-value">${order.assigned_driver_name || '⚠️ Unassigned — Ready to Dispatch'}</span>
       </div>
       ${notes ? `
       <div class="row">
@@ -757,13 +771,16 @@ export const createAdminStatusEmail = (order: Order, prevStatus: OrderStatus, ne
     </div>
 
     <div style="text-align: center; margin: 24px 0;">
-      <a href="${adminUrl}" class="button">View in Admin Dashboard &rarr;</a>
+      <a href="${adminUrl}" class="button">
+        ${isQuoteAccepted ? 'Assign Driver in Admin Dashboard &rarr;' : 'View in Admin Dashboard &rarr;'}
+      </a>
     </div>
   `;
 
   return {
     subject,
     html: wrapHtmlEmail(subject, preheader, contentHtml),
+    plain: `${subject}\n\nOrder #${order.order_number} is now ${newStatus}.\nCustomer: ${order.customer_name}\nTotal: $${order.total_price.toFixed(2)} CAD\nDriver: ${order.assigned_driver_name || 'Unassigned'}\n\nManage in Admin: ${adminUrl}`,
   };
 };
 
@@ -772,6 +789,10 @@ export const createAdminStatusSms = (order: Order, newStatus: OrderStatus, notes
   const pickupShort = order.pickup_address.split(',')[0].trim();
   const dropShort = order.delivery_address.split(',')[0].trim();
   const driverInfo = order.assigned_driver_name ? ` [Driver: ${order.assigned_driver_name}]` : '';
+
+  if (newStatus === 'confirmed' && (order.quote_accepted_at || order.quote_sent_at)) {
+    return `🎉 FlashDrop: Quote ACCEPTED by ${order.customer_name} for Order #${order.order_number} ($${order.total_price.toFixed(2)} CAD). Assign driver: ${origin}/admin`;
+  }
 
   return `📋 FlashDrop Order #${order.order_number} status is now ${newStatus.replace(/_/g, ' ').toUpperCase()}${driverInfo}. Route: ${pickupShort} -> ${dropShort}. Manage: ${origin}/admin`;
 };

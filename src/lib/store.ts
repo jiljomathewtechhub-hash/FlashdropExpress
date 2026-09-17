@@ -364,6 +364,7 @@ class FlashDropStore {
             discount_notes: existing?.discount_notes,
             quote_notes: existing?.quote_notes,
             quote_sent_at: existing?.quote_sent_at,
+            quote_accepted_at: existing?.quote_accepted_at,
             subtotal: sub,
             tax_amount: Number(row.tax_amount),
             total_price: Number(row.total_price),
@@ -744,6 +745,10 @@ class FlashDropStore {
 
     // Trigger status change notification if order_status changed (quote_sent has dedicated branded quote email)
     if (updates.order_status && updates.order_status !== oldOrder.order_status) {
+      if (updates.order_status === 'confirmed' && (oldOrder.order_status === 'quote_sent' || oldOrder.quote_sent_at) && !updatedOrder.quote_accepted_at) {
+        updatedOrder.quote_accepted_at = new Date().toISOString();
+      }
+
       if (updates.order_status !== 'quote_sent') {
         notificationService.notifyOrderStatusChanged(
           updatedOrder,
@@ -755,9 +760,13 @@ class FlashDropStore {
       }
 
       const statusFormatted = updatedOrder.order_status.replace('_', ' ').toUpperCase();
+      const isQuoteAccepted = (oldOrder.order_status === 'quote_sent' && updates.order_status === 'confirmed') || (updates.order_status === 'confirmed' && !!updatedOrder.quote_accepted_at);
+
       inAppNotificationService.dispatch({
-        title: `Order Status: #${updatedOrder.order_number}`,
-        message: `Order #${updatedOrder.order_number} status updated to ${statusFormatted}.`,
+        title: isQuoteAccepted ? `🎉 Quote Accepted: #${updatedOrder.order_number}` : `Order Status: #${updatedOrder.order_number}`,
+        message: isQuoteAccepted
+          ? `Customer ${updatedOrder.customer_name} accepted your price quotation of $${updatedOrder.total_price.toFixed(2)} CAD. Order is confirmed and ready for driver dispatch!`
+          : `Order #${updatedOrder.order_number} status updated to ${statusFormatted}.`,
         type: 'status_changed',
         order_id: updatedOrder.id,
         order_number: updatedOrder.order_number,
@@ -891,6 +900,9 @@ class FlashDropStore {
     if (status === 'accepted' && !order.driver_accepted_at) {
       order.driver_accepted_at = new Date().toISOString();
     }
+    if (status === 'confirmed' && (prevStatus === 'quote_sent' || order.quote_sent_at) && !order.quote_accepted_at) {
+      order.quote_accepted_at = new Date().toISOString();
+    }
 
     const historyItem = {
       id: `sh-${Date.now()}`,
@@ -912,9 +924,13 @@ class FlashDropStore {
       notificationService.notifyOrderStatusChanged(order, prevStatus, status, notes, this.settings);
 
       const statusFormatted = status.replace('_', ' ').toUpperCase();
+      const isQuoteAccepted = (prevStatus === 'quote_sent' && status === 'confirmed') || (status === 'confirmed' && !!order.quote_accepted_at);
+
       inAppNotificationService.dispatch({
-        title: `Order Status: #${order.order_number}`,
-        message: `Order #${order.order_number} changed to ${statusFormatted}.${notes ? ` (${notes})` : ''}`,
+        title: isQuoteAccepted ? `🎉 Quote Accepted: #${order.order_number}` : `Order Status: #${order.order_number}`,
+        message: isQuoteAccepted
+          ? `Customer ${order.customer_name} accepted your price quotation of $${order.total_price.toFixed(2)} CAD. Order is confirmed and ready for driver dispatch!`
+          : `Order #${order.order_number} changed to ${statusFormatted}.${notes ? ` (${notes})` : ''}`,
         type: 'status_changed',
         order_id: order.id,
         order_number: order.order_number,
