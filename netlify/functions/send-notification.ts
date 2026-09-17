@@ -123,6 +123,10 @@ export const handler = async (event: any) => {
     const twilioFrom = normalizePhone(process.env.TWILIO_FROM_PHONE || payload.twilio_from_phone || process.env.VITE_TWILIO_FROM_PHONE || '+13653603570');
     const targetPhone = normalizePhone(destination);
 
+    let twilioResultStatus = 'not_attempted';
+    const twilioSidPresent = !!twilioSid;
+    const twilioTokenPresent = !!twilioToken;
+
     if (channel === 'sms' && twilioSid && twilioToken && twilioFrom && targetPhone) {
       try {
         const twilioUrl = `https://api.twilio.com/2010-04-01/Accounts/${twilioSid}/Messages.json`;
@@ -162,10 +166,14 @@ export const handler = async (event: any) => {
           twilioData = await twilioRes.json();
         }
 
-        console.log('[Netlify Twilio SMS Result]:', twilioData?.status || twilioData?.sid || twilioData?.message);
-      } catch (smsErr) {
+        twilioResultStatus = twilioData?.status || twilioData?.sid || 'sent';
+        console.log('[Netlify Twilio SMS Result]:', twilioResultStatus);
+      } catch (smsErr: any) {
+        twilioResultStatus = `error: ${smsErr?.message || 'failed'}`;
         console.warn('Twilio SMS delivery warning:', smsErr);
       }
+    } else if (channel === 'sms') {
+      twilioResultStatus = `missing_config: sid=${twilioSidPresent}, token=${twilioTokenPresent}, from=${!!twilioFrom}`;
     }
 
     return {
@@ -179,6 +187,10 @@ export const handler = async (event: any) => {
         message: 'Notification processed successfully',
         channel,
         destination,
+        twilio_status: twilioResultStatus,
+        has_twilio_sid: twilioSidPresent,
+        has_twilio_token: twilioTokenPresent,
+        from_phone: twilioFrom,
         timestamp: new Date().toISOString(),
       }),
     };
