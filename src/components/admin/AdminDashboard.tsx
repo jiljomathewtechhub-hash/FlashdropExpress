@@ -62,7 +62,7 @@ import {
   ChevronRight,
 } from 'lucide-react';
 import { NotificationLog } from '../../types/notification';
-import { Order, Driver, Vehicle, OrderRequestItem, OrderStatus, BusinessSettings } from '../../types/order';
+import { Order, Driver, Vehicle, Customer, OrderRequestItem, OrderStatus, BusinessSettings } from '../../types/order';
 import { store, UserSession } from '../../lib/store';
 import { PricingTierRule } from '../../lib/pricing';
 import { generateOrderPdf } from '../../lib/pdf';
@@ -72,17 +72,19 @@ import { inAppNotificationService, InAppNotification } from '../../lib/inAppNoti
 import { getOrderStatusBadge } from '../../lib/statusHelper';
 import { formatScheduleDate, formatDateTime } from '../../lib/dateUtils';
 import { AdminAnalytics } from './AdminAnalytics';
+import { CustomerManagement } from './CustomerManagement';
 
 interface AdminDashboardProps {
   onNavigate: (tab: string, param?: any) => void;
-  initialParams?: { orderNumber?: string; tab?: 'orders' | 'drivers' | 'reports' | 'requests' | 'notifications' | 'pricing' | 'settings' } | any;
+  initialParams?: { orderNumber?: string; tab?: 'orders' | 'customers' | 'drivers' | 'reports' | 'requests' | 'notifications' | 'pricing' | 'settings' } | any;
 }
 
 export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, initialParams }) => {
-  const [activeTab, setActiveTab] = useState<'orders' | 'drivers' | 'reports' | 'requests' | 'notifications' | 'pricing' | 'settings'>('orders');
+  const [activeTab, setActiveTab] = useState<'orders' | 'customers' | 'drivers' | 'reports' | 'requests' | 'notifications' | 'pricing' | 'settings'>('orders');
   const [user, setUser] = useState<UserSession | null>(store.getCurrentUser());
   const [orders, setOrders] = useState<Order[]>([]);
   const [drivers, setDrivers] = useState<Driver[]>([]);
+  const [customers, setCustomers] = useState<Customer[]>(store.getCustomers());
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [pricingTiers, setPricingTiers] = useState<PricingTierRule[]>([]);
   const [settings, setSettings] = useState<BusinessSettings>(store.getSettings());
@@ -191,6 +193,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
       setUser(currentUser);
       setOrders(store.getOrders());
       setDrivers(currentDrivers);
+      setCustomers(store.getCustomers());
       setVehicles(store.getVehicles());
       setPricingTiers(store.getPricingTiers());
       setSettings(store.getSettings());
@@ -873,6 +876,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
       <div className="flex border-b border-slate-200/90 overflow-x-auto gap-2 pb-2 scrollbar-thin">
         {[
           { id: 'orders', label: 'Orders Queue', count: orders.length, icon: Package },
+          { id: 'customers', label: 'Customer Accounts', count: customers.length, icon: Building },
           { id: 'drivers', label: 'Staff & Drivers', count: drivers.length, icon: Users },
           { id: 'reports', label: 'Reports & Analytics', icon: BarChart3 },
           { id: 'requests', label: 'Customer Requests', count: pendingRequests, alertCount: pendingRequests, icon: AlertCircle },
@@ -1604,6 +1608,19 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
             </div>
           )}
         </div>
+      )}
+
+      {/* TAB: CUSTOMER DIRECTORY & CRM ANALYTICS */}
+      {activeTab === 'customers' && (
+        <CustomerManagement
+          orders={orders}
+          onNavigate={onNavigate}
+          onOpenOrder={(ord) => {
+            setSelectedOrder(ord);
+            setSelectedOrderDetails(ord);
+            setActiveTab('orders');
+          }}
+        />
       )}
 
       {/* TAB 2: DRIVER FLEET & STAFF MANAGEMENT */}

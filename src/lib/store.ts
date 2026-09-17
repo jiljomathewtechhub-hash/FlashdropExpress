@@ -3,6 +3,7 @@ import {
   OrderStatus,
   Vehicle,
   Driver,
+  Customer,
   BusinessSettings,
   OrderRequestItem,
   UserRole,
@@ -97,6 +98,51 @@ export const INITIAL_VEHICLES: Vehicle[] = [
 
 export const INITIAL_DRIVERS: Driver[] = [];
 
+export const INITIAL_CUSTOMERS: Customer[] = [
+  {
+    id: 'cust-apex-001',
+    name: 'Marcus Vance',
+    company_name: 'Apex Construction Supply Inc.',
+    account_type: 'commercial',
+    email: 'marcus@apexbuilds.ca',
+    phone: '+1 (416) 555-0182',
+    hst_number: '84920 1144 RT0001',
+    address: '1450 Dundas St E, Mississauga, ON L4X 1L1',
+    unit: 'Dock #4',
+    notes: 'Primary freight partner for GTA drywall, fasteners, and scaffolding components.',
+    is_active: true,
+    created_at: '2025-10-12T14:30:00.000Z',
+  },
+  {
+    id: 'cust-jenkins-002',
+    name: 'Elena Jenkins',
+    company_name: 'Studio Jenkins Architectural Interiors',
+    account_type: 'commercial',
+    email: 'elena@studiojenkins.design',
+    phone: '+1 (416) 555-0931',
+    hst_number: '79213 4001 RT0001',
+    address: '88 Blue Jays Way, Toronto, ON M5V 2G3',
+    unit: 'Suite 902',
+    notes: 'High-end architectural finishes, custom tile, and lighting delivery.',
+    is_active: true,
+    created_at: '2025-11-04T10:15:00.000Z',
+  },
+  {
+    id: 'cust-metro-003',
+    name: 'David Tremblay',
+    company_name: 'Metro Paint Wholesalers',
+    account_type: 'commercial',
+    email: 'orders@metropaint.ca',
+    phone: '+1 (905) 555-4412',
+    hst_number: '88391 2299 RT0001',
+    address: '420 Signet Dr, North York, ON M9L 1V3',
+    unit: 'Warehouse B',
+    notes: 'Commercial coatings and 5-gallon pails distribution.',
+    is_active: true,
+    created_at: '2025-12-01T09:00:00.000Z',
+  },
+];
+
 // Starts completely clean from empty for production live operations
 export const INITIAL_ORDERS: Order[] = [];
 
@@ -153,6 +199,8 @@ export function generateOrderNumber(existingOrders: Order[] = []): string {
 class FlashDropStore {
   private orders: Order[] = [];
   private drivers: Driver[] = [];
+  private customers: Customer[] = [];
+  private deletedCustomerIds: string[] = [];
   private vehicles: Vehicle[] = [];
   private pricingTiers: PricingTierRule[] = [];
   private settings: BusinessSettings = DEFAULT_BUSINESS_SETTINGS;
@@ -485,6 +533,28 @@ class FlashDropStore {
         this.drivers = [];
       }
 
+      const savedCustomers = localStorage.getItem(`${STORAGE_KEY_PREFIX}customers`);
+      if (savedCustomers) {
+        try {
+          const parsed = JSON.parse(savedCustomers);
+          this.customers = Array.isArray(parsed) && parsed.length > 0 ? parsed : INITIAL_CUSTOMERS;
+        } catch {
+          this.customers = INITIAL_CUSTOMERS;
+        }
+      } else {
+        this.customers = INITIAL_CUSTOMERS;
+      }
+
+      const savedDeletedCust = localStorage.getItem(`${STORAGE_KEY_PREFIX}deleted_customer_ids`);
+      if (savedDeletedCust) {
+        try {
+          const parsed = JSON.parse(savedDeletedCust);
+          this.deletedCustomerIds = Array.isArray(parsed) ? parsed : [];
+        } catch {
+          this.deletedCustomerIds = [];
+        }
+      }
+
       const savedVehicles = localStorage.getItem(`${STORAGE_KEY_PREFIX}vehicles`);
       this.vehicles = savedVehicles ? JSON.parse(savedVehicles) : INITIAL_VEHICLES;
       if (
@@ -572,6 +642,8 @@ class FlashDropStore {
     } catch {
       this.orders = INITIAL_ORDERS;
       this.drivers = INITIAL_DRIVERS;
+      this.customers = INITIAL_CUSTOMERS;
+      this.deletedCustomerIds = [];
       this.vehicles = INITIAL_VEHICLES;
       this.pricingTiers = DEFAULT_PRICING_TIERS;
       this.settings = DEFAULT_BUSINESS_SETTINGS;
@@ -584,6 +656,8 @@ class FlashDropStore {
     try {
       localStorage.setItem(`${STORAGE_KEY_PREFIX}orders`, JSON.stringify(this.orders));
       localStorage.setItem(`${STORAGE_KEY_PREFIX}drivers`, JSON.stringify(this.drivers));
+      localStorage.setItem(`${STORAGE_KEY_PREFIX}customers`, JSON.stringify(this.customers));
+      localStorage.setItem(`${STORAGE_KEY_PREFIX}deleted_customer_ids`, JSON.stringify(this.deletedCustomerIds));
       localStorage.setItem(`${STORAGE_KEY_PREFIX}vehicles`, JSON.stringify(this.vehicles));
       localStorage.setItem(`${STORAGE_KEY_PREFIX}pricing_tiers`, JSON.stringify(this.pricingTiers));
       localStorage.setItem(`${STORAGE_KEY_PREFIX}settings`, JSON.stringify(this.settings));
@@ -715,12 +789,16 @@ class FlashDropStore {
     });
   }
 
-  public getOrdersForCustomer(emailOrId: string): Order[] {
-    return this.orders.filter(
-      (o) =>
-        (o.customer_email && o.customer_email.toLowerCase() === emailOrId.toLowerCase()) ||
-        o.customer_id === emailOrId
-    );
+  public getOrdersForCustomer(emailOrIdOrCompany: string): Order[] {
+    if (!emailOrIdOrCompany) return [];
+    const query = emailOrIdOrCompany.toLowerCase().trim();
+    return this.orders.filter((o) => {
+      if (o.customer_email && o.customer_email.toLowerCase().trim() === query) return true;
+      if (o.customer_id && o.customer_id.toLowerCase().trim() === query) return true;
+      if (o.company_name && o.company_name.toLowerCase().trim() === query) return true;
+      if (o.customer_name && o.customer_name.toLowerCase().trim() === query) return true;
+      return false;
+    });
   }
 
   public getOrdersForDriver(driverId: string): Order[] {
@@ -1507,6 +1585,192 @@ class FlashDropStore {
           });
       }
     }
+  }
+
+  // --- Customers Management ---
+  public getCustomers(): Customer[] {
+    const customerMap = new Map<string, Customer>();
+
+    // 1. Add explicitly configured customers (excluding deleted)
+    for (const c of this.customers) {
+      const emailLower = (c.email || '').toLowerCase().trim();
+      const idKey = c.id || emailLower;
+      if (!this.deletedCustomerIds.includes(c.id) && !this.deletedCustomerIds.includes(emailLower)) {
+        customerMap.set(emailLower || idKey, { ...c });
+      }
+    }
+
+    // 2. Synthesize customer records from existing orders (unless explicitly deleted)
+    for (const ord of this.orders) {
+      if (!ord.customer_email) continue;
+      const emailLower = ord.customer_email.toLowerCase().trim();
+      if (this.deletedCustomerIds.includes(emailLower)) continue;
+
+      if (!customerMap.has(emailLower)) {
+        const hashSeed = emailLower.split('').reduce((acc, ch) => ((acc << 5) - acc) + ch.charCodeAt(0), 0);
+        const synthesized: Customer = {
+          id: ord.customer_id || `cust-${Math.abs(hashSeed)}`,
+          name: ord.customer_name || 'Valued Customer',
+          email: ord.customer_email,
+          phone: ord.customer_phone || '',
+          company_name: ord.company_name || undefined,
+          account_type: ord.account_type || (ord.company_name ? 'commercial' : 'personal'),
+          hst_number: ord.customer_hst_number || ord.hst_number,
+          address: ord.pickup_address,
+          unit: ord.pickup_unit,
+          is_active: true,
+          created_at: ord.created_at || new Date().toISOString(),
+        };
+        customerMap.set(emailLower, synthesized);
+      } else {
+        const existing = customerMap.get(emailLower)!;
+        if (!existing.company_name && ord.company_name) existing.company_name = ord.company_name;
+        if (!existing.hst_number && (ord.customer_hst_number || ord.hst_number)) {
+          existing.hst_number = ord.customer_hst_number || ord.hst_number;
+        }
+        if (!existing.phone && ord.customer_phone) existing.phone = ord.customer_phone;
+      }
+    }
+
+    // 3. Aggregate order statistics for each customer
+    const result: Customer[] = [];
+    for (const cust of customerMap.values()) {
+      const emailLower = (cust.email || '').toLowerCase().trim();
+      const matchingOrders = this.orders.filter((o) => {
+        if (o.customer_email && o.customer_email.toLowerCase().trim() === emailLower) return true;
+        if (cust.user_id && o.customer_id === cust.user_id) return true;
+        if (cust.id && o.customer_id === cust.id) return true;
+        if (cust.company_name && o.company_name && o.company_name.toLowerCase().trim() === cust.company_name.toLowerCase().trim()) return true;
+        return false;
+      });
+
+      // Sort matching orders newest first
+      matchingOrders.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+
+      const totalSpent = Number(
+        matchingOrders.reduce((sum, ord) => sum + (Number(ord.total_price) || 0), 0).toFixed(2)
+      );
+      const completedOrders = matchingOrders.filter((o) => o.order_status === 'delivered').length;
+      const activeOrders = matchingOrders.filter((o) =>
+        ['submitted', 'confirmed', 'assigned', 'en_route_pickup', 'picked_up', 'in_transit'].includes(o.order_status)
+      ).length;
+
+      result.push({
+        ...cust,
+        total_orders: matchingOrders.length,
+        completed_orders: completedOrders,
+        active_orders: activeOrders,
+        total_spent: totalSpent,
+        last_order_at: matchingOrders[0]?.created_at || cust.created_at,
+      });
+    }
+
+    return result;
+  }
+
+  public getCustomerById(id: string): Customer | undefined {
+    return this.getCustomers().find((c) => c.id === id || c.user_id === id);
+  }
+
+  public createCustomer(customerInput: Omit<Customer, 'id' | 'created_at'> & { id?: string }): Customer {
+    const newCust: Customer = {
+      ...customerInput,
+      id: customerInput.id || `cust-${Date.now()}`,
+      is_active: customerInput.is_active ?? true,
+      created_at: new Date().toISOString(),
+    };
+
+    const emailLower = newCust.email.toLowerCase().trim();
+    this.deletedCustomerIds = this.deletedCustomerIds.filter((d) => d !== newCust.id && d !== emailLower);
+
+    const existingIdx = this.customers.findIndex(
+      (c) => c.id === newCust.id || (c.email && c.email.toLowerCase().trim() === emailLower)
+    );
+    if (existingIdx >= 0) {
+      this.customers[existingIdx] = { ...this.customers[existingIdx], ...newCust };
+    } else {
+      this.customers = [newCust, ...this.customers];
+    }
+
+    this.saveToStorage();
+
+    inAppNotificationService.dispatch({
+      title: `Customer Registered: ${newCust.name}`,
+      message: `${newCust.name}${newCust.company_name ? ` (${newCust.company_name})` : ''} added to customer directory.`,
+      type: 'system',
+      recipient_role: 'admin',
+    });
+
+    return newCust;
+  }
+
+  public updateCustomer(id: string, updates: Partial<Customer>): Customer | null {
+    let custIndex = this.customers.findIndex((c) => c.id === id || c.user_id === id);
+    if (custIndex === -1) {
+      const all = this.getCustomers();
+      const target = all.find((c) => c.id === id || c.user_id === id);
+      if (target) {
+        this.customers.push(target);
+        custIndex = this.customers.length - 1;
+      } else {
+        return null;
+      }
+    }
+
+    const updatedCust: Customer = {
+      ...this.customers[custIndex],
+      ...updates,
+      updated_at: new Date().toISOString(),
+    };
+
+    this.customers[custIndex] = updatedCust;
+    this.saveToStorage();
+
+    if (
+      this.currentUser &&
+      this.currentUser.role === 'customer' &&
+      this.currentUser.email &&
+      this.currentUser.email.toLowerCase().trim() === (updatedCust.email || '').toLowerCase().trim()
+    ) {
+      this.currentUser = {
+        ...this.currentUser,
+        name: updatedCust.name,
+        phone: updatedCust.phone,
+        companyName: updatedCust.company_name,
+        hstNumber: updatedCust.hst_number,
+        accountType: updatedCust.account_type,
+        defaultPickupAddress: updatedCust.address,
+        defaultPickupUnit: updatedCust.unit,
+      };
+      this.saveToStorage();
+    }
+
+    return updatedCust;
+  }
+
+  public deleteCustomer(customerId: string): boolean {
+    const all = this.getCustomers();
+    const target = all.find((c) => c.id === customerId || c.user_id === customerId);
+    if (!target) return false;
+
+    if (!this.deletedCustomerIds.includes(customerId)) {
+      this.deletedCustomerIds.push(customerId);
+    }
+    if (target.email && !this.deletedCustomerIds.includes(target.email.toLowerCase().trim())) {
+      this.deletedCustomerIds.push(target.email.toLowerCase().trim());
+    }
+
+    this.customers = this.customers.filter((c) => c.id !== customerId && c.user_id !== customerId);
+    this.saveToStorage();
+
+    inAppNotificationService.dispatch({
+      title: `Customer Account Removed: ${target.name}`,
+      message: `${target.name}${target.company_name ? ` (${target.company_name})` : ''} removed from active accounts. Historical orders and invoices are preserved.`,
+      type: 'system',
+      recipient_role: 'admin',
+    });
+
+    return true;
   }
 
   // --- Pricing & Settings Management ---

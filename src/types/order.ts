@@ -234,3 +234,27 @@ export interface BusinessSettings {
   twilio_auth_token?: string;
   twilio_from_phone?: string;
 }
+
+export interface Customer {
+  id: string;
+  user_id?: string;
+  name: string;
+  email: string;
+  phone: string;
+  company_name?: string;
+  account_type: 'commercial' | 'personal';
+  hst_number?: string;
+  address?: string;
+  unit?: string;
+  notes?: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at?: string;
+  // CRM Aggregations
+  total_orders?: number;
+  completed_orders?: number;
+  active_orders?: number;
+  total_spent?: number;
+  last_order_at?: string;
+}
+
