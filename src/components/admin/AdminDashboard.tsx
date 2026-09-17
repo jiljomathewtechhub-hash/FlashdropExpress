@@ -96,6 +96,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
   const [orderViewMode, setOrderViewMode] = useState<'table' | 'kanban'>('table');
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [selectedOrderDetails, setSelectedOrderDetails] = useState<Order | null>(null);
+  const [orderDetailSubTab, setOrderDetailSubTab] = useState<'manifest' | 'financials' | 'pod' | 'audit'>('manifest');
   const [zoomedPhotoUrl, setZoomedPhotoUrl] = useState<string | null>(null);
   const [copiedOrderNumber, setCopiedOrderNumber] = useState(false);
 
@@ -316,6 +317,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
   const inTransitOrders = orders.filter((o) => ['assigned', 'accepted', 'en_route_pickup', 'picked_up', 'in_transit'].includes(o.order_status)).length;
   const deliveredOrders = orders.filter((o) => o.order_status === 'delivered').length;
   const pendingRequests = requests.filter((r) => r.status === 'pending').length;
+  const quotesToPrice = orders.filter((o) => o.order_status === 'submitted').length;
+  const quotesNeedingDriver = orders.filter((o) => (o.order_status === 'confirmed' || Boolean(o.quote_accepted_at)) && !o.assigned_driver_id).length;
 
   const handleAssignDriver = () => {
     if (!assignModalOrder) return;
@@ -881,41 +884,230 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
         </div>
       </div>
 
-      {/* Tabs Navigation */}
-      <div className="flex border-b border-slate-200/90 overflow-x-auto gap-2 pb-2 scrollbar-thin">
-        {[
-          { id: 'orders', label: 'Orders Queue', count: orders.length, icon: Package },
-          { id: 'customers', label: 'Customer Accounts', count: customers.length, icon: Building },
-          { id: 'drivers', label: 'Staff & Drivers', count: drivers.length, icon: Users },
-          { id: 'reports', label: 'Reports & Analytics', icon: BarChart3 },
-          { id: 'requests', label: 'Customer Requests', count: pendingRequests, alertCount: pendingRequests, icon: AlertCircle },
-          { id: 'pricing', label: 'Pricing Matrix & Tiers', icon: DollarSign },
-          { id: 'settings', label: 'Business & Operating Hours', icon: Sliders },
-        ].map((tab) => {
-          const Icon = tab.icon;
-          const isActive = activeTab === tab.id;
-          return (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id as any)}
-              className={`flex items-center space-x-2 px-4 py-2.5 rounded-xl text-xs font-bold transition flex-shrink-0 cursor-pointer ${
-                isActive
-                  ? 'bg-gradient-to-r from-[#C5161D] to-[#9E1218] text-white shadow-sm ring-1 ring-red-700/20'
-                  : 'bg-white hover:bg-slate-100 text-slate-600 hover:text-slate-900 border border-slate-200/80 shadow-2xs'
-              }`}
-            >
-              <Icon className={`w-3.5 h-3.5 ${isActive ? 'text-white' : 'text-slate-500'}`} />
-              <span>{tab.label}</span>
-              {typeof tab.count === 'number' && (
-                <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
-                  isActive ? 'bg-white/20 text-white' : tab.alertCount ? 'bg-amber-100 text-amber-900' : 'bg-slate-100 text-slate-700'
-                }`}>
-                  {tab.count}
-                </span>
-              )}
-            </button>
-          );
-        })}
+      {/* OPERATIONS ACTION CENTER (One-Click Dispatch Alerts & Filter Strip) */}
+      <div className="bg-white border border-slate-200/90 rounded-2xl p-3 sm:p-4 shadow-2xs flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center space-x-2">
+          <div className="w-2 h-2 rounded-full bg-red-600 animate-ping" />
+          <span className="text-[11px] font-black uppercase tracking-wider text-slate-800 font-['Outfit']">
+            Operations Action Center
+          </span>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Quotes to Price */}
+          <button
+            type="button"
+            onClick={() => {
+              setActiveTab('orders');
+              setStatusFilter('submitted');
+              setSearchQuery('');
+            }}
+            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center space-x-1.5 cursor-pointer border ${
+              activeTab === 'orders' && statusFilter === 'submitted'
+                ? 'bg-amber-600 text-white border-amber-600 shadow-xs'
+                : 'bg-amber-50 text-amber-900 border-amber-200 hover:bg-amber-100'
+            }`}
+          >
+            <Clock className="w-3.5 h-3.5 text-amber-600" />
+            <span>Quotes to Price:</span>
+            <span className="bg-amber-200/80 text-amber-950 px-1.5 py-0.2 rounded-full text-[10px] font-black">
+              {quotesToPrice}
+            </span>
+          </button>
+
+          {/* Quotes Accepted Needing Drivers */}
+          <button
+            type="button"
+            onClick={() => {
+              setActiveTab('orders');
+              setStatusFilter('confirmed');
+              setSearchQuery('');
+            }}
+            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center space-x-1.5 cursor-pointer border ${
+              activeTab === 'orders' && statusFilter === 'confirmed'
+                ? 'bg-emerald-700 text-white border-emerald-700 shadow-xs'
+                : 'bg-emerald-50 text-emerald-900 border-emerald-200 hover:bg-emerald-100'
+            }`}
+          >
+            <Truck className="w-3.5 h-3.5 text-emerald-600" />
+            <span>Needs Courier Dispatch:</span>
+            <span className="bg-emerald-200 text-emerald-950 px-1.5 py-0.2 rounded-full text-[10px] font-black">
+              {quotesNeedingDriver}
+            </span>
+          </button>
+
+          {/* Active In-Transit */}
+          <button
+            type="button"
+            onClick={() => {
+              setActiveTab('orders');
+              setStatusFilter('in_transit');
+              setSearchQuery('');
+            }}
+            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center space-x-1.5 cursor-pointer border ${
+              activeTab === 'orders' && statusFilter === 'in_transit'
+                ? 'bg-blue-600 text-white border-blue-600 shadow-xs'
+                : 'bg-blue-50 text-blue-900 border-blue-200 hover:bg-blue-100'
+            }`}
+          >
+            <Navigation className="w-3.5 h-3.5 text-blue-600" />
+            <span>Live on Road:</span>
+            <span className="bg-blue-200 text-blue-950 px-1.5 py-0.2 rounded-full text-[10px] font-black">
+              {inTransitOrders}
+            </span>
+          </button>
+
+          {/* Pending Inquiries */}
+          <button
+            type="button"
+            onClick={() => setActiveTab('requests')}
+            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center space-x-1.5 cursor-pointer border ${
+              activeTab === 'requests'
+                ? 'bg-purple-700 text-white border-purple-700 shadow-xs'
+                : 'bg-purple-50 text-purple-900 border-purple-200 hover:bg-purple-100'
+            }`}
+          >
+            <AlertCircle className="w-3.5 h-3.5 text-purple-600" />
+            <span>Inquiries:</span>
+            <span className="bg-purple-200 text-purple-950 px-1.5 py-0.2 rounded-full text-[10px] font-black">
+              {pendingRequests}
+            </span>
+          </button>
+        </div>
+      </div>
+
+      {/* Grouped Operational Category Tabs Navigation */}
+      <div className="bg-slate-100/70 p-1.5 sm:p-2 rounded-2xl border border-slate-200/90 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-2 overflow-x-auto">
+        {/* Category 1: Dispatch Desk */}
+        <div className="flex items-center space-x-1 bg-white p-1 rounded-xl border border-slate-200 shadow-2xs">
+          <span className="text-[10px] font-black uppercase text-slate-600 px-2 py-1 tracking-wider hidden lg:inline">
+            Dispatch Desk:
+          </span>
+          <button
+            type="button"
+            onClick={() => setActiveTab('orders')}
+            className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
+              activeTab === 'orders'
+                ? 'bg-gradient-to-r from-[#C5161D] to-[#9E1218] text-white shadow-xs'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+            }`}
+          >
+            <Package className="w-3.5 h-3.5" />
+            <span>Orders Queue</span>
+            <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
+              activeTab === 'orders' ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-700'
+            }`}>
+              {orders.length}
+            </span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveTab('requests')}
+            className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
+              activeTab === 'requests'
+                ? 'bg-gradient-to-r from-[#C5161D] to-[#9E1218] text-white shadow-xs'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+            }`}
+          >
+            <AlertCircle className="w-3.5 h-3.5" />
+            <span>Requests</span>
+            {pendingRequests > 0 && (
+              <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-black ${
+                activeTab === 'requests' ? 'bg-white/20 text-white' : 'bg-amber-100 text-amber-900'
+              }`}>
+                {pendingRequests}
+              </span>
+            )}
+          </button>
+        </div>
+
+        {/* Category 2: Directory & CRM */}
+        <div className="flex items-center space-x-1 bg-white p-1 rounded-xl border border-slate-200 shadow-2xs">
+          <span className="text-[10px] font-black uppercase text-slate-600 px-2 py-1 tracking-wider hidden lg:inline">
+            Directory:
+          </span>
+          <button
+            type="button"
+            onClick={() => setActiveTab('customers')}
+            className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
+              activeTab === 'customers'
+                ? 'bg-gradient-to-r from-[#C5161D] to-[#9E1218] text-white shadow-xs'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+            }`}
+          >
+            <Building className="w-3.5 h-3.5" />
+            <span>Customers &amp; CRM</span>
+            <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
+              activeTab === 'customers' ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-700'
+            }`}>
+              {customers.length}
+            </span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveTab('drivers')}
+            className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
+              activeTab === 'drivers'
+                ? 'bg-gradient-to-r from-[#C5161D] to-[#9E1218] text-white shadow-xs'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+            }`}
+          >
+            <Users className="w-3.5 h-3.5" />
+            <span>Staff &amp; Fleet</span>
+            <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
+              activeTab === 'drivers' ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-700'
+            }`}>
+              {drivers.length}
+            </span>
+          </button>
+        </div>
+
+        {/* Category 3: Finance & Operations */}
+        <div className="flex items-center space-x-1 bg-white p-1 rounded-xl border border-slate-200 shadow-2xs">
+          <span className="text-[10px] font-black uppercase text-slate-600 px-2 py-1 tracking-wider hidden lg:inline">
+            Finance &amp; Ops:
+          </span>
+          <button
+            type="button"
+            onClick={() => setActiveTab('reports')}
+            className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
+              activeTab === 'reports'
+                ? 'bg-gradient-to-r from-[#C5161D] to-[#9E1218] text-white shadow-xs'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+            }`}
+          >
+            <BarChart3 className="w-3.5 h-3.5" />
+            <span>Analytics</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveTab('pricing')}
+            className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
+              activeTab === 'pricing'
+                ? 'bg-gradient-to-r from-[#C5161D] to-[#9E1218] text-white shadow-xs'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+            }`}
+          >
+            <DollarSign className="w-3.5 h-3.5" />
+            <span>Pricing Matrix</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveTab('settings')}
+            className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
+              activeTab === 'settings'
+                ? 'bg-gradient-to-r from-[#C5161D] to-[#9E1218] text-white shadow-xs'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+            }`}
+          >
+            <Sliders className="w-3.5 h-3.5" />
+            <span>Operating Settings</span>
+          </button>
+        </div>
       </div>
 
       {/* TAB 1: ORDERS QUEUE */}
@@ -5092,10 +5284,77 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
               </div>
             </div>
 
+            {/* Modal Sub-Tabs Switcher */}
+            <div className="flex border-b border-slate-200 bg-slate-50 px-4 sm:px-6 gap-2 pt-2 overflow-x-auto shrink-0">
+              <button
+                type="button"
+                onClick={() => setOrderDetailSubTab('manifest')}
+                className={`flex items-center space-x-2 px-4 py-2.5 border-b-2 text-xs font-bold transition cursor-pointer ${
+                  orderDetailSubTab === 'manifest'
+                    ? 'border-[#C5161D] text-[#C5161D] bg-white rounded-t-xl shadow-xs'
+                    : 'border-transparent text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                <MapPin className="w-3.5 h-3.5" />
+                <span>1. Route &amp; Manifest</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setOrderDetailSubTab('financials')}
+                className={`flex items-center space-x-2 px-4 py-2.5 border-b-2 text-xs font-bold transition cursor-pointer ${
+                  orderDetailSubTab === 'financials'
+                    ? 'border-[#C5161D] text-[#C5161D] bg-white rounded-t-xl shadow-xs'
+                    : 'border-transparent text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                <DollarSign className="w-3.5 h-3.5" />
+                <span>2. Invoice &amp; Financials</span>
+                <span className="text-[10px] bg-emerald-100 text-emerald-800 font-mono px-2 py-0.5 rounded-full font-black">
+                  ${selectedOrderDetails.total_price.toFixed(2)}
+                </span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setOrderDetailSubTab('pod')}
+                className={`flex items-center space-x-2 px-4 py-2.5 border-b-2 text-xs font-bold transition cursor-pointer ${
+                  orderDetailSubTab === 'pod'
+                    ? 'border-[#C5161D] text-[#C5161D] bg-white rounded-t-xl shadow-xs'
+                    : 'border-transparent text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                <Camera className="w-3.5 h-3.5" />
+                <span>3. Verified POD</span>
+                {selectedOrderDetails.proof_of_delivery ? (
+                  <span className="text-[9px] bg-emerald-600 text-white px-2 py-0.5 rounded-full font-black">
+                    ✓ Verified
+                  </span>
+                ) : (
+                  <span className="text-[9px] bg-slate-200 text-slate-600 px-1.5 py-0.2 rounded-full font-semibold">
+                    Pending
+                  </span>
+                )}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setOrderDetailSubTab('audit')}
+                className={`flex items-center space-x-2 px-4 py-2.5 border-b-2 text-xs font-bold transition cursor-pointer ${
+                  orderDetailSubTab === 'audit'
+                    ? 'border-[#C5161D] text-[#C5161D] bg-white rounded-t-xl shadow-xs'
+                    : 'border-transparent text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                <Clock className="w-3.5 h-3.5" />
+                <span>4. Audit Timeline</span>
+              </button>
+            </div>
+
             {/* Modal Body */}
             <div className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-6">
               {/* QUOTATION ACCEPTANCE AUDIT BANNER */}
-              {(selectedOrderDetails.order_status === 'confirmed' || (selectedOrderDetails.order_status === 'assigned' && !selectedOrderDetails.proof_of_delivery)) && (selectedOrderDetails.quote_accepted_at || selectedOrderDetails.quote_sent_at) && (
+              {orderDetailSubTab === 'manifest' && (selectedOrderDetails.order_status === 'confirmed' || (selectedOrderDetails.order_status === 'assigned' && !selectedOrderDetails.proof_of_delivery)) && (selectedOrderDetails.quote_accepted_at || selectedOrderDetails.quote_sent_at) && (
                 <div className="bg-gradient-to-r from-emerald-50 via-teal-50 to-emerald-50/70 border-2 border-emerald-300 rounded-2xl p-4 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                   <div className="flex items-start space-x-3">
                     <div className="p-2.5 bg-emerald-600 text-white rounded-xl shadow-xs mt-0.5 shrink-0">
@@ -5139,7 +5398,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
               )}
 
               {/* SECTION 1: PROOF OF DELIVERY (POD) & COMPLETION SNAPSHOT */}
-              {selectedOrderDetails.proof_of_delivery ? (
+              {orderDetailSubTab === 'pod' && (
+                selectedOrderDetails.proof_of_delivery ? (
                 <div className="bg-gradient-to-br from-emerald-50 via-white to-emerald-50/50 border-2 border-emerald-300 rounded-2xl p-5 shadow-xs space-y-4">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-emerald-200/80 pb-3">
                     <div className="flex items-center space-x-2">
@@ -5307,10 +5567,12 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
                     Courier photo &amp; sign-off will automatically appear here once delivered.
                   </span>
                 </div>
-              )}
+              ))}
 
               {/* SECTION 2: ROUTE & DOCK ACCESS DETAILS */}
-              <div className="space-y-3">
+              {orderDetailSubTab === 'manifest' && (
+                <div className="space-y-6 animate-fade-in">
+                  <div className="space-y-3">
                 <div className="flex items-center justify-between text-xs font-bold text-slate-900 uppercase tracking-wider">
                   <span className="flex items-center space-x-1.5">
                     <MapPin className="w-3.5 h-3.5 text-red-600" />
@@ -5560,8 +5822,12 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
                   </div>
                 </div>
               </div>
+            </div>
+          )}
 
-              {/* SECTION 5: PRICING, APPLIED DISCOUNTS & BILLING BREAKDOWN */}
+          {/* SECTION 5: PRICING, APPLIED DISCOUNTS & BILLING BREAKDOWN */}
+          {orderDetailSubTab === 'financials' && (
+            <div className="space-y-6 animate-fade-in">
               <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-3">
                 <div className="flex items-center justify-between text-xs font-bold text-slate-900 uppercase tracking-wider">
                   <span className="flex items-center space-x-1.5">
@@ -5652,8 +5918,12 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
                   </div>
                 )}
               </div>
+            </div>
+          )}
 
-              {/* SECTION 6: CHAIN OF CUSTODY & AUDIT TIMELINE */}
+          {/* SECTION 6: CHAIN OF CUSTODY & AUDIT TIMELINE */}
+          {orderDetailSubTab === 'audit' && (
+            <div className="space-y-6 animate-fade-in">
               <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-3">
                 <div className="flex items-center space-x-1.5 text-xs font-bold text-slate-900 uppercase tracking-wider">
                   <Clock className="w-3.5 h-3.5 text-slate-700" />
@@ -5688,6 +5958,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
                   </div>
                 )}
               </div>
+            </div>
+          )}
             </div>
 
             {/* Modal Footer */}

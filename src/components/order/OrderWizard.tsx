@@ -87,48 +87,56 @@ export const OrderWizard: React.FC<OrderWizardProps> = ({ initialData, onNavigat
     return loggedInUser?.hstNumber || '';
   });
 
-  // 2. Pickup Address (Auto-filled from customer default address if available)
+  // 2. Pickup Address (Auto-filled from initialData or customer default address if available)
   const [pickupAddress, setPickupAddress] = useState(() => {
-    return loggedInUser?.defaultPickupAddress || '';
+    return initialData?.pickupAddress || loggedInUser?.defaultPickupAddress || '';
   });
   const [pickupUnit, setPickupUnit] = useState(() => {
-    return loggedInUser?.defaultPickupUnit || '';
+    return initialData?.pickupUnit || loggedInUser?.defaultPickupUnit || '';
   });
   const [pickupContactName, setPickupContactName] = useState(() => {
-    return loggedInUser?.defaultPickupContactName || loggedInUser?.name || '';
+    return initialData?.pickupContactName || loggedInUser?.defaultPickupContactName || loggedInUser?.name || '';
   });
   const [pickupContactPhone, setPickupContactPhone] = useState(() => {
-    return loggedInUser?.defaultPickupContactPhone || loggedInUser?.phone || '';
+    return initialData?.pickupContactPhone || loggedInUser?.defaultPickupContactPhone || loggedInUser?.phone || '';
   });
-  const [pickupLat, setPickupLat] = useState<number>(0);
-  const [pickupLng, setPickupLng] = useState<number>(0);
+  const [pickupLat, setPickupLat] = useState<number>(initialData?.pickupLat || 0);
+  const [pickupLng, setPickupLng] = useState<number>(initialData?.pickupLng || 0);
 
-  // 3. Delivery Address (Starts empty for live production)
-  const [deliveryAddress, setDeliveryAddress] = useState('');
-  const [deliveryUnit, setDeliveryUnit] = useState('');
-  const [deliveryContactName, setDeliveryContactName] = useState('');
-  const [deliveryContactPhone, setDeliveryContactPhone] = useState('');
-  const [deliveryLat, setDeliveryLat] = useState<number>(0);
-  const [deliveryLng, setDeliveryLng] = useState<number>(0);
+  // 3. Delivery Address (Can be pre-filled from initialData for repeat orders)
+  const [deliveryAddress, setDeliveryAddress] = useState(() => {
+    return initialData?.deliveryAddress || '';
+  });
+  const [deliveryUnit, setDeliveryUnit] = useState(() => {
+    return initialData?.deliveryUnit || '';
+  });
+  const [deliveryContactName, setDeliveryContactName] = useState(() => {
+    return initialData?.deliveryContactName || '';
+  });
+  const [deliveryContactPhone, setDeliveryContactPhone] = useState(() => {
+    return initialData?.deliveryContactPhone || '';
+  });
+  const [deliveryLat, setDeliveryLat] = useState<number>(initialData?.deliveryLat || 0);
+  const [deliveryLng, setDeliveryLng] = useState<number>(initialData?.deliveryLng || 0);
 
   // 4. Scheduling
   const todayStr = new Date().toISOString().split('T')[0];
   const [pickupDate, setPickupDate] = useState(todayStr);
   const [pickupTime, setPickupTime] = useState('11:00');
   const [deliveryTimeOption, setDeliveryTimeOption] = useState<DeliveryTimeOption>(
-    initialData?.deliveryType || 'standard'
+    initialData?.deliveryTimeOption || initialData?.deliveryType || 'standard'
   );
 
-  // 5. Item & Cargo (Starts empty for live production)
+  // 5. Item & Cargo
   const [itemType, setItemType] = useState<ItemType>(
-    initialData?.pailsCount ? 'paint_pails' : 'paint_pails'
+    initialData?.itemType || (initialData?.pailsCount ? 'paint_pails' : 'paint_pails')
   );
   const [itemDescription, setItemDescription] = useState(
-    initialData?.pailsCount ? `${initialData.pailsCount} Commercial Paint Pails` : ''
+    initialData?.itemDescription || (initialData?.pailsCount ? `${initialData.pailsCount} Commercial Paint Pails` : '')
   );
-  const [weightLbs, setWeightLbs] = useState<number>(initialData?.weightLbs || 0);
-  const [quantity, setQuantity] = useState<number>(initialData?.pailsCount || 1);
-  const [customInstructions, setCustomInstructions] = useState('');
+  const [weightLbs, setWeightLbs] = useState<number>(initialData?.weightLbs || initialData?.weight_lbs || 0);
+  const [quantity, setQuantity] = useState<number>(initialData?.quantity || initialData?.pailsCount || 1);
+  const [customInstructions, setCustomInstructions] = useState(initialData?.customInstructions || '');
 
   // 6. Vehicle
   const initialVehSlug: VehicleSlug =
@@ -176,15 +184,15 @@ export const OrderWizard: React.FC<OrderWizardProps> = ({ initialData, onNavigat
   useEffect(() => {
     const user = store.getCurrentUser();
     if (user) {
-      if (user.name) setCustomerName((prev) => prev || user.name || '');
-      if (user.email) setCustomerEmail((prev) => prev || user.email || '');
-      if (user.phone) setCustomerPhone((prev) => prev || user.phone || '');
+      if (user.name) setCustomerName((prev: string) => prev || user.name || '');
+      if (user.email) setCustomerEmail((prev: string) => prev || user.email || '');
+      if (user.phone) setCustomerPhone((prev: string) => prev || user.phone || '');
       if (user.accountType) setAccountType(user.accountType);
-      if (user.hstNumber) setCustomerHstNumber((prev) => prev || user.hstNumber || '');
-      if (user.companyName) setCompanyName((prev) => prev || user.companyName || '');
-      if (user.defaultPickupAddress) setPickupAddress((prev) => prev || user.defaultPickupAddress || '');
-      if (user.name) setPickupContactName((prev) => prev || user.name || '');
-      if (user.phone) setPickupContactPhone((prev) => prev || user.phone || '');
+      if (user.hstNumber) setCustomerHstNumber((prev: string) => prev || user.hstNumber || '');
+      if (user.companyName) setCompanyName((prev: string) => prev || user.companyName || '');
+      if (user.defaultPickupAddress) setPickupAddress((prev: string) => prev || user.defaultPickupAddress || '');
+      if (user.name) setPickupContactName((prev: string) => prev || user.name || '');
+      if (user.phone) setPickupContactPhone((prev: string) => prev || user.phone || '');
     }
   }, []);
 
