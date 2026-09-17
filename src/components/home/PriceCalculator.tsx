@@ -107,12 +107,13 @@ export const PriceCalculator: React.FC<PriceCalculatorProps> = ({ onNavigate }) 
               <label className="block text-xs font-bold text-slate-200 uppercase tracking-wider mb-2.5">
                 1. Select Vehicle
               </label>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5">
                 {[
-                  { slug: 'car' as VehicleSlug, label: 'Car / Sedan', icon: Car, tag: 'Up to 300 lbs' },
-                  { slug: 'van_suv' as VehicleSlug, label: 'Van / SUV', icon: Truck, tag: 'Up to 600 lbs' },
-                  { slug: 'cargo_van' as VehicleSlug, label: 'Cargo Van', icon: Truck, tag: 'Up to 1,500 lbs' },
-                  { slug: 'truck' as VehicleSlug, label: 'Box Truck', icon: Truck, tag: 'Up to 4,000 lbs' },
+                  { slug: 'car' as VehicleSlug, label: 'Car / Sedan', icon: Car, tag: 'Up to 750 lbs' },
+                  { slug: 'suv_minivan' as VehicleSlug, label: 'SUV / Minivan', icon: Car, tag: 'Up to 1,100 lbs' },
+                  { slug: 'van' as VehicleSlug, label: 'Van', icon: Truck, tag: 'Up to 1,500 lbs' },
+                  { slug: 'cargo_van' as VehicleSlug, label: 'Cargo Van', icon: Truck, tag: 'Up to 3,200 lbs' },
+                  { slug: 'truck' as VehicleSlug, label: 'Box Truck', icon: Truck, tag: '3,200+ lbs' },
                 ].map((v) => {
                   const Icon = v.icon;
                   const isSelected = vehicleSlug === v.slug;

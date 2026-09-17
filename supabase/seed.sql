@@ -6,10 +6,11 @@
 -- 1. VEHICLES
 INSERT INTO public.vehicles (id, slug, name, display_order, max_weight_lbs, max_pails, dimensions, description, image_url, is_active)
 VALUES
-  ('11111111-1111-1111-1111-111111111111', 'car', 'Car / Sedan', 1, 500, 10, 'Standard Trunk (Up to 15 cu. ft.)', 'Ideal for envelopes, small parcels, individual boxes, and light items up to 500 lbs.', '/images/vehicle-car.svg', true),
-  ('22222222-2222-2222-2222-222222222222', 'van_suv', 'Van / SUV', 2, 1500, 30, 'Spacious Cargo Area (Up to 50 cu. ft.)', 'Great for multiple boxes, small furniture, equipment, and up to 30 paint pails (1,500 lbs).', '/images/vehicle-suv.svg', true),
-  ('33333333-3333-3333-3333-333333333333', 'cargo_van', 'Cargo Van', 3, 3200, 64, 'Standard & Extended High-Roof Van (Up to 250 cu. ft.)', 'Commercial workhorse for bulk inventory, wholesale deliveries, and up to 64 paint pails (3,200 lbs).', '/images/vehicle-van.svg', true),
-  ('44444444-4444-4444-4444-444444444444', 'truck', 'Box Truck', 4, 4000, 100, '16ft - 24ft Box Truck with Hydraulic Liftgate', 'Heavy industrial freight, multi-pallet freight, large furniture, and 64+ pails up to 4,000 lbs.', '/images/vehicle-truck.svg', true)
+  ('11111111-1111-1111-1111-111111111111', 'car', 'Car / Sedan', 1, 750, 15, 'Standard Trunk & Cabin (Up to 15 cu. ft.)', 'Ideal for envelopes, small parcels, individual boxes, and light items up to 750 lbs (15 pails).', '/images/vehicle-car.svg', true),
+  ('22222222-2222-2222-2222-222222222221', 'suv_minivan', 'SUV / Minivan', 2, 1100, 22, 'Spacious SUV / Minivan Cargo Area (Up to 35 cu. ft.)', 'Great for multiple wholesale cartons, contractor equipment, and up to 22 paint pails (1,100 lbs).', '/images/vehicle-suv.svg', true),
+  ('22222222-2222-2222-2222-222222222222', 'van', 'Van', 3, 1500, 30, 'Fullsize Van Cargo Bay (Up to 55 cu. ft.)', 'Great for commercial boxes, small machinery, tools, and up to 30 paint pails (1,500 lbs).', '/images/vehicle-suv.svg', true),
+  ('33333333-3333-3333-3333-333333333333', 'cargo_van', 'Cargo Van', 4, 3200, 64, 'Standard & Extended High-Roof Van (Up to 250 cu. ft.)', 'Commercial workhorse for bulk inventory, wholesale deliveries, and up to 64 paint pails (3,200 lbs).', '/images/vehicle-van.svg', true),
+  ('44444444-4444-4444-4444-444444444444', 'truck', 'Box Truck', 5, 4500, 100, '16ft - 24ft Box Truck with Hydraulic Liftgate', 'Heavy industrial freight, multi-pallet freight, large machinery, and 64+ pails up to 3,200+ lbs.', '/images/vehicle-truck.svg', true)
 ON CONFLICT (slug) DO UPDATE SET
   name = EXCLUDED.name,
   max_weight_lbs = EXCLUDED.max_weight_lbs,
@@ -18,16 +19,17 @@ ON CONFLICT (slug) DO UPDATE SET
 -- 2. VEHICLE PRICING MATRIX
 INSERT INTO public.vehicle_pricing (vehicle_id, freight_tier_name, min_pails, max_pails, max_weight_lbs, rate_0_25km, rate_25_40km, rate_40km_base, rate_per_km_over_40)
 VALUES
-  -- Car / Minivan tiers
-  ('11111111-1111-1111-1111-111111111111', 'Minivan / 0-10 pails', 0, 10, 500, 70.00, 91.00, 91.00, 1.00),
-  ('11111111-1111-1111-1111-111111111111', 'Minivan / 10-20 pails', 10, 20, 1000, 105.00, 115.00, 115.00, 1.10),
-  -- Van / SUV / Minivan+ tier
-  ('22222222-2222-2222-2222-222222222222', 'Minivan+ / 20-30 pails', 20, 30, 1500, 132.00, 146.00, 146.00, 1.20),
+  -- Car / Sedan tier
+  ('11111111-1111-1111-1111-111111111111', 'Car / 0-15 pails', 0, 15, 750, 70.00, 91.00, 91.00, 1.00),
+  -- SUV / Minivan tier
+  ('22222222-2222-2222-2222-222222222221', 'SUV & Minivan / 15-22 pails', 15, 22, 1100, 110.00, 125.00, 125.00, 1.15),
+  -- Van tier
+  ('22222222-2222-2222-2222-222222222222', 'Van / 22-30 pails', 22, 30, 1500, 132.00, 146.00, 146.00, 1.20),
   -- Cargo Van tiers
   ('33333333-3333-3333-3333-333333333333', 'Cargo Van / 30-45 pails', 30, 45, 2250, 167.00, 184.00, 184.00, 1.30),
   ('33333333-3333-3333-3333-333333333333', 'Cargo Van+ / 45-64 pails', 45, 64, 3200, 212.00, 233.00, 233.00, 1.40),
   -- Box Truck tier
-  ('44444444-4444-4444-4444-444444444444', 'Box Truck / 64+ pails', 64, 999, 4000, 268.00, 295.00, 295.00, 1.55);
+  ('44444444-4444-4444-4444-444444444444', 'Box Truck / 64+ pails', 64, 999, 4500, 268.00, 295.00, 295.00, 1.55);
 
 -- 3. SERVICE AREAS
 INSERT INTO public.service_areas (code, name, is_gta, base_surcharge, description, is_active)

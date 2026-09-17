@@ -24,6 +24,9 @@ export const VehicleFleet: React.FC<VehicleFleetProps> = ({ onNavigate }) => {
     switch (slug) {
       case 'car':
         return <Car className="w-6 h-6 text-emerald-600" />;
+      case 'suv_minivan':
+        return <Car className="w-6 h-6 text-indigo-600" />;
+      case 'van':
       case 'van_suv':
         return <Truck className="w-6 h-6 text-sky-600" />;
       case 'cargo_van':
@@ -39,12 +42,18 @@ export const VehicleFleet: React.FC<VehicleFleetProps> = ({ onNavigate }) => {
     switch (slug) {
       case 'car':
         return 'Standard Courier';
+      case 'suv_minivan':
+        return 'Midsize Cargo';
+      case 'van':
+        return 'Fullsize Cargo';
       case 'van_suv':
         return 'Medium Cargo';
       case 'cargo_van':
         return 'Commercial Workhorse';
       case 'truck':
         return 'Hydraulic Liftgate';
+      default:
+        return 'Courier Service';
     }
   };
 
@@ -52,12 +61,17 @@ export const VehicleFleet: React.FC<VehicleFleetProps> = ({ onNavigate }) => {
     switch (slug) {
       case 'car':
         return 'From $70';
+      case 'suv_minivan':
+        return 'From $110';
+      case 'van':
       case 'van_suv':
         return 'From $132';
       case 'cargo_van':
         return 'From $167';
       case 'truck':
         return 'From $268';
+      default:
+        return 'From $70';
     }
   };
 
@@ -79,7 +93,7 @@ export const VehicleFleet: React.FC<VehicleFleetProps> = ({ onNavigate }) => {
         </div>
 
         {/* Vehicle Cards Grid with Soft Frosted Gradients */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-5">
           {vehicles.map((veh) => (
             <TiltCard
               key={veh.id}
@@ -111,7 +125,9 @@ export const VehicleFleet: React.FC<VehicleFleetProps> = ({ onNavigate }) => {
                 <div className="grid grid-cols-2 gap-2 mt-4">
                   <div className="p-2.5 rounded-lg bg-slate-50 border border-slate-200">
                     <div className="text-[10px] text-slate-500 font-semibold uppercase">Payload</div>
-                    <div className="text-xs font-bold text-slate-900 mt-0.5">{veh.max_weight_lbs} lbs</div>
+                    <div className="text-xs font-bold text-slate-900 mt-0.5">
+                      {veh.slug === 'truck' ? '3,200+ lbs' : `${veh.max_weight_lbs} lbs`}
+                    </div>
                   </div>
                   <div className="p-2.5 rounded-lg bg-slate-50 border border-slate-200">
                     <div className="text-[10px] text-slate-500 font-semibold uppercase">Paint Pails</div>
@@ -122,6 +138,8 @@ export const VehicleFleet: React.FC<VehicleFleetProps> = ({ onNavigate }) => {
                 {/* 1-Sentence Crisp Scope (High Contrast WCAG AA) */}
                 <div className="text-xs text-slate-600 mt-3.5 line-clamp-2 leading-relaxed">
                   {veh.slug === 'car' && 'Small parcels, envelopes, and light boxes.'}
+                  {veh.slug === 'suv_minivan' && 'Medium cargo, parcels, retail boxes & gear.'}
+                  {veh.slug === 'van' && 'Wholesale boxes, tools & supplies up to 30 pails.'}
                   {veh.slug === 'van_suv' && 'Wholesale boxes and equipment up to 30 pails.'}
                   {veh.slug === 'cargo_van' && 'Bulk freight, construction materials & paint.'}
                   {veh.slug === 'truck' && 'Heavy industrial skids with hydraulic liftgate.'}

@@ -290,29 +290,35 @@ export const AboutPage: React.FC<AboutPageProps> = ({ onNavigate }) => {
             </button>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-xs">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 text-xs">
             <div className="p-4 rounded-xl bg-slate-50 border border-slate-200/60 space-y-1.5">
-              <span className="font-bold text-slate-900 block text-sm">Hatchback / Sedan</span>
-              <span className="text-slate-500 block">Up to 350 lbs &bull; 4 Pails Max</span>
-              <p className="text-[11px] text-slate-600">Ideal for small cartons, hardware, urgent legal pouches, and single paint pails.</p>
+              <span className="font-bold text-slate-900 block text-sm">Car / Sedan</span>
+              <span className="text-slate-500 block">Up to 750 lbs &bull; 15 Pails Max</span>
+              <p className="text-[11px] text-slate-600">Ideal for small cartons, hardware, urgent parcels, and up to 15 paint pails.</p>
             </div>
 
             <div className="p-4 rounded-xl bg-slate-50 border border-slate-200/60 space-y-1.5">
-              <span className="font-bold text-slate-900 block text-sm">SUV / Crossover</span>
-              <span className="text-slate-500 block">Up to 600 lbs &bull; 8 Pails Max</span>
-              <p className="text-[11px] text-slate-600">Perfect for multiple boxes, painting tools, mid-size machinery parts, and cartons.</p>
+              <span className="font-bold text-slate-900 block text-sm">SUV / Minivan</span>
+              <span className="text-slate-500 block">Up to 1,100 lbs &bull; 22 Pails Max</span>
+              <p className="text-[11px] text-slate-600">Perfect for wholesale cartons, painting tools, contractor supplies, and up to 22 pails.</p>
             </div>
 
             <div className="p-4 rounded-xl bg-slate-50 border border-slate-200/60 space-y-1.5">
-              <span className="font-bold text-slate-900 block text-sm">Full Cargo Van</span>
-              <span className="text-slate-500 block">Up to 1,500 lbs &bull; 20 Pails Max</span>
+              <span className="font-bold text-slate-900 block text-sm">Van</span>
+              <span className="text-slate-500 block">Up to 1,500 lbs &bull; 30 Pails Max</span>
+              <p className="text-[11px] text-slate-600">Mid-weight cargo, wholesale boxes, trade tools, and mid-sized supply loads.</p>
+            </div>
+
+            <div className="p-4 rounded-xl bg-slate-50 border border-slate-200/60 space-y-1.5">
+              <span className="font-bold text-slate-900 block text-sm">Cargo Van</span>
+              <span className="text-slate-500 block">Up to 3,200 lbs &bull; 64 Pails Max</span>
               <p className="text-[11px] text-slate-600">Workhorse for contractor equipment, bulk freight, piping, and large paint orders.</p>
             </div>
 
             <div className="p-4 rounded-xl bg-slate-50 border border-slate-200/60 space-y-1.5">
-              <span className="font-bold text-slate-900 block text-sm">Commercial Box Truck</span>
-              <span className="text-slate-500 block">Up to 2,400 lbs &bull; 40 Pails Max</span>
-              <p className="text-[11px] text-slate-600">Heavy commercial pallets, industrial freight, and large-scale contractor distribution.</p>
+              <span className="font-bold text-slate-900 block text-sm">Box Truck</span>
+              <span className="text-slate-500 block">3,200+ lbs &bull; 100 Pails Max</span>
+              <p className="text-[11px] text-slate-600">Heavy commercial skids, hydraulic liftgate delivery, and industrial contractor distribution.</p>
             </div>
           </div>
         </div>

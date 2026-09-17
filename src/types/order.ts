@@ -34,7 +34,7 @@ export type ItemType =
   | 'large_boxes'
   | 'other';
 
-export type VehicleSlug = 'car' | 'van_suv' | 'cargo_van' | 'truck';
+export type VehicleSlug = 'car' | 'suv_minivan' | 'van' | 'van_suv' | 'cargo_van' | 'truck';
 
 export interface Vehicle {
   id: string;

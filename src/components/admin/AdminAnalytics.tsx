@@ -300,10 +300,12 @@ export const AdminAnalytics: React.FC<AdminAnalyticsProps> = ({ orders, drivers,
   // Vehicle Category Demand Breakdown
   const vehicleStats = useMemo(() => {
     const categories: { [key: string]: { name: string; count: number; revenue: number } } = {
+      car: { name: 'Car / Sedan', count: 0, revenue: 0 },
+      suv_minivan: { name: 'SUV / Minivan', count: 0, revenue: 0 },
+      van: { name: 'Van', count: 0, revenue: 0 },
       cargo_van: { name: 'Cargo Van', count: 0, revenue: 0 },
-      van_suv: { name: 'Minivan / SUV', count: 0, revenue: 0 },
-      car: { name: 'Standard Car / Sedan', count: 0, revenue: 0 },
-      truck: { name: 'Cube Truck / Heavy', count: 0, revenue: 0 },
+      truck: { name: 'Box Truck / Heavy', count: 0, revenue: 0 },
+      van_suv: { name: 'Minivan / SUV (Legacy)', count: 0, revenue: 0 },
     };
 
     filteredOrders.forEach((o) => {

@@ -920,7 +920,7 @@ export const OrderWizard: React.FC<OrderWizardProps> = ({ initialData, onNavigat
                 </span>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3.5">
                 {vehicles.map((veh) => {
                   const isSelected = vehicleSlug === veh.slug;
                   const isOverweight = weightLbs > veh.max_weight_lbs;
@@ -949,7 +949,9 @@ export const OrderWizard: React.FC<OrderWizardProps> = ({ initialData, onNavigat
                         <div className="space-y-1 text-[11px] border-t border-slate-100 pt-2">
                           <div className="flex justify-between text-slate-600">
                             <span>Max Payload:</span>
-                            <span className="font-bold text-slate-900">{veh.max_weight_lbs} lbs</span>
+                            <span className="font-bold text-slate-900">
+                              {veh.slug === 'truck' ? '3,200+ lbs' : `${veh.max_weight_lbs} lbs`}
+                            </span>
                           </div>
                           <div className="flex justify-between text-slate-600">
                             <span>Max Capacity:</span>

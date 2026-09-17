@@ -34,22 +34,34 @@ export const INITIAL_VEHICLES: Vehicle[] = [
     slug: 'car',
     name: 'Car / Sedan',
     display_order: 1,
-    max_weight_lbs: 1000,
-    max_pails: 20,
+    max_weight_lbs: 750,
+    max_pails: 15,
     dimensions: 'Trunk: 15 cu. ft. (Parcel capacity)',
-    description: 'Perfect for light commercial documents, parcels, paint cans, and small equipment up to 1,000 lbs.',
+    description: 'Perfect for light commercial documents, parcels, paint cans, and small equipment up to 750 lbs.',
     image_url: '/images/vehicle-car.svg',
     is_active: true,
   },
   {
     id: 'v-suv',
-    slug: 'van_suv',
-    name: 'Van / SUV',
+    slug: 'suv_minivan',
+    name: 'SUV / Minivan',
     display_order: 2,
+    max_weight_lbs: 1100,
+    max_pails: 22,
+    dimensions: 'Cargo Bay: 35 cu. ft.',
+    description: 'Medium transport for wholesale inventory, tools, equipment, and up to 22 paint pails (1,100 lbs).',
+    image_url: '/images/vehicle-suv.svg',
+    is_active: true,
+  },
+  {
+    id: 'v-van',
+    slug: 'van',
+    name: 'Van',
+    display_order: 3,
     max_weight_lbs: 1500,
     max_pails: 30,
-    dimensions: 'Cargo Bay: 50 cu. ft.',
-    description: 'Medium transport for wholesale inventory, tools, equipment, and up to 30 paint pails (1,500 lbs).',
+    dimensions: 'Cargo Bay: 55 cu. ft.',
+    description: 'Commercial van transport for bulk inventory, tools, equipment, and up to 30 paint pails (1,500 lbs).',
     image_url: '/images/vehicle-suv.svg',
     is_active: true,
   },
@@ -57,7 +69,7 @@ export const INITIAL_VEHICLES: Vehicle[] = [
     id: 'v-cargovan',
     slug: 'cargo_van',
     name: 'Cargo Van',
-    display_order: 3,
+    display_order: 4,
     max_weight_lbs: 3200,
     max_pails: 64,
     dimensions: 'High-Roof Cargo: 250 cu. ft.',
@@ -69,11 +81,11 @@ export const INITIAL_VEHICLES: Vehicle[] = [
     id: 'v-truck',
     slug: 'truck',
     name: 'Box Truck',
-    display_order: 4,
-    max_weight_lbs: 4000,
+    display_order: 5,
+    max_weight_lbs: 4500,
     max_pails: 100,
     dimensions: '16ft Box Truck with Hydraulic Liftgate',
-    description: 'Industrial heavy freight, multi-skid freight, large crates, furniture, and 64+ pails up to 4,000 lbs.',
+    description: 'Industrial heavy freight, multi-skid freight, large crates, furniture, and 64+ pails (3,200+ lbs).',
     image_url: '/images/vehicle-truck.svg',
     is_active: true,
   },
@@ -471,9 +483,26 @@ class FlashDropStore {
 
       const savedVehicles = localStorage.getItem(`${STORAGE_KEY_PREFIX}vehicles`);
       this.vehicles = savedVehicles ? JSON.parse(savedVehicles) : INITIAL_VEHICLES;
+      if (
+        !this.vehicles ||
+        this.vehicles.length < 5 ||
+        this.vehicles.some((v) => v.slug === 'car' && v.max_weight_lbs !== 750) ||
+        this.vehicles.some((v) => v.slug === 'suv_minivan' && v.max_weight_lbs !== 1100)
+      ) {
+        this.vehicles = INITIAL_VEHICLES;
+        localStorage.setItem(`${STORAGE_KEY_PREFIX}vehicles`, JSON.stringify(INITIAL_VEHICLES));
+      }
 
       const savedTiers = localStorage.getItem(`${STORAGE_KEY_PREFIX}pricing_tiers`);
       this.pricingTiers = savedTiers ? JSON.parse(savedTiers) : DEFAULT_PRICING_TIERS;
+      if (
+        !this.pricingTiers ||
+        this.pricingTiers.length < 6 ||
+        !this.pricingTiers.some((t) => t.vehicleSlug === 'suv_minivan')
+      ) {
+        this.pricingTiers = DEFAULT_PRICING_TIERS;
+        localStorage.setItem(`${STORAGE_KEY_PREFIX}pricing_tiers`, JSON.stringify(DEFAULT_PRICING_TIERS));
+      }
 
       const savedSettings = localStorage.getItem(`${STORAGE_KEY_PREFIX}settings`);
       this.settings = savedSettings ? { ...DEFAULT_BUSINESS_SETTINGS, ...JSON.parse(savedSettings) } : DEFAULT_BUSINESS_SETTINGS;

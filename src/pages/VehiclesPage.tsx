@@ -16,7 +16,7 @@ export const VehiclesPage: React.FC<VehiclesPageProps> = ({ onNavigate }) => {
           Commercial Fleet & Cargo Capacity
         </h1>
         <p className="text-slate-600 text-sm sm:text-base">
-          Sedans, SUVs, cargo vans, and hydraulic liftgate box trucks rated up to 4,000 lbs payload.
+          Sedans, SUVs, vans, cargo vans, and hydraulic liftgate box trucks rated up to 3,200+ lbs payload.
         </p>
       </div>
 
