@@ -180,6 +180,8 @@ export const OrderWizard: React.FC<OrderWizardProps> = ({ initialData, onNavigat
     pickupLng,
     dropoffLat: deliveryLat,
     dropoffLng: deliveryLng,
+    pickupAddress,
+    dropoffAddress: deliveryAddress,
   });
 
   // Re-sync logged in user info if user session updates
@@ -217,6 +219,18 @@ export const OrderWizard: React.FC<OrderWizardProps> = ({ initialData, onNavigat
         setPickupLat(resolved.lat);
         setPickupLng(resolved.lng);
       }
+      if (pickupAddress.trim().length >= 5) {
+        fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(pickupAddress)}&limit=1&lat=43.6532&lon=-79.3832`)
+          .then((r) => r.json())
+          .then((d) => {
+            const f = d.features?.[0];
+            if (f && f.geometry?.coordinates) {
+              setPickupLng(f.geometry.coordinates[0]);
+              setPickupLat(f.geometry.coordinates[1]);
+            }
+          })
+          .catch(() => {});
+      }
     }
   }, [pickupAddress, pickupLat, pickupLng]);
 
@@ -227,8 +241,55 @@ export const OrderWizard: React.FC<OrderWizardProps> = ({ initialData, onNavigat
         setDeliveryLat(resolved.lat);
         setDeliveryLng(resolved.lng);
       }
+      if (deliveryAddress.trim().length >= 5) {
+        fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(deliveryAddress)}&limit=1&lat=43.6532&lon=-79.3832`)
+          .then((r) => r.json())
+          .then((d) => {
+            const f = d.features?.[0];
+            if (f && f.geometry?.coordinates) {
+              setDeliveryLng(f.geometry.coordinates[0]);
+              setDeliveryLat(f.geometry.coordinates[1]);
+            }
+          })
+          .catch(() => {});
+      }
     }
   }, [deliveryAddress, deliveryLat, deliveryLng]);
+
+  // If both addresses ended up with the identical city centroid, fetch exact street coordinates for each
+  useEffect(() => {
+    if (
+      pickupAddress &&
+      deliveryAddress &&
+      pickupAddress.trim().toLowerCase() !== deliveryAddress.trim().toLowerCase() &&
+      pickupLat &&
+      deliveryLat &&
+      pickupLat === deliveryLat &&
+      pickupLng === deliveryLng
+    ) {
+      fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(pickupAddress)}&limit=1&lat=43.6532&lon=-79.3832`)
+        .then((r) => r.json())
+        .then((d) => {
+          const f = d.features?.[0];
+          if (f && f.geometry?.coordinates) {
+            setPickupLng(f.geometry.coordinates[0]);
+            setPickupLat(f.geometry.coordinates[1]);
+          }
+        })
+        .catch(() => {});
+
+      fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(deliveryAddress)}&limit=1&lat=43.6532&lon=-79.3832`)
+        .then((r) => r.json())
+        .then((d) => {
+          const f = d.features?.[0];
+          if (f && f.geometry?.coordinates) {
+            setDeliveryLng(f.geometry.coordinates[0]);
+            setDeliveryLat(f.geometry.coordinates[1]);
+          }
+        })
+        .catch(() => {});
+    }
+  }, [pickupAddress, deliveryAddress, pickupLat, pickupLng, deliveryLat, deliveryLng]);
 
   // Live Price Calculation based on active driving distance
   const breakdown = useMemo(() => {

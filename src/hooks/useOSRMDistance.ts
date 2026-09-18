@@ -6,6 +6,8 @@ interface UseOSRMDistanceProps {
   pickupLng?: number;
   dropoffLat?: number;
   dropoffLng?: number;
+  pickupAddress?: string;
+  dropoffAddress?: string;
 }
 
 export interface OSRMRouteResult {
@@ -22,6 +24,8 @@ export function useOSRMDistance({
   pickupLng,
   dropoffLat,
   dropoffLng,
+  pickupAddress,
+  dropoffAddress,
 }: UseOSRMDistanceProps): OSRMRouteResult {
   const hasValidCoords = Boolean(
     pickupLat &&
@@ -48,18 +52,37 @@ export function useOSRMDistance({
   const abortControllerRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
-    // Validate that we have valid, distinct coordinates
-    if (
-      !pickupLat ||
-      !pickupLng ||
-      !dropoffLat ||
-      !dropoffLng ||
-      (pickupLat === dropoffLat && pickupLng === dropoffLng)
-    ) {
+    // 1. Missing coordinates check
+    if (!pickupLat || !pickupLng || !dropoffLat || !dropoffLng) {
       setDistanceKm(0);
       setFormattedDistance('-- km');
       setDurationMinutes(null);
       setIsLiveRoute(false);
+      setIsLoading(false);
+      return;
+    }
+
+    // 2. Handle identical coordinates (e.g. both addresses in same municipality centroid)
+    if (pickupLat === dropoffLat && pickupLng === dropoffLng) {
+      const pClean = (pickupAddress || '').trim().toLowerCase();
+      const dClean = (dropoffAddress || '').trim().toLowerCase();
+
+      // If both pickup & dropoff addresses are specified and different, assign standard local city distance
+      if (pClean && dClean && pClean !== dClean) {
+        const localCityDefault = 8.5;
+        setDistanceKm(localCityDefault);
+        setFormattedDistance(`${localCityDefault.toFixed(1)} km`);
+        setDurationMinutes(18);
+        setIsLiveRoute(false);
+        setIsLoading(false);
+        return;
+      }
+
+      setDistanceKm(0);
+      setFormattedDistance('-- km');
+      setDurationMinutes(null);
+      setIsLiveRoute(false);
+      setIsLoading(false);
       return;
     }
 
@@ -71,6 +94,11 @@ export function useOSRMDistance({
       dropoffLng
     );
 
+    // Pre-populate with immediate fallback distance so UI is never stuck in empty state
+    setDistanceKm(currentFallback);
+    setFormattedDistance(`${currentFallback.toFixed(1)} km`);
+    setDurationMinutes(Math.max(5, Math.round((currentFallback / 50) * 60)));
+
     // Abort previous inflight request
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
@@ -81,6 +109,10 @@ export function useOSRMDistance({
 
     setIsLoading(true);
     setError(null);
+
+    const timeoutId = setTimeout(() => {
+      controller.abort();
+    }, 3500);
 
     const fetchRoute = async () => {
       try {
@@ -96,6 +128,8 @@ export function useOSRMDistance({
             Accept: 'application/json',
           },
         });
+
+        clearTimeout(timeoutId);
 
         if (!response.ok) {
           throw new Error(`OSRM routing HTTP error: ${response.status}`);
@@ -121,13 +155,14 @@ export function useOSRMDistance({
           throw new Error(data.message || 'No route found between coordinates');
         }
       } catch (err: any) {
+        clearTimeout(timeoutId);
+        // Fallback to Ontario road distance formula
+        setDistanceKm(currentFallback);
+        setFormattedDistance(`${currentFallback.toFixed(1)} km`);
+        setDurationMinutes(Math.max(5, Math.round((currentFallback / 50) * 60)));
+        setIsLiveRoute(false);
         if (err.name !== 'AbortError') {
           console.warn('OSRM route calculation fallback:', err);
-          // Gracefully fallback to Ontario road distance formula
-          setDistanceKm(currentFallback);
-          setFormattedDistance(`${currentFallback.toFixed(1)} km`);
-          setDurationMinutes(Math.round((currentFallback / 50) * 60)); // ~50 km/h average speed
-          setIsLiveRoute(false);
           setError('OSRM live routing unavailable; using road network calculation');
         }
       } finally {
@@ -135,16 +170,17 @@ export function useOSRMDistance({
       }
     };
 
-    // Slight 150ms debounce to prevent burst requests while user rapidly clicks suggestions
-    const timer = setTimeout(fetchRoute, 150);
+    // Slight 100ms debounce to prevent burst requests while user rapidly clicks suggestions
+    const timer = setTimeout(fetchRoute, 100);
 
     return () => {
       clearTimeout(timer);
+      clearTimeout(timeoutId);
       if (abortControllerRef.current) {
         abortControllerRef.current.abort();
       }
     };
-  }, [pickupLat, pickupLng, dropoffLat, dropoffLng]);
+  }, [pickupLat, pickupLng, dropoffLat, dropoffLng, pickupAddress, dropoffAddress]);
 
   return {
     distanceKm,

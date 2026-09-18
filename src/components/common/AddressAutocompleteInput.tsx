@@ -27,6 +27,9 @@ export const AddressAutocompleteInput: React.FC<AddressAutocompleteInputProps> =
   required = false,
   disabled = false,
 }) => {
+  const isSelectedRef = React.useRef(false);
+  const lastSelectedAddressRef = React.useRef('');
+
   const {
     suggestions,
     isLoading,
@@ -40,6 +43,8 @@ export const AddressAutocompleteInput: React.FC<AddressAutocompleteInputProps> =
     closeDropdown,
   } = useAddressAutocomplete({
     onSelect: (suggestion) => {
+      isSelectedRef.current = true;
+      lastSelectedAddressRef.current = suggestion.fullAddress;
       onChange(suggestion.fullAddress);
       onSelect(suggestion);
     },
@@ -48,13 +53,29 @@ export const AddressAutocompleteInput: React.FC<AddressAutocompleteInputProps> =
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const nextVal = e.target.value;
+    isSelectedRef.current = false;
     onChange(nextVal);
     searchAddress(nextVal);
   };
 
   const handleBlur = () => {
     setTimeout(() => {
+      // If user already selected a verified suggestion from dropdown, DO NOT overwrite its coordinates!
+      if (isSelectedRef.current && lastSelectedAddressRef.current.trim() === value.trim()) {
+        return;
+      }
+
       if (value && value.trim().length >= 3) {
+        // If there's an active top suggestion from Photon geocoder, use its exact coordinates!
+        if (suggestions && suggestions.length > 0) {
+          const topMatch = suggestions[0];
+          isSelectedRef.current = true;
+          lastSelectedAddressRef.current = topMatch.fullAddress;
+          onChange(topMatch.fullAddress);
+          onSelect(topMatch);
+          return;
+        }
+
         const centroid = resolveOntarioCoordinates(value);
         onSelect({
           id: `resolved-${Date.now()}`,
@@ -83,11 +104,15 @@ export const AddressAutocompleteInput: React.FC<AddressAutocompleteInputProps> =
   };
 
   const handleClear = () => {
+    isSelectedRef.current = false;
+    lastSelectedAddressRef.current = '';
     onChange('');
     closeDropdown();
   };
 
   const handleSelectSuggestion = (item: AddressSuggestion) => {
+    isSelectedRef.current = true;
+    lastSelectedAddressRef.current = item.fullAddress;
     onChange(item.fullAddress);
     handleSelect(item);
     onSelect(item);
