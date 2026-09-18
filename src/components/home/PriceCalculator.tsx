@@ -24,6 +24,7 @@ export const PriceCalculator: React.FC<PriceCalculatorProps> = ({ onNavigate }) 
   const [isPails, setIsPails] = useState<boolean>(true);
   const [deliveryType, setDeliveryType] = useState<DeliveryTimeOption>('standard');
   const [isAfterHours, setIsAfterHours] = useState<boolean>(false);
+  const [isOutsideGta, setIsOutsideGta] = useState<boolean>(false);
   const [waitingHours, setWaitingHours] = useState<number>(0);
   const [laborHours, setLaborHours] = useState<number>(0);
 
@@ -42,6 +43,7 @@ export const PriceCalculator: React.FC<PriceCalculatorProps> = ({ onNavigate }) 
         deliveryType,
         waitingHours,
         laborHours,
+        isOutsideGta,
       },
       settings,
       pricingTiers
@@ -56,6 +58,7 @@ export const PriceCalculator: React.FC<PriceCalculatorProps> = ({ onNavigate }) 
     deliveryType,
     waitingHours,
     laborHours,
+    isOutsideGta,
     settings,
     pricingTiers,
   ]);
@@ -68,6 +71,7 @@ export const PriceCalculator: React.FC<PriceCalculatorProps> = ({ onNavigate }) 
       pailsCount: isPails ? pailsCount : undefined,
       isAfterHours,
       deliveryType,
+      isOutsideGta,
     });
   };
 
@@ -258,7 +262,7 @@ export const PriceCalculator: React.FC<PriceCalculatorProps> = ({ onNavigate }) 
               </div>
             </div>
 
-            {/* 4. Priority Add-ons */}
+            {/* 4. Priority Add-ons & Regional Coverage */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
               <label className="min-h-[44px] flex items-center space-x-3 p-3.5 rounded-xl bg-slate-900/50 border border-slate-800 cursor-pointer hover:border-slate-700 transition-smooth">
                 <input
@@ -272,16 +276,35 @@ export const PriceCalculator: React.FC<PriceCalculatorProps> = ({ onNavigate }) 
                 </span>
               </label>
 
-              <div className="min-h-[44px] flex items-center justify-between p-3.5 rounded-xl bg-slate-900/50 border border-slate-800">
+              <label className="min-h-[44px] flex items-center space-x-3 p-3.5 rounded-xl bg-slate-900/50 border border-slate-800 cursor-pointer hover:border-slate-700 transition-smooth">
+                <input
+                  type="checkbox"
+                  checked={isOutsideGta}
+                  onChange={(e) => setIsOutsideGta(e.target.checked)}
+                  className="w-4 h-4 rounded bg-slate-800 border-slate-700 text-red-500 focus:ring-0 cursor-pointer"
+                />
+                <div className="leading-tight">
+                  <span className="text-slate-200 font-semibold block">
+                    Ontario-Wide (+${settings.outside_gta_surcharge || 60})
+                  </span>
+                  {distanceKm > 100 && isOutsideGta && (
+                    <span className="text-[10px] text-amber-300 block">
+                      &gt; 100 km: amount may vary
+                    </span>
+                  )}
+                </div>
+              </label>
+
+              <div className="min-h-[44px] sm:col-span-2 flex items-center justify-between p-3.5 rounded-xl bg-slate-900/50 border border-slate-800">
                 <span className="text-slate-200 font-semibold">Extra Waiting:</span>
                 <select
                   value={waitingHours}
                   onChange={(e) => setWaitingHours(Number(e.target.value))}
                   className="min-h-[36px] bg-[#0A0D14] border border-slate-700 text-white rounded-lg px-2.5 py-1 text-xs focus:outline-none"
                 >
-                  <option value={0}>0 hr</option>
-                  <option value={1}>1 hr (+$25)</option>
-                  <option value={2}>2 hr (+$50)</option>
+                  <option value={0}>0 hr (included 20 mins)</option>
+                  <option value={1}>1 hr (+${settings.waiting_rate_hourly})</option>
+                  <option value={2}>2 hr (+${settings.waiting_rate_hourly * 2})</option>
                 </select>
               </div>
             </div>
@@ -350,6 +373,20 @@ export const PriceCalculator: React.FC<PriceCalculatorProps> = ({ onNavigate }) 
                       <div className="flex justify-between">
                         <span className="text-slate-300">Waiting Charge:</span>
                         <span className="font-semibold text-white">+${breakdown.waitingCharge.toFixed(2)}</span>
+                      </div>
+                    )}
+
+                    {breakdown.outsideGtaCharge > 0 && (
+                      <div className="flex justify-between text-amber-200 font-semibold">
+                        <div>
+                          <span>Ontario-Wide Surcharge:</span>
+                          {breakdown.isVariablePricing && (
+                            <span className="block text-[10px] text-amber-300 font-normal">
+                              (&gt; 100 km: amount may vary)
+                            </span>
+                          )}
+                        </div>
+                        <span className="font-bold">+${breakdown.outsideGtaCharge.toFixed(2)}</span>
                       </div>
                     )}
 

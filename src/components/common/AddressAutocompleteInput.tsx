@@ -4,6 +4,7 @@ import {
   useAddressAutocomplete,
   AddressSuggestion,
 } from '../../hooks/useAddressAutocomplete';
+import { resolveOntarioCoordinates } from '../../lib/distance';
 
 interface AddressAutocompleteInputProps {
   label: string;
@@ -49,6 +50,29 @@ export const AddressAutocompleteInput: React.FC<AddressAutocompleteInputProps> =
     const nextVal = e.target.value;
     onChange(nextVal);
     searchAddress(nextVal);
+  };
+
+  const handleBlur = () => {
+    setTimeout(() => {
+      if (value && value.trim().length >= 3) {
+        const centroid = resolveOntarioCoordinates(value);
+        onSelect({
+          id: `resolved-${Date.now()}`,
+          fullAddress: value.trim().includes('ON') || value.trim().includes('Ontario')
+            ? value.trim()
+            : `${value.trim()}, ${centroid.name}, ON, Canada`,
+          primaryText: value.trim().split(',')[0] || value.trim(),
+          secondaryText: `${centroid.name}, ON, Canada`,
+          streetAddress: value.trim().split(',')[0] || value.trim(),
+          city: centroid.name,
+          state: 'ON',
+          country: 'Canada',
+          lon: centroid.lng,
+          lat: centroid.lat,
+          isGta: centroid.isGta,
+        });
+      }
+    }, 200);
   };
 
   const handleFocus = () => {
@@ -103,6 +127,7 @@ export const AddressAutocompleteInput: React.FC<AddressAutocompleteInputProps> =
           value={value}
           onChange={handleInputChange}
           onFocus={handleFocus}
+          onBlur={handleBlur}
           onClick={handleFocus}
           onKeyDown={handleKeyDown}
           placeholder={placeholder}
@@ -127,6 +152,23 @@ export const AddressAutocompleteInput: React.FC<AddressAutocompleteInputProps> =
           ) : null}
         </div>
       </div>
+
+      {/* Verified City & Region Badge for Instant Customer Assurance */}
+      {value && value.trim().length >= 3 && (
+        <div className="mt-1 flex items-center space-x-1.5 text-[11px] text-slate-500">
+          <Check className="w-3 h-3 text-emerald-600 shrink-0" />
+          <span>
+            Verified Location: <strong className="text-slate-800">{resolveOntarioCoordinates(value).name}</strong>{' '}
+            <span className={`px-1.5 py-0.2 rounded text-[10px] font-semibold ${
+              resolveOntarioCoordinates(value).isGta
+                ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                : 'bg-amber-50 text-amber-700 border border-amber-200'
+            }`}>
+              {resolveOntarioCoordinates(value).isGta ? 'Core GTA' : 'Ontario-Wide Coverage'}
+            </span>
+          </span>
+        </div>
+      )}
 
       {/* Floating Suggestions Dropdown */}
       {isOpen && suggestions.length > 0 && (

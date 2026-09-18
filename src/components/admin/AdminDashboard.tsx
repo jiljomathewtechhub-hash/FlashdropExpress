@@ -158,6 +158,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
     excess_km_charge: number;
     urgency_surcharge: number;
     after_hours_charge: number;
+    outside_gta_charge: number;
     discount_amount: number;
     discount_type: string;
     discount_notes: string;
@@ -170,6 +171,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
     excess_km_charge: 0,
     urgency_surcharge: 0,
     after_hours_charge: 0,
+    outside_gta_charge: 0,
     discount_amount: 0,
     discount_type: 'Loyalty Reward Discount',
     discount_notes: '',
@@ -529,8 +531,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
     const discount = Number(order.discount_amount || 0);
     const discountType = order.discount_type || 'Loyalty Reward Discount';
     const discountNotes = order.discount_notes || '';
+    const outside = Number(order.outside_gta_charge !== undefined ? order.outside_gta_charge : (order.service_area === 'Ontario-Wide' ? 60.0 : 0));
 
-    const gross = Number((base + excess + urgency + after).toFixed(2));
+    const gross = Number((base + excess + urgency + after + outside).toFixed(2));
     const sub = Math.max(0, Number((gross - discount).toFixed(2)));
     const tax = Number((sub * 0.13).toFixed(2));
     const total = Number((sub + tax).toFixed(2));
@@ -540,6 +543,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
       excess_km_charge: excess,
       urgency_surcharge: urgency,
       after_hours_charge: after,
+      outside_gta_charge: outside,
       discount_amount: discount,
       discount_type: discountType,
       discount_notes: discountNotes,
@@ -557,7 +561,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
       Number(updated.base_price || 0) +
       Number(updated.excess_km_charge || 0) +
       Number(updated.urgency_surcharge || 0) +
-      Number(updated.after_hours_charge || 0)
+      Number(updated.after_hours_charge || 0) +
+      Number(updated.outside_gta_charge || 0)
     ).toFixed(2));
     const discount = Math.max(0, Number(updated.discount_amount || 0));
     const sub = Math.max(0, Number((gross - discount).toFixed(2)));
@@ -583,6 +588,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
         excess_km_charge: quoteFormData.excess_km_charge,
         delivery_type_charge: quoteFormData.urgency_surcharge,
         after_hours_charge: quoteFormData.after_hours_charge,
+        outside_gta_charge: quoteFormData.outside_gta_charge,
         discount_amount: quoteFormData.discount_amount,
         discount_type: quoteFormData.discount_type,
         discount_notes: quoteFormData.discount_notes,
@@ -1487,7 +1493,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
                           <td className="py-3 px-4">
                             <div className="truncate max-w-[180px] text-slate-800 font-medium">{ord.pickup_address}</div>
                             <div className="truncate max-w-[180px] text-slate-500">&rarr; {ord.delivery_address}</div>
-                            <span className="text-[10px] text-red-600 font-bold">{ord.distance_km} km ({ord.service_area})</span>
+                            <span className="text-[10px] text-red-600 font-bold">
+                              {ord.distance_km} km ({ord.inside_gta_km ?? ord.distance_km} GTA / {ord.outside_gta_km ?? 0} Outside)
+                            </span>
                           </td>
                           <td className="py-3 px-4">
                             <span className="font-medium text-slate-900">{ord.vehicle_name}</span>
@@ -1818,7 +1826,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
                                 <span className="truncate">{ord.delivery_address}</span>
                               </div>
                               <div className="text-[10px] text-slate-500 font-semibold pt-0.5 border-t border-slate-200/60 flex items-center justify-between">
-                                <span>{ord.distance_km} km</span>
+                                <span>{ord.distance_km} km ({ord.inside_gta_km ?? ord.distance_km} GTA / {ord.outside_gta_km ?? 0} Out)</span>
                                 <span className="text-red-700 font-bold">{ord.service_area}</span>
                               </div>
                             </div>
@@ -4878,7 +4886,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
                   <span>Shipment & Logistics Specifications</span>
                 </div>
                 <span className="text-red-600 font-mono font-bold">
-                  {reviewingQuoteOrder.distance_km} km ({reviewingQuoteOrder.service_area})
+                  {reviewingQuoteOrder.distance_km} km ({reviewingQuoteOrder.inside_gta_km ?? reviewingQuoteOrder.distance_km} km GTA / {reviewingQuoteOrder.outside_gta_km ?? 0} km Outside)
                 </span>
               </div>
 
@@ -4967,7 +4975,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
                 <span className="text-slate-500 text-[10px] font-normal lowercase">Adjust any component to set custom price</span>
               </div>
 
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
                 <div>
                   <label className="block text-slate-700 mb-1 font-semibold">Base Freight Rate ($)</label>
                   <input
@@ -5014,6 +5022,27 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
                     className="w-full bg-white border border-slate-300 px-3 py-2 rounded-xl text-slate-900 font-mono focus:outline-none focus:border-red-500"
                   />
                   <span className="text-[9px] text-slate-500 block mt-0.5">Special access / off-hours</span>
+                </div>
+
+                <div>
+                  <label className="block text-slate-700 mb-1 font-semibold">
+                    Ontario-Wide Surcharge ($)
+                    {reviewingQuoteOrder.distance_km > 100 && (reviewingQuoteOrder.outside_gta_charge || reviewingQuoteOrder.service_area === 'Ontario-Wide') && (
+                      <span className="text-[9px] text-amber-700 font-bold block">
+                        &gt; 100km (Variable)
+                      </span>
+                    )}
+                  </label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={quoteFormData.outside_gta_charge}
+                    onChange={(e) => handleRecalculateQuoteTotals({ outside_gta_charge: Number(e.target.value) })}
+                    className="w-full bg-white border border-slate-300 px-3 py-2 rounded-xl text-slate-900 font-mono focus:outline-none focus:border-red-500"
+                  />
+                  <span className="text-[9px] text-slate-500 block mt-0.5">
+                    {reviewingQuoteOrder.outside_gta_km ?? 0} km outside GTA
+                  </span>
                 </div>
               </div>
 
@@ -5114,7 +5143,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
                     </button>
                   ))}
                   {[5, 10, 15, 20].map((pct) => {
-                    const gross = Number(quoteFormData.base_price || 0) + Number(quoteFormData.excess_km_charge || 0) + Number(quoteFormData.urgency_surcharge || 0) + Number(quoteFormData.after_hours_charge || 0);
+                    const gross = Number(quoteFormData.base_price || 0) + Number(quoteFormData.excess_km_charge || 0) + Number(quoteFormData.urgency_surcharge || 0) + Number(quoteFormData.after_hours_charge || 0) + Number(quoteFormData.outside_gta_charge || 0);
                     const calcAmt = Number((gross * (pct / 100)).toFixed(2));
                     return (
                       <button
@@ -5146,7 +5175,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
                       Number(quoteFormData.base_price || 0) +
                       Number(quoteFormData.excess_km_charge || 0) +
                       Number(quoteFormData.urgency_surcharge || 0) +
-                      Number(quoteFormData.after_hours_charge || 0)
+                      Number(quoteFormData.after_hours_charge || 0) +
+                      Number(quoteFormData.outside_gta_charge || 0)
                     ).toFixed(2)}
                   </span>
                 </div>
@@ -5702,6 +5732,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
                   </span>
                   <div className="flex items-center space-x-2 text-[11px] font-semibold text-slate-600">
                     <span className="font-bold text-red-600">{selectedOrderDetails.distance_km} KM</span>
+                    <span>({selectedOrderDetails.inside_gta_km ?? selectedOrderDetails.distance_km} km GTA / {selectedOrderDetails.outside_gta_km ?? 0} km Outside)</span>
                     <span>•</span>
                     <span>{selectedOrderDetails.service_area} zone</span>
                   </div>
@@ -5975,6 +6006,19 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
                       <div className="flex justify-between py-2 px-4">
                         <span className="text-slate-600">Excess Distance Charge ({selectedOrderDetails.distance_km} km)</span>
                         <span className="font-semibold text-slate-900 font-mono">${selectedOrderDetails.excess_km_charge.toFixed(2)} CAD</span>
+                      </div>
+                    ) : null}
+                    {selectedOrderDetails.outside_gta_charge ? (
+                      <div className="flex justify-between py-2 px-4">
+                        <span className="text-slate-600">
+                          Ontario-Wide Delivery Surcharge ({selectedOrderDetails.outside_gta_km ?? 0} km Outside GTA)
+                          {selectedOrderDetails.is_variable_pricing && (
+                            <span className="text-[10px] text-amber-600 ml-1.5 font-bold">
+                              (&gt; 100 km: amount may vary)
+                            </span>
+                          )}
+                        </span>
+                        <span className="font-semibold text-slate-900 font-mono">${selectedOrderDetails.outside_gta_charge.toFixed(2)} CAD</span>
                       </div>
                     ) : null}
                     {selectedOrderDetails.delivery_type_charge ? (

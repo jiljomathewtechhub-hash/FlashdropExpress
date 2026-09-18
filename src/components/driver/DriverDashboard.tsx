@@ -941,7 +941,7 @@ export const DriverDashboard: React.FC<DriverDashboardProps> = ({ onNavigate, in
 
                           <span className="text-xs font-bold text-amber-900 bg-amber-50 px-2.5 py-1 rounded-xl border border-amber-200 self-start sm:self-auto flex items-center space-x-1">
                             <Navigation className="w-3 h-3 text-amber-600" />
-                            <span>{ord.service_area} &bull; ~{ord.distance_km} km</span>
+                            <span>{ord.service_area} &bull; ~{ord.distance_km} km ({ord.inside_gta_km ?? ord.distance_km} GTA / {ord.outside_gta_km ?? 0} Out)</span>
                           </span>
                         </div>
 
@@ -1017,7 +1017,7 @@ export const DriverDashboard: React.FC<DriverDashboardProps> = ({ onNavigate, in
                         <div className="flex items-center space-x-2 self-start sm:self-auto shrink-0">
                           <span className="text-xs font-bold text-slate-800 bg-white px-2.5 py-1 rounded-xl border border-slate-200 flex items-center space-x-1 shadow-2xs">
                             <Navigation className="w-3 h-3 text-blue-600" />
-                            <span>{ord.distance_km} km &bull; {ord.service_area}</span>
+                            <span>{ord.distance_km} km ({ord.inside_gta_km ?? ord.distance_km} GTA / {ord.outside_gta_km ?? 0} Out) &bull; {ord.service_area}</span>
                           </span>
                           <button
                             type="button"
@@ -1268,7 +1268,7 @@ export const DriverDashboard: React.FC<DriverDashboardProps> = ({ onNavigate, in
                     <div className="flex flex-wrap items-center justify-between gap-2 border-b border-emerald-100 pb-2">
                       <div className="flex flex-wrap items-center gap-2">
                         <span className="font-bold text-slate-900 font-mono text-sm">#{ord.order_number}</span>
-                        <span className="text-slate-600 font-medium">({ord.service_area} &bull; {ord.distance_km} km)</span>
+                        <span className="text-slate-600 font-medium">({ord.service_area} &bull; {ord.distance_km} km ({ord.inside_gta_km ?? ord.distance_km} GTA / {ord.outside_gta_km ?? 0} Out))</span>
                         <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-900 border border-emerald-300 flex items-center space-x-1">
                           <Check className="w-2.5 h-2.5 text-emerald-700" />
                           <span>Delivered: {formatScheduleDate(ord.proof_of_delivery?.delivered_at || ord.updated_at || ord.created_at)}</span>

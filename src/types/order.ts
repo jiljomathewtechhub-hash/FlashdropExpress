@@ -114,11 +114,14 @@ export interface Order {
   weight_lbs: number;
   quantity: number;
   distance_km: number;
+  inside_gta_km?: number;
+  outside_gta_km?: number;
   custom_instructions?: string;
 
   // Cost Breakdown (CAD)
   base_price: number;
   excess_km_charge: number;
+  outside_gta_charge?: number;
   after_hours_charge: number;
   waiting_charge: number;
   labor_charge: number;
@@ -126,6 +129,8 @@ export interface Order {
   discount_amount?: number;
   discount_type?: string;
   discount_notes?: string;
+  is_variable_pricing?: boolean;
+  variable_pricing_note?: string;
   subtotal: number;
   tax_amount: number;
   total_price: number;
@@ -222,6 +227,7 @@ export interface BusinessSettings {
   waiting_rate_hourly: number;
   labor_rate_hourly: number;
   short_redirect_fee: number;
+  outside_gta_surcharge?: number;
   hst_enabled: boolean;
   hst_rate: number;
   hst_number?: string;

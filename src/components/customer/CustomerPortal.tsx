@@ -788,7 +788,7 @@ export const CustomerPortal: React.FC<CustomerPortalProps> = ({ onNavigate }) =>
                         <div className="flex items-center justify-between text-[11px] text-slate-500 pt-1.5 border-t border-slate-200/60 font-medium">
                           <span className="flex items-center space-x-1">
                             <Navigation className="w-3 h-3 text-red-500" />
-                            <span>{ord.distance_km} km ({ord.service_area} Service)</span>
+                            <span>{ord.distance_km} km ({ord.inside_gta_km ?? ord.distance_km} GTA / {ord.outside_gta_km ?? 0} Outside)</span>
                           </span>
                           <span>Vehicle: <strong className="text-slate-800">{ord.vehicle_name}</strong></span>
                         </div>

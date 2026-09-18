@@ -3,6 +3,8 @@ import { VehicleSlug, BusinessSettings, DeliveryTimeOption } from '../types/orde
 export interface CalculationInput {
   vehicleSlug: VehicleSlug;
   distanceKm: number;
+  insideGtaKm?: number;
+  outsideGtaKm?: number;
   weightLbs: number;
   quantity?: number;
   isPaintPails?: boolean;
@@ -19,6 +21,8 @@ export interface CalculationInput {
 export interface PricingBreakdown {
   tierName: string;
   distanceKm: number;
+  insideGtaKm: number;
+  outsideGtaKm: number;
   baseDistanceCharge: number;
   excessKmCharge: number;
   excessKm: number;
@@ -34,6 +38,9 @@ export interface PricingBreakdown {
   laborCharge: number;
   redirectCharge: number;
   outsideGtaCharge: number;
+  isOutsideGta: boolean;
+  isVariablePricing: boolean;
+  variablePricingNote?: string;
   subtotal: number;
   hstRate: number;
   taxAmount: number;
@@ -57,17 +64,18 @@ export const DEFAULT_BUSINESS_SETTINGS: BusinessSettings = {
   waiting_rate_hourly: 25.0,
   labor_rate_hourly: 30.0,
   short_redirect_fee: 18.0,
+  outside_gta_surcharge: 60.0,
   hst_enabled: true,
   hst_rate: 0.13,
   hst_number: '78750 1444 RT0001',
   admin_sms_phone: '+16478049775',
   carrier_sms_gateway: 'freedom',
-  admin_notification_email: (import.meta.env.VITE_ADMIN_EMAIL as string) || 'support@flashdropexpress.com',
-  admin_backup_email: (import.meta.env.VITE_ADMIN_BACKUP_EMAIL as string) || 'support@flashdropexpress.com',
-  twilio_account_sid: (import.meta.env.VITE_TWILIO_ACCOUNT_SID as string) || '',
-  twilio_auth_token: (import.meta.env.VITE_TWILIO_AUTH_TOKEN as string) || '',
-  twilio_from_phone: (import.meta.env.VITE_TWILIO_FROM_PHONE as string) || '+13653603570',
-  resend_api_key: (import.meta.env.VITE_RESEND_API_KEY as string) || '',
+  admin_notification_email: ((typeof import.meta !== 'undefined' && (import.meta as any).env?.VITE_ADMIN_EMAIL) as string) || 'support@flashdropexpress.com',
+  admin_backup_email: ((typeof import.meta !== 'undefined' && (import.meta as any).env?.VITE_ADMIN_BACKUP_EMAIL) as string) || 'support@flashdropexpress.com',
+  twilio_account_sid: ((typeof import.meta !== 'undefined' && (import.meta as any).env?.VITE_TWILIO_ACCOUNT_SID) as string) || '',
+  twilio_auth_token: ((typeof import.meta !== 'undefined' && (import.meta as any).env?.VITE_TWILIO_AUTH_TOKEN) as string) || '',
+  twilio_from_phone: ((typeof import.meta !== 'undefined' && (import.meta as any).env?.VITE_TWILIO_FROM_PHONE) as string) || '+13653603570',
+  resend_api_key: ((typeof import.meta !== 'undefined' && (import.meta as any).env?.VITE_RESEND_API_KEY) as string) || '',
 };
 
 export interface PricingTierRule {
@@ -278,7 +286,19 @@ export function calculateDeliveryPrice(
   const waitingCharge = Math.round(waitingHours * settings.waiting_rate_hourly * 100) / 100;
   const laborCharge = Math.round(laborHours * settings.labor_rate_hourly * 100) / 100;
   const redirectCharge = isShortRedirect ? settings.short_redirect_fee : 0;
-  const outsideCharge = isOutsideGta ? (outsideGtaSurcharge || 25.0) : 0;
+
+  // Outside GTA Surcharge rule: $60.00 within 100 km; beyond 100 km amount may vary
+  let outsideCharge = 0;
+  let isVariablePricing = false;
+  let variablePricingNote = '';
+
+  if (isOutsideGta) {
+    outsideCharge = outsideGtaSurcharge ? outsideGtaSurcharge : 60.0;
+    if (distanceKm > 100) {
+      isVariablePricing = true;
+      variablePricingNote = 'Route distance exceeds 100 km. Final quote amount may vary based on long-haul dispatch confirmation.';
+    }
+  }
 
   const subtotal = Math.round(
     (transportTotal + waitingCharge + laborCharge + redirectCharge + outsideCharge) * 100
@@ -289,9 +309,18 @@ export function calculateDeliveryPrice(
   const taxAmount = Math.round(subtotal * hstRate * 100) / 100;
   const totalPrice = Math.round((subtotal + taxAmount) * 100) / 100;
 
+  const resolvedInsideKm = input.insideGtaKm !== undefined
+    ? input.insideGtaKm
+    : isOutsideGta ? 0 : distanceKm;
+  const resolvedOutsideKm = input.outsideGtaKm !== undefined
+    ? input.outsideGtaKm
+    : isOutsideGta ? distanceKm : 0;
+
   return {
     tierName: tier.tierName,
     distanceKm,
+    insideGtaKm: resolvedInsideKm,
+    outsideGtaKm: resolvedOutsideKm,
     baseDistanceCharge,
     excessKm,
     excessKmRate: tier.ratePerKmOver40,
@@ -307,6 +336,9 @@ export function calculateDeliveryPrice(
     laborCharge,
     redirectCharge,
     outsideGtaCharge: outsideCharge,
+    isOutsideGta,
+    isVariablePricing,
+    variablePricingNote: variablePricingNote || undefined,
     subtotal,
     hstRate,
     taxAmount,

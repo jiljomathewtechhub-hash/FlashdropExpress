@@ -38,6 +38,8 @@ import {
 import {
   checkIsGta,
   POPULAR_LOCATIONS,
+  calculateGtaKmBreakdown,
+  resolveOntarioCoordinates,
 } from '../../lib/distance';
 import { calculateDeliveryPrice } from '../../lib/pricing';
 import { store } from '../../lib/store';
@@ -196,10 +198,37 @@ export const OrderWizard: React.FC<OrderWizardProps> = ({ initialData, onNavigat
     }
   }, []);
 
-  // Service area detection
+  // Service area detection & precise GTA kilometer breakdown
   const isPickupGta = useMemo(() => checkIsGta(pickupAddress), [pickupAddress]);
   const isDeliveryGta = useMemo(() => checkIsGta(deliveryAddress), [deliveryAddress]);
   const serviceArea = isPickupGta && isDeliveryGta ? 'GTA' : 'Ontario-Wide';
+
+  const kmBreakdown = useMemo(() => {
+    const pCoord = pickupLat && pickupLng ? { lat: pickupLat, lng: pickupLng } : undefined;
+    const dCoord = deliveryLat && deliveryLng ? { lat: deliveryLat, lng: deliveryLng } : undefined;
+    return calculateGtaKmBreakdown(pickupAddress, deliveryAddress, distanceKm, pCoord, dCoord);
+  }, [pickupAddress, deliveryAddress, distanceKm, pickupLat, pickupLng, deliveryLat, deliveryLng]);
+
+  // Auto-resolve coordinates if address is provided but coordinates are missing
+  useEffect(() => {
+    if (pickupAddress && (!pickupLat || !pickupLng)) {
+      const resolved = resolveOntarioCoordinates(pickupAddress);
+      if (resolved) {
+        setPickupLat(resolved.lat);
+        setPickupLng(resolved.lng);
+      }
+    }
+  }, [pickupAddress, pickupLat, pickupLng]);
+
+  useEffect(() => {
+    if (deliveryAddress && (!deliveryLat || !deliveryLng)) {
+      const resolved = resolveOntarioCoordinates(deliveryAddress);
+      if (resolved) {
+        setDeliveryLat(resolved.lat);
+        setDeliveryLng(resolved.lng);
+      }
+    }
+  }, [deliveryAddress, deliveryLat, deliveryLng]);
 
   // Live Price Calculation based on active driving distance
   const breakdown = useMemo(() => {
@@ -207,6 +236,8 @@ export const OrderWizard: React.FC<OrderWizardProps> = ({ initialData, onNavigat
       {
         vehicleSlug,
         distanceKm,
+        insideGtaKm: kmBreakdown.insideGtaKm,
+        outsideGtaKm: kmBreakdown.outsideGtaKm,
         weightLbs,
         quantity,
         isPaintPails: itemType === 'paint_pails',
@@ -214,7 +245,7 @@ export const OrderWizard: React.FC<OrderWizardProps> = ({ initialData, onNavigat
         deliveryType: deliveryTimeOption,
         waitingHours,
         laborHours,
-        isOutsideGta: !isPickupGta || !isDeliveryGta,
+        isOutsideGta: kmBreakdown.isOutsideGta,
       },
       settings,
       pricingTiers
@@ -222,6 +253,7 @@ export const OrderWizard: React.FC<OrderWizardProps> = ({ initialData, onNavigat
   }, [
     vehicleSlug,
     distanceKm,
+    kmBreakdown,
     weightLbs,
     quantity,
     itemType,
@@ -229,7 +261,6 @@ export const OrderWizard: React.FC<OrderWizardProps> = ({ initialData, onNavigat
     deliveryTimeOption,
     waitingHours,
     laborHours,
-    serviceArea,
     settings,
     pricingTiers,
   ]);
@@ -349,6 +380,11 @@ export const OrderWizard: React.FC<OrderWizardProps> = ({ initialData, onNavigat
       weight_lbs: weightLbs,
       quantity,
       distance_km: distanceKm,
+      inside_gta_km: kmBreakdown.insideGtaKm,
+      outside_gta_km: kmBreakdown.outsideGtaKm,
+      outside_gta_charge: breakdown.outsideGtaCharge,
+      is_variable_pricing: breakdown.isVariablePricing,
+      variable_pricing_note: breakdown.variablePricingNote,
       custom_instructions: customInstructions || undefined,
 
       base_price: breakdown.baseDistanceCharge,
@@ -755,7 +791,7 @@ export const OrderWizard: React.FC<OrderWizardProps> = ({ initialData, onNavigat
                             ~{durationMinutes} mins drive
                           </span>
                         )}
-                        <span className="text-xs font-normal text-slate-400">
+                        <span className="text-xs font-normal text-slate-500">
                           ({serviceArea === 'GTA' ? 'GTA Zone' : 'Ontario-Wide Delivery Coverage'})
                         </span>
                       </>
@@ -765,6 +801,21 @@ export const OrderWizard: React.FC<OrderWizardProps> = ({ initialData, onNavigat
                       </span>
                     )}
                   </div>
+                  {distanceKm > 0 && (
+                    <div className="flex flex-wrap items-center gap-2 mt-2 text-xs">
+                      <span className="font-semibold text-slate-500">Route Breakdown:</span>
+                      <span className="bg-emerald-50 border border-emerald-200 text-emerald-800 px-2.5 py-0.5 rounded-lg font-bold">
+                        Inside GTA: {kmBreakdown.insideGtaKm} km
+                      </span>
+                      <span className={`px-2.5 py-0.5 rounded-lg font-bold ${
+                        kmBreakdown.outsideGtaKm > 0
+                          ? 'bg-amber-50 border border-amber-300 text-amber-900'
+                          : 'bg-slate-100 border border-slate-200 text-slate-600'
+                      }`}>
+                        Outside GTA: {kmBreakdown.outsideGtaKm} km
+                      </span>
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -786,6 +837,31 @@ export const OrderWizard: React.FC<OrderWizardProps> = ({ initialData, onNavigat
                 )}
               </div>
             </div>
+
+            {/* Outside GTA Surcharge Advisory Notice */}
+            {distanceKm > 0 && kmBreakdown.isOutsideGta && (
+              <div className="p-4 rounded-xl bg-amber-50 border border-amber-300 text-xs text-amber-950 flex items-start space-x-3 shadow-2xs">
+                <Info className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+                <div className="space-y-1">
+                  <div className="font-bold flex items-center space-x-2">
+                    <span className="text-amber-900 font-['Outfit'] text-sm">Ontario-Wide Regional Delivery Coverage (+$60.00 CAD Surcharge)</span>
+                    {breakdown.isVariablePricing && (
+                      <span className="text-[10px] bg-amber-200 text-amber-900 border border-amber-400 font-bold px-2 py-0.5 rounded-full uppercase">
+                        Distance &gt; 100 km (Amount May Vary)
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-amber-800 text-xs leading-relaxed">
+                    This route includes <strong>{kmBreakdown.outsideGtaKm} km</strong> outside the Greater Toronto Area.
+                    {breakdown.isVariablePricing ? (
+                      <> An initial <strong>$60.00 CAD</strong> outside-GTA coverage surcharge is included. <em>Notice: Because the total driving distance ({distanceKm} km) exceeds 100 km, the final quotation amount may vary subject to long-haul dispatch confirmation.</em></>
+                    ) : (
+                      <> A standard flat-rate <strong>$60.00 CAD</strong> Ontario-Wide delivery coverage fee is applied within 100 km.</>
+                    )}
+                  </p>
+                </div>
+              </div>
+            )}
 
             {/* Schedule & Speed Window */}
             <div className="space-y-4 pt-2">
@@ -1410,10 +1486,30 @@ export const OrderWizard: React.FC<OrderWizardProps> = ({ initialData, onNavigat
                 </div>
                 <div className="flex justify-between border-t border-slate-100 pt-2 text-slate-600">
                   <span>Driving Distance:</span>
-                  <span className="font-bold text-slate-900">
-                    {formattedDistance} ({serviceArea === 'GTA' ? 'GTA Zone' : 'Ontario-Wide Delivery Coverage'})
-                  </span>
+                  <div className="text-right">
+                    <span className="font-bold text-slate-900">
+                      {formattedDistance} ({serviceArea === 'GTA' ? 'GTA Zone' : 'Ontario-Wide Delivery Coverage'})
+                    </span>
+                    <div className="text-[11px] text-slate-500 font-medium mt-0.5">
+                      Inside GTA: <strong>{kmBreakdown.insideGtaKm} km</strong> &bull; Outside GTA: <strong>{kmBreakdown.outsideGtaKm} km</strong>
+                    </div>
+                  </div>
                 </div>
+                {breakdown.outsideGtaCharge > 0 && (
+                  <div className="flex justify-between text-slate-600">
+                    <span>Ontario-Wide Surcharge:</span>
+                    <div className="text-right">
+                      <span className="font-bold text-amber-800">
+                        +${breakdown.outsideGtaCharge.toFixed(2)} CAD
+                      </span>
+                      {breakdown.isVariablePricing && (
+                        <div className="text-[10px] text-amber-600 font-normal">
+                          (&gt; 100 km: amount may vary)
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
                 {durationMinutes && (
                   <div className="flex justify-between text-slate-600">
                     <span>Est. Drive Time:</span>
@@ -1568,6 +1664,28 @@ export const OrderWizard: React.FC<OrderWizardProps> = ({ initialData, onNavigat
                 <span>Vehicle / Cargo:</span>
                 <span className="text-slate-900 font-medium">{createdOrder.vehicle_name} ({createdOrder.weight_lbs} lbs)</span>
               </div>
+              <div className="flex justify-between text-slate-600">
+                <span>Route Distance:</span>
+                <span className="text-slate-900 font-medium text-right">
+                  {createdOrder.distance_km} km
+                  <span className="block text-[11px] text-slate-500">
+                    ({createdOrder.inside_gta_km ?? createdOrder.distance_km} km GTA / {createdOrder.outside_gta_km ?? 0} km Outside)
+                  </span>
+                </span>
+              </div>
+              {createdOrder.outside_gta_charge && createdOrder.outside_gta_charge > 0 && (
+                <div className="flex justify-between text-slate-600">
+                  <span>Ontario-Wide Surcharge:</span>
+                  <span className="text-amber-700 font-bold text-right">
+                    ${createdOrder.outside_gta_charge.toFixed(2)} CAD
+                    {createdOrder.is_variable_pricing && (
+                      <span className="block text-[10px] text-amber-600 font-normal">
+                        (Over 100 km: subject to review)
+                      </span>
+                    )}
+                  </span>
+                </div>
+              )}
               <div className="flex justify-between text-slate-600">
                 <span>Type of Delivery:</span>
                 <span className="font-bold text-red-600">

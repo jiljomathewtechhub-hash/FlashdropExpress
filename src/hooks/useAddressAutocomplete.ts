@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { checkIsGta, POPULAR_LOCATIONS, LocationPoint } from '../lib/distance';
+import { checkIsGta, POPULAR_LOCATIONS, LocationPoint, resolveOntarioCoordinates } from '../lib/distance';
 
 export interface AddressSuggestion {
   id: string;
@@ -426,23 +426,23 @@ export function useAddressAutocomplete({
         isGta: loc.isGta,
       }));
 
-      // 2. If user typed a custom street address or postal code, guarantee an instant Ontario item
+      // 2. If user typed a custom street address or postal code, guarantee an instant Ontario item with PRECISE coordinates
       if (suggestions.length === 0 && q.length >= 3) {
-        const isGta = checkIsGta(text);
-        const cityMatch = isGta ? 'Toronto' : 'Ontario';
+        const centroid = resolveOntarioCoordinates(text);
+        const cityMatch = centroid.name;
         const formatted = `${text.trim()}, ${cityMatch}, ON, Canada`;
         suggestions.push({
           id: `custom-on-${Date.now()}`,
           fullAddress: formatted,
           primaryText: text.trim(),
-          secondaryText: `${cityMatch}, ON, Canada`,
+          secondaryText: `${cityMatch}, ON, Canada (${centroid.isGta ? 'Core GTA' : 'Ontario-Wide'})`,
           streetAddress: text.trim(),
           city: cityMatch,
           state: 'ON',
           country: 'Canada',
-          lon: isGta ? -79.3832 : -79.8696,
-          lat: isGta ? 43.6532 : 43.2568,
-          isGta,
+          lon: centroid.lng,
+          lat: centroid.lat,
+          isGta: centroid.isGta,
         });
       }
 

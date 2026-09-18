@@ -182,7 +182,7 @@ export const createCustomerOrderEmail = (order: Order, settings: BusinessSetting
       </div>
       <div class="row">
         <span class="row-label">Estimated Route</span>
-        <span class="row-value">${order.distance_km} km (${order.service_area})</span>
+        <span class="row-value">${order.distance_km} km (${order.inside_gta_km ?? order.distance_km} km Inside GTA / ${order.outside_gta_km ?? 0} km Outside)</span>
       </div>
       ${order.custom_instructions ? `
       <div class="row">
@@ -310,6 +310,11 @@ export const createCustomerQuoteReadyEmail = (order: Order, settings: BusinessSe
       <div class="row">
         <span class="row-label">Excess Distance Charge (${order.distance_km} km total)</span>
         <span class="row-value">+$${order.excess_km_charge.toFixed(2)} CAD</span>
+      </div>` : ''}
+      ${(order.outside_gta_charge && order.outside_gta_charge > 0) ? `
+      <div class="row">
+        <span class="row-label">Ontario-Wide Delivery Surcharge (${order.outside_gta_km ?? 0} km outside GTA)</span>
+        <span class="row-value">+$${order.outside_gta_charge.toFixed(2)} CAD</span>
       </div>` : ''}
       ${(order.delivery_type_charge && order.delivery_type_charge > 0) ? `
       <div class="row">
@@ -472,6 +477,11 @@ export const createCustomerStatusEmail = (order: Order, prevStatus: OrderStatus,
       <div class="row">
         <span class="row-label">Excess Distance Charge (${order.distance_km} km total)</span>
         <span class="row-value">+$${order.excess_km_charge.toFixed(2)} CAD</span>
+      </div>` : ''}
+      ${(order.outside_gta_charge && order.outside_gta_charge > 0) ? `
+      <div class="row">
+        <span class="row-label">Ontario-Wide Delivery Surcharge (${order.outside_gta_km ?? 0} km outside GTA)</span>
+        <span class="row-value">+$${order.outside_gta_charge.toFixed(2)} CAD</span>
       </div>` : ''}
       ${(order.delivery_type_charge && order.delivery_type_charge > 0) ? `
       <div class="row">

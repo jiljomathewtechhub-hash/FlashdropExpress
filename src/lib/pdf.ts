@@ -152,9 +152,9 @@ export function generateOrderPdf(
   // Calculate dynamic card height to prevent overflow
   const pickupLines = doc.splitTextToSize(order.pickup_address, 62);
   const dropLines = doc.splitTextToSize(order.delivery_address, 62);
-  const routingContentH = 15 + pickupLines.length * 4.2 + 6 + dropLines.length * 4.2 + 4;
+  const routingContentH = 15 + pickupLines.length * 4.2 + 6 + dropLines.length * 4.2 + 10;
   const custContentH = 22 + (order.company_name ? 5 : 0) + 14 + 6;
-  const cardH = Math.max(48, Math.max(routingContentH, custContentH));
+  const cardH = Math.max(52, Math.max(routingContentH, custContentH));
 
   // Customer Card
   doc.setFillColor(255, 255, 255);
@@ -226,6 +226,17 @@ export function generateOrderPdf(
   doc.setTextColor(textBody[0], textBody[1], textBody[2]);
   doc.text(dropLines, 131, deliveryY);
 
+  const distY = deliveryY + Math.max(dropLines.length * 4.2, 7) + 2;
+  const insideKm = order.inside_gta_km !== undefined ? order.inside_gta_km : (order.service_area === 'Ontario-Wide' ? 0 : order.distance_km);
+  const outsideKm = order.outside_gta_km !== undefined ? order.outside_gta_km : (order.service_area === 'Ontario-Wide' ? order.distance_km : 0);
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(textDark[0], textDark[1], textDark[2]);
+  doc.text('DISTANCE:', 114, distY);
+
+  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(textBody[0], textBody[1], textBody[2]);
+  doc.text(`${order.distance_km} km (${insideKm} km GTA / ${outsideKm} km Outside)`, 131, distY);
+
   // --- LINE ITEM TABLE (WHITE THEME) ---
   y = y + cardH + 5;
   const tableStartY = y;
@@ -288,12 +299,22 @@ export function generateOrderPdf(
 
   addRow(
     `Transport Base Rate (${order.vehicle_name})`,
-    `${order.distance_km} km / ${order.weight_lbs} lbs`,
+    `${order.distance_km} km (${insideKm} km GTA / ${outsideKm} km Outside) • ${order.weight_lbs} lbs`,
     order.base_price
   );
 
   if (order.excess_km_charge > 0) {
     addRow('Excess Distance Surcharge (> 40km)', 'Beyond 40km delivery radius', order.excess_km_charge, true);
+  }
+
+  // Ontario-Wide / Outside GTA Delivery Coverage Surcharge ($60.00 base)
+  const outsideCharge = order.outside_gta_charge ?? (order.service_area === 'Ontario-Wide' ? 60.0 : 0);
+  if (outsideCharge > 0) {
+    const isVar = order.is_variable_pricing || (order.distance_km > 100 && outsideKm > 0);
+    const outsideSpecs = isVar
+      ? `${outsideKm} km Outside GTA (Over 100 km: amount may vary)`
+      : `${outsideKm} km Outside GTA Coverage`;
+    addRow('Ontario-Wide Delivery Coverage Surcharge', outsideSpecs, outsideCharge, true);
   }
 
   if (order.delivery_type_charge && order.delivery_type_charge > 0) {
@@ -624,7 +645,7 @@ export function generateWaybillPdf(
   const colW = 88;
   const pickupLines = doc.splitTextToSize(order.pickup_address, 65);
   const deliveryLines = doc.splitTextToSize(order.delivery_address, 65);
-  const cardHeight = Math.max(54, Math.max(pickupLines.length, deliveryLines.length) * 4.2 + 36);
+  const cardHeight = Math.max(58, Math.max(pickupLines.length, deliveryLines.length) * 4.2 + 42);
 
   // --- SHIPPER / CONSIGNOR CARD ---
   doc.setFillColor(255, 255, 255);
@@ -696,7 +717,17 @@ export function generateWaybillPdf(
     doc.setTextColor(textBody[0], textBody[1], textBody[2]);
     const pNotes = doc.splitTextToSize(order.pickup_notes, 42);
     doc.text(pNotes, 45, sY);
+    sY += pNotes.length * 4;
   }
+
+  sY += 5;
+  doc.setFontSize(7);
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(mutedText[0], mutedText[1], mutedText[2]);
+  doc.text('SERVICE REGION:', 19, sY);
+  doc.setFontSize(7.5);
+  doc.setTextColor(textDark[0], textDark[1], textDark[2]);
+  doc.text(order.service_area || 'GTA Central', 45, sY);
 
   // --- CONSIGNEE / RECEIVER CARD ---
   const cX = 107;
@@ -768,7 +799,19 @@ export function generateWaybillPdf(
     doc.setTextColor(textBody[0], textBody[1], textBody[2]);
     const dNotes = doc.splitTextToSize(order.delivery_notes, 53);
     doc.text(dNotes, cX + 31, dY);
+    dY += dNotes.length * 4;
   }
+
+  dY += 5;
+  const insideKmWb = order.inside_gta_km !== undefined ? order.inside_gta_km : (order.service_area === 'Ontario-Wide' ? 0 : order.distance_km);
+  const outsideKmWb = order.outside_gta_km !== undefined ? order.outside_gta_km : (order.service_area === 'Ontario-Wide' ? order.distance_km : 0);
+  doc.setFontSize(7);
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(mutedText[0], mutedText[1], mutedText[2]);
+  doc.text('ROUTE DISTANCE:', cX + 4, dY);
+  doc.setFontSize(7.5);
+  doc.setTextColor(textDark[0], textDark[1], textDark[2]);
+  doc.text(`${order.distance_km} km (${insideKmWb} km GTA / ${outsideKmWb} km Outside)`, cX + 31, dY);
 
   // --- CARGO MANIFEST & LOGISTICS SPECIFICATIONS TABLE ---
   y += cardHeight + 4;
