@@ -39,7 +39,7 @@ export const Hero: React.FC<HeroProps> = ({ onNavigate }) => {
               <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-600"></span>
             </span>
             <span className="tracking-wide text-emerald-800">
-              Greater Toronto Area • Same-Day Dispatch Active
+              Greater Toronto & Ontario-Wide Delivery Coverage Active
             </span>
           </div>
 
@@ -55,7 +55,7 @@ export const Hero: React.FC<HeroProps> = ({ onNavigate }) => {
               On-Demand Freight & Commercial Courier
             </p>
             <p className="text-sm sm:text-base text-slate-600 max-w-2xl mx-auto leading-relaxed font-normal">
-              Direct point-to-point commercial transport across the Greater Toronto Area. Custom tailored freight quotes, transparent milestone status updates, and dedicated GTA couriers.
+              Direct point-to-point commercial transport across Greater Toronto and Ontario-Wide delivery corridors. Custom tailored freight quotes, transparent milestone status updates, and dedicated vehicle couriers.
             </p>
           </div>
 

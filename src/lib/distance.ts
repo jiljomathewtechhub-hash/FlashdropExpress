@@ -359,18 +359,18 @@ export function classifyOntarioAddress(rawInput: string): CoverageCheckResult {
     };
   }
 
-  // 10. Fallback: Custom Regional Dispatch
+  // 10. Fallback: Ontario-Wide Delivery Coverage
   return {
     checked: true,
     isGta: false,
     status: 'special_dispatch',
-    regionName: 'Extended Regional / Custom Dispatch',
+    regionName: 'Ontario-Wide Delivery Coverage',
     matchedName: query,
-    transitSpeed: 'Custom Route Vehicle Dispatch',
+    transitSpeed: 'Dedicated Vehicle Dispatch',
     pricingType: 'Direct Mileage Quote',
     badgeColor: 'sky',
     zoneTab: 'outside',
-    description: 'We service custom long-distance routes across Ontario. Call dispatch at +1 (647) 804-9775 for an immediate vehicle dispatch quote.',
+    description: 'Ontario-Wide Delivery Coverage: Point-to-point dedicated vehicle courier and freight dispatch across all Ontario regions.',
   };
 }
 

@@ -206,10 +206,10 @@ export const ServiceAreas: React.FC<ServiceAreasProps> = ({ onNavigate }) => {
             <span>Coverage Areas</span>
           </div>
           <h2 className="text-3xl sm:text-4xl font-black text-slate-900 font-['Outfit']">
-            GTA & Regional Ontario Dispatch
+            GTA & Ontario-Wide Delivery Coverage
           </h2>
           <p className="text-sm text-slate-600">
-            Daily courier corridors across Greater Toronto and direct regional routes.
+            Daily courier corridors across Greater Toronto and direct Ontario-wide delivery coverage.
           </p>
 
           {/* Area Switcher (Accessible 44px Touch Target) */}
@@ -232,7 +232,7 @@ export const ServiceAreas: React.FC<ServiceAreasProps> = ({ onNavigate }) => {
                   : 'text-slate-600 hover:text-slate-900'
               }`}
             >
-              Extended Ontario
+              Ontario-Wide Coverage
             </button>
           </div>
         </div>
@@ -250,7 +250,7 @@ export const ServiceAreas: React.FC<ServiceAreasProps> = ({ onNavigate }) => {
                   </span>
                 </div>
                 <span className="text-[11px] text-slate-500 font-medium">
-                  {activeTab === 'gta' ? 'GTA Core Zone (0–40+ km)' : 'Extended Regional Network'}
+                  {activeTab === 'gta' ? 'GTA Core Zone (0–40+ km)' : 'Ontario-Wide Delivery Coverage'}
                 </span>
               </div>
 
@@ -385,7 +385,7 @@ export const ServiceAreas: React.FC<ServiceAreasProps> = ({ onNavigate }) => {
                                     : 'bg-amber-50 text-amber-700 border border-amber-200'
                                 }`}
                               >
-                                {item.category === 'Core GTA' ? 'GTA' : 'Ext'}
+                                {item.category === 'Core GTA' ? 'GTA' : 'Ontario-Wide'}
                               </span>
                             </div>
                           </button>
@@ -437,7 +437,7 @@ export const ServiceAreas: React.FC<ServiceAreasProps> = ({ onNavigate }) => {
                           {testResult.isGta
                             ? 'Core GTA Hub'
                             : testResult.status === 'extended_ontario'
-                            ? 'Extended Ontario Run'
+                            ? 'Ontario-Wide Delivery Coverage'
                             : 'Custom Long-Haul Route'}
                         </span>
                         <span className="text-xs font-bold text-slate-900 font-['Outfit']">

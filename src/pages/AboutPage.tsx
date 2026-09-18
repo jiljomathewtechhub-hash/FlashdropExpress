@@ -329,10 +329,10 @@ export const AboutPage: React.FC<AboutPageProps> = ({ onNavigate }) => {
         <div className="bg-slate-100 border border-slate-200 rounded-3xl p-8 sm:p-10 space-y-6">
           <div className="text-center max-w-2xl mx-auto space-y-2">
             <h2 className="text-2xl sm:text-3xl font-black text-slate-900 font-['Outfit']">
-              Headquartered in Ontario, Serving the Entire Golden Horseshoe
+              Headquartered in Ontario, Providing Ontario-Wide Delivery Coverage
             </h2>
             <p className="text-xs sm:text-sm text-slate-600">
-              Our central operations coordinate daily dispatches across Toronto, Peel, York, Halton, Hamilton, Niagara, and beyond.
+              Our central operations coordinate daily dispatches across Toronto, Peel, York, Halton, Hamilton, Niagara, Waterloo, London, and Ontario-wide delivery corridors.
             </p>
           </div>
 

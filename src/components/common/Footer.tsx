@@ -210,7 +210,7 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
                   onClick={() => onNavigate('service-areas')}
                   className="py-1 text-slate-600 hover:text-red-600 transition-smooth cursor-pointer block text-left"
                 >
-                  Outside GTA (Hamilton, Niagara, Waterloo)
+                  Ontario-Wide Delivery Coverage (Hamilton, Niagara, Waterloo, London)
                 </button>
               </li>
             </ul>

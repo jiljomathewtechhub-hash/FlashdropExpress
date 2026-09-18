@@ -68,11 +68,11 @@ export const TermsPage: React.FC<TermsPageProps> = ({ onNavigate }) => {
     },
     {
       number: 6,
-      title: 'Remote / Outside-GTA Deliveries',
+      title: 'Ontario-Wide Delivery Coverage & Extended Routes',
       icon: Truck,
       content:
-        'Deliveries outside the normal GTA service area may be subject to additional mileage, driver travel time, deadhead mileage and/or remote service charges. Exceptionally long-distance or unusual shipments may be priced separately.',
-      highlight: 'Long-haul routes outside the standard GTA envelope may be priced via custom dispatch quotation.',
+        'We provide Ontario-Wide Delivery Coverage across all regional corridors. Deliveries outside the core GTA service area are subject to applicable mileage, driver travel time, and dedicated vehicle dispatch rates. Exceptionally long-distance or specialized shipments are priced transparently via custom dispatch quotation.',
+      highlight: 'Ontario-wide delivery coverage is fully supported with point-to-point dedicated vehicle dispatch.',
     },
     {
       number: 7,

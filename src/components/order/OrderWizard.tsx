@@ -199,7 +199,7 @@ export const OrderWizard: React.FC<OrderWizardProps> = ({ initialData, onNavigat
   // Service area detection
   const isPickupGta = useMemo(() => checkIsGta(pickupAddress), [pickupAddress]);
   const isDeliveryGta = useMemo(() => checkIsGta(deliveryAddress), [deliveryAddress]);
-  const serviceArea = isPickupGta && isDeliveryGta ? 'GTA' : 'Outside GTA';
+  const serviceArea = isPickupGta && isDeliveryGta ? 'GTA' : 'Ontario-Wide';
 
   // Live Price Calculation based on active driving distance
   const breakdown = useMemo(() => {
@@ -214,7 +214,7 @@ export const OrderWizard: React.FC<OrderWizardProps> = ({ initialData, onNavigat
         deliveryType: deliveryTimeOption,
         waitingHours,
         laborHours,
-        isOutsideGta: serviceArea === 'Outside GTA',
+        isOutsideGta: !isPickupGta || !isDeliveryGta,
       },
       settings,
       pricingTiers
@@ -548,7 +548,7 @@ export const OrderWizard: React.FC<OrderWizardProps> = ({ initialData, onNavigat
                     </span>
                   </div>
                   <span className="text-[11px] font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full">
-                    {isPickupGta ? 'Inside GTA' : 'Outside GTA'}
+                    {isPickupGta ? 'Inside GTA' : 'Ontario-Wide Coverage'}
                   </span>
                 </div>
 
@@ -668,7 +668,7 @@ export const OrderWizard: React.FC<OrderWizardProps> = ({ initialData, onNavigat
                     </span>
                   </div>
                   <span className="text-[11px] font-semibold text-red-700 bg-red-50 border border-red-200 px-2.5 py-0.5 rounded-full">
-                    {isDeliveryGta ? 'Inside GTA' : 'Outside GTA'}
+                    {isDeliveryGta ? 'Inside GTA' : 'Ontario-Wide Coverage'}
                   </span>
                 </div>
 
@@ -755,7 +755,9 @@ export const OrderWizard: React.FC<OrderWizardProps> = ({ initialData, onNavigat
                             ~{durationMinutes} mins drive
                           </span>
                         )}
-                        <span className="text-xs font-normal text-slate-400">({serviceArea} Zone)</span>
+                        <span className="text-xs font-normal text-slate-400">
+                          ({serviceArea === 'GTA' ? 'GTA Zone' : 'Ontario-Wide Delivery Coverage'})
+                        </span>
                       </>
                     ) : (
                       <span className="text-sm sm:text-base font-normal text-slate-400">
@@ -1409,7 +1411,7 @@ export const OrderWizard: React.FC<OrderWizardProps> = ({ initialData, onNavigat
                 <div className="flex justify-between border-t border-slate-100 pt-2 text-slate-600">
                   <span>Driving Distance:</span>
                   <span className="font-bold text-slate-900">
-                    {formattedDistance} ({serviceArea})
+                    {formattedDistance} ({serviceArea === 'GTA' ? 'GTA Zone' : 'Ontario-Wide Delivery Coverage'})
                   </span>
                 </div>
                 {durationMinutes && (
