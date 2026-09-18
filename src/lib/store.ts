@@ -368,6 +368,15 @@ class FlashDropStore {
         .on('postgres_changes', { event: '*', schema: 'public', table: 'proof_of_delivery' }, () => {
           this.fetchOrdersFromSupabase();
         })
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'order_status_history' }, () => {
+          this.fetchOrdersFromSupabase();
+        })
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'order_cancellation_requests' }, () => {
+          this.fetchOrdersFromSupabase();
+        })
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'order_change_requests' }, () => {
+          this.fetchOrdersFromSupabase();
+        })
         .subscribe();
     } catch (err) {
       console.warn('Supabase initialization notice:', err);
@@ -535,7 +544,6 @@ class FlashDropStore {
         const allOrders = [...remoteOrders, ...unSyncedLocal];
 
         // Strip legacy test orders and mock accounts
-        const testOrderNumbers = ['FD1001', 'FD-1001', 'FD1005', 'FD1006'];
         const testOrderIds = [
           'c58f414f-a24a-42ab-a2d9-f16e6b6a83d6',
           'b0d48532-66d5-4a62-8beb-cf755cd77382',
@@ -552,7 +560,6 @@ class FlashDropStore {
         ];
         this.orders = allOrders.filter(
           (o) =>
-            !testOrderNumbers.includes(o.order_number) &&
             !testOrderIds.includes(o.id) &&
             !testEmails.includes((o.customer_email || '').toLowerCase().trim())
         );
@@ -785,7 +792,6 @@ class FlashDropStore {
       );
 
       // Purge any legacy test orders from local storage
-      const testOrderNumbers = ['FD1001', 'FD-1001', 'FD1005', 'FD1006'];
       const testOrderIds = [
         'c58f414f-a24a-42ab-a2d9-f16e6b6a83d6',
         'b0d48532-66d5-4a62-8beb-cf755cd77382',
@@ -794,7 +800,6 @@ class FlashDropStore {
       ];
       this.orders = this.orders.filter(
         (o) =>
-          !testOrderNumbers.includes(o.order_number) &&
           !testOrderIds.includes(o.id) &&
           !testEmails.includes((o.customer_email || '').toLowerCase().trim())
       );
