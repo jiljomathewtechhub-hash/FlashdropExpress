@@ -1398,8 +1398,18 @@ class FlashDropStore {
     let currentPayload = { ...payload };
     let attempts = 0;
     while (attempts < 6) {
-      const { error } = await sb.from('orders').update(currentPayload).match(matchFilter);
+      const { data, error } = await sb.from('orders').update(currentPayload).match(matchFilter).select('id');
       if (!error) {
+        // If 0 rows matched by UUID id, fallback to matching by order_number
+        if ((!data || data.length === 0) && matchFilter.id && updatedOrder.order_number) {
+          const { error: orderNumErr } = await sb
+            .from('orders')
+            .update(currentPayload)
+            .match({ order_number: updatedOrder.order_number });
+          if (orderNumErr) {
+            console.warn('Supabase secondary sync by order_number notice:', orderNumErr.message);
+          }
+        }
         break;
       }
 
