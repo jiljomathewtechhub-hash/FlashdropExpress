@@ -1,4 +1,4 @@
-﻿-- =============================================================================
+-- =============================================================================
 -- FlashDrop Express — Clean Customer Profiles & Orders Data
 -- (Preserves Admins, Drivers, Fleet Vehicles, Pricing Matrix, and Settings)
 -- =============================================================================
@@ -33,13 +33,14 @@ WHERE user_id IN (
 DELETE FROM public.profiles
 WHERE role = 'customer';
 
--- 7. Delete customer authentication users from auth.users (if any exist)
--- Strictly preserves admin accounts and driver staff accounts
+-- 7. Delete dummy test admin accounts (admin_settings_*)
+DELETE FROM public.profiles
+WHERE email LIKE 'admin_settings_%';
+
+-- 8. Delete customer and test authentication users from auth.users
+-- Strictly preserves the 1 real admin account and 6 driver staff accounts
 DELETE FROM auth.users
-WHERE id NOT IN (
-  SELECT id FROM public.profiles WHERE role IN ('admin', 'owner', 'driver')
-)
-AND email NOT IN (
+WHERE email NOT IN (
   'support@flashdropexpress.com',
   'shyswashiinc@gmail.com',
   'nidhinathimattam@gmail.com',
