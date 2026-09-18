@@ -32,8 +32,8 @@ export const NotificationToastContainer: React.FC<NotificationToastContainerProp
       const currentUser = store.getCurrentUser();
       const drivers = store.getDrivers();
 
-      // Only show toast if user is logged in as admin or driver
-      if (!currentUser || (currentUser.role !== 'admin' && currentUser.role !== 'owner' && currentUser.role !== 'driver')) {
+      // Only show toast if user is logged in
+      if (!currentUser) {
         return;
       }
 

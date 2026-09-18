@@ -33,6 +33,25 @@ export const NotificationDetailModal: React.FC<NotificationDetailModalProps> = (
 
   useEffect(() => {
     const unsubscribe = inAppNotificationService.subscribeModal((notif) => {
+      if (!notif) {
+        setNotification(null);
+        setAssociatedOrder(null);
+        return;
+      }
+      const currentUser = store.getCurrentUser();
+      const drivers = store.getDrivers();
+      if (!currentUser) {
+        setNotification(null);
+        setAssociatedOrder(null);
+        return;
+      }
+      const eligible = inAppNotificationService.getNotificationsForUser(currentUser, drivers);
+      if (!eligible.some((n) => n.id === notif.id)) {
+        setNotification(null);
+        setAssociatedOrder(null);
+        return;
+      }
+
       setNotification(notif);
       if (notif?.order_number || notif?.order_id) {
         const order =

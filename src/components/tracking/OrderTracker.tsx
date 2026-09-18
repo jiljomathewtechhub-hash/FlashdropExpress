@@ -178,7 +178,7 @@ export const OrderTracker: React.FC<OrderTrackerProps> = ({ initialOrderNumber, 
 
       if (hasConfirmIntent) {
         autoConfirmedRef.current = true;
-        if (order.order_status === 'quote_sent' || order.order_status === 'submitted') {
+        if (order.order_status === 'quote_sent') {
           handleConfirmQuote(order);
         } else if (order.order_status === 'confirmed') {
           setQuoteConfirmedCelebration(true);
@@ -188,7 +188,11 @@ export const OrderTracker: React.FC<OrderTrackerProps> = ({ initialOrderNumber, 
   }, [order, autoConfirm]);
 
   const statusPipeline: { status: OrderStatus; label: string; sub: string }[] = [
-    { status: 'submitted', label: 'Quote Requested', sub: 'Route & cargo submitted' },
+    {
+      status: 'submitted',
+      label: order?.order_status === 'quote_sent' ? 'Quote Ready' : 'Quote Requested',
+      sub: order?.order_status === 'quote_sent' ? 'Awaiting your acceptance' : 'Route & cargo submitted',
+    },
     { status: 'confirmed', label: 'Quote Accepted', sub: 'Verified & rate locked' },
     { status: 'assigned', label: 'Driver Assigned', sub: 'Driver allocated to route' },
     { status: 'en_route_pickup', label: 'En Route to Pickup', sub: 'Driver heading to location' },
@@ -813,11 +817,21 @@ export const OrderTracker: React.FC<OrderTrackerProps> = ({ initialOrderNumber, 
                 <span className="text-slate-500 block text-[10px] uppercase font-semibold">Pickup:</span>
                 <span className="text-slate-900 font-medium">{order.pickup_address}</span>
                 {order.pickup_unit && <span className="text-slate-400 block">Unit: {order.pickup_unit}</span>}
+                {(order.pickup_contact_name || order.pickup_contact_phone) && (
+                  <span className="text-[11px] text-slate-600 block mt-0.5">
+                    Contact: {order.pickup_contact_name || 'Shipper'} {order.pickup_contact_phone && `(${order.pickup_contact_phone})`}
+                  </span>
+                )}
               </div>
               <div>
                 <span className="text-slate-500 block text-[10px] uppercase font-semibold">Dropoff:</span>
                 <span className="text-slate-900 font-medium">{order.delivery_address}</span>
                 {order.delivery_unit && <span className="text-slate-400 block">Unit: {order.delivery_unit}</span>}
+                {(order.delivery_contact_name || order.delivery_contact_phone) && (
+                  <span className="text-[11px] text-slate-600 block mt-0.5 font-medium">
+                    Receiver: {order.delivery_contact_name || 'Recipient'} {order.delivery_contact_phone && `(${order.delivery_contact_phone})`}
+                  </span>
+                )}
               </div>
               <div className="pt-1 text-slate-500 text-xs">
                 Coverage Zone: <strong className="text-slate-900">{order.service_area === 'GTA' ? 'Greater Toronto Area (GTA Zone)' : (order.service_area || 'Ontario-Wide Regional Delivery')}</strong>
@@ -842,8 +856,15 @@ export const OrderTracker: React.FC<OrderTrackerProps> = ({ initialOrderNumber, 
               </div>
               <div>
                 <span className="text-slate-500 block text-[10px] uppercase font-semibold">Assigned Driver:</span>
-                <span className="text-emerald-700 font-bold">
-                  {order.assigned_driver_name || 'Dispatch Allocating...'}
+                <span className={`font-bold ${order.assigned_driver_name ? 'text-emerald-700' : 'text-slate-600'}`}>
+                  {order.assigned_driver_name ||
+                    (order.order_status === 'submitted'
+                      ? 'Pending Quote Review'
+                      : order.order_status === 'quote_sent'
+                      ? 'Pending Quote Acceptance'
+                      : order.order_status === 'confirmed'
+                      ? 'Dispatch Allocating Driver...'
+                      : 'Dispatch Allocating...')}
                 </span>
               </div>
             </div>

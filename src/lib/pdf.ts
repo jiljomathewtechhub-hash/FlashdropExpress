@@ -151,10 +151,18 @@ export function generateOrderPdf(
 
   // Calculate dynamic card height to prevent overflow
   const pickupLines = doc.splitTextToSize(order.pickup_address, 62);
-  const dropLines = doc.splitTextToSize(order.delivery_address, 62);
-  const routingContentH = 15 + pickupLines.length * 4.2 + 6 + dropLines.length * 4.2 + 10;
+  const dropAddressWithUnit = order.delivery_unit ? `${order.delivery_address} (${order.delivery_unit})` : order.delivery_address;
+  const dropLines = doc.splitTextToSize(dropAddressWithUnit, 62);
+  const receiverContactName = order.delivery_contact_name || order.customer_name || 'Designated Consignee';
+  const receiverContactPhone = order.delivery_contact_phone || order.customer_phone || '';
+  const receiverText = receiverContactPhone
+    ? `${receiverContactName} (Tel: ${receiverContactPhone})`
+    : receiverContactName;
+  const receiverLines = doc.splitTextToSize(receiverText, 62);
+
+  const routingContentH = 15 + pickupLines.length * 4.2 + 5 + dropLines.length * 4.2 + 5 + receiverLines.length * 4.2 + 10;
   const custContentH = 22 + (order.company_name ? 5 : 0) + 14 + 6;
-  const cardH = Math.max(52, Math.max(routingContentH, custContentH));
+  const cardH = Math.max(54, Math.max(routingContentH, custContentH));
 
   // Customer Card
   doc.setFillColor(255, 255, 255);
@@ -217,7 +225,7 @@ export function generateOrderPdf(
   doc.setTextColor(textBody[0], textBody[1], textBody[2]);
   doc.text(pickupLines, 131, y + 15);
 
-  const deliveryY = y + 15 + Math.max(pickupLines.length * 4.2, 8);
+  const deliveryY = y + 15 + Math.max(pickupLines.length * 4.2, 7) + 1.5;
   doc.setFont('helvetica', 'bold');
   doc.setTextColor(textDark[0], textDark[1], textDark[2]);
   doc.text('DROPOFF:', 114, deliveryY);
@@ -226,7 +234,16 @@ export function generateOrderPdf(
   doc.setTextColor(textBody[0], textBody[1], textBody[2]);
   doc.text(dropLines, 131, deliveryY);
 
-  const distY = deliveryY + Math.max(dropLines.length * 4.2, 7) + 2;
+  const recvY = deliveryY + Math.max(dropLines.length * 4.2, 7) + 1.5;
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(textDark[0], textDark[1], textDark[2]);
+  doc.text('RECEIVER:', 114, recvY);
+
+  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(textBody[0], textBody[1], textBody[2]);
+  doc.text(receiverLines, 131, recvY);
+
+  const distY = recvY + Math.max(receiverLines.length * 4.2, 7) + 2;
   const insideKm = order.inside_gta_km !== undefined ? order.inside_gta_km : (order.service_area === 'Ontario-Wide' ? 0 : order.distance_km);
   const outsideKm = order.outside_gta_km !== undefined ? order.outside_gta_km : (order.service_area === 'Ontario-Wide' ? order.distance_km : 0);
   doc.setFont('helvetica', 'bold');
@@ -751,7 +768,7 @@ export function generateWaybillPdf(
   doc.text('RECEIVING SITE:', cX + 4, dY);
   doc.setFontSize(8.5);
   doc.setTextColor(textDark[0], textDark[1], textDark[2]);
-  doc.text(order.delivery_contact_name ? `${order.delivery_contact_name} (Site)` : 'Receiving Consignee', cX + 31, dY);
+  doc.text(order.delivery_contact_name ? `${order.delivery_contact_name} (Site)` : (order.company_name || order.customer_name || 'Receiving Consignee'), cX + 31, dY);
 
   dY += 5;
   doc.setFontSize(7);
@@ -761,8 +778,10 @@ export function generateWaybillPdf(
   doc.setFontSize(8);
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(textDark[0], textDark[1], textDark[2]);
+  const waybillRecvName = order.delivery_contact_name || order.customer_name || 'Receiving Consignee';
+  const waybillRecvPhone = order.delivery_contact_phone || order.customer_phone || 'On File';
   doc.text(
-    `${order.delivery_contact_name || 'Receiving Dock'} (Tel: ${order.delivery_contact_phone || 'On File'})`,
+    `${waybillRecvName} (Tel: ${waybillRecvPhone})`,
     cX + 31,
     dY
   );

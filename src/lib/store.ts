@@ -479,20 +479,20 @@ class FlashDropStore {
             customer_phone: row.customer_phone,
             customer_email: row.customer_email,
             company_name: row.company_name,
-            pickup_address: row.pickup_address,
-            pickup_lat: row.pickup_lat,
-            pickup_lng: row.pickup_lng,
-            pickup_unit: row.pickup_unit,
-            pickup_contact_name: row.pickup_contact_name,
-            pickup_contact_phone: row.pickup_contact_phone,
-            pickup_notes: row.pickup_notes,
-            delivery_address: row.delivery_address,
-            delivery_lat: row.delivery_lat,
-            delivery_lng: row.delivery_lng,
-            delivery_unit: row.delivery_unit,
-            delivery_contact_name: row.delivery_contact_name,
-            delivery_contact_phone: row.delivery_contact_phone,
-            delivery_notes: row.delivery_notes,
+            pickup_address: row.pickup_address || existing?.pickup_address,
+            pickup_lat: row.pickup_lat !== undefined ? row.pickup_lat : existing?.pickup_lat,
+            pickup_lng: row.pickup_lng !== undefined ? row.pickup_lng : existing?.pickup_lng,
+            pickup_unit: row.pickup_unit || existing?.pickup_unit,
+            pickup_contact_name: row.pickup_contact_name || existing?.pickup_contact_name,
+            pickup_contact_phone: row.pickup_contact_phone || existing?.pickup_contact_phone,
+            pickup_notes: row.pickup_notes || existing?.pickup_notes,
+            delivery_address: row.delivery_address || existing?.delivery_address,
+            delivery_lat: row.delivery_lat !== undefined ? row.delivery_lat : existing?.delivery_lat,
+            delivery_lng: row.delivery_lng !== undefined ? row.delivery_lng : existing?.delivery_lng,
+            delivery_unit: row.delivery_unit || existing?.delivery_unit,
+            delivery_contact_name: row.delivery_contact_name || existing?.delivery_contact_name,
+            delivery_contact_phone: row.delivery_contact_phone || existing?.delivery_contact_phone,
+            delivery_notes: row.delivery_notes || existing?.delivery_notes,
             pickup_date: row.pickup_date,
             pickup_time: row.pickup_time,
             delivery_time_option: row.delivery_time_option,
@@ -1138,6 +1138,19 @@ class FlashDropStore {
       recipient_role: 'admin',
     });
 
+    // Real-time In-App Notification for Customer
+    if (newOrder.customer_email) {
+      inAppNotificationService.dispatch({
+        title: `Quote Request Received: #${newOrder.order_number}`,
+        message: `Thank you, ${newOrder.customer_name}! Your quote request #${newOrder.order_number} has been received. Our operations team is reviewing your route specifications.`,
+        type: 'quote_requested',
+        order_id: newOrder.id,
+        order_number: newOrder.order_number,
+        recipient_role: 'customer',
+        customer_email: newOrder.customer_email,
+      });
+    }
+
     // Async sync to Supabase if configured
     const sb = supabase;
     if (isSupabaseConfigured && sb) {
@@ -1287,6 +1300,22 @@ class FlashDropStore {
           assigned_driver_id: updatedOrder.assigned_driver_id,
           assigned_driver_name: updatedOrder.assigned_driver_name,
           recipient_role: 'driver',
+        });
+      }
+
+      if (updatedOrder.customer_email) {
+        inAppNotificationService.dispatch({
+          title: isQuoteAccepted
+            ? `Booking Confirmed: #${updatedOrder.order_number}`
+            : `Order #${updatedOrder.order_number}: ${statusFormatted}`,
+          message: isQuoteAccepted
+            ? `Your quotation acceptance was received! Our dispatch team is allocating a dedicated courier driver for your pickup.`
+            : `Your shipment #${updatedOrder.order_number} status has been updated to ${statusFormatted}.`,
+          type: 'status_changed',
+          order_id: updatedOrder.id,
+          order_number: updatedOrder.order_number,
+          recipient_role: 'customer',
+          customer_email: updatedOrder.customer_email,
         });
       }
     }
@@ -1530,6 +1559,20 @@ class FlashDropStore {
           recipient_role: 'driver',
         });
       }
+
+      if (order.customer_email) {
+        inAppNotificationService.dispatch({
+          title: isQuoteAccepted ? `🎉 Quote Accepted: #${order.order_number}` : `Shipment Update: #${order.order_number}`,
+          message: isQuoteAccepted
+            ? `Your quotation acceptance for order #${order.order_number} is confirmed ($${order.total_price.toFixed(2)} CAD). We are now allocating a courier driver!`
+            : `Your shipment #${order.order_number} is now ${statusFormatted}.${notes ? ` (${notes})` : ''}`,
+          type: 'status_changed',
+          order_id: order.id,
+          order_number: order.order_number,
+          recipient_role: 'customer',
+          customer_email: order.customer_email,
+        });
+      }
     }
 
     // Supabase update
@@ -1613,7 +1656,7 @@ class FlashDropStore {
     order.assigned_driver_id = driver.id;
     order.assigned_driver_name = driver.name;
     order.driver_accepted_at = undefined;
-    if (order.order_status === 'submitted' || order.order_status === 'confirmed') {
+    if (order.order_status === 'submitted' || order.order_status === 'quote_sent' || order.order_status === 'confirmed') {
       order.order_status = 'assigned';
     }
     order.updated_at = new Date().toISOString();
@@ -1668,6 +1711,18 @@ class FlashDropStore {
       assigned_driver_name: driver.name,
       recipient_role: 'driver',
     });
+
+    if (order.customer_email) {
+      inAppNotificationService.dispatch({
+        title: `Courier Assigned: #${order.order_number}`,
+        message: `Courier ${driver.name} has been assigned to your shipment #${order.order_number} (${order.vehicle_name}).`,
+        type: 'order_assigned',
+        order_id: order.id,
+        order_number: order.order_number,
+        recipient_role: 'customer',
+        customer_email: order.customer_email,
+      });
+    }
 
     // Supabase sync
     if (isSupabaseConfigured && supabase) {
@@ -1765,6 +1820,18 @@ class FlashDropStore {
         assigned_driver_id: order.assigned_driver_id,
         assigned_driver_name: order.assigned_driver_name,
         recipient_role: 'driver',
+      });
+    }
+
+    if (order.customer_email) {
+      inAppNotificationService.dispatch({
+        title: `🎉 Delivered: #${order.order_number}`,
+        message: `Your shipment #${order.order_number} has been successfully delivered${pod.recipient_name ? ` to ${pod.recipient_name}` : ''}. Verified proof of delivery is on file.`,
+        type: 'pod_uploaded',
+        order_id: order.id,
+        order_number: order.order_number,
+        recipient_role: 'customer',
+        customer_email: order.customer_email,
       });
     }
 

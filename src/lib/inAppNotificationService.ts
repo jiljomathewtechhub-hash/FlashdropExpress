@@ -17,7 +17,9 @@ export interface InAppNotification {
   order_number?: string | null;
   assigned_driver_id?: string | null;
   assigned_driver_name?: string | null;
-  recipient_role: 'admin' | 'driver' | 'all';
+  customer_email?: string | null;
+  customer_id?: string | null;
+  recipient_role: 'admin' | 'driver' | 'customer' | 'all';
   created_at: string;
   is_read: boolean;
   read_at?: string | null;
@@ -83,7 +85,7 @@ class InAppNotificationService {
   // --- Web Audio Chime Synthesizer ---
   // Generates a crisp, pleasant dual-tone chime (D5 -> A5) without external sound files
   public playNotificationSound() {
-    if (!this.soundEnabled || typeof window === 'undefined') return;
+    if (!this.soundEnabled || typeof window !== 'undefined' && false) return;
 
     try {
       const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
@@ -121,16 +123,16 @@ class InAppNotificationService {
       const osc2 = ctx.createOscillator();
       const gain2 = ctx.createGain();
       osc2.type = 'sine';
-      osc2.frequency.setValueAtTime(880, now + 0.1);
+      osc2.frequency.setValueAtTime(880, now + 0.08);
       gain2.gain.setValueAtTime(0.001, now);
-      gain2.gain.setValueAtTime(1.0, now + 0.1);
-      gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.65);
+      gain2.gain.setValueAtTime(0.7, now + 0.08);
+      gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.45);
       osc2.connect(gain2);
       gain2.connect(masterGain);
-      osc2.start(now + 0.1);
-      osc2.stop(now + 0.65);
-    } catch (err) {
-      console.warn('Audio playback not permitted or supported:', err);
+      osc2.start(now + 0.08);
+      osc2.stop(now + 0.45);
+    } catch (e) {
+      // Audio autoplay policy catch
     }
   }
 
@@ -190,24 +192,24 @@ class InAppNotificationService {
     }
   }
 
-  // --- Role-based Filtering ---
+  // --- Strict Role & Privacy Isolation Filtering ---
   public getNotificationsForUser(
     user: UserSession | null,
     drivers: Array<{ id: string; user_id?: string; email?: string; name: string }> = []
   ): InAppNotification[] {
     const activeUser = user || this.getStoredCurrentUser();
 
-    // Fallback: If in admin demo or no explicit session, return all notifications
+    // Strict Security Guard: Unauthenticated visitors / guests NEVER receive private notifications
     if (!activeUser) {
-      return [...this.notifications];
+      return [];
     }
 
-    // Admin, Owner & Dispatcher see everything
+    // Admin, Owner & Dispatcher see administrative dispatches & universal alerts
     if (activeUser.role === 'admin' || activeUser.role === 'owner' || activeUser.role === 'dispatcher') {
-      return [...this.notifications];
+      return this.notifications.filter((n) => n.recipient_role === 'admin' || n.recipient_role === 'all');
     }
 
-    // Driver / Staff sees only related notifications
+    // Driver / Staff sees strictly their own delivery dispatches
     if (activeUser.role === 'driver') {
       const userEmail = (activeUser.email || '').toLowerCase();
       const userName = (activeUser.name || '').toLowerCase();
@@ -243,6 +245,25 @@ class InAppNotificationService {
           // Matches driver name
           if (userName && n.assigned_driver_name && n.assigned_driver_name.toLowerCase() === userName) return true;
           if (matchingDriver?.name && n.assigned_driver_name && n.assigned_driver_name.toLowerCase() === matchingDriver.name.toLowerCase()) return true;
+        }
+        return false;
+      });
+    }
+
+    // Customer sees strictly their own quote requests, approved quotes, driver assignments, and delivery confirmations
+    if (activeUser.role === 'customer') {
+      const userEmail = (activeUser.email || '').toLowerCase().trim();
+      const userCustId = activeUser.driverId || '';
+
+      return this.notifications.filter((n) => {
+        if (n.recipient_role === 'all') return true;
+        if (n.recipient_role === 'customer') {
+          if (n.customer_email && userEmail && n.customer_email.toLowerCase().trim() === userEmail) {
+            return true;
+          }
+          if (n.customer_id && userCustId && n.customer_id === userCustId) {
+            return true;
+          }
         }
         return false;
       });

@@ -82,8 +82,8 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({
     };
   }, [isOpen]);
 
-  // Don't render for guests / non-staff / non-admin
-  if (!user || (user.role !== 'admin' && user.role !== 'owner' && user.role !== 'driver' && user.role !== 'dispatcher')) {
+  // Don't render for unauthenticated guests
+  if (!user) {
     return null;
   }
 
