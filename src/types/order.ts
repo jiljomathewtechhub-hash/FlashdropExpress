@@ -149,9 +149,9 @@ export interface Order {
   status_history?: StatusHistoryItem[];
 
   // Custom Quotation & Review
-  quote_notes?: string;
-  quote_sent_at?: string;
-  quote_accepted_at?: string;
+  quote_notes?: string | null;
+  quote_sent_at?: string | null;
+  quote_accepted_at?: string | null;
 
   // Account Type & Tax
   account_type?: 'personal' | 'commercial';

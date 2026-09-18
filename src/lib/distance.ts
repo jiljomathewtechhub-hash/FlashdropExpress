@@ -80,6 +80,16 @@ export const ONTARIO_CITY_CENTROIDS: Record<string, GeoCentroid> = {
   waterloo: { name: 'Waterloo', lat: 43.4643, lng: -80.5204, isGta: false, region: 'Waterloo' },
   cambridge: { name: 'Cambridge', lat: 43.3616, lng: -80.3144, isGta: false, region: 'Waterloo' },
   guelph: { name: 'Guelph', lat: 43.5448, lng: -80.2482, isGta: false, region: 'Wellington' },
+  wellington: { name: 'Wellington', lat: 43.8500, lng: -80.5500, isGta: false, region: 'Wellington' },
+  'wellington north': { name: 'Wellington North', lat: 43.8500, lng: -80.5500, isGta: false, region: 'Wellington' },
+  'centre wellington': { name: 'Centre Wellington', lat: 43.7034, lng: -80.3776, isGta: false, region: 'Wellington' },
+  fergus: { name: 'Fergus', lat: 43.7034, lng: -80.3776, isGta: false, region: 'Wellington' },
+  elora: { name: 'Elora', lat: 43.6834, lng: -80.4304, isGta: false, region: 'Wellington' },
+  arthur: { name: 'Arthur', lat: 43.8334, lng: -80.5334, isGta: false, region: 'Wellington' },
+  'mount forest': { name: 'Mount Forest', lat: 43.9834, lng: -80.7334, isGta: false, region: 'Wellington' },
+  drayton: { name: 'Drayton', lat: 43.7500, lng: -80.6667, isGta: false, region: 'Wellington' },
+  erin: { name: 'Erin', lat: 43.7667, lng: -80.0667, isGta: false, region: 'Wellington' },
+  rockwood: { name: 'Rockwood', lat: 43.6167, lng: -80.1333, isGta: false, region: 'Wellington' },
   brantford: { name: 'Brantford', lat: 43.1394, lng: -80.2644, isGta: false, region: 'Brant' },
   paris: { name: 'Paris', lat: 43.1925, lng: -80.3844, isGta: false, region: 'Brant' },
 
@@ -569,7 +579,10 @@ export function classifyOntarioAddress(rawInput: string): CoverageCheckResult {
   // 7. Extended: Waterloo Region & Guelph Corridor
   if (
     (fsa && /^(n1|n2|n3[cehprst])/i.test(fsa)) ||
-    matchesAnyWord(lower, ['kitchener', 'waterloo', 'guelph', 'cambridge', 'brantford', 'elmira', 'woolwich'])
+    matchesAnyWord(lower, [
+      'kitchener', 'waterloo', 'guelph', 'cambridge', 'brantford', 'elmira', 'woolwich',
+      'wellington', 'wellington north', 'centre wellington', 'fergus', 'elora', 'arthur', 'mount forest', 'drayton', 'erin', 'rockwood'
+    ])
   ) {
     return {
       checked: true,
@@ -729,10 +742,7 @@ export function checkIsGta(addressStr: string): boolean {
     return direct.isGta;
   }
   const classification = classifyOntarioAddress(addressStr);
-  if (classification.status === 'extended_ontario') {
-    return false;
-  }
-  return true;
+  return classification.isGta;
 }
 
 /**
@@ -807,7 +817,8 @@ export function calculateGtaKmBreakdown(
   pickupCoords?: { lat: number; lng: number },
   deliveryCoords?: { lat: number; lng: number }
 ): GtaKmBreakdown {
-  if (totalKm <= 0) {
+  const safeTotal = Math.max(0, Math.round((Number(totalKm) || 0) * 10) / 10);
+  if (safeTotal <= 0) {
     return { totalKm: 0, insideGtaKm: 0, outsideGtaKm: 0, isOutsideGta: false };
   }
 
@@ -817,8 +828,8 @@ export function calculateGtaKmBreakdown(
   // Case 1: Both Pickup & Delivery are inside GTA
   if (pIsGta && dIsGta) {
     return {
-      totalKm,
-      insideGtaKm: totalKm,
+      totalKm: safeTotal,
+      insideGtaKm: safeTotal,
       outsideGtaKm: 0,
       isOutsideGta: false,
     };
@@ -827,9 +838,9 @@ export function calculateGtaKmBreakdown(
   // Case 2: Both Pickup & Delivery are outside GTA
   if (!pIsGta && !dIsGta) {
     return {
-      totalKm,
+      totalKm: safeTotal,
       insideGtaKm: 0,
-      outsideGtaKm: totalKm,
+      outsideGtaKm: safeTotal,
       isOutsideGta: true,
     };
   }
@@ -853,7 +864,7 @@ export function calculateGtaKmBreakdown(
     borderLat = 43.33;
     borderLng = -79.82;
   } else if (dLng < -0.2 && dLat >= 0) {
-    // Towards Guelph / Kitchener (Milton / Halton border)
+    // Towards Guelph / Kitchener / Wellington (Milton / Halton border)
     borderLat = 43.53;
     borderLng = -80.02;
   } else if (dLat > 0.3) {
@@ -871,16 +882,16 @@ export function calculateGtaKmBreakdown(
 
   // Compute road distance within GTA
   const distanceInside = calculateRoadDistanceKm(inCoord.lat, inCoord.lng, borderLat, borderLng);
+  const rawInside = Math.round(distanceInside * 10) / 10;
 
-  // Bound insideGtaKm between 1 km and totalKm - 1 km
-  const insideGtaKm = Math.min(
-    Math.round((totalKm - 1) * 10) / 10,
-    Math.max(1.0, Math.round(distanceInside * 10) / 10)
-  );
-  const outsideGtaKm = Math.max(0, Math.round((totalKm - insideGtaKm) * 10) / 10);
+  // Bound insideGtaKm strictly between 0.5 km and safeTotal - 0.5 km
+  const insideGtaKm = safeTotal <= 1.0
+    ? Math.round((safeTotal / 2) * 10) / 10
+    : Math.min(Math.round((safeTotal - 0.5) * 10) / 10, Math.max(0.5, rawInside));
+  const outsideGtaKm = Math.round((safeTotal - insideGtaKm) * 10) / 10;
 
   return {
-    totalKm,
+    totalKm: safeTotal,
     insideGtaKm,
     outsideGtaKm,
     isOutsideGta: true,

@@ -2,6 +2,7 @@ import { jsPDF } from 'jspdf';
 import { Order, BusinessSettings } from '../types/order';
 import { DEFAULT_BUSINESS_SETTINGS } from './pricing';
 import { FLASHDROP_LOGO_BASE64, FD_SPEED_LOGO_BASE64 } from './assets/logoBase64';
+import { calculateGtaKmBreakdown } from './distance';
 
 /**
  * Generates and downloads a branded, high-contrast, commercial PDF invoice
@@ -244,8 +245,22 @@ export function generateOrderPdf(
   doc.text(receiverLines, 131, recvY);
 
   const distY = recvY + Math.max(receiverLines.length * 4.2, 7) + 2;
-  const insideKm = order.inside_gta_km !== undefined ? order.inside_gta_km : (order.service_area === 'Ontario-Wide' ? 0 : order.distance_km);
-  const outsideKm = order.outside_gta_km !== undefined ? order.outside_gta_km : (order.service_area === 'Ontario-Wide' ? order.distance_km : 0);
+  let insideKm = order.inside_gta_km;
+  let outsideKm = order.outside_gta_km;
+  if (
+    insideKm === undefined ||
+    outsideKm === undefined ||
+    Math.abs((insideKm + outsideKm) - order.distance_km) > 0.05 ||
+    insideKm > order.distance_km
+  ) {
+    const bk = calculateGtaKmBreakdown(
+      order.pickup_address || '',
+      order.delivery_address || '',
+      order.distance_km || 0
+    );
+    insideKm = bk.insideGtaKm;
+    outsideKm = bk.outsideGtaKm;
+  }
   doc.setFont('helvetica', 'bold');
   doc.setTextColor(textDark[0], textDark[1], textDark[2]);
   doc.text('DISTANCE:', 114, distY);
@@ -650,7 +665,13 @@ export function generateWaybillPdf(
   doc.text(isUrgent ? 'URGENT (DIRECT)' : 'SAME-DAY EXPEDITED', 60, y + 11.5);
 
   doc.setTextColor(textDark[0], textDark[1], textDark[2]);
-  doc.text(order.assigned_driver_name || 'Fleet Dispatched', 105, y + 11.5);
+  const wbDriverDisplay =
+    order.order_status === 'submitted'
+      ? 'Pending Quote'
+      : order.order_status === 'quote_sent'
+      ? 'Awaiting Acceptance'
+      : order.assigned_driver_name || 'Fleet Dispatched';
+  doc.text(wbDriverDisplay, 105, y + 11.5);
   doc.text(order.vehicle_name || 'Cargo Van', 145, y + 11.5);
 
   // Explicitly NO DOLLARS: Legal Billing Terms indicator
@@ -822,8 +843,22 @@ export function generateWaybillPdf(
   }
 
   dY += 5;
-  const insideKmWb = order.inside_gta_km !== undefined ? order.inside_gta_km : (order.service_area === 'Ontario-Wide' ? 0 : order.distance_km);
-  const outsideKmWb = order.outside_gta_km !== undefined ? order.outside_gta_km : (order.service_area === 'Ontario-Wide' ? order.distance_km : 0);
+  let insideKmWb = order.inside_gta_km;
+  let outsideKmWb = order.outside_gta_km;
+  if (
+    insideKmWb === undefined ||
+    outsideKmWb === undefined ||
+    Math.abs((insideKmWb + outsideKmWb) - order.distance_km) > 0.05 ||
+    insideKmWb > order.distance_km
+  ) {
+    const bk = calculateGtaKmBreakdown(
+      order.pickup_address || '',
+      order.delivery_address || '',
+      order.distance_km || 0
+    );
+    insideKmWb = bk.insideGtaKm;
+    outsideKmWb = bk.outsideGtaKm;
+  }
   doc.setFontSize(7);
   doc.setFont('helvetica', 'bold');
   doc.setTextColor(mutedText[0], mutedText[1], mutedText[2]);
@@ -964,7 +999,13 @@ export function generateWaybillPdf(
 
   doc.setFontSize(6.8);
   doc.setTextColor(textBody[0], textBody[1], textBody[2]);
-  doc.text(`Driver: ${order.assigned_driver_name || 'Fleet Courier'}`, dX + 3, y + 17);
+  const wbDriverSig =
+    order.order_status === 'submitted'
+      ? 'Pending Quote Review'
+      : order.order_status === 'quote_sent'
+      ? 'Pending Quote Acceptance'
+      : order.assigned_driver_name || 'Fleet Courier';
+  doc.text(`Driver: ${wbDriverSig}`, dX + 3, y + 17);
   doc.text(`Vehicle: ${order.vehicle_name}`, dX + 3, y + 21);
   doc.line(dX + 3, y + 27, dX + sigColW - 6, y + 27);
   doc.setFontSize(6);

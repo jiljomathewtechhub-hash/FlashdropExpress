@@ -856,15 +856,21 @@ export const OrderTracker: React.FC<OrderTrackerProps> = ({ initialOrderNumber, 
               </div>
               <div>
                 <span className="text-slate-500 block text-[10px] uppercase font-semibold">Assigned Driver:</span>
-                <span className={`font-bold ${order.assigned_driver_name ? 'text-emerald-700' : 'text-slate-600'}`}>
-                  {order.assigned_driver_name ||
-                    (order.order_status === 'submitted'
-                      ? 'Pending Quote Review'
-                      : order.order_status === 'quote_sent'
-                      ? 'Pending Quote Acceptance'
-                      : order.order_status === 'confirmed'
-                      ? 'Dispatch Allocating Driver...'
-                      : 'Dispatch Allocating...')}
+                <span className={`font-bold ${
+                  order.order_status === 'submitted' || order.order_status === 'quote_sent'
+                    ? 'text-slate-600'
+                    : order.assigned_driver_name
+                    ? 'text-emerald-700'
+                    : 'text-slate-600'
+                }`}>
+                  {order.order_status === 'submitted'
+                    ? 'Pending Quote Review'
+                    : order.order_status === 'quote_sent'
+                    ? 'Pending Quote Acceptance'
+                    : order.assigned_driver_name ||
+                      (order.order_status === 'confirmed'
+                        ? 'Dispatch Allocating Driver...'
+                        : 'Dispatch Allocating...')}
                 </span>
               </div>
             </div>

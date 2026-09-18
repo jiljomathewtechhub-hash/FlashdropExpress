@@ -14,6 +14,7 @@ import { supabase, isSupabaseConfigured } from './supabase';
 import { notificationService } from './notificationService';
 import { inAppNotificationService } from './inAppNotificationService';
 import { NotificationLog } from '../types/notification';
+import { calculateGtaKmBreakdown } from './distance';
 
 const STORAGE_KEY_PREFIX = 'flashdrop_';
 
@@ -404,6 +405,7 @@ class FlashDropStore {
           const existing = this.orders.find((o) => o.id === row.id || o.order_number === row.order_number);
           const base = Number(row.base_price || 0);
           const excess = Number(row.excess_km_charge || 0);
+          const outside = Number(row.outside_gta_charge !== null && row.outside_gta_charge !== undefined ? row.outside_gta_charge : (existing?.outside_gta_charge || 0));
           const after = Number(row.after_hours_charge || 0);
           const waiting = Number(row.waiting_charge || 0);
           const labor = Number(row.labor_charge || 0);
@@ -420,7 +422,7 @@ class FlashDropStore {
           const discountType = row.discount_type || existing?.discount_type || undefined;
           const discountNotes = row.discount_notes || existing?.discount_notes || undefined;
 
-          const gross = Number((base + excess + deliveryTypeCharge + after + waiting + labor).toFixed(2));
+          const gross = Number((base + excess + deliveryTypeCharge + outside + after + waiting + labor).toFixed(2));
           if (discountAmt === undefined && gross > Number(row.subtotal || 0) && Number(row.subtotal || 0) > 0) {
             discountAmt = Number((gross - Number(row.subtotal || 0)).toFixed(2));
           }
@@ -447,7 +449,17 @@ class FlashDropStore {
           const existingStatus = existing?.order_status || undefined;
           let resolvedStatus: OrderStatus = 'submitted';
 
-          if (pod || rawRowStatus === 'delivered' || existingStatus === 'delivered') {
+          if (existingStatus === 'submitted') {
+            resolvedStatus = 'submitted';
+          } else if (quoteAcceptedAt) {
+            resolvedStatus = (existingStatus === 'delivered' || rawRowStatus === 'delivered' || pod)
+              ? 'delivered'
+              : (existingStatus || rawRowStatus || 'confirmed');
+          } else if (existingStatus === 'quote_sent' || quoteSentAt) {
+            resolvedStatus = 'quote_sent';
+          } else if (rawRowStatus === 'submitted' || rawRowStatus === 'quote_sent') {
+            resolvedStatus = rawRowStatus;
+          } else if (pod || rawRowStatus === 'delivered' || existingStatus === 'delivered') {
             resolvedStatus = 'delivered';
           } else if (rawRowStatus === 'cancelled' || existingStatus === 'cancelled') {
             resolvedStatus = 'cancelled';
@@ -461,14 +473,23 @@ class FlashDropStore {
             } else {
               resolvedStatus = rawRowStatus || existingStatus || 'submitted';
             }
+          }
 
-            if (quoteSentAt && !quoteAcceptedAt) {
-              if (resolvedStatus === 'submitted' || !resolvedStatus || existingStatus === 'quote_sent') {
-                resolvedStatus = 'quote_sent';
-              }
-            } else if (quoteAcceptedAt && (resolvedStatus === 'quote_sent' || resolvedStatus === 'submitted')) {
-              resolvedStatus = 'confirmed';
-            }
+          // Strict Quote Isolation: orders in submitted or quote_sent status must never have an assigned driver
+          const isQuoteDraft = resolvedStatus === 'submitted' || resolvedStatus === 'quote_sent';
+
+          const kmTotal = Number(row.distance_km || existing?.distance_km || 0);
+          let inGta = (row.inside_gta_km !== undefined && row.inside_gta_km !== null) ? Number(row.inside_gta_km) : existing?.inside_gta_km;
+          let outGta = (row.outside_gta_km !== undefined && row.outside_gta_km !== null) ? Number(row.outside_gta_km) : existing?.outside_gta_km;
+
+          if (inGta === undefined || outGta === undefined || Math.abs((inGta + outGta) - kmTotal) > 0.2 || inGta > kmTotal) {
+            const recalculated = calculateGtaKmBreakdown(
+              row.pickup_address || existing?.pickup_address || '',
+              row.delivery_address || existing?.delivery_address || '',
+              kmTotal
+            );
+            inGta = recalculated.insideGtaKm;
+            outGta = recalculated.outsideGtaKm;
           }
 
           return {
@@ -504,13 +525,13 @@ class FlashDropStore {
             item_description: row.item_description,
             weight_lbs: Number(row.weight_lbs),
             quantity: Number(row.quantity),
-            distance_km: Number(row.distance_km),
-            inside_gta_km: row.inside_gta_km !== undefined ? Number(row.inside_gta_km) : existing?.inside_gta_km,
-            outside_gta_km: row.outside_gta_km !== undefined ? Number(row.outside_gta_km) : existing?.outside_gta_km,
+            distance_km: kmTotal,
+            inside_gta_km: inGta,
+            outside_gta_km: outGta,
             custom_instructions: row.custom_instructions,
             base_price: base,
             excess_km_charge: excess,
-            outside_gta_charge: row.outside_gta_charge !== undefined ? Number(row.outside_gta_charge) : existing?.outside_gta_charge,
+            outside_gta_charge: outside,
             after_hours_charge: after,
             waiting_charge: waiting,
             labor_charge: labor,
@@ -528,12 +549,12 @@ class FlashDropStore {
             total_price: total,
             payment_status: row.payment_status,
             order_status: resolvedStatus,
-            assigned_driver_id: row.assigned_driver_id,
-            assigned_driver_name: assignedDriver?.name || row.assigned_driver_name || undefined,
+            assigned_driver_id: isQuoteDraft ? null : row.assigned_driver_id,
+            assigned_driver_name: isQuoteDraft ? undefined : (assignedDriver?.name || row.assigned_driver_name || undefined),
             created_at: row.created_at,
             updated_at: row.updated_at,
             status_history: row.order_status_history || existing?.status_history || [],
-            proof_of_delivery: row.proof_of_delivery?.[0] || existing?.proof_of_delivery || undefined,
+            proof_of_delivery: isQuoteDraft ? undefined : (row.proof_of_delivery?.[0] || existing?.proof_of_delivery || undefined),
           };
         });
 
@@ -601,8 +622,13 @@ class FlashDropStore {
         );
         this.drivers = [...remoteDrivers, ...unSyncedLocalDrivers];
 
-        // Backfill assigned_driver_name on existing orders in memory if missing
+        // Backfill assigned_driver_name on existing orders in memory if missing (excluding quote requests)
         this.orders.forEach((o) => {
+          if (o.order_status === 'submitted' || o.order_status === 'quote_sent') {
+            o.assigned_driver_id = null;
+            o.assigned_driver_name = undefined;
+            return;
+          }
           if (o.assigned_driver_id && !o.assigned_driver_name) {
             const found = this.drivers.find((d) => d.id === o.assigned_driver_id || d.user_id === o.assigned_driver_id);
             if (found) o.assigned_driver_name = found.name;
@@ -1234,8 +1260,14 @@ class FlashDropStore {
       updated_at: new Date().toISOString(),
     };
 
-    // If driver changed, update assigned_driver_name
-    if (updates.assigned_driver_id && updates.assigned_driver_id !== oldOrder.assigned_driver_id) {
+    // Enforce driver assignment isolation for quote requests
+    if (updatedOrder.order_status === 'submitted' || updatedOrder.order_status === 'quote_sent') {
+      updatedOrder.assigned_driver_id = null;
+      updatedOrder.assigned_driver_name = undefined;
+    } else if (updates.assigned_driver_id === null) {
+      updatedOrder.assigned_driver_id = null;
+      updatedOrder.assigned_driver_name = undefined;
+    } else if (updates.assigned_driver_id && updates.assigned_driver_id !== oldOrder.assigned_driver_id) {
       const drv = this.drivers.find(
         (d) =>
           d.id === updates.assigned_driver_id ||
@@ -1391,13 +1423,13 @@ class FlashDropStore {
       total_price: updatedOrder.total_price,
       payment_status: updatedOrder.payment_status,
       order_status: updatedOrder.order_status,
-      assigned_driver_id: driverUUID,
+      assigned_driver_id: (updatedOrder.order_status === 'submitted' || updatedOrder.order_status === 'quote_sent') ? null : driverUUID,
       updated_at: updatedOrder.updated_at,
     };
 
     let currentPayload = { ...payload };
     let attempts = 0;
-    while (attempts < 6) {
+    while (attempts < 25) {
       const { data, error } = await sb.from('orders').update(currentPayload).match(matchFilter).select('id');
       if (!error) {
         // If 0 rows matched by UUID id, fallback to matching by order_number
@@ -1416,13 +1448,14 @@ class FlashDropStore {
       console.warn(`Supabase order sync notice (attempt ${attempts + 1}):`, error.message);
 
       // 1. If a column doesn't exist in the current PostgreSQL schema, strip it and retry safely
-      if (error.message?.includes('does not exist')) {
-        const match = error.message.match(/column "([^"]+)" of relation/i);
-        if (match && match[1] && match[1] in currentPayload) {
-          delete currentPayload[match[1]];
-          attempts++;
-          continue;
-        }
+      const colMatch =
+        error.message?.match(/Could not find the '([^']+)' column/i) ||
+        error.message?.match(/column "([^"]+)" of relation/i) ||
+        error.message?.match(/column ([a-zA-Z0-9_]+) does not exist/i);
+      if (colMatch && colMatch[1] && colMatch[1] in currentPayload) {
+        delete currentPayload[colMatch[1]];
+        attempts++;
+        continue;
       }
 
       // 2. If order_status enum rejects custom status like 'quote_sent', fallback to 'submitted'

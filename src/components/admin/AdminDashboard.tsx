@@ -184,6 +184,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
     custom_instructions: string;
 
     distance_km: number;
+    inside_gta_km: number;
+    outside_gta_km: number;
     base_price: number;
     excess_km_charge: number;
     urgency_surcharge: number;
@@ -226,6 +228,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
     custom_instructions: '',
 
     distance_km: 0,
+    inside_gta_km: 0,
+    outside_gta_km: 0,
     base_price: 0,
     excess_km_charge: 0,
     urgency_surcharge: 0,
@@ -604,6 +608,20 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
     const tax = Number((sub * 0.13).toFixed(2));
     const total = Number((sub + tax).toFixed(2));
 
+    const kmBreakdown = calculateGtaKmBreakdown(
+      order.pickup_address || '',
+      order.delivery_address || '',
+      dist,
+      order.pickup_lat && order.pickup_lng ? { lat: order.pickup_lat, lng: order.pickup_lng } : undefined,
+      order.delivery_lat && order.delivery_lng ? { lat: order.delivery_lat, lng: order.delivery_lng } : undefined
+    );
+    const inKm = order.inside_gta_km !== undefined && order.outside_gta_km !== undefined && Math.abs((order.inside_gta_km + order.outside_gta_km) - dist) <= 0.05 && order.inside_gta_km <= dist
+      ? order.inside_gta_km
+      : kmBreakdown.insideGtaKm;
+    const outKm = order.inside_gta_km !== undefined && order.outside_gta_km !== undefined && Math.abs((order.inside_gta_km + order.outside_gta_km) - dist) <= 0.05 && order.inside_gta_km <= dist
+      ? order.outside_gta_km
+      : kmBreakdown.outsideGtaKm;
+
     setQuoteFormData({
       customer_name: order.customer_name || '',
       customer_phone: order.customer_phone || '',
@@ -634,6 +652,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
       custom_instructions: order.custom_instructions || '',
 
       distance_km: dist,
+      inside_gta_km: inKm,
+      outside_gta_km: outKm,
       base_price: base,
       excess_km_charge: excess,
       urgency_surcharge: urgency,
@@ -694,6 +714,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
       return {
         ...current,
         distance_km: safeKm,
+        inside_gta_km: kmBreakdown.insideGtaKm,
+        outside_gta_km: kmBreakdown.outsideGtaKm,
         base_price: base,
         excess_km_charge: excess,
         urgency_surcharge: urgency,
@@ -848,12 +870,20 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
         tax_amount: quoteFormData.tax_amount,
         total_price: quoteFormData.total_price,
         quote_notes: quoteFormData.quote_notes,
-        order_status: sendEmail ? 'quote_sent' : (reviewingQuoteOrder.order_status || 'submitted'),
-        quote_sent_at: sendEmail ? now : (reviewingQuoteOrder.quote_sent_at || undefined),
+        order_status: sendEmail ? 'quote_sent' : 'submitted',
+        quote_sent_at: sendEmail ? now : null,
+        assigned_driver_id: null,
+        assigned_driver_name: undefined,
       };
 
       const res = await store.updateOrderAndSync(reviewingQuoteOrder.id, updatedData);
-      const updatedOrder = res || ({ ...reviewingQuoteOrder, ...updatedData, order_status: sendEmail ? 'quote_sent' : reviewingQuoteOrder.order_status } as Order);
+      const updatedOrder = res || ({
+        ...reviewingQuoteOrder,
+        ...updatedData,
+        order_status: sendEmail ? 'quote_sent' : 'submitted',
+        assigned_driver_id: null,
+        assigned_driver_name: undefined,
+      } as Order);
 
       if (sendEmail) {
         await notificationService.notifyQuoteSent(updatedOrder, settings);
@@ -1726,7 +1756,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
                                 Booked: {formatScheduleDate(ord.created_at)}
                               </div>
                             </div>
-                            {ord.proof_of_delivery?.photo_url && (
+                            {ord.order_status !== 'submitted' && ord.order_status !== 'quote_sent' && ord.proof_of_delivery?.photo_url && (
                               <button
                                 type="button"
                                 onClick={() => setSelectedOrderDetails(ord)}
@@ -1746,7 +1776,16 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
                             <div className="truncate max-w-[180px] text-slate-800 font-medium">{ord.pickup_address}</div>
                             <div className="truncate max-w-[180px] text-slate-500">&rarr; {ord.delivery_address}</div>
                             <span className="text-[10px] text-red-600 font-bold">
-                              {ord.distance_km} km ({ord.inside_gta_km ?? ord.distance_km} GTA / {ord.outside_gta_km ?? 0} Outside)
+                              {(() => {
+                                let inKm = ord.inside_gta_km;
+                                let outKm = ord.outside_gta_km;
+                                if (inKm === undefined || outKm === undefined || Math.abs((inKm + outKm) - ord.distance_km) > 0.05 || inKm > ord.distance_km) {
+                                  const bk = calculateGtaKmBreakdown(ord.pickup_address, ord.delivery_address, ord.distance_km);
+                                  inKm = bk.insideGtaKm;
+                                  outKm = bk.outsideGtaKm;
+                                }
+                                return `${ord.distance_km} km (${inKm} GTA / ${outKm} Outside)`;
+                              })()}
                             </span>
                           </td>
                           <td className="py-3 px-4">
@@ -1774,7 +1813,23 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
                             )}
                           </td>
                           <td className="py-3 px-4">
-                            {ord.assigned_driver_name ? (
+                            {ord.order_status === 'submitted' ? (
+                              <span
+                                className="inline-flex items-center space-x-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-300"
+                                title="Customer has submitted quote request. Driver assignment unlocks once quote is accepted."
+                              >
+                                <Clock className="w-3 h-3 text-amber-600" />
+                                <span>Pending Quote</span>
+                              </span>
+                            ) : ord.order_status === 'quote_sent' ? (
+                              <span
+                                className="inline-flex items-center space-x-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-purple-50 text-purple-800 border border-purple-300"
+                                title="Quotation sent to customer. Awaiting customer acceptance before driver allocation."
+                              >
+                                <FileText className="w-3 h-3 text-purple-600" />
+                                <span>Awaiting Acceptance</span>
+                              </span>
+                            ) : ord.assigned_driver_name ? (
                               <div className="flex items-center space-x-2">
                                 <span className="text-emerald-700 font-semibold">{ord.assigned_driver_name}</span>
                                 <button
@@ -1800,22 +1855,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
                                 <Truck className="w-3 h-3" />
                                 <span>Assign Courier</span>
                               </button>
-                            ) : ord.order_status === 'submitted' ? (
-                              <span
-                                className="inline-flex items-center space-x-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-300"
-                                title="Customer has submitted quote request. Driver assignment unlocks once quote is accepted."
-                              >
-                                <Clock className="w-3 h-3 text-amber-600" />
-                                <span>Pending Quote</span>
-                              </span>
-                            ) : ord.order_status === 'quote_sent' ? (
-                              <span
-                                className="inline-flex items-center space-x-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-purple-50 text-purple-800 border border-purple-300"
-                                title="Quotation sent to customer. Awaiting customer acceptance before driver allocation."
-                              >
-                                <FileText className="w-3 h-3 text-purple-600" />
-                                <span>Awaiting Acceptance</span>
-                              </span>
                             ) : (
                               <span className="text-slate-400 text-xs">-</span>
                             )}
@@ -1879,16 +1918,18 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
                               >
                                 <FileDown className="w-3.5 h-3.5" />
                               </button>
-                              <button
-                                onClick={() => {
-                                  setSelectedDriverForAssign(ord.assigned_driver_id || drivers[0]?.id || '');
-                                  setAssignModalOrder(ord);
-                                }}
-                                className="p-1.5 bg-slate-50 hover:bg-slate-100 text-blue-600 hover:text-blue-800 border border-slate-200 rounded-lg transition cursor-pointer"
-                                title="Assign / Reassign Driver"
-                              >
-                                <Truck className="w-3.5 h-3.5" />
-                              </button>
+                              {ord.order_status !== 'submitted' && ord.order_status !== 'quote_sent' && (
+                                <button
+                                  onClick={() => {
+                                    setSelectedDriverForAssign(ord.assigned_driver_id || drivers[0]?.id || '');
+                                    setAssignModalOrder(ord);
+                                  }}
+                                  className="p-1.5 bg-slate-50 hover:bg-slate-100 text-blue-600 hover:text-blue-800 border border-slate-200 rounded-lg transition cursor-pointer"
+                                  title="Assign / Reassign Driver"
+                                >
+                                  <Truck className="w-3.5 h-3.5" />
+                                </button>
+                              )}
                               <button
                                 onClick={() => handleOpenEditOrder(ord)}
                                 className="p-1.5 bg-slate-50 hover:bg-slate-100 text-amber-700 hover:text-amber-900 border border-slate-200 rounded-lg transition cursor-pointer"
@@ -2086,7 +2127,18 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
                                 <span className="truncate">{ord.delivery_address}</span>
                               </div>
                               <div className="text-[10px] text-slate-500 font-semibold pt-0.5 border-t border-slate-200/60 flex items-center justify-between">
-                                <span>{ord.distance_km} km ({ord.inside_gta_km ?? ord.distance_km} GTA / {ord.outside_gta_km ?? 0} Out)</span>
+                                <span>
+                                  {(() => {
+                                    let inKm = ord.inside_gta_km;
+                                    let outKm = ord.outside_gta_km;
+                                    if (inKm === undefined || outKm === undefined || Math.abs((inKm + outKm) - ord.distance_km) > 0.05 || inKm > ord.distance_km) {
+                                      const bk = calculateGtaKmBreakdown(ord.pickup_address, ord.delivery_address, ord.distance_km);
+                                      inKm = bk.insideGtaKm;
+                                      outKm = bk.outsideGtaKm;
+                                    }
+                                    return `${ord.distance_km} km (${inKm} GTA / ${outKm} Out)`;
+                                  })()}
+                                </span>
                                 <span className="text-red-700 font-bold">{ord.service_area}</span>
                               </div>
                             </div>
@@ -2094,7 +2146,15 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
                             {/* Driver Assignment & Price */}
                             <div className="flex items-center justify-between pt-1 text-xs">
                               <div>
-                                {ord.assigned_driver_name ? (
+                                {ord.order_status === 'submitted' ? (
+                                  <span className="text-[10px] font-bold text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200">
+                                    Quote Pending
+                                  </span>
+                                ) : ord.order_status === 'quote_sent' ? (
+                                  <span className="text-[10px] font-bold text-purple-700 bg-purple-50 px-1.5 py-0.5 rounded border border-purple-200">
+                                    Awaiting Acceptance
+                                  </span>
+                                ) : ord.assigned_driver_name ? (
                                   <div className="flex items-center space-x-1 text-slate-800">
                                     <Truck className="w-3 h-3 text-emerald-600 shrink-0" />
                                     <span className="text-[11px] font-semibold truncate max-w-[100px]">
@@ -5257,7 +5317,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
                   <span>Shipment, Route &amp; Logistics Specifications</span>
                 </div>
                 <span className="text-red-600 font-mono font-bold text-xs">
-                  {quoteFormData.distance_km} km ({quoteFormData.distance_km <= 40 ? quoteFormData.distance_km : 40} km GTA / {quoteFormData.distance_km > 40 ? Number((quoteFormData.distance_km - 40).toFixed(1)) : 0} km Outside)
+                  {quoteFormData.distance_km} km ({quoteFormData.inside_gta_km ?? 0} km GTA / {quoteFormData.outside_gta_km ?? 0} km Outside)
                 </span>
               </div>
 
@@ -5661,7 +5721,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
                     className="w-full bg-white border border-slate-300 px-3 py-2 rounded-xl text-slate-900 font-mono focus:outline-none focus:border-red-500"
                   />
                   <span className="text-[9px] text-slate-500 block mt-0.5">
-                    {reviewingQuoteOrder.outside_gta_km ?? 0} km outside GTA
+                    {quoteFormData.outside_gta_km ?? reviewingQuoteOrder.outside_gta_km ?? 0} km outside GTA
                   </span>
                 </div>
               </div>
@@ -6475,7 +6535,18 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
                   </span>
                   <div className="flex items-center space-x-2 text-[11px] font-semibold text-slate-600">
                     <span className="font-bold text-red-600">{selectedOrderDetails.distance_km} KM</span>
-                    <span>({selectedOrderDetails.inside_gta_km ?? selectedOrderDetails.distance_km} km GTA / {selectedOrderDetails.outside_gta_km ?? 0} km Outside)</span>
+                    <span>
+                      {(() => {
+                        let inKm = selectedOrderDetails.inside_gta_km;
+                        let outKm = selectedOrderDetails.outside_gta_km;
+                        if (inKm === undefined || outKm === undefined || Math.abs((inKm + outKm) - selectedOrderDetails.distance_km) > 0.05 || inKm > selectedOrderDetails.distance_km) {
+                          const bk = calculateGtaKmBreakdown(selectedOrderDetails.pickup_address, selectedOrderDetails.delivery_address, selectedOrderDetails.distance_km);
+                          inKm = bk.insideGtaKm;
+                          outKm = bk.outsideGtaKm;
+                        }
+                        return `(${inKm} km GTA / ${outKm} km Outside)`;
+                      })()}
+                    </span>
                     <span>•</span>
                     <span>{selectedOrderDetails.service_area} zone</span>
                   </div>
@@ -6754,7 +6825,15 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
                     {selectedOrderDetails.outside_gta_charge ? (
                       <div className="flex justify-between py-2 px-4">
                         <span className="text-slate-600">
-                          Ontario-Wide Delivery Surcharge ({selectedOrderDetails.outside_gta_km ?? 0} km Outside GTA)
+                          {(() => {
+                            let outKm = selectedOrderDetails.outside_gta_km;
+                            let inKm = selectedOrderDetails.inside_gta_km;
+                            if (outKm === undefined || inKm === undefined || Math.abs((inKm + outKm) - selectedOrderDetails.distance_km) > 0.05 || inKm > selectedOrderDetails.distance_km) {
+                              const bk = calculateGtaKmBreakdown(selectedOrderDetails.pickup_address, selectedOrderDetails.delivery_address, selectedOrderDetails.distance_km);
+                              outKm = bk.outsideGtaKm;
+                            }
+                            return `Ontario-Wide Delivery Surcharge (${outKm} km Outside GTA)`;
+                          })()}
                           {selectedOrderDetails.is_variable_pricing && (
                             <span className="text-[10px] text-amber-600 ml-1.5 font-bold">
                               (&gt; 100 km: amount may vary)
@@ -6875,28 +6954,14 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
             <div className="p-4 sm:p-5 border-t border-slate-200 bg-slate-50 flex flex-wrap items-center justify-between gap-3 shrink-0">
               <div className="flex flex-wrap items-center gap-2">
                 {selectedOrderDetails.order_status === 'submitted' ? (
-                  <>
-                    <button
-                      type="button"
-                      onClick={() => handleOpenQuoteReview(selectedOrderDetails)}
-                      className="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-xl transition flex items-center space-x-1.5 cursor-pointer shadow-sm"
-                    >
-                      <DollarSign className="w-3.5 h-3.5" />
-                      <span>Review &amp; Send Quote</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setSelectedDriverForAssign(selectedOrderDetails.assigned_driver_id || drivers[0]?.id || '');
-                        setAssignModalOrder(selectedOrderDetails);
-                      }}
-                      className="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold border border-slate-300 rounded-xl transition flex items-center space-x-1.5 cursor-pointer shadow-xs text-[11px]"
-                      title="Assign driver directly (overrides customer quote acceptance requirement)"
-                    >
-                      <Truck className="w-3.5 h-3.5 text-slate-500" />
-                      <span>Assign Driver Directly</span>
-                    </button>
-                  </>
+                  <button
+                    type="button"
+                    onClick={() => handleOpenQuoteReview(selectedOrderDetails)}
+                    className="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-xl transition flex items-center space-x-1.5 cursor-pointer shadow-sm"
+                  >
+                    <DollarSign className="w-3.5 h-3.5" />
+                    <span>Review &amp; Send Quote</span>
+                  </button>
                 ) : selectedOrderDetails.order_status === 'quote_sent' ? (
                   <>
                     <div className="px-3 py-1.5 bg-purple-50 text-purple-800 border border-purple-200 rounded-xl font-bold flex items-center space-x-1.5 text-xs">
@@ -6910,17 +6975,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
                     >
                       <DollarSign className="w-3.5 h-3.5" />
                       <span>Revise Quote</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setSelectedDriverForAssign(selectedOrderDetails.assigned_driver_id || drivers[0]?.id || '');
-                        setAssignModalOrder(selectedOrderDetails);
-                      }}
-                      className="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold border border-slate-300 rounded-xl transition flex items-center space-x-1.5 cursor-pointer shadow-xs text-[11px]"
-                    >
-                      <Truck className="w-3.5 h-3.5 text-slate-500" />
-                      <span>Assign Driver Directly</span>
                     </button>
                   </>
                 ) : selectedOrderDetails.order_status === 'confirmed' && !selectedOrderDetails.assigned_driver_id ? (
