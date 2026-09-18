@@ -80,7 +80,46 @@ interface AdminDashboardProps {
 }
 
 export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, initialParams }) => {
-  const [activeTab, setActiveTab] = useState<'orders' | 'customers' | 'drivers' | 'reports' | 'requests' | 'notifications' | 'pricing' | 'settings'>('orders');
+  type AdminMainCategory = 'orders' | 'directory' | 'analytics' | 'settings';
+  const [mainCategory, setMainCategory] = useState<AdminMainCategory>('orders');
+  const [ordersSubView, setOrdersSubView] = useState<'queue' | 'requests'>('queue');
+  const [directorySubView, setDirectorySubView] = useState<'customers' | 'drivers'>('customers');
+  const [settingsSubView, setSettingsSubView] = useState<'business' | 'pricing' | 'notifications'>('business');
+
+  const navigateToTab = (tab: 'orders' | 'customers' | 'drivers' | 'reports' | 'requests' | 'notifications' | 'pricing' | 'settings' | string) => {
+    if (tab === 'orders') {
+      setMainCategory('orders');
+      setOrdersSubView('queue');
+    } else if (tab === 'requests') {
+      setMainCategory('orders');
+      setOrdersSubView('requests');
+    } else if (tab === 'customers') {
+      setMainCategory('directory');
+      setDirectorySubView('customers');
+    } else if (tab === 'drivers') {
+      setMainCategory('directory');
+      setDirectorySubView('drivers');
+    } else if (tab === 'reports' || tab === 'analytics') {
+      setMainCategory('analytics');
+    } else if (tab === 'pricing') {
+      setMainCategory('settings');
+      setSettingsSubView('pricing');
+    } else if (tab === 'settings' || tab === 'business') {
+      setMainCategory('settings');
+      setSettingsSubView('business');
+    } else if (tab === 'notifications') {
+      setMainCategory('settings');
+      setSettingsSubView('notifications');
+    }
+  };
+
+  const setActiveTab = (tab: any) => navigateToTab(tab);
+
+  const activeTab: 'orders' | 'customers' | 'drivers' | 'reports' | 'requests' | 'notifications' | 'pricing' | 'settings' = 
+    mainCategory === 'orders' ? (ordersSubView === 'requests' ? 'requests' : 'orders') :
+    mainCategory === 'directory' ? (directorySubView === 'drivers' ? 'drivers' : 'customers') :
+    mainCategory === 'analytics' ? 'reports' :
+    (settingsSubView === 'pricing' ? 'pricing' : settingsSubView === 'notifications' ? 'notifications' : 'settings');
   const [user, setUser] = useState<UserSession | null>(store.getCurrentUser());
   const [orders, setOrders] = useState<Order[]>([]);
   const [drivers, setDrivers] = useState<Driver[]>([]);
@@ -884,231 +923,259 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
         </div>
       </div>
 
-      {/* OPERATIONS ACTION CENTER (One-Click Dispatch Alerts & Filter Strip) */}
-      <div className="bg-white border border-slate-200/90 rounded-2xl p-3 sm:p-4 shadow-2xs flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center space-x-2">
-          <div className="w-2 h-2 rounded-full bg-red-600 animate-ping" />
-          <span className="text-[11px] font-black uppercase tracking-wider text-slate-800 font-['Outfit']">
-            Operations Action Center
-          </span>
-        </div>
-
-        <div className="flex flex-wrap items-center gap-2">
-          {/* Quotes to Price */}
+      {/* Sleek 4-Category Primary Navigation Bar */}
+      <div className="bg-slate-100 p-1.5 rounded-2xl border border-slate-200/90 shadow-2xs">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-1.5">
+          {/* 1. Orders & Dispatch */}
           <button
             type="button"
             onClick={() => {
-              setActiveTab('orders');
-              setStatusFilter('submitted');
-              setSearchQuery('');
+              setMainCategory('orders');
+              setOrdersSubView('queue');
             }}
-            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center space-x-1.5 cursor-pointer border ${
-              activeTab === 'orders' && statusFilter === 'submitted'
-                ? 'bg-amber-600 text-white border-amber-600 shadow-xs'
-                : 'bg-amber-50 text-amber-900 border-amber-200 hover:bg-amber-100'
-            }`}
-          >
-            <Clock className="w-3.5 h-3.5 text-amber-600" />
-            <span>Quotes to Price:</span>
-            <span className="bg-amber-200/80 text-amber-950 px-1.5 py-0.2 rounded-full text-[10px] font-black">
-              {quotesToPrice}
-            </span>
-          </button>
-
-          {/* Quotes Accepted Needing Drivers */}
-          <button
-            type="button"
-            onClick={() => {
-              setActiveTab('orders');
-              setStatusFilter('confirmed');
-              setSearchQuery('');
-            }}
-            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center space-x-1.5 cursor-pointer border ${
-              activeTab === 'orders' && statusFilter === 'confirmed'
-                ? 'bg-emerald-700 text-white border-emerald-700 shadow-xs'
-                : 'bg-emerald-50 text-emerald-900 border-emerald-200 hover:bg-emerald-100'
-            }`}
-          >
-            <Truck className="w-3.5 h-3.5 text-emerald-600" />
-            <span>Needs Courier Dispatch:</span>
-            <span className="bg-emerald-200 text-emerald-950 px-1.5 py-0.2 rounded-full text-[10px] font-black">
-              {quotesNeedingDriver}
-            </span>
-          </button>
-
-          {/* Active In-Transit */}
-          <button
-            type="button"
-            onClick={() => {
-              setActiveTab('orders');
-              setStatusFilter('in_transit');
-              setSearchQuery('');
-            }}
-            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center space-x-1.5 cursor-pointer border ${
-              activeTab === 'orders' && statusFilter === 'in_transit'
-                ? 'bg-blue-600 text-white border-blue-600 shadow-xs'
-                : 'bg-blue-50 text-blue-900 border-blue-200 hover:bg-blue-100'
-            }`}
-          >
-            <Navigation className="w-3.5 h-3.5 text-blue-600" />
-            <span>Live on Road:</span>
-            <span className="bg-blue-200 text-blue-950 px-1.5 py-0.2 rounded-full text-[10px] font-black">
-              {inTransitOrders}
-            </span>
-          </button>
-
-          {/* Pending Inquiries */}
-          <button
-            type="button"
-            onClick={() => setActiveTab('requests')}
-            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center space-x-1.5 cursor-pointer border ${
-              activeTab === 'requests'
-                ? 'bg-purple-700 text-white border-purple-700 shadow-xs'
-                : 'bg-purple-50 text-purple-900 border-purple-200 hover:bg-purple-100'
-            }`}
-          >
-            <AlertCircle className="w-3.5 h-3.5 text-purple-600" />
-            <span>Inquiries:</span>
-            <span className="bg-purple-200 text-purple-950 px-1.5 py-0.2 rounded-full text-[10px] font-black">
-              {pendingRequests}
-            </span>
-          </button>
-        </div>
-      </div>
-
-      {/* Grouped Operational Category Tabs Navigation */}
-      <div className="bg-slate-100/70 p-1.5 sm:p-2 rounded-2xl border border-slate-200/90 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-2 overflow-x-auto">
-        {/* Category 1: Dispatch Desk */}
-        <div className="flex items-center space-x-1 bg-white p-1 rounded-xl border border-slate-200 shadow-2xs">
-          <span className="text-[10px] font-black uppercase text-slate-600 px-2 py-1 tracking-wider hidden lg:inline">
-            Dispatch Desk:
-          </span>
-          <button
-            type="button"
-            onClick={() => setActiveTab('orders')}
-            className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
-              activeTab === 'orders'
+            className={`flex items-center justify-center space-x-2 px-3.5 py-2.5 rounded-xl text-xs font-bold transition cursor-pointer ${
+              mainCategory === 'orders'
                 ? 'bg-gradient-to-r from-[#C5161D] to-[#9E1218] text-white shadow-xs'
-                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-white'
             }`}
           >
-            <Package className="w-3.5 h-3.5" />
-            <span>Orders Queue</span>
-            <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
-              activeTab === 'orders' ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-700'
-            }`}>
+            <Package className="w-4 h-4" />
+            <span>Orders &amp; Dispatch</span>
+            <span
+              className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
+                mainCategory === 'orders' ? 'bg-white/20 text-white' : 'bg-slate-200 text-slate-700'
+              }`}
+            >
               {orders.length}
             </span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setActiveTab('requests')}
-            className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
-              activeTab === 'requests'
-                ? 'bg-gradient-to-r from-[#C5161D] to-[#9E1218] text-white shadow-xs'
-                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
-            }`}
-          >
-            <AlertCircle className="w-3.5 h-3.5" />
-            <span>Requests</span>
             {pendingRequests > 0 && (
-              <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-black ${
-                activeTab === 'requests' ? 'bg-white/20 text-white' : 'bg-amber-100 text-amber-900'
-              }`}>
-                {pendingRequests}
+              <span
+                className="text-[9px] px-1.5 py-0.2 rounded-full font-black bg-amber-400 text-amber-950 animate-pulse"
+                title={`${pendingRequests} pending customer requests`}
+              >
+                {pendingRequests} req
               </span>
             )}
           </button>
-        </div>
 
-        {/* Category 2: Directory & CRM */}
-        <div className="flex items-center space-x-1 bg-white p-1 rounded-xl border border-slate-200 shadow-2xs">
-          <span className="text-[10px] font-black uppercase text-slate-600 px-2 py-1 tracking-wider hidden lg:inline">
-            Directory:
-          </span>
+          {/* 2. Directory & Fleet */}
           <button
             type="button"
-            onClick={() => setActiveTab('customers')}
-            className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
-              activeTab === 'customers'
+            onClick={() => setMainCategory('directory')}
+            className={`flex items-center justify-center space-x-2 px-3.5 py-2.5 rounded-xl text-xs font-bold transition cursor-pointer ${
+              mainCategory === 'directory'
                 ? 'bg-gradient-to-r from-[#C5161D] to-[#9E1218] text-white shadow-xs'
-                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-white'
             }`}
           >
-            <Building className="w-3.5 h-3.5" />
-            <span>Customers &amp; CRM</span>
-            <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
-              activeTab === 'customers' ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-700'
-            }`}>
-              {customers.length}
+            <Users className="w-4 h-4" />
+            <span>Directory &amp; Fleet</span>
+            <span
+              className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
+                mainCategory === 'directory' ? 'bg-white/20 text-white' : 'bg-slate-200 text-slate-700'
+              }`}
+            >
+              {customers.length + drivers.length}
             </span>
           </button>
 
+          {/* 3. Analytics & Revenue */}
           <button
             type="button"
-            onClick={() => setActiveTab('drivers')}
-            className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
-              activeTab === 'drivers'
+            onClick={() => setMainCategory('analytics')}
+            className={`flex items-center justify-center space-x-2 px-3.5 py-2.5 rounded-xl text-xs font-bold transition cursor-pointer ${
+              mainCategory === 'analytics'
                 ? 'bg-gradient-to-r from-[#C5161D] to-[#9E1218] text-white shadow-xs'
-                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-white'
             }`}
           >
-            <Users className="w-3.5 h-3.5" />
-            <span>Staff &amp; Fleet</span>
-            <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
-              activeTab === 'drivers' ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-700'
-            }`}>
-              {drivers.length}
-            </span>
-          </button>
-        </div>
-
-        {/* Category 3: Finance & Operations */}
-        <div className="flex items-center space-x-1 bg-white p-1 rounded-xl border border-slate-200 shadow-2xs">
-          <span className="text-[10px] font-black uppercase text-slate-600 px-2 py-1 tracking-wider hidden lg:inline">
-            Finance &amp; Ops:
-          </span>
-          <button
-            type="button"
-            onClick={() => setActiveTab('reports')}
-            className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
-              activeTab === 'reports'
-                ? 'bg-gradient-to-r from-[#C5161D] to-[#9E1218] text-white shadow-xs'
-                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
-            }`}
-          >
-            <BarChart3 className="w-3.5 h-3.5" />
-            <span>Analytics</span>
+            <BarChart3 className="w-4 h-4" />
+            <span>Analytics &amp; Revenue</span>
           </button>
 
+          {/* 4. System Settings */}
           <button
             type="button"
-            onClick={() => setActiveTab('pricing')}
-            className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
-              activeTab === 'pricing'
+            onClick={() => setMainCategory('settings')}
+            className={`flex items-center justify-center space-x-2 px-3.5 py-2.5 rounded-xl text-xs font-bold transition cursor-pointer ${
+              mainCategory === 'settings'
                 ? 'bg-gradient-to-r from-[#C5161D] to-[#9E1218] text-white shadow-xs'
-                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-white'
             }`}
           >
-            <DollarSign className="w-3.5 h-3.5" />
-            <span>Pricing Matrix</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setActiveTab('settings')}
-            className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
-              activeTab === 'settings'
-                ? 'bg-gradient-to-r from-[#C5161D] to-[#9E1218] text-white shadow-xs'
-                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
-            }`}
-          >
-            <Sliders className="w-3.5 h-3.5" />
-            <span>Operating Settings</span>
+            <Sliders className="w-4 h-4" />
+            <span>System Settings</span>
+            {inAppNotifications.filter((n) => !n.is_read).length > 0 && (
+              <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+            )}
           </button>
         </div>
       </div>
+
+      {/* Secondary Sub-Category Pill Bar */}
+      {mainCategory === 'orders' && (
+        <div className="flex flex-wrap items-center justify-between gap-3 bg-white p-2 sm:p-2.5 rounded-2xl border border-slate-200/90 shadow-2xs">
+          <div className="flex items-center space-x-2">
+            <button
+              type="button"
+              onClick={() => setOrdersSubView('queue')}
+              className={`flex items-center space-x-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer ${
+                ordersSubView === 'queue'
+                  ? 'bg-slate-900 text-white shadow-xs'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+              }`}
+            >
+              <Package className="w-3.5 h-3.5" />
+              <span>Orders Queue</span>
+              <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
+                ordersSubView === 'queue' ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-700'
+              }`}>
+                {orders.length}
+              </span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setOrdersSubView('requests')}
+              className={`flex items-center space-x-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer ${
+                ordersSubView === 'requests'
+                  ? 'bg-slate-900 text-white shadow-xs'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+              }`}
+            >
+              <AlertCircle className="w-3.5 h-3.5" />
+              <span>Customer Requests</span>
+              {pendingRequests > 0 ? (
+                <span className="text-[10px] px-1.5 py-0.2 rounded-full font-black bg-amber-400 text-amber-950 animate-pulse">
+                  {pendingRequests} pending
+                </span>
+              ) : (
+                <span className="text-[10px] px-1.5 py-0.2 rounded-full font-bold bg-slate-100 text-slate-600">
+                  {requests.length}
+                </span>
+              )}
+            </button>
+          </div>
+
+          <div className="text-xs text-slate-500 font-medium">
+            {ordersSubView === 'queue' ? (
+              <span>Dispatching across GTA &bull; {inTransitOrders} live on road</span>
+            ) : (
+              <span>Customer modification &amp; cancellation approval stream</span>
+            )}
+          </div>
+        </div>
+      )}
+
+      {mainCategory === 'directory' && (
+        <div className="flex flex-wrap items-center justify-between gap-3 bg-white p-2 sm:p-2.5 rounded-2xl border border-slate-200/90 shadow-2xs">
+          <div className="flex items-center space-x-2">
+            <button
+              type="button"
+              onClick={() => setDirectorySubView('customers')}
+              className={`flex items-center space-x-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer ${
+                directorySubView === 'customers'
+                  ? 'bg-slate-900 text-white shadow-xs'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+              }`}
+            >
+              <Building className="w-3.5 h-3.5" />
+              <span>Customers &amp; Accounts CRM</span>
+              <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
+                directorySubView === 'customers' ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-700'
+              }`}>
+                {customers.length}
+              </span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setDirectorySubView('drivers')}
+              className={`flex items-center space-x-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer ${
+                directorySubView === 'drivers'
+                  ? 'bg-slate-900 text-white shadow-xs'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+              }`}
+            >
+              <Truck className="w-3.5 h-3.5" />
+              <span>Drivers, Dispatchers &amp; Fleet</span>
+              <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
+                directorySubView === 'drivers' ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-700'
+              }`}>
+                {drivers.length}
+              </span>
+            </button>
+          </div>
+
+          <div className="text-xs text-slate-500 font-medium">
+            {directorySubView === 'customers' ? (
+              <span>Commercial client accounts &amp; shipment histories</span>
+            ) : (
+              <span>Fleet staff roster &amp; vehicle allocations</span>
+            )}
+          </div>
+        </div>
+      )}
+
+      {mainCategory === 'settings' && (
+        <div className="flex flex-wrap items-center justify-between gap-3 bg-white p-2 sm:p-2.5 rounded-2xl border border-slate-200/90 shadow-2xs">
+          <div className="flex items-center space-x-2">
+            <button
+              type="button"
+              onClick={() => setSettingsSubView('business')}
+              className={`flex items-center space-x-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer ${
+                settingsSubView === 'business'
+                  ? 'bg-slate-900 text-white shadow-xs'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+              }`}
+            >
+              <Building className="w-3.5 h-3.5" />
+              <span>Business Profile &amp; Schedule</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setSettingsSubView('pricing')}
+              className={`flex items-center space-x-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer ${
+                settingsSubView === 'pricing'
+                  ? 'bg-slate-900 text-white shadow-xs'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+              }`}
+            >
+              <DollarSign className="w-3.5 h-3.5" />
+              <span>Pricing Matrix</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setSettingsSubView('notifications')}
+              className={`flex items-center space-x-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer ${
+                settingsSubView === 'notifications'
+                  ? 'bg-slate-900 text-white shadow-xs'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+              }`}
+            >
+              <Bell className="w-3.5 h-3.5" />
+              <span>Notifications &amp; Audit Logs</span>
+              <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
+                settingsSubView === 'notifications' ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-700'
+              }`}>
+                {notifications.length}
+              </span>
+            </button>
+          </div>
+
+          <div className="text-xs text-slate-500 font-medium">
+            {settingsSubView === 'business' ? (
+              <span>Operating hours, address &amp; CRA HST registration</span>
+            ) : settingsSubView === 'pricing' ? (
+              <span>Live mileage tiers &amp; surcharge engine</span>
+            ) : (
+              <span>Audit delivery trail, email/SMS &amp; audio alerts</span>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* TAB 1: ORDERS QUEUE */}
       {activeTab === 'orders' && (
