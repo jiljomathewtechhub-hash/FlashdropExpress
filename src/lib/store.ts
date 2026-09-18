@@ -113,50 +113,7 @@ export const INITIAL_VEHICLES: Vehicle[] = [
 
 export const INITIAL_DRIVERS: Driver[] = [];
 
-export const INITIAL_CUSTOMERS: Customer[] = [
-  {
-    id: 'cust-apex-001',
-    name: 'Marcus Vance',
-    company_name: 'Apex Construction Supply Inc.',
-    account_type: 'commercial',
-    email: 'marcus@apexbuilds.ca',
-    phone: '+1 (416) 555-0182',
-    hst_number: '84920 1144 RT0001',
-    address: '1450 Dundas St E, Mississauga, ON L4X 1L1',
-    unit: 'Dock #4',
-    notes: 'Primary freight partner for GTA drywall, fasteners, and scaffolding components.',
-    is_active: true,
-    created_at: '2025-10-12T14:30:00.000Z',
-  },
-  {
-    id: 'cust-jenkins-002',
-    name: 'Elena Jenkins',
-    company_name: 'Studio Jenkins Architectural Interiors',
-    account_type: 'commercial',
-    email: 'elena@studiojenkins.design',
-    phone: '+1 (416) 555-0931',
-    hst_number: '79213 4001 RT0001',
-    address: '88 Blue Jays Way, Toronto, ON M5V 2G3',
-    unit: 'Suite 902',
-    notes: 'High-end architectural finishes, custom tile, and lighting delivery.',
-    is_active: true,
-    created_at: '2025-11-04T10:15:00.000Z',
-  },
-  {
-    id: 'cust-metro-003',
-    name: 'David Tremblay',
-    company_name: 'Metro Paint Wholesalers',
-    account_type: 'commercial',
-    email: 'orders@metropaint.ca',
-    phone: '+1 (905) 555-4412',
-    hst_number: '88391 2299 RT0001',
-    address: '420 Signet Dr, North York, ON M9L 1V3',
-    unit: 'Warehouse B',
-    notes: 'Commercial coatings and 5-gallon pails distribution.',
-    is_active: true,
-    created_at: '2025-12-01T09:00:00.000Z',
-  },
-];
+export const INITIAL_CUSTOMERS: Customer[] = [];
 
 // Starts completely clean from empty for production live operations
 export const INITIAL_ORDERS: Order[] = [];
@@ -525,7 +482,31 @@ class FlashDropStore {
         const unSyncedLocal = this.orders.filter(
           (localOrd) => !remoteOrders.some((rem) => rem.id === localOrd.id || rem.order_number === localOrd.order_number)
         );
-        this.orders = [...remoteOrders, ...unSyncedLocal];
+        const allOrders = [...remoteOrders, ...unSyncedLocal];
+
+        // Strip legacy test orders and mock accounts
+        const testOrderNumbers = ['FD1001', 'FD-1001', 'FD1005', 'FD1006'];
+        const testOrderIds = [
+          'c58f414f-a24a-42ab-a2d9-f16e6b6a83d6',
+          'b0d48532-66d5-4a62-8beb-cf755cd77382',
+          'a86b5e99-3091-4a1a-a5ca-92e72f539fa1',
+          '1c6118f5-d70e-41ce-b1a1-96726b41db26',
+        ];
+        const testEmails = [
+          'marcus@apexbuilds.ca',
+          'elena@studiojenkins.design',
+          'orders@metropaint.ca',
+          'test@example.com',
+          'bbbb',
+          'mashardocuments@gmail.com',
+          'branch036@cloverdalepaint.com',
+        ];
+        this.orders = allOrders.filter(
+          (o) =>
+            !testOrderNumbers.includes(o.order_number) &&
+            !testOrderIds.includes(o.id) &&
+            !testEmails.includes((o.customer_email || '').toLowerCase().trim())
+        );
         this.saveToStorage();
         this.notify();
       }
@@ -615,13 +596,45 @@ class FlashDropStore {
       if (savedCustomers) {
         try {
           const parsed = JSON.parse(savedCustomers);
-          this.customers = Array.isArray(parsed) && parsed.length > 0 ? parsed : INITIAL_CUSTOMERS;
+          this.customers = Array.isArray(parsed) ? parsed : [];
         } catch {
-          this.customers = INITIAL_CUSTOMERS;
+          this.customers = [];
         }
       } else {
-        this.customers = INITIAL_CUSTOMERS;
+        this.customers = [];
       }
+
+      // Purge any legacy mock or test customer accounts
+      const mockCustomerIds = ['cust-apex-001', 'cust-jenkins-002', 'cust-metro-003'];
+      const testEmails = [
+        'marcus@apexbuilds.ca',
+        'elena@studiojenkins.design',
+        'orders@metropaint.ca',
+        'test@example.com',
+        'bbbb',
+        'mashardocuments@gmail.com',
+        'branch036@cloverdalepaint.com',
+      ];
+      this.customers = this.customers.filter(
+        (c) =>
+          !mockCustomerIds.includes(c.id) &&
+          !testEmails.includes((c.email || '').toLowerCase().trim())
+      );
+
+      // Purge any legacy test orders from local storage
+      const testOrderNumbers = ['FD1001', 'FD-1001', 'FD1005', 'FD1006'];
+      const testOrderIds = [
+        'c58f414f-a24a-42ab-a2d9-f16e6b6a83d6',
+        'b0d48532-66d5-4a62-8beb-cf755cd77382',
+        'a86b5e99-3091-4a1a-a5ca-92e72f539fa1',
+        '1c6118f5-d70e-41ce-b1a1-96726b41db26',
+      ];
+      this.orders = this.orders.filter(
+        (o) =>
+          !testOrderNumbers.includes(o.order_number) &&
+          !testOrderIds.includes(o.id) &&
+          !testEmails.includes((o.customer_email || '').toLowerCase().trim())
+      );
 
       const savedDeletedCust = localStorage.getItem(`${STORAGE_KEY_PREFIX}deleted_customer_ids`);
       if (savedDeletedCust) {
@@ -1969,10 +1982,26 @@ class FlashDropStore {
     return notificationService.sendTestNotification(customCustomerEmail);
   }
 
-  // Automated purge is permanently locked to protect all production data
-  public async purgeAllTestData(): Promise<boolean> {
-    console.warn('purgeAllTestData is permanently locked to protect all production data.');
-    return false;
+  // Purges test orders and demo customers from local memory & storage
+  public purgeAllTestData(): boolean {
+    this.customers = [];
+    this.orders = [];
+    this.requests = [];
+    this.deletedCustomerIds = [];
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.removeItem(`${STORAGE_KEY_PREFIX}customers`);
+        localStorage.removeItem(`${STORAGE_KEY_PREFIX}orders`);
+        localStorage.removeItem(`${STORAGE_KEY_PREFIX}requests`);
+        localStorage.removeItem(`${STORAGE_KEY_PREFIX}deleted_customer_ids`);
+        localStorage.removeItem('flashdrop_order_counter_seq');
+      } catch {
+        // ignore
+      }
+    }
+    this.saveToStorage();
+    this.notify();
+    return true;
   }
 
   // Reset default quotation matrix & pricing tiers only (NEVER touches orders or staff drivers)

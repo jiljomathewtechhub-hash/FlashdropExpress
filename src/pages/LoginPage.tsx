@@ -1024,7 +1024,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate, initialParams 
                         type="text"
                         value={companyName}
                         onChange={(e) => setCompanyName(e.target.value)}
-                        placeholder="e.g. Apex Coatings & Construction Inc."
+                        placeholder="e.g. Acme Commercial Supplies Inc."
                         className="w-full bg-slate-50 border border-slate-300 pl-10 pr-3 py-2.5 rounded-xl text-slate-900 placeholder:text-slate-400 focus:bg-white focus:border-red-500 focus:outline-none shadow-xs"
                         required
                       />

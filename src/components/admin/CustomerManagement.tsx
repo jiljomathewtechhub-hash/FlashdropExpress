@@ -1031,7 +1031,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
                     required
                     value={formData.company_name}
                     onChange={(e) => setFormData({ ...formData, company_name: e.target.value })}
-                    placeholder="e.g. Apex Construction Supply Inc."
+                    placeholder="e.g. Ontario Construction Supply Ltd."
                     className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-900 focus:bg-white focus:border-red-600 focus:outline-none transition"
                   />
                 </div>
@@ -1047,7 +1047,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
                   required
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  placeholder="e.g. Marcus Vance"
+                  placeholder="e.g. John Doe"
                   className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-900 focus:bg-white focus:border-red-600 focus:outline-none transition"
                 />
               </div>
@@ -1063,7 +1063,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
                     required
                     value={formData.email}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    placeholder="marcus@apexbuilds.ca"
+                    placeholder="orders@clientcompany.ca"
                     className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-900 focus:bg-white focus:border-red-600 focus:outline-none transition"
                   />
                 </div>
