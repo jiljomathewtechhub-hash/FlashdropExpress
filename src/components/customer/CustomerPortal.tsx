@@ -33,10 +33,11 @@ import {
   Layers,
   Send,
   Trash2,
+  FileText,
 } from 'lucide-react';
 import { Order, OrderStatus } from '../../types/order';
 import { store, UserSession } from '../../lib/store';
-import { generateOrderPdf } from '../../lib/pdf';
+import { generateOrderPdf, generateWaybillPdf } from '../../lib/pdf';
 import { getOrderStatusBadge, ORDER_STATUS_CONFIG } from '../../lib/statusHelper';
 import { formatScheduleDate, formatDateTime } from '../../lib/dateUtils';
 
@@ -847,16 +848,28 @@ export const CustomerPortal: React.FC<CustomerPortalProps> = ({ onNavigate }) =>
                           <span>Details {ord.proof_of_delivery ? '& POD' : ''}</span>
                         </button>
 
-                        {/* Download Invoice */}
+                        {/* Download Waybill & Invoice */}
                         {ord.order_status !== 'submitted' && (
-                          <button
-                            onClick={() => generateOrderPdf(ord, store.getSettings())}
-                            className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-xl text-xs font-semibold transition border border-slate-200 flex items-center space-x-1.5 cursor-pointer"
-                            title="Download CRA PDF Invoice"
-                          >
-                            <FileDown className="w-3 h-3 text-red-600" />
-                            <span>Invoice PDF</span>
-                          </button>
+                          <>
+                            <button
+                              type="button"
+                              onClick={() => generateWaybillPdf(ord, store.getSettings())}
+                              className="px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 rounded-xl text-xs font-semibold transition border border-emerald-200 flex items-center space-x-1.5 cursor-pointer"
+                              title="Download Carrier Waybill (Bill of Lading)"
+                            >
+                              <FileText className="w-3 h-3 text-emerald-600" />
+                              <span>Waybill</span>
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => generateOrderPdf(ord, store.getSettings())}
+                              className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-xl text-xs font-semibold transition border border-slate-200 flex items-center space-x-1.5 cursor-pointer"
+                              title="Download CRA Tax Invoice"
+                            >
+                              <FileDown className="w-3 h-3 text-red-600" />
+                              <span>Invoice</span>
+                            </button>
+                          </>
                         )}
                       </div>
 
@@ -942,7 +955,7 @@ export const CustomerPortal: React.FC<CustomerPortalProps> = ({ onNavigate }) =>
                 Official Billing Statements ({orders.filter((o) => o.order_status !== 'submitted' && o.order_status !== 'cancelled').length})
               </h4>
               <span className="text-xs text-slate-500">
-                Click PDF Invoice to download official waybill &amp; receipt
+                Download CRA tax invoices &amp; carrier waybills (BOL)
               </span>
             </div>
 
@@ -957,7 +970,7 @@ export const CustomerPortal: React.FC<CustomerPortalProps> = ({ onNavigate }) =>
                     <th className="py-3 px-4 text-right">13% HST</th>
                     <th className="py-3 px-4 text-right">Total CAD</th>
                     <th className="py-3 px-4 text-center">Status</th>
-                    <th className="py-3 px-4 text-center">Action</th>
+                    <th className="py-3 px-4 text-center">Documents</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
@@ -971,7 +984,7 @@ export const CustomerPortal: React.FC<CustomerPortalProps> = ({ onNavigate }) =>
                         <td className="py-3 px-4 text-slate-600">
                           {formatScheduleDate(ord.created_at)}
                         </td>
-                        <td className="py-3 px-4 text-slate-700 max-w-xs truncate">
+                        <td className="py-3 px-4 text-slate-600 max-w-[200px] truncate">
                           {ord.pickup_address.split(',')[0]} &rarr; {ord.delivery_address.split(',')[0]}
                         </td>
                         <td className="py-3 px-4 text-right font-mono text-slate-700">
@@ -989,14 +1002,26 @@ export const CustomerPortal: React.FC<CustomerPortalProps> = ({ onNavigate }) =>
                           </span>
                         </td>
                         <td className="py-3 px-4 text-center">
-                          <button
-                            onClick={() => generateOrderPdf(ord, store.getSettings())}
-                            className="px-3 py-1 bg-red-50 hover:bg-red-100 text-red-700 font-bold rounded-lg transition border border-red-200 inline-flex items-center space-x-1 cursor-pointer shadow-2xs"
-                            title="Download CRA PDF Invoice"
-                          >
-                            <FileDown className="w-3.5 h-3.5 text-red-600" />
-                            <span>PDF</span>
-                          </button>
+                          <div className="inline-flex items-center space-x-1.5 justify-center">
+                            <button
+                              type="button"
+                              onClick={() => generateWaybillPdf(ord, store.getSettings())}
+                              className="px-2.5 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-bold rounded-lg transition border border-emerald-200 inline-flex items-center space-x-1 cursor-pointer shadow-2xs"
+                              title="Download Carrier Waybill (Bill of Lading)"
+                            >
+                              <FileText className="w-3 h-3 text-emerald-600" />
+                              <span>BOL</span>
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => generateOrderPdf(ord, store.getSettings())}
+                              className="px-2.5 py-1 bg-red-50 hover:bg-red-100 text-red-700 font-bold rounded-lg transition border border-red-200 inline-flex items-center space-x-1 cursor-pointer shadow-2xs"
+                              title="Download CRA Tax Invoice"
+                            >
+                              <FileDown className="w-3 h-3 text-red-600" />
+                              <span>Invoice</span>
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     ))}
@@ -1524,13 +1549,26 @@ export const CustomerPortal: React.FC<CustomerPortalProps> = ({ onNavigate }) =>
 
               <div className="flex items-center space-x-2">
                 {selectedOrderDetails.order_status !== 'submitted' && (
-                  <button
-                    onClick={() => generateOrderPdf(selectedOrderDetails, store.getSettings())}
-                    className="px-4 py-2 bg-white hover:bg-slate-100 text-slate-800 rounded-xl text-xs font-bold border border-slate-300 transition flex items-center space-x-1.5 cursor-pointer"
-                  >
-                    <FileDown className="w-3.5 h-3.5 text-red-600" />
-                    <span>Download Invoice</span>
-                  </button>
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => generateWaybillPdf(selectedOrderDetails, store.getSettings())}
+                      className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition flex items-center space-x-1.5 cursor-pointer shadow-xs"
+                      title="Official Bill of Lading (Carrier Waybill)"
+                    >
+                      <FileText className="w-3.5 h-3.5" />
+                      <span>Download Waybill</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => generateOrderPdf(selectedOrderDetails, store.getSettings())}
+                      className="px-3.5 py-2 bg-white hover:bg-slate-100 text-slate-800 rounded-xl text-xs font-bold border border-slate-300 transition flex items-center space-x-1.5 cursor-pointer shadow-xs"
+                      title="Commercial Tax Invoice"
+                    >
+                      <FileDown className="w-3.5 h-3.5 text-red-600" />
+                      <span>Download Invoice</span>
+                    </button>
+                  </>
                 )}
                 <button
                   onClick={() => setSelectedOrderDetails(null)}

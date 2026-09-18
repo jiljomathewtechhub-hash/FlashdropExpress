@@ -65,7 +65,7 @@ import { NotificationLog } from '../../types/notification';
 import { Order, Driver, Vehicle, Customer, OrderRequestItem, OrderStatus, BusinessSettings } from '../../types/order';
 import { store, UserSession } from '../../lib/store';
 import { PricingTierRule } from '../../lib/pricing';
-import { generateOrderPdf } from '../../lib/pdf';
+import { generateOrderPdf, generateWaybillPdf } from '../../lib/pdf';
 import { supabase, isSupabaseConfigured, createUnpersistedClient } from '../../lib/supabase';
 import { notificationService } from '../../lib/notificationService';
 import { inAppNotificationService, InAppNotification } from '../../lib/inAppNotificationService';
@@ -1492,9 +1492,16 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
                                 <Search className="w-3.5 h-3.5" />
                               </button>
                               <button
+                                onClick={() => generateWaybillPdf(ord, settings)}
+                                className="p-1.5 bg-slate-50 hover:bg-slate-100 text-slate-700 hover:text-slate-900 border border-slate-200 rounded-lg transition cursor-pointer"
+                                title="Download Official Shipping Waybill (BOL)"
+                              >
+                                <FileText className="w-3.5 h-3.5" />
+                              </button>
+                              <button
                                 onClick={() => generateOrderPdf(ord, settings)}
                                 className="p-1.5 bg-slate-50 hover:bg-slate-100 text-red-600 hover:text-red-800 border border-slate-200 rounded-lg transition cursor-pointer"
-                                title="Download Waybill PDF"
+                                title="Download Commercial Tax Invoice"
                               >
                                 <FileDown className="w-3.5 h-3.5" />
                               </button>
@@ -5245,12 +5252,21 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
               <div className="flex items-center space-x-2 shrink-0 self-end sm:self-center">
                 <button
                   type="button"
+                  onClick={() => generateWaybillPdf(selectedOrderDetails, settings)}
+                  className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold border border-slate-300 rounded-xl transition flex items-center space-x-1.5 cursor-pointer shadow-xs"
+                  title="Download Official Shipping Waybill (BOL)"
+                >
+                  <FileText className="w-3.5 h-3.5 text-slate-600" />
+                  <span className="hidden sm:inline text-xs">PDF Waybill</span>
+                </button>
+                <button
+                  type="button"
                   onClick={() => generateOrderPdf(selectedOrderDetails, settings)}
                   className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-red-700 font-bold border border-slate-300 rounded-xl transition flex items-center space-x-1.5 cursor-pointer shadow-xs"
-                  title="Download Official PDF Waybill & Invoice"
+                  title="Download Commercial Tax Invoice"
                 >
-                  <FileDown className="w-3.5 h-3.5" />
-                  <span className="hidden sm:inline text-xs">PDF Waybill</span>
+                  <FileDown className="w-3.5 h-3.5 text-red-600" />
+                  <span className="hidden sm:inline text-xs">PDF Invoice</span>
                 </button>
                 <button
                   type="button"
@@ -5989,16 +6005,26 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
               <div className="flex items-center space-x-2">
                 <button
                   type="button"
+                  onClick={() => generateWaybillPdf(selectedOrderDetails, settings)}
+                  className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl transition flex items-center space-x-1.5 cursor-pointer shadow-xs text-xs"
+                  title="Official Bill of Lading (Carrier Waybill)"
+                >
+                  <FileText className="w-3.5 h-3.5" />
+                  <span>Download Waybill</span>
+                </button>
+                <button
+                  type="button"
                   onClick={() => generateOrderPdf(selectedOrderDetails, settings)}
-                  className="px-4 py-2 bg-slate-900 hover:bg-black text-white font-bold rounded-xl transition flex items-center space-x-1.5 cursor-pointer shadow-xs"
+                  className="px-3.5 py-2 bg-slate-900 hover:bg-black text-white font-bold rounded-xl transition flex items-center space-x-1.5 cursor-pointer shadow-xs text-xs"
+                  title="Commercial Tax Invoice"
                 >
                   <FileDown className="w-3.5 h-3.5" />
-                  <span>Download PDF Waybill</span>
+                  <span>Download Invoice</span>
                 </button>
                 <button
                   type="button"
                   onClick={() => setSelectedOrderDetails(null)}
-                  className="px-5 py-2 bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold rounded-xl transition cursor-pointer"
+                  className="px-5 py-2 bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold rounded-xl transition cursor-pointer text-xs"
                 >
                   Close
                 </button>

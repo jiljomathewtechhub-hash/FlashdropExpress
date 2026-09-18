@@ -16,7 +16,7 @@ import {
 } from 'lucide-react';
 import { Order, OrderStatus } from '../../types/order';
 import { store } from '../../lib/store';
-import { generateOrderPdf } from '../../lib/pdf';
+import { generateOrderPdf, generateWaybillPdf } from '../../lib/pdf';
 import { formatDeliveryType } from '../../lib/notificationTemplates';
 import { TiltCard } from '../common/TiltCard';
 import confetti from 'canvas-confetti';
@@ -476,13 +476,26 @@ export const OrderTracker: React.FC<OrderTrackerProps> = ({ initialOrderNumber, 
               )}
 
               {order.order_status !== 'submitted' && (
-                <button
-                  onClick={() => generateOrderPdf(order, store.getSettings())}
-                  className="flex items-center space-x-1.5 px-3.5 py-2 bg-white hover:bg-slate-50 text-slate-800 font-bold text-xs rounded-xl border border-slate-300 transition shadow-xs"
-                >
-                  <FileDown className="w-3.5 h-3.5 text-red-400" />
-                  <span>PDF Invoice</span>
-                </button>
+                <>
+                  <button
+                    type="button"
+                    onClick={() => generateWaybillPdf(order, store.getSettings())}
+                    className="flex items-center space-x-1.5 px-3.5 py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-bold text-xs rounded-xl border border-emerald-300 transition shadow-xs cursor-pointer"
+                    title="Official Bill of Lading (Carrier Waybill)"
+                  >
+                    <FileText className="w-3.5 h-3.5 text-emerald-600" />
+                    <span>PDF Waybill</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => generateOrderPdf(order, store.getSettings())}
+                    className="flex items-center space-x-1.5 px-3.5 py-2 bg-white hover:bg-slate-50 text-slate-800 font-bold text-xs rounded-xl border border-slate-300 transition shadow-xs cursor-pointer"
+                    title="Commercial Tax Invoice"
+                  >
+                    <FileDown className="w-3.5 h-3.5 text-red-500" />
+                    <span>PDF Invoice</span>
+                  </button>
+                </>
               )}
 
               {order.order_status !== 'delivered' && order.order_status !== 'cancelled' && (
