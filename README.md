@@ -92,4 +92,4 @@ flashdropfinal-project/
 
 ## 📄 License
 
-Proprietary — All rights reserved © FlashDrop Express Inc.
+Proprietary — All rights reserved © FlashDrop Express.
