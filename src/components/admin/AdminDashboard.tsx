@@ -64,7 +64,8 @@ import {
 import { NotificationLog } from '../../types/notification';
 import { Order, Driver, Vehicle, Customer, OrderRequestItem, OrderStatus, BusinessSettings } from '../../types/order';
 import { store, UserSession } from '../../lib/store';
-import { PricingTierRule } from '../../lib/pricing';
+import { PricingTierRule, calculateDeliveryPrice } from '../../lib/pricing';
+import { calculateGtaKmBreakdown } from '../../lib/distance';
 import { generateOrderPdf, generateWaybillPdf } from '../../lib/pdf';
 import { supabase, isSupabaseConfigured, createUnpersistedClient } from '../../lib/supabase';
 import { notificationService } from '../../lib/notificationService';
@@ -154,6 +155,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
   // Quote Review & Dispatch state
   const [reviewingQuoteOrder, setReviewingQuoteOrder] = useState<Order | null>(null);
   const [quoteFormData, setQuoteFormData] = useState<{
+    distance_km: number;
     base_price: number;
     excess_km_charge: number;
     urgency_surcharge: number;
@@ -167,6 +169,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
     total_price: number;
     quote_notes: string;
   }>({
+    distance_km: 0,
     base_price: 0,
     excess_km_charge: 0,
     urgency_surcharge: 0,
@@ -517,6 +520,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
 
   const handleOpenQuoteReview = (order: Order) => {
     setReviewingQuoteOrder(order);
+    const dist = Number(order.distance_km || 0);
     const base = Number(order.base_price || 0);
     const excess = Number(order.excess_km_charge || 0);
     const after = Number(order.after_hours_charge || 0);
@@ -539,6 +543,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
     const total = Number((sub + tax).toFixed(2));
 
     setQuoteFormData({
+      distance_km: dist,
       base_price: base,
       excess_km_charge: excess,
       urgency_surcharge: urgency,
@@ -553,6 +558,115 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
       quote_notes: order.quote_notes || 'Custom commercial freight quotation based on verified route specs and cargo dimensions.',
     });
     setQuoteSentSuccess(false);
+  };
+
+  const handleQuoteDistanceChange = (newKm: number) => {
+    if (!reviewingQuoteOrder) return;
+    const safeKm = Math.max(0, Number(newKm) || 0);
+
+    const kmBreakdown = calculateGtaKmBreakdown(
+      reviewingQuoteOrder.pickup_address,
+      reviewingQuoteOrder.delivery_address,
+      safeKm,
+      reviewingQuoteOrder.pickup_lat && reviewingQuoteOrder.pickup_lng ? { lat: reviewingQuoteOrder.pickup_lat, lng: reviewingQuoteOrder.pickup_lng } : undefined,
+      reviewingQuoteOrder.delivery_lat && reviewingQuoteOrder.delivery_lng ? { lat: reviewingQuoteOrder.delivery_lat, lng: reviewingQuoteOrder.delivery_lng } : undefined
+    );
+
+    const isOutside = kmBreakdown.isOutsideGta || reviewingQuoteOrder.service_area === 'Ontario-Wide';
+    const breakdown = calculateDeliveryPrice({
+      vehicleSlug: (reviewingQuoteOrder.vehicle_slug as any) || 'cargo_van',
+      distanceKm: safeKm,
+      insideGtaKm: kmBreakdown.insideGtaKm,
+      outsideGtaKm: kmBreakdown.outsideGtaKm,
+      weightLbs: Number(reviewingQuoteOrder.weight_lbs || 0),
+      quantity: Number(reviewingQuoteOrder.quantity || 1),
+      isPaintPails: reviewingQuoteOrder.item_type === 'paint_pails',
+      pickupTime: reviewingQuoteOrder.pickup_time,
+      deliveryType: reviewingQuoteOrder.delivery_time_option,
+      isOutsideGta: isOutside,
+      outsideGtaSurcharge: isOutside ? 60.0 : 0,
+    }, settings, pricingTiers.length > 0 ? pricingTiers : undefined);
+
+    const base = breakdown.baseDistanceCharge;
+    const excess = breakdown.excessKmCharge;
+    const urgency = breakdown.deliveryTypeCharge;
+    const after = breakdown.afterHoursCharge;
+    const outside = breakdown.outsideGtaCharge;
+
+    const gross = Number((base + excess + urgency + after + outside).toFixed(2));
+    const discount = Math.max(0, Number(quoteFormData.discount_amount || 0));
+    const sub = Math.max(0, Number((gross - discount).toFixed(2)));
+    const tax = Number((sub * (settings.hst_enabled ? (settings.hst_rate || 0.13) : 0)).toFixed(2));
+    const total = Number((sub + tax).toFixed(2));
+
+    setQuoteFormData(prev => ({
+      ...prev,
+      distance_km: safeKm,
+      base_price: base,
+      excess_km_charge: excess,
+      urgency_surcharge: urgency,
+      after_hours_charge: after,
+      outside_gta_charge: outside,
+      subtotal: sub,
+      tax_amount: tax,
+      total_price: total,
+    }));
+  };
+
+  const handleEditOrderDistanceChange = (newKm: number) => {
+    if (!editingOrder) return;
+    const safeKm = Math.max(0, Number(newKm) || 0);
+
+    const kmBreakdown = calculateGtaKmBreakdown(
+      editFormData.pickup_address || editingOrder.pickup_address,
+      editFormData.delivery_address || editingOrder.delivery_address,
+      safeKm,
+      editingOrder.pickup_lat && editingOrder.pickup_lng ? { lat: editingOrder.pickup_lat, lng: editingOrder.pickup_lng } : undefined,
+      editingOrder.delivery_lat && editingOrder.delivery_lng ? { lat: editingOrder.delivery_lat, lng: editingOrder.delivery_lng } : undefined
+    );
+
+    const isOutside = kmBreakdown.isOutsideGta || (editFormData.service_area || editingOrder.service_area) === 'Ontario-Wide';
+    const breakdown = calculateDeliveryPrice({
+      vehicleSlug: (editFormData.vehicle_slug || editingOrder.vehicle_slug as any) || 'cargo_van',
+      distanceKm: safeKm,
+      insideGtaKm: kmBreakdown.insideGtaKm,
+      outsideGtaKm: kmBreakdown.outsideGtaKm,
+      weightLbs: Number(editFormData.weight_lbs ?? editingOrder.weight_lbs ?? 0),
+      quantity: Number(editFormData.quantity ?? editingOrder.quantity ?? 1),
+      isPaintPails: (editFormData.item_type || editingOrder.item_type) === 'paint_pails',
+      pickupTime: editFormData.pickup_time || editingOrder.pickup_time,
+      deliveryType: editFormData.delivery_time_option || editingOrder.delivery_time_option,
+      isOutsideGta: isOutside,
+      outsideGtaSurcharge: isOutside ? 60.0 : 0,
+    }, settings, pricingTiers.length > 0 ? pricingTiers : undefined);
+
+    const base = breakdown.baseDistanceCharge;
+    const excess = breakdown.excessKmCharge;
+    const urgency = breakdown.deliveryTypeCharge;
+    const after = breakdown.afterHoursCharge;
+    const outside = breakdown.outsideGtaCharge;
+
+    const gross = Number((base + excess + urgency + after + outside).toFixed(2));
+    const discount = Math.max(0, Number(editFormData.discount_amount ?? editingOrder.discount_amount ?? 0));
+    const sub = Math.max(0, Number((gross - discount).toFixed(2)));
+    const tax = Number((sub * (settings.hst_enabled ? (settings.hst_rate || 0.13) : 0)).toFixed(2));
+    const total = Number((sub + tax).toFixed(2));
+
+    setEditFormData(prev => ({
+      ...prev,
+      distance_km: safeKm,
+      inside_gta_km: kmBreakdown.insideGtaKm,
+      outside_gta_km: kmBreakdown.outsideGtaKm,
+      service_area: isOutside ? 'Ontario-Wide' : 'GTA',
+      base_price: base,
+      excess_km_charge: excess,
+      delivery_type_charge: urgency,
+      after_hours_charge: after,
+      outside_gta_charge: outside,
+      subtotal: sub,
+      tax_amount: tax,
+      total_price: total,
+    }));
   };
 
   const handleRecalculateQuoteTotals = (updates: Partial<typeof quoteFormData>) => {
@@ -583,7 +697,19 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
 
     try {
       const now = new Date().toISOString();
+      const kmBreakdown = calculateGtaKmBreakdown(
+        reviewingQuoteOrder.pickup_address,
+        reviewingQuoteOrder.delivery_address,
+        quoteFormData.distance_km,
+        reviewingQuoteOrder.pickup_lat && reviewingQuoteOrder.pickup_lng ? { lat: reviewingQuoteOrder.pickup_lat, lng: reviewingQuoteOrder.pickup_lng } : undefined,
+        reviewingQuoteOrder.delivery_lat && reviewingQuoteOrder.delivery_lng ? { lat: reviewingQuoteOrder.delivery_lat, lng: reviewingQuoteOrder.delivery_lng } : undefined
+      );
+
       const updatedData: Partial<Order> = {
+        distance_km: quoteFormData.distance_km,
+        inside_gta_km: kmBreakdown.insideGtaKm,
+        outside_gta_km: kmBreakdown.outsideGtaKm,
+        service_area: kmBreakdown.isOutsideGta ? 'Ontario-Wide' : 'GTA',
         base_price: quoteFormData.base_price,
         excess_km_charge: quoteFormData.excess_km_charge,
         delivery_type_charge: quoteFormData.urgency_surcharge,
@@ -4252,9 +4378,60 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
 
               {/* Financials & Price Breakdown */}
               <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-3">
-                <div className="text-[11px] font-bold uppercase tracking-wider text-emerald-700 flex items-center space-x-1.5">
-                  <DollarSign className="w-3.5 h-3.5 text-emerald-600" />
-                  <span>Financial Breakdown & Pricing (CAD)</span>
+                <div className="text-[11px] font-bold uppercase tracking-wider text-emerald-700 flex items-center justify-between">
+                  <div className="flex items-center space-x-1.5">
+                    <DollarSign className="w-3.5 h-3.5 text-emerald-600" />
+                    <span>Financial Breakdown & Pricing (CAD)</span>
+                  </div>
+                  <span className="text-slate-500 text-[10px] font-mono">
+                    {editFormData.distance_km ?? editingOrder.distance_km ?? 0} km total
+                  </span>
+                </div>
+
+                {/* Distance Verification & Auto-Recalculate for Edit Order */}
+                <div className="bg-white p-3 rounded-xl border border-blue-200 bg-gradient-to-r from-blue-50/60 via-white to-slate-50 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-2xs">
+                  <div className="flex items-center space-x-2.5">
+                    <div className="w-8 h-8 rounded-lg bg-blue-100 border border-blue-200 flex items-center justify-center text-blue-700 flex-shrink-0">
+                      <Navigation className="w-3.5 h-3.5" />
+                    </div>
+                    <div>
+                      <div className="text-xs font-bold text-slate-900 flex items-center space-x-2">
+                        <span>Route Distance Verification</span>
+                        <span className="text-[10px] bg-blue-100 text-blue-800 font-bold px-1.5 py-0.5 rounded-md uppercase">
+                          Google Maps
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-slate-500">
+                        Verify route in Google Maps. Changing distance recalculates base freight, excess km &amp; totals.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto justify-end">
+                    <a
+                      href={`https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(editFormData.pickup_address || editingOrder.pickup_address)}&destination=${encodeURIComponent(editFormData.delivery_address || editingOrder.delivery_address)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center space-x-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition-all shadow-xs cursor-pointer"
+                      title="Verify in Google Maps"
+                    >
+                      <ExternalLink className="w-3.5 h-3.5" />
+                      <span>Verify on Google Maps</span>
+                    </a>
+
+                    <div className="flex items-center space-x-1.5 bg-slate-50 border border-slate-300 px-2.5 py-1 rounded-xl shadow-xs">
+                      <span className="text-[11px] font-bold text-slate-700">Distance:</span>
+                      <input
+                        type="number"
+                        step="0.1"
+                        min="0"
+                        value={editFormData.distance_km ?? editingOrder.distance_km ?? 0}
+                        onChange={(e) => handleEditOrderDistanceChange(Number(e.target.value))}
+                        className="w-20 bg-white border border-slate-300 rounded-lg px-2 py-0.5 text-xs font-mono font-bold text-slate-900 focus:outline-none focus:border-red-500 text-right"
+                      />
+                      <span className="text-xs font-bold text-slate-600">km</span>
+                    </div>
+                  </div>
                 </div>
                 <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
                   <div>
@@ -4855,8 +5032,56 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
                   <span>Shipment & Logistics Specifications</span>
                 </div>
                 <span className="text-red-600 font-mono font-bold">
-                  {reviewingQuoteOrder.distance_km} km ({reviewingQuoteOrder.inside_gta_km ?? reviewingQuoteOrder.distance_km} km GTA / {reviewingQuoteOrder.outside_gta_km ?? 0} km Outside)
+                  {quoteFormData.distance_km} km ({quoteFormData.distance_km <= 40 ? quoteFormData.distance_km : 40} km GTA / {quoteFormData.distance_km > 40 ? Number((quoteFormData.distance_km - 40).toFixed(1)) : 0} km Outside)
                 </span>
+              </div>
+
+              {/* Google Maps Route Verification & Distance Recalculation Bar */}
+              <div className="bg-white p-3.5 rounded-xl border border-blue-200 bg-gradient-to-r from-blue-50/60 via-white to-slate-50 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-2xs">
+                <div className="flex items-center space-x-3">
+                  <div className="w-9 h-9 rounded-lg bg-blue-100 border border-blue-200 flex items-center justify-center text-blue-700 flex-shrink-0">
+                    <Navigation className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <div className="text-xs font-bold text-slate-900 flex items-center space-x-2">
+                      <span>Driving Distance Verification &amp; Adjustment</span>
+                      <span className="text-[10px] bg-blue-100 text-blue-800 font-bold px-2 py-0.5 rounded-md uppercase">
+                        Admin Tool
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-slate-500">
+                      Verify route on Google Maps. Editing distance automatically recalculates base price, excess km, and totals.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-2.5 w-full sm:w-auto justify-end">
+                  {/* Google Maps Verification Button */}
+                  <a
+                    href={`https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(reviewingQuoteOrder.pickup_address)}&destination=${encodeURIComponent(reviewingQuoteOrder.delivery_address)}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center space-x-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition-all shadow-xs hover:shadow-sm cursor-pointer"
+                    title="Open live route directions in Google Maps in a new tab"
+                  >
+                    <ExternalLink className="w-3.5 h-3.5" />
+                    <span>Verify on Google Maps</span>
+                  </a>
+
+                  {/* Editable Distance Input with Auto-recalculation */}
+                  <div className="flex items-center space-x-1.5 bg-white border border-slate-300 px-2.5 py-1 rounded-xl shadow-xs">
+                    <span className="text-[11px] font-bold text-slate-700">Verified KM:</span>
+                    <input
+                      type="number"
+                      step="0.1"
+                      min="0"
+                      value={quoteFormData.distance_km}
+                      onChange={(e) => handleQuoteDistanceChange(Number(e.target.value))}
+                      className="w-20 bg-slate-50 border border-slate-300 rounded-lg px-2 py-0.5 text-xs font-mono font-bold text-slate-900 focus:bg-white focus:outline-none focus:border-red-500 text-right"
+                    />
+                    <span className="text-xs font-bold text-slate-600">km</span>
+                  </div>
+                </div>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs bg-slate-100 p-3 rounded-xl border border-slate-200">

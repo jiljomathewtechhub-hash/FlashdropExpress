@@ -67,6 +67,15 @@ export const OrderWizard: React.FC<OrderWizardProps> = ({ initialData, onNavigat
 
   // Pre-load user session immediately on mount
   const loggedInUser = useMemo(() => store.getCurrentUser(), []);
+  const [currentUser, setCurrentUser] = useState(() => store.getCurrentUser());
+
+  useEffect(() => {
+    return store.subscribe(() => {
+      setCurrentUser(store.getCurrentUser());
+    });
+  }, []);
+
+  const isAdmin = currentUser?.role === 'admin' || currentUser?.role === 'owner';
 
   // Form states
   // 1. Customer Info (Auto-filled immediately from customer portal profile)
@@ -824,80 +833,82 @@ export const OrderWizard: React.FC<OrderWizardProps> = ({ initialData, onNavigat
               </div>
             </div>
 
-            {/* Dynamic OSRM Driving Distance & Routing Badge */}
-            <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-xs">
-              <div className="flex items-center space-x-3.5">
-                <div className="w-11 h-11 rounded-xl bg-red-50 border border-red-200 flex items-center justify-center text-red-600 flex-shrink-0">
-                  {isRouteLoading ? (
-                    <Loader2 className="w-5 h-5 animate-spin text-red-400" />
-                  ) : (
-                    <Navigation className="w-5 h-5" />
-                  )}
-                </div>
-                <div>
-                  <div className="flex items-center space-x-2">
-                    <span className="text-xs text-slate-500 font-medium">Estimated Direct Driving Route:</span>
-                    {isRouteLoading && (
-                      <span className="text-[10px] text-red-400 animate-pulse font-semibold">
-                        (Calculating via OSRM...)
-                      </span>
-                    )}
-                  </div>
-                  <div className="text-lg sm:text-xl font-black text-slate-900 font-['Outfit'] flex items-center space-x-2.5 mt-0.5">
-                    {distanceKm > 0 ? (
-                      <>
-                        <span>{formattedDistance}</span>
-                        {durationMinutes && (
-                          <span className="text-xs font-medium text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-md">
-                            ~{durationMinutes} mins drive
-                          </span>
-                        )}
-                        <span className="text-xs font-normal text-slate-500">
-                          ({serviceArea === 'GTA' ? 'GTA Zone' : 'Ontario-Wide Delivery Coverage'})
-                        </span>
-                      </>
+            {/* Dynamic OSRM Driving Distance & Routing Badge (Visible to Admins Only) */}
+            {isAdmin && (
+              <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-xs">
+                <div className="flex items-center space-x-3.5">
+                  <div className="w-11 h-11 rounded-xl bg-red-50 border border-red-200 flex items-center justify-center text-red-600 flex-shrink-0">
+                    {isRouteLoading ? (
+                      <Loader2 className="w-5 h-5 animate-spin text-red-400" />
                     ) : (
-                      <span className="text-sm sm:text-base font-normal text-slate-400">
-                        Enter pickup and delivery locations to calculate live route
-                      </span>
+                      <Navigation className="w-5 h-5" />
                     )}
                   </div>
-                  {distanceKm > 0 && (
-                    <div className="flex flex-wrap items-center gap-2 mt-2 text-xs">
-                      <span className="font-semibold text-slate-500">Route Breakdown:</span>
-                      <span className="bg-emerald-50 border border-emerald-200 text-emerald-800 px-2.5 py-0.5 rounded-lg font-bold">
-                        Inside GTA: {kmBreakdown.insideGtaKm} km
-                      </span>
-                      <span className={`px-2.5 py-0.5 rounded-lg font-bold ${
-                        kmBreakdown.outsideGtaKm > 0
-                          ? 'bg-amber-50 border border-amber-300 text-amber-900'
-                          : 'bg-slate-100 border border-slate-200 text-slate-600'
-                      }`}>
-                        Outside GTA: {kmBreakdown.outsideGtaKm} km
-                      </span>
+                  <div>
+                    <div className="flex items-center space-x-2">
+                      <span className="text-xs text-slate-500 font-medium">Estimated Direct Driving Route:</span>
+                      {isRouteLoading && (
+                        <span className="text-[10px] text-red-400 animate-pulse font-semibold">
+                          (Calculating via OSRM...)
+                        </span>
+                      )}
                     </div>
+                    <div className="text-lg sm:text-xl font-black text-slate-900 font-['Outfit'] flex items-center space-x-2.5 mt-0.5">
+                      {distanceKm > 0 ? (
+                        <>
+                          <span>{formattedDistance}</span>
+                          {durationMinutes && (
+                            <span className="text-xs font-medium text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-md">
+                              ~{durationMinutes} mins drive
+                            </span>
+                          )}
+                          <span className="text-xs font-normal text-slate-500">
+                            ({serviceArea === 'GTA' ? 'GTA Zone' : 'Ontario-Wide Delivery Coverage'})
+                          </span>
+                        </>
+                      ) : (
+                        <span className="text-sm sm:text-base font-normal text-slate-400">
+                          Enter pickup and delivery locations to calculate live route
+                        </span>
+                      )}
+                    </div>
+                    {distanceKm > 0 && (
+                      <div className="flex flex-wrap items-center gap-2 mt-2 text-xs">
+                        <span className="font-semibold text-slate-500">Route Breakdown:</span>
+                        <span className="bg-emerald-50 border border-emerald-200 text-emerald-800 px-2.5 py-0.5 rounded-lg font-bold">
+                          Inside GTA: {kmBreakdown.insideGtaKm} km
+                        </span>
+                        <span className={`px-2.5 py-0.5 rounded-lg font-bold ${
+                          kmBreakdown.outsideGtaKm > 0
+                            ? 'bg-amber-50 border border-amber-300 text-amber-900'
+                            : 'bg-slate-100 border border-slate-200 text-slate-600'
+                        }`}>
+                          Outside GTA: {kmBreakdown.outsideGtaKm} km
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-2 self-stretch sm:self-auto justify-end">
+                  {distanceKm > 0 ? (
+                    <>
+                      <span className="text-[11px] font-bold text-slate-700 bg-white border border-slate-200 px-3 py-1 rounded-xl flex items-center space-x-1.5 shadow-xs">
+                        <span className={`w-2 h-2 rounded-full ${isLiveRoute ? 'bg-emerald-400 animate-pulse' : 'bg-slate-400'}`} />
+                        <span>{isLiveRoute ? 'OSRM Live Routing' : 'Road Curvature Net'}</span>
+                      </span>
+                      <span className="text-xs font-bold text-red-700 bg-red-50 border border-red-200 px-3 py-1.5 rounded-xl">
+                        {distanceKm <= 25 ? '0–25 km Standard Tier' : distanceKm <= 40 ? '25–40 km Mid Tier' : '40+ km Extended Highway Tier'}
+                      </span>
+                    </>
+                  ) : (
+                    <span className="text-xs font-medium text-slate-400 bg-slate-800/50 border border-slate-700/60 px-3 py-1.5 rounded-xl">
+                      Awaiting locations
+                    </span>
                   )}
                 </div>
               </div>
-
-              <div className="flex flex-wrap items-center gap-2 self-stretch sm:self-auto justify-end">
-                {distanceKm > 0 ? (
-                  <>
-                    <span className="text-[11px] font-bold text-slate-700 bg-white border border-slate-200 px-3 py-1 rounded-xl flex items-center space-x-1.5 shadow-xs">
-                      <span className={`w-2 h-2 rounded-full ${isLiveRoute ? 'bg-emerald-400 animate-pulse' : 'bg-slate-400'}`} />
-                      <span>{isLiveRoute ? 'OSRM Live Routing' : 'Road Curvature Net'}</span>
-                    </span>
-                    <span className="text-xs font-bold text-red-700 bg-red-50 border border-red-200 px-3 py-1.5 rounded-xl">
-                      {distanceKm <= 25 ? '0–25 km Standard Tier' : distanceKm <= 40 ? '25–40 km Mid Tier' : '40+ km Extended Highway Tier'}
-                    </span>
-                  </>
-                ) : (
-                  <span className="text-xs font-medium text-slate-400 bg-slate-800/50 border border-slate-700/60 px-3 py-1.5 rounded-xl">
-                    Awaiting locations
-                  </span>
-                )}
-              </div>
-            </div>
+            )}
 
             {/* Outside GTA Surcharge Advisory Notice */}
             {distanceKm > 0 && kmBreakdown.isOutsideGta && (
@@ -908,16 +919,20 @@ export const OrderWizard: React.FC<OrderWizardProps> = ({ initialData, onNavigat
                     <span className="text-amber-900 font-['Outfit'] text-sm">Ontario-Wide Regional Delivery Coverage (+$60.00 CAD Surcharge)</span>
                     {breakdown.isVariablePricing && (
                       <span className="text-[10px] bg-amber-200 text-amber-900 border border-amber-400 font-bold px-2 py-0.5 rounded-full uppercase">
-                        Distance &gt; 100 km (Amount May Vary)
+                        {isAdmin ? `Distance > 100 km (${distanceKm} km)` : 'Long-Haul Extended Route (Subject to Dispatch Review)'}
                       </span>
                     )}
                   </div>
                   <p className="text-amber-800 text-xs leading-relaxed">
-                    This route includes <strong>{kmBreakdown.outsideGtaKm} km</strong> outside the Greater Toronto Area.
-                    {breakdown.isVariablePricing ? (
-                      <> An initial <strong>$60.00 CAD</strong> outside-GTA coverage surcharge is included. <em>Notice: Because the total driving distance ({distanceKm} km) exceeds 100 km, the final quotation amount may vary subject to long-haul dispatch confirmation.</em></>
+                    {isAdmin ? (
+                      <>This route includes <strong>{kmBreakdown.outsideGtaKm} km</strong> outside the Greater Toronto Area.</>
                     ) : (
-                      <> A standard flat-rate <strong>$60.00 CAD</strong> Ontario-Wide delivery coverage fee is applied within 100 km.</>
+                      <>This delivery route includes regional coverage outside the standard Greater Toronto Area zone.</>
+                    )}
+                    {breakdown.isVariablePricing ? (
+                      <> An initial <strong>$60.00 CAD</strong> outside-GTA coverage surcharge is included. <em>Notice: Because of long-haul extended delivery distance, the final quotation amount may vary subject to dispatch confirmation.</em></>
+                    ) : (
+                      <> A standard flat-rate <strong>$60.00 CAD</strong> Ontario-Wide delivery coverage fee is applied.</>
                     )}
                   </p>
                 </div>
@@ -1546,14 +1561,18 @@ export const OrderWizard: React.FC<OrderWizardProps> = ({ initialData, onNavigat
                   {deliveryUnit && <span className="text-slate-600"> ({deliveryUnit})</span>}
                 </div>
                 <div className="flex justify-between border-t border-slate-100 pt-2 text-slate-600">
-                  <span>Driving Distance:</span>
+                  <span>{isAdmin ? 'Driving Distance:' : 'Delivery Service Area:'}</span>
                   <div className="text-right">
                     <span className="font-bold text-slate-900">
-                      {formattedDistance} ({serviceArea === 'GTA' ? 'GTA Zone' : 'Ontario-Wide Delivery Coverage'})
+                      {isAdmin
+                        ? `${formattedDistance} (${serviceArea === 'GTA' ? 'GTA Zone' : 'Ontario-Wide Delivery Coverage'})`
+                        : (serviceArea === 'GTA' ? 'Greater Toronto Area (GTA Zone)' : 'Ontario-Wide Regional Delivery Coverage')}
                     </span>
-                    <div className="text-[11px] text-slate-500 font-medium mt-0.5">
-                      Inside GTA: <strong>{kmBreakdown.insideGtaKm} km</strong> &bull; Outside GTA: <strong>{kmBreakdown.outsideGtaKm} km</strong>
-                    </div>
+                    {isAdmin && (
+                      <div className="text-[11px] text-slate-500 font-medium mt-0.5">
+                        Inside GTA: <strong>{kmBreakdown.insideGtaKm} km</strong> &bull; Outside GTA: <strong>{kmBreakdown.outsideGtaKm} km</strong>
+                      </div>
+                    )}
                   </div>
                 </div>
                 {breakdown.outsideGtaCharge > 0 && (
@@ -1565,7 +1584,7 @@ export const OrderWizard: React.FC<OrderWizardProps> = ({ initialData, onNavigat
                       </span>
                       {breakdown.isVariablePricing && (
                         <div className="text-[10px] text-amber-600 font-normal">
-                          (&gt; 100 km: amount may vary)
+                          {isAdmin ? '(> 100 km: amount may vary)' : '(Subject to review)'}
                         </div>
                       )}
                     </div>
@@ -1726,12 +1745,18 @@ export const OrderWizard: React.FC<OrderWizardProps> = ({ initialData, onNavigat
                 <span className="text-slate-900 font-medium">{createdOrder.vehicle_name} ({createdOrder.weight_lbs} lbs)</span>
               </div>
               <div className="flex justify-between text-slate-600">
-                <span>Route Distance:</span>
+                <span>{isAdmin ? 'Route Distance:' : 'Coverage Zone:'}</span>
                 <span className="text-slate-900 font-medium text-right">
-                  {createdOrder.distance_km} km
-                  <span className="block text-[11px] text-slate-500">
-                    ({createdOrder.inside_gta_km ?? createdOrder.distance_km} km GTA / {createdOrder.outside_gta_km ?? 0} km Outside)
-                  </span>
+                  {isAdmin ? (
+                    <>
+                      {createdOrder.distance_km} km
+                      <span className="block text-[11px] text-slate-500">
+                        ({createdOrder.inside_gta_km ?? createdOrder.distance_km} km GTA / {createdOrder.outside_gta_km ?? 0} km Outside)
+                      </span>
+                    </>
+                  ) : (
+                    <span>{createdOrder.service_area || 'Greater Toronto Area'}</span>
+                  )}
                 </span>
               </div>
               {createdOrder.outside_gta_charge && createdOrder.outside_gta_charge > 0 && (
@@ -1741,7 +1766,7 @@ export const OrderWizard: React.FC<OrderWizardProps> = ({ initialData, onNavigat
                     ${createdOrder.outside_gta_charge.toFixed(2)} CAD
                     {createdOrder.is_variable_pricing && (
                       <span className="block text-[10px] text-amber-600 font-normal">
-                        (Over 100 km: subject to review)
+                        {isAdmin ? '(Over 100 km: subject to review)' : '(Subject to review)'}
                       </span>
                     )}
                   </span>

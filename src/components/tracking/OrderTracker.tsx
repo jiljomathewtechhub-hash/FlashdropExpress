@@ -561,7 +561,7 @@ export const OrderTracker: React.FC<OrderTrackerProps> = ({ initialOrderNumber, 
                   <span className="text-slate-500 block text-[10px] uppercase font-bold">Freight Specifications</span>
                   <span className="text-slate-900 font-bold block truncate">{order.item_description || order.item_type}</span>
                   <span className="text-slate-500 text-[11px] block">
-                    {order.quantity} units &bull; {order.weight_lbs} lbs &bull; {order.distance_km} km ({order.inside_gta_km ?? order.distance_km} km GTA / {order.outside_gta_km ?? 0} km Outside)
+                    {order.quantity} units &bull; {order.weight_lbs} lbs &bull; {order.service_area === 'GTA' ? 'Greater Toronto Area (GTA)' : (order.service_area || 'Regional Delivery')}
                   </span>
                 </div>
 
@@ -619,14 +619,14 @@ export const OrderTracker: React.FC<OrderTrackerProps> = ({ initialOrderNumber, 
                   </div>
                   {order.excess_km_charge > 0 && (
                     <div className="flex justify-between items-center py-0.5">
-                      <span>Excess Distance ({order.distance_km} km total):</span>
+                      <span>Excess Distance Fee:</span>
                       <span className="font-semibold text-slate-900">+${order.excess_km_charge.toFixed(2)} CAD</span>
                     </div>
                   )}
                   {order.outside_gta_charge && order.outside_gta_charge > 0 ? (
                     <div className="flex justify-between items-center py-0.5">
                       <span>
-                        Ontario-Wide Delivery Surcharge ({order.outside_gta_km ?? 0} km Outside GTA):
+                        Ontario-Wide Delivery Surcharge:
                         {order.is_variable_pricing && (
                           <span className="block text-[10px] text-amber-600 font-normal">
                             (Distance exceeds 100 km: amount may vary)
@@ -698,7 +698,7 @@ export const OrderTracker: React.FC<OrderTrackerProps> = ({ initialOrderNumber, 
                   <span className="text-slate-500 block text-[10px] uppercase font-bold">Freight Specifications</span>
                   <span className="text-slate-900 font-bold block truncate">{order.item_description || order.item_type}</span>
                   <span className="text-slate-500 text-[11px] block">
-                    {order.quantity} units &bull; {order.weight_lbs} lbs &bull; {order.distance_km} km ({order.inside_gta_km ?? order.distance_km} km GTA / {order.outside_gta_km ?? 0} km Outside)
+                    {order.quantity} units &bull; {order.weight_lbs} lbs &bull; {order.service_area === 'GTA' ? 'Greater Toronto Area (GTA)' : (order.service_area || 'Regional Coverage')}
                   </span>
                 </div>
 
@@ -820,10 +820,7 @@ export const OrderTracker: React.FC<OrderTrackerProps> = ({ initialOrderNumber, 
                 {order.delivery_unit && <span className="text-slate-400 block">Unit: {order.delivery_unit}</span>}
               </div>
               <div className="pt-1 text-slate-500 text-xs">
-                Route Distance: <strong className="text-slate-900">{order.distance_km} km</strong>
-                <span className="block text-[11px] text-slate-500 font-medium">
-                  ({order.inside_gta_km ?? order.distance_km} km Inside GTA &bull; {order.outside_gta_km ?? 0} km Outside GTA)
-                </span>
+                Coverage Zone: <strong className="text-slate-900">{order.service_area === 'GTA' ? 'Greater Toronto Area (GTA Zone)' : (order.service_area || 'Ontario-Wide Regional Delivery')}</strong>
               </div>
             </div>
 
@@ -883,7 +880,7 @@ export const OrderTracker: React.FC<OrderTrackerProps> = ({ initialOrderNumber, 
                       </div>
                       {order.excess_km_charge > 0 && (
                         <div className="flex justify-between">
-                          <span>Excess Km ({order.distance_km} km):</span>
+                          <span>Excess Distance Fee:</span>
                           <span className="text-slate-900 font-semibold">+${order.excess_km_charge.toFixed(2)}</span>
                         </div>
                       )}
