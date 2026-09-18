@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   Building2,
   User,
@@ -87,6 +87,18 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
   const refreshCustomers = () => {
     setCustomers(store.getCustomers());
   };
+
+  useEffect(() => {
+    refreshCustomers();
+    const unsubscribe = store.subscribe(() => {
+      refreshCustomers();
+    });
+    return () => {
+      if (typeof unsubscribe === 'function') {
+        unsubscribe();
+      }
+    };
+  }, []);
 
   // KPI Analytics calculations
   const totalCustomersCount = customers.length;

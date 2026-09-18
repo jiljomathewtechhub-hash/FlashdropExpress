@@ -493,6 +493,7 @@ class FlashDropStore {
           '1c6118f5-d70e-41ce-b1a1-96726b41db26',
         ];
         const testEmails = [
+          'jiljo555@gmail.com',
           'marcus@apexbuilds.ca',
           'elena@studiojenkins.design',
           'orders@metropaint.ca',
@@ -563,6 +564,21 @@ class FlashDropStore {
 
   private loadFromStorage() {
     try {
+      // One-time automatic clean-slate migration for production launch (purges all dummy/test accounts and test orders)
+      const PROD_RESET_KEY = `${STORAGE_KEY_PREFIX}production_clean_v4`;
+      if (typeof window !== 'undefined' && localStorage.getItem(PROD_RESET_KEY) !== 'true') {
+        try {
+          localStorage.removeItem(`${STORAGE_KEY_PREFIX}customers`);
+          localStorage.removeItem(`${STORAGE_KEY_PREFIX}orders`);
+          localStorage.removeItem(`${STORAGE_KEY_PREFIX}requests`);
+          localStorage.removeItem(`${STORAGE_KEY_PREFIX}deleted_customer_ids`);
+          localStorage.removeItem('flashdrop_order_counter_seq');
+          localStorage.setItem(PROD_RESET_KEY, 'true');
+        } catch {
+          // ignore
+        }
+      }
+
       const savedOrders = localStorage.getItem(`${STORAGE_KEY_PREFIX}orders`);
       if (savedOrders) {
         try {
@@ -607,6 +623,7 @@ class FlashDropStore {
       // Purge any legacy mock or test customer accounts
       const mockCustomerIds = ['cust-apex-001', 'cust-jenkins-002', 'cust-metro-003'];
       const testEmails = [
+        'jiljo555@gmail.com',
         'marcus@apexbuilds.ca',
         'elena@studiojenkins.design',
         'orders@metropaint.ca',
@@ -618,7 +635,9 @@ class FlashDropStore {
       this.customers = this.customers.filter(
         (c) =>
           !mockCustomerIds.includes(c.id) &&
-          !testEmails.includes((c.email || '').toLowerCase().trim())
+          !testEmails.includes((c.email || '').toLowerCase().trim()) &&
+          (c.company_name || '').toLowerCase().trim() !== 'jo' &&
+          (c.name || '').toLowerCase().trim() !== 'jiljo mathew'
       );
 
       // Purge any legacy test orders from local storage
@@ -1753,20 +1772,51 @@ class FlashDropStore {
   // --- Customers Management ---
   public getCustomers(): Customer[] {
     const customerMap = new Map<string, Customer>();
+    const BLACKLIST_TEST_EMAILS = [
+      'jiljo555@gmail.com',
+      'marcus@apexbuilds.ca',
+      'elena@studiojenkins.design',
+      'orders@metropaint.ca',
+      'test@example.com',
+      'bbbb',
+      'mashardocuments@gmail.com',
+      'branch036@cloverdalepaint.com',
+    ];
 
-    // 1. Add explicitly configured customers (excluding deleted)
+    // 1. Add explicitly configured customers (excluding deleted and test dummy accounts)
     for (const c of this.customers) {
       const emailLower = (c.email || '').toLowerCase().trim();
+      const compLower = (c.company_name || '').toLowerCase().trim();
+      const nameLower = (c.name || '').toLowerCase().trim();
+      if (
+        BLACKLIST_TEST_EMAILS.includes(emailLower) ||
+        compLower === 'jo' ||
+        nameLower === 'jiljo mathew' ||
+        nameLower === 'test customer' ||
+        nameLower === 'marcus vance'
+      ) {
+        continue;
+      }
       const idKey = c.id || emailLower;
       if (!this.deletedCustomerIds.includes(c.id) && !this.deletedCustomerIds.includes(emailLower)) {
         customerMap.set(emailLower || idKey, { ...c });
       }
     }
 
-    // 2. Synthesize customer records from existing orders (unless explicitly deleted)
+    // 2. Synthesize customer records from existing orders (unless explicitly deleted or dummy test)
     for (const ord of this.orders) {
       if (!ord.customer_email) continue;
       const emailLower = ord.customer_email.toLowerCase().trim();
+      const compLower = (ord.company_name || '').toLowerCase().trim();
+      const nameLower = (ord.customer_name || '').toLowerCase().trim();
+      if (
+        BLACKLIST_TEST_EMAILS.includes(emailLower) ||
+        compLower === 'jo' ||
+        nameLower === 'jiljo mathew' ||
+        nameLower === 'test customer'
+      ) {
+        continue;
+      }
       if (this.deletedCustomerIds.includes(emailLower)) continue;
 
       if (!customerMap.has(emailLower)) {
@@ -1913,8 +1963,14 @@ class FlashDropStore {
 
   public deleteCustomer(customerId: string): boolean {
     const all = this.getCustomers();
-    const target = all.find((c) => c.id === customerId || c.user_id === customerId);
-    if (!target) return false;
+    const target = all.find((c) => c.id === customerId || c.user_id === customerId) ||
+                   this.customers.find((c) => c.id === customerId || c.user_id === customerId);
+    if (!target) {
+      this.customers = this.customers.filter((c) => c.id !== customerId && c.user_id !== customerId);
+      this.saveToStorage();
+      this.notify();
+      return true;
+    }
 
     if (!this.deletedCustomerIds.includes(customerId)) {
       this.deletedCustomerIds.push(customerId);
@@ -1925,6 +1981,16 @@ class FlashDropStore {
 
     this.customers = this.customers.filter((c) => c.id !== customerId && c.user_id !== customerId);
     this.saveToStorage();
+    this.notify();
+
+    if (isSupabaseConfigured && supabase) {
+      if (target.user_id) {
+        supabase.from('profiles').delete().eq('id', target.user_id).eq('role', 'customer').then(() => {});
+      }
+      if (target.email) {
+        supabase.from('profiles').delete().eq('email', target.email).eq('role', 'customer').then(() => {});
+      }
+    }
 
     inAppNotificationService.dispatch({
       title: `Customer Account Removed: ${target.name}`,
