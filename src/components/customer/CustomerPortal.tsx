@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import {
   Package,
@@ -101,16 +101,23 @@ export const CustomerPortal: React.FC<CustomerPortalProps> = ({ onNavigate }) =>
   const [newLocContact, setNewLocContact] = useState('');
   const [newLocPhone, setNewLocPhone] = useState('');
 
-  // Sync edit profile fields when user changes
+  const isFormDirtyRef = useRef(false);
+  const loadedEmailRef = useRef<string | null>(null);
+
+  // Sync edit profile fields when user changes, but NEVER wipe out dirty/in-progress user typing!
   useEffect(() => {
     if (user) {
-      setEditCompanyName(user.companyName || '');
-      setEditFullName(user.name || '');
-      setEditPhone(user.phone || '');
-      setEditHstNumber(user.hstNumber || '');
-      setEditAccountType(user.accountType || 'commercial');
-      setEditAddress(user.defaultPickupAddress || '');
-      setEditUnit(user.defaultPickupUnit || '');
+      const isDifferentUser = loadedEmailRef.current !== user.email;
+      if (isDifferentUser || !isFormDirtyRef.current) {
+        loadedEmailRef.current = user.email;
+        setEditCompanyName(user.companyName || '');
+        setEditFullName(user.name || '');
+        setEditPhone(user.phone || '');
+        setEditHstNumber(user.hstNumber || '');
+        setEditAccountType(user.accountType || 'commercial');
+        setEditAddress(user.defaultPickupAddress || '');
+        setEditUnit(user.defaultPickupUnit || '');
+      }
     }
   }, [user]);
 
@@ -137,7 +144,24 @@ export const CustomerPortal: React.FC<CustomerPortalProps> = ({ onNavigate }) =>
   useEffect(() => {
     const refreshData = () => {
       const currentUser = store.getCurrentUser();
-      setUser(currentUser);
+      setUser((prevUser) => {
+        if (!prevUser && !currentUser) return null;
+        if (
+          prevUser &&
+          currentUser &&
+          prevUser.email === currentUser.email &&
+          prevUser.name === currentUser.name &&
+          prevUser.phone === currentUser.phone &&
+          prevUser.companyName === currentUser.companyName &&
+          prevUser.accountType === currentUser.accountType &&
+          prevUser.hstNumber === currentUser.hstNumber &&
+          prevUser.defaultPickupAddress === currentUser.defaultPickupAddress &&
+          prevUser.defaultPickupUnit === currentUser.defaultPickupUnit
+        ) {
+          return prevUser;
+        }
+        return currentUser;
+      });
 
       if (!currentUser || currentUser.role !== 'customer') {
         setOrders([]);
@@ -189,6 +213,7 @@ export const CustomerPortal: React.FC<CustomerPortalProps> = ({ onNavigate }) =>
         defaultPickupContactName: editFullName.trim(),
         defaultPickupContactPhone: editPhone.trim(),
       });
+      isFormDirtyRef.current = false;
       setUser(store.getCurrentUser());
       setProfileSuccessMsg('Company profile saved! Your contact, company name, and HST number will auto-populate every new delivery.');
       setTimeout(() => setProfileSuccessMsg(''), 5000);
@@ -1239,7 +1264,10 @@ export const CustomerPortal: React.FC<CustomerPortalProps> = ({ onNavigate }) =>
               <div className="grid grid-cols-2 gap-3">
                 <button
                   type="button"
-                  onClick={() => setEditAccountType('commercial')}
+                  onClick={() => {
+                    isFormDirtyRef.current = true;
+                    setEditAccountType('commercial');
+                  }}
                   className={`py-3 px-4 rounded-xl border font-bold transition flex items-center justify-center space-x-2 cursor-pointer ${
                     editAccountType === 'commercial'
                       ? 'bg-red-50 border-red-600 text-red-700 shadow-xs'
@@ -1251,7 +1279,10 @@ export const CustomerPortal: React.FC<CustomerPortalProps> = ({ onNavigate }) =>
                 </button>
                 <button
                   type="button"
-                  onClick={() => setEditAccountType('personal')}
+                  onClick={() => {
+                    isFormDirtyRef.current = true;
+                    setEditAccountType('personal');
+                  }}
                   className={`py-3 px-4 rounded-xl border font-bold transition flex items-center justify-center space-x-2 cursor-pointer ${
                     editAccountType === 'personal'
                       ? 'bg-red-50 border-red-600 text-red-700 shadow-xs'
@@ -1274,7 +1305,10 @@ export const CustomerPortal: React.FC<CustomerPortalProps> = ({ onNavigate }) =>
                 <input
                   type="text"
                   value={editCompanyName}
-                  onChange={(e) => setEditCompanyName(e.target.value)}
+                  onChange={(e) => {
+                    isFormDirtyRef.current = true;
+                    setEditCompanyName(e.target.value);
+                  }}
                   placeholder="e.g. Apex Industrial Logistics Inc."
                   className="w-full bg-slate-50 border border-slate-300 pl-10 pr-3 py-2.5 text-slate-900 rounded-xl focus:border-red-600 focus:bg-white focus:outline-none"
                   required={editAccountType === 'commercial'}
@@ -1293,7 +1327,10 @@ export const CustomerPortal: React.FC<CustomerPortalProps> = ({ onNavigate }) =>
                   <input
                     type="text"
                     value={editFullName}
-                    onChange={(e) => setEditFullName(e.target.value)}
+                    onChange={(e) => {
+                      isFormDirtyRef.current = true;
+                      setEditFullName(e.target.value);
+                    }}
                     placeholder="e.g. Jane Doe"
                     className="w-full bg-slate-50 border border-slate-300 pl-10 pr-3 py-2.5 text-slate-900 rounded-xl focus:border-red-600 focus:bg-white focus:outline-none"
                     required
@@ -1310,7 +1347,10 @@ export const CustomerPortal: React.FC<CustomerPortalProps> = ({ onNavigate }) =>
                   <input
                     type="tel"
                     value={editPhone}
-                    onChange={(e) => setEditPhone(e.target.value)}
+                    onChange={(e) => {
+                      isFormDirtyRef.current = true;
+                      setEditPhone(e.target.value);
+                    }}
                     placeholder="e.g. +1 (647) 555-0199"
                     className="w-full bg-slate-50 border border-slate-300 pl-10 pr-3 py-2.5 text-slate-900 rounded-xl focus:border-red-600 focus:bg-white focus:outline-none"
                     required
@@ -1329,7 +1369,10 @@ export const CustomerPortal: React.FC<CustomerPortalProps> = ({ onNavigate }) =>
                 <input
                   type="text"
                   value={editHstNumber}
-                  onChange={(e) => setEditHstNumber(e.target.value)}
+                  onChange={(e) => {
+                    isFormDirtyRef.current = true;
+                    setEditHstNumber(e.target.value);
+                  }}
                   placeholder="e.g. 12345 6789 RT0001"
                   className="w-full bg-slate-50 border border-slate-300 pl-10 pr-3 py-2.5 text-slate-900 font-mono rounded-xl focus:border-red-600 focus:bg-white focus:outline-none"
                   required={editAccountType === 'commercial'}
@@ -1351,7 +1394,10 @@ export const CustomerPortal: React.FC<CustomerPortalProps> = ({ onNavigate }) =>
                   <input
                     type="text"
                     value={editAddress}
-                    onChange={(e) => setEditAddress(e.target.value)}
+                    onChange={(e) => {
+                      isFormDirtyRef.current = true;
+                      setEditAddress(e.target.value);
+                    }}
                     placeholder="e.g. 1450 Dundas St E, Mississauga, ON"
                     className="w-full bg-slate-50 border border-slate-300 pl-10 pr-3 py-2.5 text-slate-900 rounded-xl focus:border-red-600 focus:bg-white focus:outline-none"
                   />
@@ -1364,7 +1410,10 @@ export const CustomerPortal: React.FC<CustomerPortalProps> = ({ onNavigate }) =>
                 <input
                   type="text"
                   value={editUnit}
-                  onChange={(e) => setEditUnit(e.target.value)}
+                  onChange={(e) => {
+                    isFormDirtyRef.current = true;
+                    setEditUnit(e.target.value);
+                  }}
                   placeholder="e.g. Dock #4"
                   className="w-full bg-slate-50 border border-slate-300 px-3 py-2.5 text-slate-900 rounded-xl focus:border-red-600 focus:bg-white focus:outline-none"
                 />

@@ -200,7 +200,9 @@ class FlashDropStore {
       setInterval(() => {
         if (isSupabaseConfigured && supabase) {
           this.fetchDriversFromSupabase().then(() => {
-            this.fetchOrdersFromSupabase();
+            this.fetchOrdersFromSupabase().then(() => {
+              this.fetchCustomersFromSupabase();
+            });
           });
         }
       }, 7000);
@@ -214,6 +216,9 @@ class FlashDropStore {
     try {
       // 1. Initial fetch of live Supabase drivers FIRST so records exist in memory
       await this.fetchDriversFromSupabase();
+
+      // 1b. Initial fetch of live customer directory from Supabase
+      await this.fetchCustomersFromSupabase();
 
       // 2. Restore auth session
       const { data: { session } } = await sb.auth.getSession();
@@ -246,12 +251,24 @@ class FlashDropStore {
         const rawName = profile?.full_name || matchingDriver?.name || session.user.user_metadata?.full_name || session.user.email?.split('@')[0] || 'User';
         const resolvedName = (isAdmin && (rawName.toLowerCase() === 'support' || !rawName || rawName === 'User')) ? 'Admin' : rawName;
 
+        let cachedProfile: any = {};
+        try {
+          const profileKey = `flashdrop_profile_${emailLower}`;
+          const cpStr = localStorage.getItem(profileKey);
+          if (cpStr) cachedProfile = JSON.parse(cpStr);
+        } catch {}
+
         this.currentUser = {
           role: resolvedRole,
           email: session.user.email || '',
           name: resolvedName,
-          phone: profile?.phone || matchingDriver?.phone || session.user.user_metadata?.phone,
+          phone: profile?.phone || matchingDriver?.phone || session.user.user_metadata?.phone || cachedProfile.phone || this.currentUser?.phone,
           driverId: resolvedRole === 'driver' ? (matchingDriver?.id || profile?.id || session.user.id) : undefined,
+          companyName: profile?.company_name || session.user.user_metadata?.company_name || session.user.user_metadata?.companyName || cachedProfile.companyName || this.currentUser?.companyName,
+          accountType: session.user.user_metadata?.account_type || session.user.user_metadata?.accountType || cachedProfile.accountType || this.currentUser?.accountType || (profile?.company_name ? 'commercial' : 'personal'),
+          hstNumber: session.user.user_metadata?.hst_number || session.user.user_metadata?.hstNumber || cachedProfile.hstNumber || this.currentUser?.hstNumber,
+          defaultPickupAddress: session.user.user_metadata?.default_pickup_address || session.user.user_metadata?.defaultPickupAddress || session.user.user_metadata?.address || cachedProfile.address || this.currentUser?.defaultPickupAddress,
+          defaultPickupUnit: session.user.user_metadata?.default_pickup_unit || session.user.user_metadata?.defaultPickupUnit || cachedProfile.unit || this.currentUser?.defaultPickupUnit,
         };
 
         if (isAdmin && profile?.id && profile?.full_name === 'support') {
@@ -291,12 +308,24 @@ class FlashDropStore {
           const rawName = profile?.full_name || matchingDriver?.name || session.user.user_metadata?.full_name || session.user.email?.split('@')[0] || 'User';
           const resolvedName = (isAdmin && (rawName.toLowerCase() === 'support' || !rawName || rawName === 'User')) ? 'Admin' : rawName;
 
+          let cachedProfile: any = {};
+          try {
+            const profileKey = `flashdrop_profile_${emailLower}`;
+            const cpStr = localStorage.getItem(profileKey);
+            if (cpStr) cachedProfile = JSON.parse(cpStr);
+          } catch {}
+
           this.currentUser = {
             role: resolvedRole,
             email: session.user.email || '',
             name: resolvedName,
-            phone: profile?.phone || matchingDriver?.phone || session.user.user_metadata?.phone,
+            phone: profile?.phone || matchingDriver?.phone || session.user.user_metadata?.phone || cachedProfile.phone || this.currentUser?.phone,
             driverId: resolvedRole === 'driver' ? (matchingDriver?.id || profile?.id || session.user.id) : undefined,
+            companyName: profile?.company_name || session.user.user_metadata?.company_name || session.user.user_metadata?.companyName || cachedProfile.companyName || this.currentUser?.companyName,
+            accountType: session.user.user_metadata?.account_type || session.user.user_metadata?.accountType || cachedProfile.accountType || this.currentUser?.accountType || (profile?.company_name ? 'commercial' : 'personal'),
+            hstNumber: session.user.user_metadata?.hst_number || session.user.user_metadata?.hstNumber || cachedProfile.hstNumber || this.currentUser?.hstNumber,
+            defaultPickupAddress: session.user.user_metadata?.default_pickup_address || session.user.user_metadata?.defaultPickupAddress || session.user.user_metadata?.address || cachedProfile.address || this.currentUser?.defaultPickupAddress,
+            defaultPickupUnit: session.user.user_metadata?.default_pickup_unit || session.user.user_metadata?.defaultPickupUnit || cachedProfile.unit || this.currentUser?.defaultPickupUnit,
           };
 
           if (isAdmin && profile?.id && profile?.full_name === 'support') {
@@ -324,6 +353,13 @@ class FlashDropStore {
         .channel('public:drivers_channel')
         .on('postgres_changes', { event: '*', schema: 'public', table: 'drivers' }, () => {
           this.fetchDriversFromSupabase();
+        })
+        .subscribe();
+
+      sb
+        .channel('public:profiles_channel')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' }, () => {
+          this.fetchCustomersFromSupabase();
         })
         .subscribe();
 
@@ -513,8 +549,6 @@ class FlashDropStore {
           'orders@metropaint.ca',
           'test@example.com',
           'bbbb',
-          'mashardocuments@gmail.com',
-          'branch036@cloverdalepaint.com',
         ];
         this.orders = allOrders.filter(
           (o) =>
@@ -573,6 +607,104 @@ class FlashDropStore {
       }
     } catch (e) {
       console.warn('Supabase fetch drivers notice:', e);
+    }
+  }
+
+  public async fetchCustomersFromSupabase() {
+    if (!isSupabaseConfigured || !supabase) return;
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*');
+
+      if (!error && data) {
+        const BLACKLIST_TEST_EMAILS = [
+          'jiljo555@gmail.com',
+          'marcus@apexbuilds.ca',
+          'elena@studiojenkins.design',
+          'orders@metropaint.ca',
+          'test@example.com',
+          'bbbb',
+        ];
+
+        const remoteCustomers: Customer[] = data
+          .filter((p: any) => {
+            const roleLower = (p.role || '').toLowerCase().trim();
+            if (roleLower === 'driver' || roleLower === 'admin' || roleLower === 'owner') return false;
+            const emailLower = (p.email || '').toLowerCase().trim();
+            const nameLower = (p.full_name || '').toLowerCase().trim();
+            const compLower = (p.company_name || '').toLowerCase().trim();
+            return (
+              emailLower &&
+              !BLACKLIST_TEST_EMAILS.includes(emailLower) &&
+              compLower !== 'jo' &&
+              nameLower !== 'jiljo mathew' &&
+              nameLower !== 'test customer' &&
+              nameLower !== 'marcus vance'
+            );
+          })
+          .map((p: any) => {
+            let cached: any = {};
+            try {
+              const cachedStr = localStorage.getItem(`flashdrop_profile_${(p.email || '').toLowerCase().trim()}`);
+              if (cachedStr) cached = JSON.parse(cachedStr);
+            } catch {}
+
+            return {
+              id: p.id,
+              user_id: p.id,
+              name: p.full_name || cached.fullName || 'Valued Customer',
+              email: p.email,
+              phone: p.phone || cached.phone || '',
+              company_name: p.company_name || cached.companyName || undefined,
+              account_type: cached.accountType || (p.company_name ? 'commercial' : 'personal'),
+              hst_number: cached.hstNumber || undefined,
+              address: cached.address || undefined,
+              unit: cached.unit || undefined,
+              is_active: true,
+              created_at: p.created_at || new Date().toISOString(),
+              updated_at: p.updated_at || undefined,
+            };
+          });
+
+        // Ensure active accounts are not accidentally marked as deleted in local memory
+        for (const rc of remoteCustomers) {
+          const emailLower = (rc.email || '').toLowerCase().trim();
+          this.deletedCustomerIds = this.deletedCustomerIds.filter(
+            (d) => d !== rc.id && d !== emailLower
+          );
+        }
+
+        // Merge with existing this.customers
+        const existingMap = new Map<string, Customer>();
+        for (const c of this.customers) {
+          const key = (c.email || c.id).toLowerCase().trim();
+          existingMap.set(key, c);
+        }
+        for (const rc of remoteCustomers) {
+          const key = (rc.email || rc.id).toLowerCase().trim();
+          const existing = existingMap.get(key);
+          if (existing) {
+            existingMap.set(key, {
+              ...existing,
+              ...rc,
+              name: rc.name || existing.name,
+              phone: rc.phone || existing.phone,
+              company_name: rc.company_name || existing.company_name,
+              hst_number: existing.hst_number || rc.hst_number,
+              address: existing.address || rc.address,
+              unit: existing.unit || rc.unit,
+            });
+          } else {
+            existingMap.set(key, rc);
+          }
+        }
+        this.customers = Array.from(existingMap.values());
+        this.saveToStorage();
+        this.notify();
+      }
+    } catch (e) {
+      console.warn('Supabase fetch customers notice:', e);
     }
   }
 
@@ -643,8 +775,6 @@ class FlashDropStore {
         'orders@metropaint.ca',
         'test@example.com',
         'bbbb',
-        'mashardocuments@gmail.com',
-        'branch036@cloverdalepaint.com',
       ];
       this.customers = this.customers.filter(
         (c) =>
@@ -840,10 +970,47 @@ class FlashDropStore {
         hstNumber: this.currentUser.hstNumber,
         accountType: this.currentUser.accountType,
         address: this.currentUser.defaultPickupAddress || existing.address || '',
+        unit: this.currentUser.defaultPickupUnit || existing.unit || '',
       }));
     } catch (e) {
       console.warn('Failed to cache updated profile locally:', e);
     }
+
+    // Immediately reflect profile update in customer directory
+    const emailLower = this.currentUser.email.toLowerCase().trim();
+    const existingIdx = this.customers.findIndex(
+      (c) => (c.email && c.email.toLowerCase().trim() === emailLower) || (this.currentUser?.driverId && c.id === this.currentUser.driverId)
+    );
+    if (existingIdx >= 0) {
+      this.customers[existingIdx] = {
+        ...this.customers[existingIdx],
+        name: this.currentUser.name,
+        phone: this.currentUser.phone || this.customers[existingIdx].phone,
+        company_name: this.currentUser.companyName || this.customers[existingIdx].company_name,
+        account_type: this.currentUser.accountType || this.customers[existingIdx].account_type,
+        hst_number: this.currentUser.hstNumber || this.customers[existingIdx].hst_number,
+        address: this.currentUser.defaultPickupAddress || this.customers[existingIdx].address,
+        unit: this.currentUser.defaultPickupUnit || this.customers[existingIdx].unit,
+        updated_at: new Date().toISOString(),
+      };
+    } else {
+      this.customers.push({
+        id: this.currentUser.driverId || `cust-${Date.now()}`,
+        user_id: this.currentUser.driverId,
+        name: this.currentUser.name,
+        email: this.currentUser.email,
+        phone: this.currentUser.phone || '',
+        company_name: this.currentUser.companyName,
+        account_type: this.currentUser.accountType || (this.currentUser.companyName ? 'commercial' : 'personal'),
+        hst_number: this.currentUser.hstNumber,
+        address: this.currentUser.defaultPickupAddress,
+        unit: this.currentUser.defaultPickupUnit,
+        is_active: true,
+        created_at: new Date().toISOString(),
+      });
+    }
+    this.saveToStorage();
+    this.notify();
 
     // Sync to Supabase auth metadata and profiles table if connected
     if (isSupabaseConfigured && supabase) {
@@ -858,6 +1025,8 @@ class FlashDropStore {
               hst_number: this.currentUser.hstNumber,
               account_type: this.currentUser.accountType,
               address: this.currentUser.defaultPickupAddress,
+              default_pickup_address: this.currentUser.defaultPickupAddress,
+              default_pickup_unit: this.currentUser.defaultPickupUnit,
             },
           });
 
@@ -869,6 +1038,7 @@ class FlashDropStore {
               full_name: this.currentUser.name,
               phone: this.currentUser.phone,
               company_name: this.currentUser.companyName,
+              updated_at: new Date().toISOString(),
             },
           ]);
         }
@@ -1793,8 +1963,6 @@ class FlashDropStore {
       'orders@metropaint.ca',
       'test@example.com',
       'bbbb',
-      'mashardocuments@gmail.com',
-      'branch036@cloverdalepaint.com',
     ];
 
     // 1. Add explicitly configured customers (excluding deleted and test dummy accounts)
@@ -1952,6 +2120,21 @@ class FlashDropStore {
 
     this.customers[custIndex] = updatedCust;
     this.saveToStorage();
+    this.notify();
+
+    if (isSupabaseConfigured && supabase) {
+      const sbUpdates: any = {
+        full_name: updatedCust.name,
+        phone: updatedCust.phone,
+        company_name: updatedCust.company_name,
+        updated_at: new Date().toISOString(),
+      };
+      if (updatedCust.user_id) {
+        supabase.from('profiles').update(sbUpdates).eq('id', updatedCust.user_id).then();
+      } else if (updatedCust.email) {
+        supabase.from('profiles').update(sbUpdates).eq('email', updatedCust.email).then();
+      }
+    }
 
     if (
       this.currentUser &&
@@ -1970,6 +2153,7 @@ class FlashDropStore {
         defaultPickupUnit: updatedCust.unit,
       };
       this.saveToStorage();
+      this.notify();
     }
 
     return updatedCust;
