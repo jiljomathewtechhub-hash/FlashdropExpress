@@ -279,10 +279,10 @@ export default function App() {
           <button
             onClick={() => handleNavigate('tracking')}
             className="min-h-[48px] min-w-[62px] flex flex-col items-center justify-center px-2 py-1 text-slate-600 hover:text-slate-900 transition-smooth rounded-xl hover:bg-slate-100 active:bg-slate-200 cursor-pointer"
-            aria-label="Track Order with FD code"
+            aria-label="Check Order Status with FD code"
           >
             <Search className="w-4 h-4 text-sky-600" />
-            <span className="text-[10px] font-bold mt-0.5 tracking-tight">Track</span>
+            <span className="text-[10px] font-bold mt-0.5 tracking-tight">Status</span>
           </button>
         </div>
       </div>

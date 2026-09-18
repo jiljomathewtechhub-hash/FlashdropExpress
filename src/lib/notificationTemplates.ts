@@ -201,10 +201,10 @@ export const createCustomerOrderEmail = (order: Order, settings: BusinessSetting
       </p>
     </div>
 
-    <!-- CTA Tracking Button -->
+    <!-- CTA Status Button -->
     <div style="text-align: center; margin: 28px 0;">
       <a href="${trackUrl}" class="button" style="background-color: #C5161D; box-shadow: 0 4px 12px rgba(197, 22, 29, 0.25); font-size: 14px; padding: 14px 28px; display: inline-block;">
-        Track Quotation Request Status &rarr;
+        Check Quotation Request Status &rarr;
       </a>
       <p style="color: #64748B; font-size: 11px; margin-top: 12px;">
         Need to update details? Reply to this email or call dispatch at ${settings.phone || '+1 647 804 9775'}.
@@ -368,7 +368,7 @@ export const createCustomerQuoteReadyEmail = (order: Order, settings: BusinessSe
       </a>
       <div style="margin-top: 12px;">
         <a href="${trackUrl}" style="color: #0284C7; font-size: 12px; text-decoration: underline; font-weight: 600;">
-          Or review specifications on live tracking page &rarr;
+          Or review specifications on order status page &rarr;
         </a>
       </div>
       <p style="color: #64748B; font-size: 11px; margin-top: 12px;">
@@ -380,7 +380,7 @@ export const createCustomerQuoteReadyEmail = (order: Order, settings: BusinessSe
   return {
     subject,
     html: wrapHtmlEmail(subject, preheader, contentHtml),
-    plain: `FlashDrop Express: Official Delivery Quotation #${order.order_number} is ready! Total: $${order.total_price.toFixed(2)} CAD.\n\nAccept & Confirm Quotation: ${confirmUrl}\nOr review on tracking page: ${trackUrl}`,
+    plain: `FlashDrop Express: Official Delivery Quotation #${order.order_number} is ready! Total: $${order.total_price.toFixed(2)} CAD.\n\nAccept & Confirm Quotation: ${confirmUrl}\nOr review on order status page: ${trackUrl}`,
   };
 };
 
@@ -558,7 +558,7 @@ export const createCustomerStatusEmail = (order: Order, prevStatus: OrderStatus,
       ` : ''}
     </div>
 
-    <!-- Live Tracking & Action Button -->
+    <!-- Order Status & Action Button -->
     <div style="text-align: center; margin: 28px 0;">
       ${newStatus === 'quote_sent' ? `
       <a href="${confirmUrl}" class="button" style="background-color: #059669; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.35); font-size: 15px; padding: 14px 28px; display: inline-block; margin-bottom: 12px;">
@@ -566,11 +566,11 @@ export const createCustomerStatusEmail = (order: Order, prevStatus: OrderStatus,
       </a>
       <div>
         <a href="${trackUrl}" style="color: #0284C7; font-size: 12px; text-decoration: underline; font-weight: 600;">
-          Or review specifications on live tracking page &rarr;
+          Or review specifications on order status page &rarr;
         </a>
       </div>
       ` : `
-      <a href="${trackUrl}" class="button">View Live Order Tracking &rarr;</a>
+      <a href="${trackUrl}" class="button">Check Order Status &rarr;</a>
       `}
     </div>
   `;
@@ -579,8 +579,8 @@ export const createCustomerStatusEmail = (order: Order, prevStatus: OrderStatus,
     subject,
     html: wrapHtmlEmail(subject, preheader, contentHtml),
     plain: newStatus === 'quote_sent'
-      ? `FlashDrop Express: Official Delivery Quotation #${order.order_number} is ready! Total: $${order.total_price.toFixed(2)} CAD.\n\nAccept & Confirm Quotation: ${confirmUrl}\nOr review on tracking page: ${trackUrl}`
-      : `FlashDrop Express Update: Order #${order.order_number} is now ${currentTitle}. ${currentMsg} Track: ${trackUrl}`,
+      ? `FlashDrop Express: Official Delivery Quotation #${order.order_number} is ready! Total: $${order.total_price.toFixed(2)} CAD.\n\nAccept & Confirm Quotation: ${confirmUrl}\nOr review on order status page: ${trackUrl}`
+      : `FlashDrop Express Update: Order #${order.order_number} is now ${currentTitle}. ${currentMsg} Status: ${trackUrl}`,
   };
 };
 

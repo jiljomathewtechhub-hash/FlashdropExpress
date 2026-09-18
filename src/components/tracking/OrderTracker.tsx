@@ -253,13 +253,13 @@ export const OrderTracker: React.FC<OrderTrackerProps> = ({ initialOrderNumber, 
       {/* Header */}
       <div className="text-center max-w-2xl mx-auto space-y-2">
         <span className="badge-soft-rose px-3.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider inline-block">
-          Live Radar
+          Delivery Status
         </span>
         <h1 className="text-3xl font-black text-slate-900 font-['Outfit']">
-          Track Your Delivery Order
+          Check Order Status
         </h1>
         <p className="text-xs text-slate-600">
-          Enter your <strong>FD1001</strong> tracking number to view real-time transit checkpoints.
+          Enter your <strong>FD1001</strong> order number to view current progress and delivery checkpoints.
         </p>
       </div>
 
@@ -283,7 +283,7 @@ export const OrderTracker: React.FC<OrderTrackerProps> = ({ initialOrderNumber, 
             type="submit"
             className="px-6 py-2.5 btn-gradient-primary text-white font-bold text-xs rounded-xl shadow-lg shadow-red-950/40 transition flex-shrink-0 cursor-pointer"
           >
-            Locate Order
+            Check Status
           </button>
         </form>
 
@@ -306,7 +306,7 @@ export const OrderTracker: React.FC<OrderTrackerProps> = ({ initialOrderNumber, 
           </div>
         ) : (
           <p className="text-center text-xs text-slate-500 mt-2.5">
-            Enter your order tracking code (e.g. FD1001) from your receipt or confirmation email.
+            Enter your order number (e.g. FD1001) from your receipt or confirmation email.
           </p>
         )}
       </div>
@@ -318,10 +318,10 @@ export const OrderTracker: React.FC<OrderTrackerProps> = ({ initialOrderNumber, 
             <Truck className="w-6 h-6" />
           </div>
           <h3 className="text-base font-bold text-slate-900 font-['Outfit']">
-            Real-Time Dispatch Tracking
+            Delivery Status &amp; Checkpoints
           </h3>
           <p className="text-xs text-slate-600 leading-relaxed max-w-md mx-auto">
-            All FlashDrop deliveries include real-time checkpoint timestamps, assigned driver details, route telemetry, and electronic proof of delivery (POD) with digital signatures.
+            All FlashDrop shipments feature verified stage progression, scheduled time windows, assigned courier details, and official proof of delivery (POD) with recipient signatures.
           </p>
           <div className="grid grid-cols-3 gap-3 pt-2 text-[11px] text-slate-700">
             <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl">
@@ -329,12 +329,12 @@ export const OrderTracker: React.FC<OrderTrackerProps> = ({ initialOrderNumber, 
               <span className="text-slate-400">6-character code</span>
             </div>
             <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl">
-              <span className="font-bold text-emerald-600 block mb-0.5">2. Live Status</span>
-              <span className="text-slate-400">En route updates</span>
+              <span className="font-bold text-emerald-600 block mb-0.5">2. Current Status</span>
+              <span className="text-slate-400">Step checkpoints</span>
             </div>
             <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl">
-              <span className="font-bold text-amber-600 block mb-0.5">3. Sign & POD</span>
-              <span className="text-slate-400">Instant PDF download</span>
+              <span className="font-bold text-amber-600 block mb-0.5">3. Sign &amp; POD</span>
+              <span className="text-slate-400">Waybill &amp; Invoice</span>
             </div>
           </div>
         </div>
@@ -386,7 +386,7 @@ export const OrderTracker: React.FC<OrderTrackerProps> = ({ initialOrderNumber, 
                   </div>
                   <div className="flex items-center space-x-1 font-semibold text-emerald-800">
                     <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                    <span>Live Dispatch Radar Active</span>
+                    <span>Dispatch Queue Active</span>
                   </div>
                 </div>
               </div>

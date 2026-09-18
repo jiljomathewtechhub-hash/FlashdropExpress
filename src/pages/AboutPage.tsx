@@ -160,7 +160,7 @@ export const AboutPage: React.FC<AboutPageProps> = ({ onNavigate }) => {
                 </div>
                 <div className="flex items-center space-x-2">
                   <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                  <span>Real-Time GPS Tracking</span>
+                  <span>Transparent Milestone Status</span>
                 </div>
               </div>
             </div>

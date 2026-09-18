@@ -1159,7 +1159,7 @@ export const OrderWizard: React.FC<OrderWizardProps> = ({ initialData, onNavigat
                 <span>Step 3: Contact Details & Order Review</span>
               </h2>
               <p className="text-xs sm:text-sm text-slate-600 mt-1">
-                Enter your contact info to receive live tracking and official PDF invoice. Review the itemized quote below.
+                Enter your contact info to receive milestone status updates and official PDF invoice. Review the itemized quote below.
               </p>
             </div>
 

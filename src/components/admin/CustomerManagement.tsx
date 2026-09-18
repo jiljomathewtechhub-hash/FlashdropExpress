@@ -915,7 +915,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
                                   <button
                                     onClick={() => onNavigate('tracking', ord.order_number)}
                                     className="p-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg transition cursor-pointer"
-                                    title="Live Tracking"
+                                    title="Order Status"
                                   >
                                     <Truck className="w-3.5 h-3.5" />
                                   </button>

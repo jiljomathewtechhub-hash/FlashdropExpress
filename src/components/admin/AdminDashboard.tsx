@@ -1554,7 +1554,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
                               <button
                                 onClick={() => onNavigate('tracking', ord.order_number)}
                                 className="p-1.5 bg-slate-50 hover:bg-slate-100 text-slate-700 hover:text-slate-900 border border-slate-200 rounded-lg transition cursor-pointer"
-                                title="Inspect Live Tracking"
+                                title="Inspect Order Status"
                               >
                                 <Search className="w-3.5 h-3.5" />
                               </button>
@@ -1868,7 +1868,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
                               <button
                                 onClick={() => onNavigate('tracking', ord.order_number)}
                                 className="p-1 bg-slate-50 hover:bg-slate-100 text-slate-700 text-[10px] rounded-lg border border-slate-200 transition cursor-pointer"
-                                title="Live Tracking"
+                                title="Order Status"
                               >
                                 <Search className="w-3 h-3" />
                               </button>
@@ -5339,10 +5339,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
                   type="button"
                   onClick={() => onNavigate('tracking', selectedOrderDetails.order_number)}
                   className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold border border-slate-300 rounded-xl transition flex items-center space-x-1.5 cursor-pointer shadow-xs"
-                  title="Open Live GPS Tracking Map"
+                  title="Open Order Status"
                 >
                   <Search className="w-3.5 h-3.5" />
-                  <span className="hidden sm:inline text-xs">Live Tracking</span>
+                  <span className="hidden sm:inline text-xs">Order Status</span>
                 </button>
                 <button
                   type="button"

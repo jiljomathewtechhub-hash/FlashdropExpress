@@ -260,7 +260,7 @@ export function classifyOntarioAddress(rawInput: string): CoverageCheckResult {
       pricingType: 'Standard Flat Kilometre Rate',
       badgeColor: 'emerald',
       zoneTab: 'gta',
-      description: 'West GTA Corridor: Fast QEW & Highway 401 dispatch with real-time driver tracking.',
+      description: 'West GTA Corridor: Fast QEW & Highway 401 dispatch with direct status updates.',
     };
   }
 

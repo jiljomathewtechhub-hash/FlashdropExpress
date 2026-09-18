@@ -558,7 +558,7 @@ export const CustomerPortal: React.FC<CustomerPortalProps> = ({ onNavigate }) =>
       <div className="border-b border-slate-200">
         <div className="flex space-x-2 sm:space-x-4 overflow-x-auto pb-2 scrollbar-thin">
           {[
-            { id: 'shipments', label: 'Shipments & Tracking', icon: Package, count: orders.length },
+            { id: 'shipments', label: 'Shipments & Status', icon: Package, count: orders.length },
             { id: 'invoices', label: 'Invoices & CRA Receipts', icon: Receipt, count: orders.filter((o) => o.order_status !== 'submitted' && o.order_status !== 'cancelled').length },
             { id: 'locations', label: 'Saved Address Book', icon: MapPin, count: savedLocations.length },
             { id: 'profile', label: 'Company Profile & Tax Settings', icon: Building },
@@ -591,7 +591,7 @@ export const CustomerPortal: React.FC<CustomerPortalProps> = ({ onNavigate }) =>
       </div>
 
       {/* ========================================================================= */}
-      {/* TAB 1: SHIPMENTS & LIVE TRACKING */}
+      {/* TAB 1: SHIPMENTS & ORDER STATUS */}
       {/* ========================================================================= */}
       {activeTab === 'shipments' && (
         <div className="space-y-6">
@@ -830,13 +830,13 @@ export const CustomerPortal: React.FC<CustomerPortalProps> = ({ onNavigate }) =>
                           </button>
                         )}
 
-                        {/* Track Live */}
+                        {/* Check Order Status */}
                         <button
                           onClick={() => onNavigate('tracking', ord.order_number)}
                           className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-xl text-xs font-semibold transition border border-slate-200 flex items-center space-x-1.5 cursor-pointer"
                         >
                           <Navigation className="w-3 h-3 text-blue-600" />
-                          <span>Live Tracking</span>
+                          <span>Order Status</span>
                         </button>
 
                         {/* Inspection / POD Modal */}

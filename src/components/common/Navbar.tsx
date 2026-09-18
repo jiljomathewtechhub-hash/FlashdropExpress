@@ -61,7 +61,7 @@ export const Navbar: React.FC<NavbarProps> = ({ currentTab, onNavigate }) => {
     { id: 'services', label: 'Services' },
     { id: 'service-areas', label: 'Coverage' },
     { id: 'vehicles', label: 'Fleet' },
-    { id: 'tracking', label: 'Track Order' },
+    { id: 'tracking', label: 'Order Status' },
     { id: 'contact', label: 'Contact' },
   ];
 
@@ -139,7 +139,7 @@ export const Navbar: React.FC<NavbarProps> = ({ currentTab, onNavigate }) => {
               </a>
             )}
 
-            {/* Quick Track order button */}
+            {/* Quick Order Status button */}
             <button
               onClick={() => onNavigate('tracking')}
               className={`flex items-center space-x-1.5 px-2.5 py-1.5 text-xs font-semibold rounded-lg transition-smooth cursor-pointer whitespace-nowrap border ${
@@ -147,10 +147,10 @@ export const Navbar: React.FC<NavbarProps> = ({ currentTab, onNavigate }) => {
                   ? 'bg-red-50 text-red-700 border-red-200 font-bold'
                   : 'text-slate-700 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 border-slate-200'
               }`}
-              title="Track order with FD number"
+              title="Check order status with FD number"
             >
               <Search className="w-3.5 h-3.5 text-slate-500" />
-              <span>Track</span>
+              <span>Order Status</span>
             </button>
 
             {/* Portal / Role Button & Notification Bell */}

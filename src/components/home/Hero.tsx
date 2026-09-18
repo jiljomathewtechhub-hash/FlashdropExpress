@@ -55,7 +55,7 @@ export const Hero: React.FC<HeroProps> = ({ onNavigate }) => {
               On-Demand Freight & Commercial Courier
             </p>
             <p className="text-sm sm:text-base text-slate-600 max-w-2xl mx-auto leading-relaxed font-normal">
-              Direct point-to-point commercial transport across the Greater Toronto Area. Custom tailored freight quotes, live radar tracking, and dedicated GTA couriers.
+              Direct point-to-point commercial transport across the Greater Toronto Area. Custom tailored freight quotes, transparent milestone status updates, and dedicated GTA couriers.
             </p>
           </div>
 
@@ -92,14 +92,14 @@ export const Hero: React.FC<HeroProps> = ({ onNavigate }) => {
                 type="text"
                 value={trackNumber}
                 onChange={(e) => setTrackNumber(e.target.value)}
-                placeholder="Track Order # (e.g. FD1001)"
+                placeholder="Check Order Status # (e.g. FD1001)"
                 className="w-full bg-transparent px-3 py-2 text-xs sm:text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none font-mono"
               />
               <button
                 type="submit"
                 className="min-h-[40px] px-5 py-2 btn-gradient-primary text-white font-bold text-xs rounded-xl transition-smooth shrink-0 cursor-pointer shadow-sm"
               >
-                Track
+                Check Status
               </button>
             </form>
           </div>

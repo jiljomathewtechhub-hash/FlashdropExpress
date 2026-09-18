@@ -679,7 +679,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate, initialParams 
               ? 'Restricted dispatch executive access. Authorized personnel only.'
               : selectedRole === 'driver'
               ? 'Courier driver and internal operations management portal.'
-              : 'Sign in to manage commercial deliveries, invoices, and tracking.'}
+              : 'Sign in to manage commercial deliveries, invoices, and order status.'}
           </p>
         </div>
 

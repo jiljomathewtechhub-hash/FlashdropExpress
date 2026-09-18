@@ -37,10 +37,10 @@ const FAQ_ITEMS: FAQItem[] = [
       'We provide daily point-to-point courier service across the entire Greater Toronto Area (Toronto, Mississauga, Brampton, Vaughan, Markham, Richmond Hill, Oakville, Burlington, and Oshawa), with dedicated regional routes to Hamilton, Kitchener-Waterloo, Barrie, and Niagara.',
   },
   {
-    id: 'tracking-pod',
-    question: 'How does live tracking and Proof of Delivery (POD) work?',
+    id: 'status-pod',
+    question: 'How does Order Status and Proof of Delivery (POD) work?',
     answer:
-      'Every shipment includes a live radar tracking link with real-time GPS transit updates. Once delivered, the recipient\'s digital signature and timestamped photo verification are recorded and available on your invoice receipt.',
+      'Every shipment includes a dedicated order status link showing confirmed milestone checkpoints from dispatch through to delivery. Once delivered, the recipient\'s digital signature and timestamped photo verification are recorded and available on your invoice receipt.',
   },
   {
     id: 'after-hours',

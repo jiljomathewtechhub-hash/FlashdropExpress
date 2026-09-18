@@ -17,13 +17,13 @@ export const HowItWorks: React.FC<HowItWorksProps> = ({ onNavigate }) => {
       step: '02',
       icon: Calculator,
       title: 'Automatic Distance & Rate',
-      desc: 'Instant transparent pricing calculated based on exact kilometres and weight tiers. Order generated with unique FDXXXXXX tracking number.',
+      desc: 'Instant transparent pricing calculated based on exact kilometres and weight tiers. Order generated with unique FDXXXXXX order number.',
     },
     {
       step: '03',
       icon: Truck,
-      title: 'Swift Dispatch & Live Tracking',
-      desc: 'Dedicated driver is assigned immediately. Track live status checkpoints from pickup arrival to en route transit across Ontario.',
+      title: 'Swift Dispatch & Order Status',
+      desc: 'Dedicated driver is assigned immediately. Check delivery status checkpoints from pickup arrival to en route transit across Ontario.',
     },
     {
       step: '04',
