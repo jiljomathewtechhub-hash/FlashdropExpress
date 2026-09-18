@@ -658,15 +658,81 @@ export function classifyOntarioAddress(rawInput: string): CoverageCheckResult {
 }
 
 /**
+ * Finds direct FSA, city centroid, or popular location match without fallbacks.
+ * Decoupled from checkIsGta and resolveOntarioCoordinates to prevent circular recursion.
+ */
+export function findDirectOntarioCentroid(rawAddress: string): GeoCentroid | null {
+  const query = (rawAddress || '').trim().toLowerCase();
+  if (!query) {
+    return null;
+  }
+
+  // 1. Check if an exact postal code FSA (e.g. "L6H", "M5V", "L8G") is in the address
+  const cleaned = query.replace(/[^a-z0-9]/g, '');
+  const fsaMatch = query.match(/\b([a-ceghj-npr-tvxy]\d[a-ceghj-npr-tv-z])\b/i);
+  if (fsaMatch) {
+    const fsa = fsaMatch[1].toLowerCase();
+    if (ONTARIO_FSA_PREFIXES[fsa]) {
+      return ONTARIO_FSA_PREFIXES[fsa];
+    }
+    const prefix2 = fsa.substring(0, 2);
+    if (ONTARIO_FSA_PREFIXES[prefix2]) {
+      return ONTARIO_FSA_PREFIXES[prefix2];
+    }
+  }
+
+  // Check 3-character FSA key contained within cleaned string
+  for (const [fsaKey, centroid] of Object.entries(ONTARIO_FSA_PREFIXES)) {
+    if (fsaKey.length === 3 && cleaned.includes(fsaKey)) {
+      return centroid;
+    }
+  }
+
+  // 2. Check known city/town names in the address string with word boundaries (longest name first)
+  if (query.length >= 3) {
+    const sortedCityKeys = Object.keys(ONTARIO_CITY_CENTROIDS).sort((a, b) => b.length - a.length);
+    for (const cityKey of sortedCityKeys) {
+      const cityRegex = new RegExp(`(^|[^a-z0-9])${cityKey}([^a-z0-9]|$)`, 'i');
+      if (cityRegex.test(query)) {
+        return ONTARIO_CITY_CENTROIDS[cityKey];
+      }
+    }
+  }
+
+  // 3. Check popular locations exact match (only for meaningful queries >= 6 chars)
+  if (query.length >= 6) {
+    const popular = POPULAR_LOCATIONS.find((loc) =>
+      loc.address.toLowerCase().includes(query) || loc.city.toLowerCase().includes(query)
+    );
+    if (popular) {
+      return {
+        name: popular.city,
+        lat: popular.lat,
+        lng: popular.lng,
+        isGta: popular.isGta,
+        region: popular.city,
+      };
+    }
+  }
+
+  return null;
+}
+
+/**
  * Checks if an address string is within the Greater Toronto Area (GTA).
+ * Guaranteed zero circular recursion.
  */
 export function checkIsGta(addressStr: string): boolean {
   if (!addressStr) return true;
-  const centroid = resolveOntarioCoordinates(addressStr);
-  if (centroid && centroid.name !== 'Toronto' && centroid.name !== 'Ontario Regional Hub') {
-    return centroid.isGta;
+  const direct = findDirectOntarioCentroid(addressStr);
+  if (direct) {
+    return direct.isGta;
   }
-  return classifyOntarioAddress(addressStr).isGta;
+  const classification = classifyOntarioAddress(addressStr);
+  if (classification.status === 'extended_ontario') {
+    return false;
+  }
+  return true;
 }
 
 /**
@@ -702,62 +768,25 @@ export function calculateRoadDistanceKm(
 /**
  * Resolves precise coordinates for any Ontario street address, postal code, or municipality.
  * Prevents distance mismatches by matching exact FSA and city centroids.
+ * Guaranteed zero circular recursion.
  */
 export function resolveOntarioCoordinates(rawAddress: string): GeoCentroid {
-  const query = (rawAddress || '').trim().toLowerCase();
+  const query = (rawAddress || '').trim();
   if (!query) {
     return { name: 'Toronto', lat: 43.6532, lng: -79.3832, isGta: true, region: 'Toronto' };
   }
 
-  // 1. Check if an exact postal code FSA (e.g. "L6H", "M5V", "L8G") is in the address
-  const cleaned = query.replace(/[^a-z0-9]/g, '');
-  const fsaMatch = query.match(/\b([a-ceghj-npr-tvxy]\d[a-ceghj-npr-tv-z])\b/i);
-  if (fsaMatch) {
-    const fsa = fsaMatch[1].toLowerCase();
-    if (ONTARIO_FSA_PREFIXES[fsa]) {
-      return ONTARIO_FSA_PREFIXES[fsa];
-    }
-    const prefix2 = fsa.substring(0, 2);
-    if (ONTARIO_FSA_PREFIXES[prefix2]) {
-      return ONTARIO_FSA_PREFIXES[prefix2];
-    }
+  const direct = findDirectOntarioCentroid(rawAddress);
+  if (direct) {
+    return direct;
   }
 
-  // Check 3-character FSA key contained within cleaned string
-  for (const [fsaKey, centroid] of Object.entries(ONTARIO_FSA_PREFIXES)) {
-    if (fsaKey.length === 3 && cleaned.includes(fsaKey)) {
-      return centroid;
-    }
+  // Fallback based on regional classification
+  const classification = classifyOntarioAddress(rawAddress);
+  if (classification.status === 'extended_ontario') {
+    return { name: 'Ontario Regional Hub', lat: 43.4516, lng: -80.4925, isGta: false, region: 'Extended Ontario' };
   }
-
-  // 2. Check known city/town names in the address string (longest name first)
-  const sortedCityKeys = Object.keys(ONTARIO_CITY_CENTROIDS).sort((a, b) => b.length - a.length);
-  for (const cityKey of sortedCityKeys) {
-    if (query.includes(cityKey)) {
-      return ONTARIO_CITY_CENTROIDS[cityKey];
-    }
-  }
-
-  // 3. Check popular locations exact match
-  const popular = POPULAR_LOCATIONS.find((loc) =>
-    loc.address.toLowerCase().includes(query) || loc.city.toLowerCase().includes(query)
-  );
-  if (popular) {
-    return {
-      name: popular.city,
-      lat: popular.lat,
-      lng: popular.lng,
-      isGta: popular.isGta,
-      region: popular.city,
-    };
-  }
-
-  // 4. Default fallback based on GTA classification
-  const isGta = checkIsGta(rawAddress);
-  if (isGta) {
-    return { name: 'Toronto', lat: 43.6532, lng: -79.3832, isGta: true, region: 'Toronto' };
-  }
-  return { name: 'Ontario Regional Hub', lat: 43.4516, lng: -80.4925, isGta: false, region: 'Extended Ontario' };
+  return { name: 'Toronto', lat: 43.6532, lng: -79.3832, isGta: true, region: 'Toronto' };
 }
 
 export interface GtaKmBreakdown {

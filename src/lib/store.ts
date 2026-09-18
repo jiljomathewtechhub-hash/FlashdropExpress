@@ -243,13 +243,20 @@ class FlashDropStore {
         const isDriver = !isAdmin && (Boolean(matchingDriver) || profile?.role === 'driver' || profile?.role === 'dispatcher');
         const resolvedRole: UserRole = isAdmin ? 'admin' : isDriver ? 'driver' : 'customer';
 
+        const rawName = profile?.full_name || matchingDriver?.name || session.user.user_metadata?.full_name || session.user.email?.split('@')[0] || 'User';
+        const resolvedName = (isAdmin && (rawName.toLowerCase() === 'support' || !rawName || rawName === 'User')) ? 'Admin' : rawName;
+
         this.currentUser = {
           role: resolvedRole,
           email: session.user.email || '',
-          name: profile?.full_name || matchingDriver?.name || session.user.user_metadata?.full_name || session.user.email?.split('@')[0] || 'User',
+          name: resolvedName,
           phone: profile?.phone || matchingDriver?.phone || session.user.user_metadata?.phone,
           driverId: resolvedRole === 'driver' ? (matchingDriver?.id || profile?.id || session.user.id) : undefined,
         };
+
+        if (isAdmin && profile?.id && profile?.full_name === 'support') {
+          sb.from('profiles').update({ full_name: 'Admin' }).eq('id', profile.id).then();
+        }
         this.notify();
       }
 
@@ -281,13 +288,20 @@ class FlashDropStore {
           const isDriver = !isAdmin && (Boolean(matchingDriver) || profile?.role === 'driver' || profile?.role === 'dispatcher');
           const resolvedRole: UserRole = isAdmin ? 'admin' : isDriver ? 'driver' : 'customer';
 
+          const rawName = profile?.full_name || matchingDriver?.name || session.user.user_metadata?.full_name || session.user.email?.split('@')[0] || 'User';
+          const resolvedName = (isAdmin && (rawName.toLowerCase() === 'support' || !rawName || rawName === 'User')) ? 'Admin' : rawName;
+
           this.currentUser = {
             role: resolvedRole,
             email: session.user.email || '',
-            name: profile?.full_name || matchingDriver?.name || session.user.user_metadata?.full_name || session.user.email?.split('@')[0] || 'User',
+            name: resolvedName,
             phone: profile?.phone || matchingDriver?.phone || session.user.user_metadata?.phone,
             driverId: resolvedRole === 'driver' ? (matchingDriver?.id || profile?.id || session.user.id) : undefined,
           };
+
+          if (isAdmin && profile?.id && profile?.full_name === 'support') {
+            sb.from('profiles').update({ full_name: 'Admin' }).eq('id', profile.id).then();
+          }
           this.saveToStorage();
         } else if (event === 'SIGNED_OUT') {
           this.currentUser = null;

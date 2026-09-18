@@ -513,12 +513,20 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate, initialParams 
           throw new Error('Access Denied: Customer accounts cannot access the Administrator Command Center. Please select "Customer" above to sign in.');
         }
 
+        const adminDisplayName = (profile?.full_name && profile.full_name.toLowerCase() !== 'support')
+          ? profile.full_name
+          : 'Admin';
+
         store.setCurrentUser({
           role: 'admin',
           email: userEmail,
-          name: profile?.full_name || authData.user.user_metadata?.full_name || 'Administrator',
+          name: adminDisplayName,
           phone: profile?.phone || '',
         });
+
+        if (supabase && profile?.id && (profile?.full_name === 'support' || !profile?.full_name)) {
+          supabase.from('profiles').update({ full_name: 'Admin' }).eq('id', profile.id).then();
+        }
 
         setSuccessMessage('Administrator authenticated. Loading Dispatch Command Center...');
         setTimeout(() => onNavigate('admin'), 500);

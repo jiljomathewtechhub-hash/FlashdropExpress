@@ -391,62 +391,67 @@ export function useAddressAutocomplete({
   // Instant local Ontario matcher (0ms latency!)
   const getLocalOntarioMatches = useCallback(
     (text: string): AddressSuggestion[] => {
-      const q = text.toLowerCase().trim();
-      if (!q || q.length < 2) return [];
+      try {
+        const q = text.trim().toLowerCase();
+        if (!q || q.length < 2) return [];
 
-      const qClean = q.replace(/[^a-z0-9]/g, '');
+        const qClean = q.replace(/[^a-z0-9]/g, '');
 
-      // 1. Find direct matches in local registry
-      const matched = ONTARIO_DATABASE.filter((loc) => {
-        const addr = loc.address.toLowerCase();
-        const city = loc.city.toLowerCase();
-        const pc = loc.postalCode ? loc.postalCode.toLowerCase().replace(/[^a-z0-9]/g, '') : '';
-        const addrClean = addr.replace(/[^a-z0-9]/g, '');
+        // 1. Find direct matches in local registry
+        const matched = ONTARIO_DATABASE.filter((loc) => {
+          const addr = loc.address.toLowerCase();
+          const city = loc.city.toLowerCase();
+          const pc = loc.postalCode ? loc.postalCode.toLowerCase().replace(/[^a-z0-9]/g, '') : '';
+          const addrClean = addr.replace(/[^a-z0-9]/g, '');
 
-        return (
-          addr.includes(q) ||
-          city.includes(q) ||
-          addrClean.includes(qClean) ||
-          (pc && pc.includes(qClean))
-        );
-      }).slice(0, 5);
+          return (
+            addr.includes(q) ||
+            city.includes(q) ||
+            addrClean.includes(qClean) ||
+            (pc && pc.includes(qClean))
+          );
+        }).slice(0, 5);
 
-      const suggestions: AddressSuggestion[] = matched.map((loc, idx) => ({
-        id: `local-on-${idx}-${loc.lat}`,
-        fullAddress: loc.address,
-        primaryText: loc.address.split(',')[0] || loc.address,
-        secondaryText: `${loc.city}, ON, Canada${loc.postalCode ? ' • ' + loc.postalCode : ''}`,
-        streetAddress: loc.address.split(',')[0] || loc.address,
-        city: loc.city,
-        state: 'ON',
-        country: 'Canada',
-        postcode: loc.postalCode,
-        lon: loc.lng,
-        lat: loc.lat,
-        isGta: loc.isGta,
-      }));
-
-      // 2. If user typed a custom street address or postal code, guarantee an instant Ontario item with PRECISE coordinates
-      if (suggestions.length === 0 && q.length >= 3) {
-        const centroid = resolveOntarioCoordinates(text);
-        const cityMatch = centroid.name;
-        const formatted = `${text.trim()}, ${cityMatch}, ON, Canada`;
-        suggestions.push({
-          id: `custom-on-${Date.now()}`,
-          fullAddress: formatted,
-          primaryText: text.trim(),
-          secondaryText: `${cityMatch}, ON, Canada (${centroid.isGta ? 'Core GTA' : 'Ontario-Wide'})`,
-          streetAddress: text.trim(),
-          city: cityMatch,
+        const suggestions: AddressSuggestion[] = matched.map((loc, idx) => ({
+          id: `local-on-${idx}-${loc.lat}`,
+          fullAddress: loc.address,
+          primaryText: loc.address.split(',')[0] || loc.address,
+          secondaryText: `${loc.city}, ON, Canada${loc.postalCode ? ' • ' + loc.postalCode : ''}`,
+          streetAddress: loc.address.split(',')[0] || loc.address,
+          city: loc.city,
           state: 'ON',
           country: 'Canada',
-          lon: centroid.lng,
-          lat: centroid.lat,
-          isGta: centroid.isGta,
-        });
-      }
+          postcode: loc.postalCode,
+          lon: loc.lng,
+          lat: loc.lat,
+          isGta: loc.isGta,
+        }));
 
-      return suggestions;
+        // 2. If user typed a custom street address or postal code, guarantee an instant Ontario item with PRECISE coordinates
+        if (suggestions.length === 0 && q.length >= 3) {
+          const centroid = resolveOntarioCoordinates(text);
+          const cityMatch = centroid.name;
+          const formatted = `${text.trim()}, ${cityMatch}, ON, Canada`;
+          suggestions.push({
+            id: `custom-on-${Date.now()}`,
+            fullAddress: formatted,
+            primaryText: text.trim(),
+            secondaryText: `${cityMatch}, ON, Canada (${centroid.isGta ? 'Core GTA' : 'Ontario-Wide'})`,
+            streetAddress: text.trim(),
+            city: cityMatch,
+            state: 'ON',
+            country: 'Canada',
+            lon: centroid.lng,
+            lat: centroid.lat,
+            isGta: centroid.isGta,
+          });
+        }
+
+        return suggestions;
+      } catch (err) {
+        console.warn('[AddressAutocomplete] Local match fallback error:', err);
+        return [];
+      }
     },
     []
   );
