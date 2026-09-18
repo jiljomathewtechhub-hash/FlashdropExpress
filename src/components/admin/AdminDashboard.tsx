@@ -155,6 +155,34 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
   // Quote Review & Dispatch state
   const [reviewingQuoteOrder, setReviewingQuoteOrder] = useState<Order | null>(null);
   const [quoteFormData, setQuoteFormData] = useState<{
+    customer_name: string;
+    customer_phone: string;
+    customer_email: string;
+    company_name: string;
+
+    pickup_address: string;
+    pickup_unit: string;
+    pickup_contact_name: string;
+    pickup_contact_phone: string;
+    pickup_date: string;
+    pickup_time: string;
+    pickup_notes: string;
+
+    delivery_address: string;
+    delivery_unit: string;
+    delivery_contact_name: string;
+    delivery_contact_phone: string;
+    delivery_time_option: string;
+    delivery_notes: string;
+
+    vehicle_slug: string;
+    vehicle_name: string;
+    weight_lbs: number;
+    quantity: number;
+    item_type: string;
+    item_description: string;
+    custom_instructions: string;
+
     distance_km: number;
     base_price: number;
     excess_km_charge: number;
@@ -169,6 +197,34 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
     total_price: number;
     quote_notes: string;
   }>({
+    customer_name: '',
+    customer_phone: '',
+    customer_email: '',
+    company_name: '',
+
+    pickup_address: '',
+    pickup_unit: '',
+    pickup_contact_name: '',
+    pickup_contact_phone: '',
+    pickup_date: '',
+    pickup_time: '11:00',
+    pickup_notes: '',
+
+    delivery_address: '',
+    delivery_unit: '',
+    delivery_contact_name: '',
+    delivery_contact_phone: '',
+    delivery_time_option: 'standard',
+    delivery_notes: '',
+
+    vehicle_slug: 'cargo_van',
+    vehicle_name: 'Cargo Van',
+    weight_lbs: 0,
+    quantity: 1,
+    item_type: 'paint_pails',
+    item_description: '',
+    custom_instructions: '',
+
     distance_km: 0,
     base_price: 0,
     excess_km_charge: 0,
@@ -543,6 +599,34 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
     const total = Number((sub + tax).toFixed(2));
 
     setQuoteFormData({
+      customer_name: order.customer_name || '',
+      customer_phone: order.customer_phone || '',
+      customer_email: order.customer_email || '',
+      company_name: order.company_name || '',
+
+      pickup_address: order.pickup_address || '',
+      pickup_unit: order.pickup_unit || '',
+      pickup_contact_name: order.pickup_contact_name || order.customer_name || '',
+      pickup_contact_phone: order.pickup_contact_phone || order.customer_phone || '',
+      pickup_date: order.pickup_date || '',
+      pickup_time: order.pickup_time || '11:00',
+      pickup_notes: order.pickup_notes || '',
+
+      delivery_address: order.delivery_address || '',
+      delivery_unit: order.delivery_unit || '',
+      delivery_contact_name: order.delivery_contact_name || '',
+      delivery_contact_phone: order.delivery_contact_phone || '',
+      delivery_time_option: order.delivery_time_option || 'standard',
+      delivery_notes: order.delivery_notes || '',
+
+      vehicle_slug: order.vehicle_slug || 'cargo_van',
+      vehicle_name: order.vehicle_name || 'Cargo Van',
+      weight_lbs: Number(order.weight_lbs || 0),
+      quantity: Number(order.quantity || 1),
+      item_type: order.item_type || 'paint_pails',
+      item_description: order.item_description || '',
+      custom_instructions: order.custom_instructions || '',
+
       distance_km: dist,
       base_price: base,
       excess_km_charge: excess,
@@ -560,57 +644,63 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
     setQuoteSentSuccess(false);
   };
 
+  const recalculateQuotePricing = (fields: Partial<typeof quoteFormData>) => {
+    setQuoteFormData(prev => {
+      const current = { ...prev, ...fields };
+      const safeKm = Math.max(0, Number(current.distance_km) || 0);
+
+      const kmBreakdown = calculateGtaKmBreakdown(
+        current.pickup_address,
+        current.delivery_address,
+        safeKm,
+        reviewingQuoteOrder?.pickup_lat && reviewingQuoteOrder?.pickup_lng ? { lat: reviewingQuoteOrder.pickup_lat, lng: reviewingQuoteOrder.pickup_lng } : undefined,
+        reviewingQuoteOrder?.delivery_lat && reviewingQuoteOrder?.delivery_lng ? { lat: reviewingQuoteOrder.delivery_lat, lng: reviewingQuoteOrder.delivery_lng } : undefined
+      );
+
+      const isOutside = kmBreakdown.isOutsideGta || reviewingQuoteOrder?.service_area === 'Ontario-Wide';
+      const breakdown = calculateDeliveryPrice({
+        vehicleSlug: (current.vehicle_slug as any) || 'cargo_van',
+        distanceKm: safeKm,
+        insideGtaKm: kmBreakdown.insideGtaKm,
+        outsideGtaKm: kmBreakdown.outsideGtaKm,
+        weightLbs: Number(current.weight_lbs || 0),
+        quantity: Number(current.quantity || 1),
+        isPaintPails: current.item_type === 'paint_pails',
+        pickupTime: current.pickup_time,
+        deliveryType: current.delivery_time_option as any,
+        isOutsideGta: isOutside,
+        outsideGtaSurcharge: isOutside ? 60.0 : 0,
+      }, settings, pricingTiers.length > 0 ? pricingTiers : undefined);
+
+      const base = breakdown.baseDistanceCharge;
+      const excess = breakdown.excessKmCharge;
+      const urgency = breakdown.deliveryTypeCharge;
+      const after = breakdown.afterHoursCharge;
+      const outside = breakdown.outsideGtaCharge;
+
+      const gross = Number((base + excess + urgency + after + outside).toFixed(2));
+      const discount = Math.max(0, Number(current.discount_amount || 0));
+      const sub = Math.max(0, Number((gross - discount).toFixed(2)));
+      const tax = Number((sub * (settings.hst_enabled ? (settings.hst_rate || 0.13) : 0)).toFixed(2));
+      const total = Number((sub + tax).toFixed(2));
+
+      return {
+        ...current,
+        distance_km: safeKm,
+        base_price: base,
+        excess_km_charge: excess,
+        urgency_surcharge: urgency,
+        after_hours_charge: after,
+        outside_gta_charge: outside,
+        subtotal: sub,
+        tax_amount: tax,
+        total_price: total,
+      };
+    });
+  };
+
   const handleQuoteDistanceChange = (newKm: number) => {
-    if (!reviewingQuoteOrder) return;
-    const safeKm = Math.max(0, Number(newKm) || 0);
-
-    const kmBreakdown = calculateGtaKmBreakdown(
-      reviewingQuoteOrder.pickup_address,
-      reviewingQuoteOrder.delivery_address,
-      safeKm,
-      reviewingQuoteOrder.pickup_lat && reviewingQuoteOrder.pickup_lng ? { lat: reviewingQuoteOrder.pickup_lat, lng: reviewingQuoteOrder.pickup_lng } : undefined,
-      reviewingQuoteOrder.delivery_lat && reviewingQuoteOrder.delivery_lng ? { lat: reviewingQuoteOrder.delivery_lat, lng: reviewingQuoteOrder.delivery_lng } : undefined
-    );
-
-    const isOutside = kmBreakdown.isOutsideGta || reviewingQuoteOrder.service_area === 'Ontario-Wide';
-    const breakdown = calculateDeliveryPrice({
-      vehicleSlug: (reviewingQuoteOrder.vehicle_slug as any) || 'cargo_van',
-      distanceKm: safeKm,
-      insideGtaKm: kmBreakdown.insideGtaKm,
-      outsideGtaKm: kmBreakdown.outsideGtaKm,
-      weightLbs: Number(reviewingQuoteOrder.weight_lbs || 0),
-      quantity: Number(reviewingQuoteOrder.quantity || 1),
-      isPaintPails: reviewingQuoteOrder.item_type === 'paint_pails',
-      pickupTime: reviewingQuoteOrder.pickup_time,
-      deliveryType: reviewingQuoteOrder.delivery_time_option,
-      isOutsideGta: isOutside,
-      outsideGtaSurcharge: isOutside ? 60.0 : 0,
-    }, settings, pricingTiers.length > 0 ? pricingTiers : undefined);
-
-    const base = breakdown.baseDistanceCharge;
-    const excess = breakdown.excessKmCharge;
-    const urgency = breakdown.deliveryTypeCharge;
-    const after = breakdown.afterHoursCharge;
-    const outside = breakdown.outsideGtaCharge;
-
-    const gross = Number((base + excess + urgency + after + outside).toFixed(2));
-    const discount = Math.max(0, Number(quoteFormData.discount_amount || 0));
-    const sub = Math.max(0, Number((gross - discount).toFixed(2)));
-    const tax = Number((sub * (settings.hst_enabled ? (settings.hst_rate || 0.13) : 0)).toFixed(2));
-    const total = Number((sub + tax).toFixed(2));
-
-    setQuoteFormData(prev => ({
-      ...prev,
-      distance_km: safeKm,
-      base_price: base,
-      excess_km_charge: excess,
-      urgency_surcharge: urgency,
-      after_hours_charge: after,
-      outside_gta_charge: outside,
-      subtotal: sub,
-      tax_amount: tax,
-      total_price: total,
-    }));
+    recalculateQuotePricing({ distance_km: newKm });
   };
 
   const handleEditOrderDistanceChange = (newKm: number) => {
@@ -698,18 +788,47 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
     try {
       const now = new Date().toISOString();
       const kmBreakdown = calculateGtaKmBreakdown(
-        reviewingQuoteOrder.pickup_address,
-        reviewingQuoteOrder.delivery_address,
+        quoteFormData.pickup_address,
+        quoteFormData.delivery_address,
         quoteFormData.distance_km,
         reviewingQuoteOrder.pickup_lat && reviewingQuoteOrder.pickup_lng ? { lat: reviewingQuoteOrder.pickup_lat, lng: reviewingQuoteOrder.pickup_lng } : undefined,
         reviewingQuoteOrder.delivery_lat && reviewingQuoteOrder.delivery_lng ? { lat: reviewingQuoteOrder.delivery_lat, lng: reviewingQuoteOrder.delivery_lng } : undefined
       );
 
       const updatedData: Partial<Order> = {
+        customer_name: quoteFormData.customer_name,
+        customer_phone: quoteFormData.customer_phone,
+        customer_email: quoteFormData.customer_email,
+        company_name: quoteFormData.company_name,
+
+        pickup_address: quoteFormData.pickup_address,
+        pickup_unit: quoteFormData.pickup_unit,
+        pickup_contact_name: quoteFormData.pickup_contact_name,
+        pickup_contact_phone: quoteFormData.pickup_contact_phone,
+        pickup_date: quoteFormData.pickup_date,
+        pickup_time: quoteFormData.pickup_time,
+        pickup_notes: quoteFormData.pickup_notes,
+
+        delivery_address: quoteFormData.delivery_address,
+        delivery_unit: quoteFormData.delivery_unit,
+        delivery_contact_name: quoteFormData.delivery_contact_name,
+        delivery_contact_phone: quoteFormData.delivery_contact_phone,
+        delivery_time_option: quoteFormData.delivery_time_option as any,
+        delivery_notes: quoteFormData.delivery_notes,
+
+        vehicle_slug: quoteFormData.vehicle_slug as any,
+        vehicle_name: quoteFormData.vehicle_name,
+        weight_lbs: quoteFormData.weight_lbs,
+        quantity: quoteFormData.quantity,
+        item_type: quoteFormData.item_type as any,
+        item_description: quoteFormData.item_description,
+        custom_instructions: quoteFormData.custom_instructions,
+
         distance_km: quoteFormData.distance_km,
         inside_gta_km: kmBreakdown.insideGtaKm,
         outside_gta_km: kmBreakdown.outsideGtaKm,
         service_area: kmBreakdown.isOutsideGta ? 'Ontario-Wide' : 'GTA',
+
         base_price: quoteFormData.base_price,
         excess_km_charge: quoteFormData.excess_km_charge,
         delivery_type_charge: quoteFormData.urgency_surcharge,
@@ -5024,14 +5143,72 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
               </div>
             )}
 
+            {/* Customer & Contact Account Specifications */}
+            <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-3">
+              <div className="text-[11px] font-bold uppercase tracking-wider text-slate-700 flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <Users className="w-3.5 h-3.5 text-blue-600" />
+                  <span>Customer &amp; Account Information</span>
+                </div>
+                <span className="text-[10px] bg-blue-100 text-blue-800 font-bold px-2 py-0.5 rounded-md uppercase">
+                  Editable Contact Info
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 text-xs">
+                <div>
+                  <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-600 mb-1">Customer Full Name</label>
+                  <input
+                    type="text"
+                    value={quoteFormData.customer_name}
+                    onChange={(e) => setQuoteFormData(prev => ({ ...prev, customer_name: e.target.value }))}
+                    placeholder="Customer Name"
+                    className="w-full bg-white border border-slate-300 rounded-xl px-2.5 py-1.5 text-xs text-slate-900 font-medium focus:outline-none focus:border-red-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-600 mb-1">Company / Business Name</label>
+                  <input
+                    type="text"
+                    value={quoteFormData.company_name}
+                    onChange={(e) => setQuoteFormData(prev => ({ ...prev, company_name: e.target.value }))}
+                    placeholder="Optional Business Name"
+                    className="w-full bg-white border border-slate-300 rounded-xl px-2.5 py-1.5 text-xs text-slate-900 font-medium focus:outline-none focus:border-red-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-600 mb-1">Contact Phone</label>
+                  <input
+                    type="tel"
+                    value={quoteFormData.customer_phone}
+                    onChange={(e) => setQuoteFormData(prev => ({ ...prev, customer_phone: e.target.value }))}
+                    placeholder="(416) 555-0199"
+                    className="w-full bg-white border border-slate-300 rounded-xl px-2.5 py-1.5 text-xs text-slate-900 font-medium focus:outline-none focus:border-red-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-600 mb-1">
+                    Quotation Email Recipient
+                  </label>
+                  <input
+                    type="email"
+                    value={quoteFormData.customer_email}
+                    onChange={(e) => setQuoteFormData(prev => ({ ...prev, customer_email: e.target.value }))}
+                    placeholder="customer@example.com"
+                    className="w-full bg-white border border-slate-300 rounded-xl px-2.5 py-1.5 text-xs text-slate-900 font-medium focus:outline-none focus:border-red-500"
+                  />
+                </div>
+              </div>
+            </div>
+
             {/* Route & Cargo Specifications Summary */}
             <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-3">
               <div className="text-[11px] font-bold uppercase tracking-wider text-slate-600 flex items-center justify-between">
                 <div className="flex items-center space-x-2">
                   <Package className="w-3.5 h-3.5 text-red-600" />
-                  <span>Shipment & Logistics Specifications</span>
+                  <span>Shipment, Route &amp; Logistics Specifications</span>
                 </div>
-                <span className="text-red-600 font-mono font-bold">
+                <span className="text-red-600 font-mono font-bold text-xs">
                   {quoteFormData.distance_km} km ({quoteFormData.distance_km <= 40 ? quoteFormData.distance_km : 40} km GTA / {quoteFormData.distance_km > 40 ? Number((quoteFormData.distance_km - 40).toFixed(1)) : 0} km Outside)
                 </span>
               </div>
@@ -5056,9 +5233,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
                 </div>
 
                 <div className="flex flex-wrap items-center gap-2.5 w-full sm:w-auto justify-end">
-                  {/* Google Maps Verification Button */}
+                  {/* Google Maps Verification Button (dynamically reflects updated addresses) */}
                   <a
-                    href={`https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(reviewingQuoteOrder.pickup_address)}&destination=${encodeURIComponent(reviewingQuoteOrder.delivery_address)}`}
+                    href={`https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(quoteFormData.pickup_address || reviewingQuoteOrder.pickup_address)}&destination=${encodeURIComponent(quoteFormData.delivery_address || reviewingQuoteOrder.delivery_address)}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="inline-flex items-center space-x-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition-all shadow-xs hover:shadow-sm cursor-pointer"
@@ -5084,79 +5261,280 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs bg-slate-100 p-3 rounded-xl border border-slate-200">
-                <div>
-                  <span className="text-[10px] uppercase font-bold text-red-600 block mb-0.5">Pickup Location</span>
-                  <div className="text-slate-900 font-semibold">{reviewingQuoteOrder.pickup_address}</div>
-                  {reviewingQuoteOrder.pickup_unit && (
-                    <div className="text-slate-600 text-[11px]">Unit/Bay: {reviewingQuoteOrder.pickup_unit}</div>
-                  )}
-                  <div className="text-slate-600 text-[11px] mt-1">
-                    Contact: {reviewingQuoteOrder.pickup_contact_name || reviewingQuoteOrder.customer_name} ({reviewingQuoteOrder.pickup_contact_phone || reviewingQuoteOrder.customer_phone})
+              {/* Pickup & Delivery Location Form Cards */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+                {/* Pickup Section */}
+                <div className="bg-white p-3 rounded-xl border border-slate-200 space-y-2">
+                  <div className="flex items-center justify-between border-b border-slate-100 pb-1.5">
+                    <span className="text-[10px] uppercase font-bold text-red-600 flex items-center space-x-1">
+                      <MapPin className="w-3 h-3" />
+                      <span>Pickup Origin &amp; Schedule</span>
+                    </span>
+                    <span className="text-[10px] text-slate-500 font-medium">Editable by Admin</span>
                   </div>
-                  {reviewingQuoteOrder.pickup_date && (
-                    <div className="text-slate-600 text-[11px]">
-                      Scheduled: {reviewingQuoteOrder.pickup_date} at {reviewingQuoteOrder.pickup_time || 'Standard'}
+
+                  <div>
+                    <label className="block text-[10px] font-bold text-slate-600 mb-0.5">Pickup Address</label>
+                    <input
+                      type="text"
+                      value={quoteFormData.pickup_address}
+                      onChange={(e) => recalculateQuotePricing({ pickup_address: e.target.value })}
+                      placeholder="e.g. 100 King St W, Toronto, ON"
+                      className="w-full bg-slate-50 border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs text-slate-900 font-medium focus:bg-white focus:outline-none focus:border-red-500"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="block text-[10px] font-bold text-slate-600 mb-0.5">Unit / Suite / Bay #</label>
+                      <input
+                        type="text"
+                        value={quoteFormData.pickup_unit}
+                        onChange={(e) => setQuoteFormData(prev => ({ ...prev, pickup_unit: e.target.value }))}
+                        placeholder="e.g. Unit 4B / Bay 2"
+                        className="w-full bg-slate-50 border border-slate-300 rounded-lg px-2 py-1 text-xs text-slate-900 font-medium focus:bg-white focus:outline-none focus:border-red-500"
+                      />
                     </div>
-                  )}
-                  {reviewingQuoteOrder.pickup_notes && (
-                    <div className="text-amber-800 text-[11px] mt-1 italic">
-                      Notes: {reviewingQuoteOrder.pickup_notes}
+                    <div>
+                      <label className="block text-[10px] font-bold text-slate-600 mb-0.5">On-Site Contact</label>
+                      <input
+                        type="text"
+                        value={quoteFormData.pickup_contact_name}
+                        onChange={(e) => setQuoteFormData(prev => ({ ...prev, pickup_contact_name: e.target.value }))}
+                        placeholder="Contact person"
+                        className="w-full bg-slate-50 border border-slate-300 rounded-lg px-2 py-1 text-xs text-slate-900 font-medium focus:bg-white focus:outline-none focus:border-red-500"
+                      />
                     </div>
-                  )}
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-2">
+                    <div>
+                      <label className="block text-[10px] font-bold text-slate-600 mb-0.5">Contact Phone</label>
+                      <input
+                        type="tel"
+                        value={quoteFormData.pickup_contact_phone}
+                        onChange={(e) => setQuoteFormData(prev => ({ ...prev, pickup_contact_phone: e.target.value }))}
+                        placeholder="(416) 555-0100"
+                        className="w-full bg-slate-50 border border-slate-300 rounded-lg px-2 py-1 text-xs text-slate-900 font-medium focus:bg-white focus:outline-none focus:border-red-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-bold text-slate-600 mb-0.5">Pickup Date</label>
+                      <input
+                        type="date"
+                        value={quoteFormData.pickup_date}
+                        onChange={(e) => setQuoteFormData(prev => ({ ...prev, pickup_date: e.target.value }))}
+                        className="w-full bg-slate-50 border border-slate-300 rounded-lg px-2 py-1 text-xs text-slate-900 font-medium focus:bg-white focus:outline-none focus:border-red-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-bold text-slate-600 mb-0.5">Pickup Time</label>
+                      <input
+                        type="time"
+                        value={quoteFormData.pickup_time}
+                        onChange={(e) => recalculateQuotePricing({ pickup_time: e.target.value })}
+                        className="w-full bg-slate-50 border border-slate-300 rounded-lg px-2 py-1 text-xs text-slate-900 font-medium focus:bg-white focus:outline-none focus:border-red-500"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-[10px] font-bold text-slate-600 mb-0.5">Pickup Notes / Access Instructions</label>
+                    <input
+                      type="text"
+                      value={quoteFormData.pickup_notes}
+                      onChange={(e) => setQuoteFormData(prev => ({ ...prev, pickup_notes: e.target.value }))}
+                      placeholder="e.g. Ring buzzer 102, entrance via back alley"
+                      className="w-full bg-slate-50 border border-slate-300 rounded-lg px-2 py-1 text-xs text-slate-900 font-medium focus:bg-white focus:outline-none focus:border-red-500"
+                    />
+                  </div>
                 </div>
 
-                <div>
-                  <span className="text-[10px] uppercase font-bold text-emerald-700 block mb-0.5">Delivery Destination</span>
-                  <div className="text-slate-900 font-semibold">{reviewingQuoteOrder.delivery_address}</div>
-                  {reviewingQuoteOrder.delivery_unit && (
-                    <div className="text-slate-600 text-[11px]">Unit/Suite: {reviewingQuoteOrder.delivery_unit}</div>
-                  )}
-                  <div className="text-slate-600 text-[11px] mt-1">
-                    Receiving: {reviewingQuoteOrder.delivery_contact_name || 'Designated Consignee'} ({reviewingQuoteOrder.delivery_contact_phone || 'N/A'})
+                {/* Delivery Section */}
+                <div className="bg-white p-3 rounded-xl border border-slate-200 space-y-2">
+                  <div className="flex items-center justify-between border-b border-slate-100 pb-1.5">
+                    <span className="text-[10px] uppercase font-bold text-emerald-700 flex items-center space-x-1">
+                      <MapPin className="w-3 h-3" />
+                      <span>Delivery Destination &amp; Consignee</span>
+                    </span>
+                    <span className="text-[10px] text-slate-500 font-medium">Editable by Admin</span>
                   </div>
-                  <div className="text-slate-600 text-[11px]">
-                    Delivery Tier: <strong className="text-blue-700 capitalize">
-                      {reviewingQuoteOrder.delivery_time_option === 'direct'
-                        ? '2) On Demand / Direct Delivery'
-                        : reviewingQuoteOrder.delivery_time_option === 'urgent'
-                        ? '3) Urgent / ASAP'
-                        : '1) Standard / Same Day'}
-                    </strong>
+
+                  <div>
+                    <label className="block text-[10px] font-bold text-slate-600 mb-0.5">Delivery Address</label>
+                    <input
+                      type="text"
+                      value={quoteFormData.delivery_address}
+                      onChange={(e) => recalculateQuotePricing({ delivery_address: e.target.value })}
+                      placeholder="e.g. 500 Burnhamthorpe Rd W, Mississauga, ON"
+                      className="w-full bg-slate-50 border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs text-slate-900 font-medium focus:bg-white focus:outline-none focus:border-red-500"
+                    />
                   </div>
-                  {reviewingQuoteOrder.delivery_notes && (
-                    <div className="text-amber-800 text-[11px] mt-1 italic">
-                      Notes: {reviewingQuoteOrder.delivery_notes}
+
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="block text-[10px] font-bold text-slate-600 mb-0.5">Unit / Suite / Bay #</label>
+                      <input
+                        type="text"
+                        value={quoteFormData.delivery_unit}
+                        onChange={(e) => setQuoteFormData(prev => ({ ...prev, delivery_unit: e.target.value }))}
+                        placeholder="e.g. Suite 300 / Dock 5"
+                        className="w-full bg-slate-50 border border-slate-300 rounded-lg px-2 py-1 text-xs text-slate-900 font-medium focus:bg-white focus:outline-none focus:border-red-500"
+                      />
                     </div>
-                  )}
+                    <div>
+                      <label className="block text-[10px] font-bold text-slate-600 mb-0.5">Receiving Contact</label>
+                      <input
+                        type="text"
+                        value={quoteFormData.delivery_contact_name}
+                        onChange={(e) => setQuoteFormData(prev => ({ ...prev, delivery_contact_name: e.target.value }))}
+                        placeholder="Receiving contact person"
+                        className="w-full bg-slate-50 border border-slate-300 rounded-lg px-2 py-1 text-xs text-slate-900 font-medium focus:bg-white focus:outline-none focus:border-red-500"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="block text-[10px] font-bold text-slate-600 mb-0.5">Receiving Phone</label>
+                      <input
+                        type="tel"
+                        value={quoteFormData.delivery_contact_phone}
+                        onChange={(e) => setQuoteFormData(prev => ({ ...prev, delivery_contact_phone: e.target.value }))}
+                        placeholder="(905) 555-0123"
+                        className="w-full bg-slate-50 border border-slate-300 rounded-lg px-2 py-1 text-xs text-slate-900 font-medium focus:bg-white focus:outline-none focus:border-red-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-bold text-slate-600 mb-0.5">Delivery Service Tier</label>
+                      <select
+                        value={quoteFormData.delivery_time_option}
+                        onChange={(e) => recalculateQuotePricing({ delivery_time_option: e.target.value })}
+                        className="w-full bg-slate-50 border border-slate-300 rounded-lg px-2 py-1 text-xs text-slate-900 font-medium focus:bg-white focus:outline-none focus:border-red-500"
+                      >
+                        <option value="standard">1) Standard / Same Day (1.0×)</option>
+                        <option value="direct">2) On Demand / Direct (1.25×)</option>
+                        <option value="urgent">3) Urgent / ASAP (1.50×)</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-[10px] font-bold text-slate-600 mb-0.5">Delivery Notes / Receiving Gate Instructions</label>
+                    <input
+                      type="text"
+                      value={quoteFormData.delivery_notes}
+                      onChange={(e) => setQuoteFormData(prev => ({ ...prev, delivery_notes: e.target.value }))}
+                      placeholder="e.g. Leave with shipping clerk, elevator available"
+                      className="w-full bg-slate-50 border border-slate-300 rounded-lg px-2 py-1 text-xs text-slate-900 font-medium focus:bg-white focus:outline-none focus:border-red-500"
+                    />
+                  </div>
                 </div>
               </div>
 
-              {/* Cargo & Vehicle Details */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-[11px]">
-                <div className="bg-white p-2.5 rounded-xl border border-slate-200">
-                  <span className="text-slate-500 block text-[10px]">Vehicle Required</span>
-                  <span className="font-bold text-slate-900">{reviewingQuoteOrder.vehicle_name}</span>
+              {/* Cargo & Fleet Vehicle Form Details */}
+              <div className="bg-white p-3 rounded-xl border border-slate-200 space-y-2.5">
+                <div className="flex items-center justify-between border-b border-slate-100 pb-1.5">
+                  <span className="text-[10px] uppercase font-bold text-slate-700 flex items-center space-x-1">
+                    <Truck className="w-3.5 h-3.5 text-blue-600" />
+                    <span>Cargo Manifest &amp; Vehicle Allocation</span>
+                  </span>
+                  <span className="text-[10px] text-slate-500 font-medium">Modifying cargo auto-updates rate formula</span>
                 </div>
-                <div className="bg-white p-2.5 rounded-xl border border-slate-200">
-                  <span className="text-slate-500 block text-[10px]">Total Weight</span>
-                  <span className="font-bold text-slate-900">{reviewingQuoteOrder.weight_lbs} lbs</span>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 text-xs">
+                  <div>
+                    <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-600 mb-1">Vehicle Required</label>
+                    <select
+                      value={quoteFormData.vehicle_slug}
+                      onChange={(e) => {
+                        const slug = e.target.value;
+                        const nameMap: Record<string, string> = {
+                          cargo_van: 'Cargo Van',
+                          car: 'Car / Sedan',
+                          suv_minivan: 'SUV / Minivan',
+                          van: 'Mid-Size Van',
+                          truck: 'Box Truck / Large Fleet',
+                        };
+                        recalculateQuotePricing({
+                          vehicle_slug: slug,
+                          vehicle_name: nameMap[slug] || 'Cargo Van',
+                        });
+                      }}
+                      className="w-full bg-slate-50 border border-slate-300 rounded-lg px-2 py-1.5 text-xs text-slate-900 font-bold focus:bg-white focus:outline-none focus:border-red-500"
+                    >
+                      <option value="cargo_van">Cargo Van (High-Roof)</option>
+                      <option value="car">Car / Compact Courier</option>
+                      <option value="suv_minivan">SUV / Minivan</option>
+                      <option value="van">Mid-Size Van</option>
+                      <option value="truck">Box Truck / Large Fleet</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-600 mb-1">Total Weight (lbs)</label>
+                    <input
+                      type="number"
+                      min="0"
+                      value={quoteFormData.weight_lbs}
+                      onChange={(e) => recalculateQuotePricing({ weight_lbs: Number(e.target.value) })}
+                      placeholder="0"
+                      className="w-full bg-slate-50 border border-slate-300 rounded-lg px-2 py-1.5 text-xs text-slate-900 font-bold focus:bg-white focus:outline-none focus:border-red-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-600 mb-1">Units / Pails Count</label>
+                    <input
+                      type="number"
+                      min="1"
+                      value={quoteFormData.quantity}
+                      onChange={(e) => recalculateQuotePricing({ quantity: Math.max(1, parseInt(e.target.value) || 1) })}
+                      placeholder="1"
+                      className="w-full bg-slate-50 border border-slate-300 rounded-lg px-2 py-1.5 text-xs text-slate-900 font-bold focus:bg-white focus:outline-none focus:border-red-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-600 mb-1">Cargo Classification</label>
+                    <select
+                      value={quoteFormData.item_type}
+                      onChange={(e) => recalculateQuotePricing({ item_type: e.target.value })}
+                      className="w-full bg-slate-50 border border-slate-300 rounded-lg px-2 py-1.5 text-xs text-slate-900 font-bold focus:bg-white focus:outline-none focus:border-red-500"
+                    >
+                      <option value="paint_pails">Paint Pails / Liquid Cans</option>
+                      <option value="furniture">Furniture / Commercial Fixtures</option>
+                      <option value="small_boxes">Small Parcels &amp; Boxes</option>
+                      <option value="medium_boxes">Medium Cartons</option>
+                      <option value="large_boxes">Large / Heavy Freight</option>
+                      <option value="other">Other Commercial Cargo</option>
+                    </select>
+                  </div>
                 </div>
-                <div className="bg-white p-2.5 rounded-xl border border-slate-200">
-                  <span className="text-slate-500 block text-[10px]">Units / Pails</span>
-                  <span className="font-bold text-slate-900">{reviewingQuoteOrder.quantity} units</span>
-                </div>
-                <div className="bg-white p-2.5 rounded-xl border border-slate-200">
-                  <span className="text-slate-500 block text-[10px]">Cargo Classification</span>
-                  <span className="font-bold text-slate-900">{reviewingQuoteOrder.item_description || reviewingQuoteOrder.item_type}</span>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs pt-1">
+                  <div>
+                    <label className="block text-[10px] font-bold text-slate-600 mb-0.5">Item Description / Cargo Specifics</label>
+                    <input
+                      type="text"
+                      value={quoteFormData.item_description}
+                      onChange={(e) => setQuoteFormData(prev => ({ ...prev, item_description: e.target.value }))}
+                      placeholder="e.g. 5-Gallon Commercial Acrylic Latex paint pails"
+                      className="w-full bg-slate-50 border border-slate-300 rounded-lg px-2.5 py-1 text-xs text-slate-900 font-medium focus:bg-white focus:outline-none focus:border-red-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-bold text-slate-600 mb-0.5">Customer Special Instructions</label>
+                    <input
+                      type="text"
+                      value={quoteFormData.custom_instructions}
+                      onChange={(e) => setQuoteFormData(prev => ({ ...prev, custom_instructions: e.target.value }))}
+                      placeholder="e.g. Tailgate required, call 10 minutes prior to delivery"
+                      className="w-full bg-slate-50 border border-slate-300 rounded-lg px-2.5 py-1 text-xs text-slate-900 font-medium focus:bg-white focus:outline-none focus:border-red-500"
+                    />
+                  </div>
                 </div>
               </div>
-
-              {reviewingQuoteOrder.custom_instructions && (
-                <div className="bg-amber-50 border border-amber-300 p-2.5 rounded-xl text-amber-900 text-[11px]">
-                  <strong>Customer Special Instructions:</strong> {reviewingQuoteOrder.custom_instructions}
-                </div>
-              )}
             </div>
 
             {/* Price Quote Calculation & Adjustment */}
@@ -5413,7 +5791,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
 
               <div className="flex items-center justify-between text-[11px] text-slate-600 bg-slate-100 p-2.5 rounded-xl border border-slate-200">
                 <span>Quotation email recipient:</span>
-                <strong className="text-slate-900 font-mono">{reviewingQuoteOrder.customer_name} &lt;{reviewingQuoteOrder.customer_email}&gt;</strong>
+                <strong className="text-slate-900 font-mono">{quoteFormData.customer_name} &lt;{quoteFormData.customer_email}&gt;</strong>
               </div>
             </div>
 
