@@ -267,7 +267,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
   }, [viewingCustomer, orders]);
 
   return (
-    <div className="space-y-6 animate-fade-in">
+    <div className="space-y-6">
       {/* SECTION HEADER & PRIMARY ACTION */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 rounded-2xl border border-slate-200/90 shadow-2xs">
         <div>
@@ -346,7 +346,6 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
             <span>{activeDeliveriesCount}</span>
             {activeDeliveriesCount > 0 && (
               <span className="flex h-2 w-2 relative">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-600"></span>
               </span>
             )}
@@ -678,7 +677,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
 
       {/* MODAL 1: VIEW CUSTOMER PROFILE & ORDER HISTORY */}
       {viewingCustomer && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-fade-in overflow-y-auto">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs overflow-y-auto">
           <div className="bg-white rounded-3xl max-w-4xl w-full max-h-[92vh] flex flex-col shadow-2xl border border-slate-200 overflow-hidden my-auto">
             {/* Modal Header */}
             <div className="p-6 bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 text-white flex items-start justify-between">
@@ -958,7 +957,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
 
       {/* MODAL 2: ADD / EDIT CUSTOMER */}
       {(isAddModalOpen || editingCustomer) && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-fade-in overflow-y-auto">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs overflow-y-auto">
           <div className="bg-white rounded-3xl max-w-lg w-full shadow-2xl border border-slate-200 overflow-hidden my-auto">
             {/* Header */}
             <div className="p-6 bg-slate-900 text-white flex items-center justify-between">
@@ -1162,7 +1161,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
 
       {/* MODAL 3: DELETE CONFIRMATION */}
       {deleteConfirmCust && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-fade-in">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
           <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-200 space-y-4">
             <div className="w-12 h-12 rounded-2xl bg-red-50 text-red-600 flex items-center justify-center border border-red-200">
               <AlertCircle className="w-6 h-6" />

@@ -719,28 +719,68 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
   }
 
   return (
-    <div className="py-8 px-4 sm:px-6 max-w-7xl mx-auto space-y-7">
-      {/* Top Executive Header Banner */}
-      <div className="bg-white border border-slate-200/90 rounded-2xl p-5 sm:p-6 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-        <div className="flex items-center space-x-4">
-          <div className="relative">
-            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#C5161D] via-[#A61217] to-[#800C10] flex items-center justify-center text-white shadow-md shadow-red-900/20 ring-4 ring-red-50">
-              <Shield className="w-6 h-6 text-white" />
-            </div>
-            <span className="absolute -bottom-1 -right-1 flex h-3.5 w-3.5">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-emerald-500 border-2 border-white"></span>
-            </span>
-          </div>
-          <div>
-            <div className="flex flex-wrap items-center gap-2">
-              <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight font-['Outfit']">
-                FlashDrop Admin Panel
-              </h1>
-              <span className="inline-flex items-center space-x-1 text-[10px] font-bold text-emerald-800 bg-emerald-50 border border-emerald-200/80 px-2.5 py-0.5 rounded-full">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                <span>Live Dispatch Active</span>
+    <div className="admin-dashboard-scope min-h-screen relative w-full bg-[#F1F5F9] selection:bg-red-500 selection:text-white">
+      {/* Simple & Relevant Dispatch Logistics Grid Background */}
+      <div 
+        className="absolute inset-0 pointer-events-none z-0 overflow-hidden" 
+        aria-hidden="true"
+      >
+        {/* 1. Fine Technical Dispatch Grid Pattern (32px x 32px) */}
+        <div 
+          className="absolute inset-0 opacity-70"
+          style={{
+            backgroundImage: `
+              linear-gradient(to right, rgba(148, 163, 184, 0.16) 1px, transparent 1px),
+              linear-gradient(to bottom, rgba(148, 163, 184, 0.16) 1px, transparent 1px)
+            `,
+            backgroundSize: '32px 32px',
+          }}
+        />
+
+        {/* 2. Logistics Coordinate Crosshairs / Waypoints (every 128px) */}
+        <div
+          className="absolute inset-0 opacity-35"
+          style={{
+            backgroundImage: `radial-gradient(circle, rgba(100, 116, 139, 0.4) 1.5px, transparent 1.5px)`,
+            backgroundSize: '128px 128px',
+            backgroundPosition: '16px 16px',
+          }}
+        />
+
+        {/* 3. Soft Ambient Vignette for Content Focus */}
+        <div 
+          className="absolute inset-0"
+          style={{
+            background: 'radial-gradient(ellipse at 50% 0%, rgba(255, 255, 255, 0.85) 0%, rgba(241, 245, 249, 0.5) 50%, rgba(226, 232, 240, 0.8) 100%)',
+          }}
+        />
+
+        {/* 4. Top Dispatch Command Center Red Accent Line */}
+        <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-transparent via-[#C5161D]/50 to-transparent" />
+      </div>
+
+      {/* Main Admin Dashboard Content */}
+      <div className="relative z-10 py-8 px-4 sm:px-6 max-w-7xl mx-auto space-y-7">
+        {/* Top Executive Header Banner */}
+        <div className="bg-white border border-slate-200/90 rounded-2xl p-5 sm:p-6 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+          <div className="flex items-center space-x-4">
+            <div className="relative">
+              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#C5161D] via-[#A61217] to-[#800C10] flex items-center justify-center text-white shadow-md shadow-red-900/20 ring-4 ring-red-50">
+                <Shield className="w-6 h-6 text-white" />
+              </div>
+              <span className="absolute -bottom-1 -right-1 flex h-3.5 w-3.5">
+                <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-emerald-500 border-2 border-white"></span>
               </span>
+            </div>
+            <div>
+              <div className="flex flex-wrap items-center gap-2">
+                <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight font-['Outfit']">
+                  FlashDrop Admin Panel
+                </h1>
+                <span className="inline-flex items-center space-x-1 text-[10px] font-bold text-emerald-800 bg-emerald-50 border border-emerald-200/80 px-2.5 py-0.5 rounded-full">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                  <span>Live Dispatch Active</span>
+                </span>
               <span className="hidden sm:inline-flex items-center text-[10px] font-semibold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full border border-slate-200">
                 Logged in as: <strong className="ml-1 text-slate-800">{user.name}</strong>
               </span>
@@ -860,7 +900,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
             <span>{inTransitOrders}</span>
             {inTransitOrders > 0 && (
               <span className="flex h-2 w-2 relative">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-600"></span>
               </span>
             )}
@@ -950,7 +989,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
             </span>
             {pendingRequests > 0 && (
               <span
-                className="text-[9px] px-1.5 py-0.2 rounded-full font-black bg-amber-400 text-amber-950 animate-pulse"
+                className="text-[9px] px-1.5 py-0.2 rounded-full font-black bg-amber-400 text-amber-950"
                 title={`${pendingRequests} pending customer requests`}
               >
                 {pendingRequests} req
@@ -1006,7 +1045,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
             <Sliders className="w-4 h-4" />
             <span>System Settings</span>
             {inAppNotifications.filter((n) => !n.is_read).length > 0 && (
-              <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+              <span className="w-2 h-2 rounded-full bg-red-500" />
             )}
           </button>
         </div>
@@ -1046,7 +1085,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
               <AlertCircle className="w-3.5 h-3.5" />
               <span>Customer Requests</span>
               {pendingRequests > 0 ? (
-                <span className="text-[10px] px-1.5 py-0.2 rounded-full font-black bg-amber-400 text-amber-950 animate-pulse">
+                <span className="text-[10px] px-1.5 py-0.2 rounded-full font-black bg-amber-400 text-amber-950">
                   {pendingRequests} pending
                 </span>
               ) : (
@@ -1303,7 +1342,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
                   : 'bg-blue-50 hover:bg-blue-100 text-blue-900 border border-blue-300'
               }`}
             >
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              <span className="w-2 h-2 rounded-full bg-emerald-500" />
               <span>Awaiting Driver</span>
               <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-black ${
                 statusFilter === 'assigned' ? 'bg-blue-700 text-white' : 'bg-blue-200 text-blue-900'
@@ -1927,7 +1966,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
 
           {/* Newly Created Credentials Banner Card */}
           {createdCredentials && (
-            <div className="bg-emerald-50 border border-emerald-300 rounded-2xl p-5 shadow-sm space-y-3 animate-fade-in">
+            <div className="bg-emerald-50 border border-emerald-300 rounded-2xl p-5 shadow-sm space-y-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-2.5">
                   <div className="w-8 h-8 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center border border-emerald-300 shadow-2xs">
@@ -1989,7 +2028,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
 
           {/* Provision Staff / Driver Modal Form */}
           {showAddStaffModal && (
-            <div className="bg-white border border-red-500/30 rounded-2xl p-6 space-y-5 shadow-2xl animate-fade-in">
+            <div className="bg-white border border-red-500/30 rounded-2xl p-6 space-y-5 shadow-2xl">
               <div className="flex items-center justify-between border-b border-slate-200 pb-3">
                 <div className="flex items-center space-x-2.5">
                   <div className="w-7 h-7 rounded-lg bg-red-50 border border-red-200 flex items-center justify-center text-red-400">
@@ -2350,7 +2389,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
                               : 'bg-slate-100 text-slate-600 border border-slate-200'
                           }`}
                         >
-                          <span className={`w-1.5 h-1.5 rounded-full mr-1 ${drv.is_active ? 'bg-emerald-600 animate-pulse' : 'bg-slate-400'}`} />
+                          <span className={`w-1.5 h-1.5 rounded-full mr-1 ${drv.is_active ? 'bg-emerald-600' : 'bg-slate-400'}`} />
                           <span>{drv.is_active ? 'On Duty' : 'Suspended'}</span>
                         </span>
                       </div>
@@ -2384,7 +2423,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
                       <div className="flex items-center justify-between text-xs px-1">
                         <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${
                           activeRuns.length > 0
-                            ? 'bg-blue-50 text-blue-800 border border-blue-200 animate-pulse'
+                            ? 'bg-blue-50 text-blue-800 border border-blue-200'
                             : 'bg-emerald-50 text-emerald-800 border border-emerald-200'
                         }`}>
                           {activeRuns.length > 0 ? `${activeRuns.length} Active Run${activeRuns.length === 1 ? '' : 's'}` : '0 Active (Available)'}
@@ -2579,7 +2618,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
                     className={`px-2 py-0.5 text-[10px] font-black rounded-full ${
                       inAppNotifSubtab === 'in_app'
                         ? 'bg-white text-red-700'
-                        : 'bg-red-600 text-white animate-pulse'
+                        : 'bg-red-600 text-white'
                     }`}
                   >
                     {inAppNotifications.filter((n) => !n.is_read).length} New
@@ -2679,7 +2718,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
                     <span className="text-2xl font-black text-red-600 font-['Outfit'] flex items-center">
                       {inAppNotifications.filter((n) => !n.is_read).length}
                       {inAppNotifications.filter((n) => !n.is_read).length > 0 && (
-                        <span className="ml-2 w-2.5 h-2.5 rounded-full bg-red-600 animate-ping inline-block" />
+                        <span className="ml-2 w-2.5 h-2.5 rounded-full bg-red-600 inline-block" />
                       )}
                     </span>
                   </div>
@@ -2885,7 +2924,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
                                   {/* Opened vs Unopened Distinction Badge */}
                                   {isUnopened ? (
                                     <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-red-600 text-white shadow-xs">
-                                      <span className="w-1.5 h-1.5 rounded-full bg-white animate-ping mr-1.5" />
+                                      <span className="w-1.5 h-1.5 rounded-full bg-white mr-1.5" />
                                       ● Unopened (New)
                                     </span>
                                   ) : (
@@ -3039,7 +3078,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
                   Automated Customer & Admin Notifications
                 </h2>
                 <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full flex items-center">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse mr-1.5" />
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1.5" />
                   Live Dispatch Active
                 </span>
               </div>
@@ -3082,7 +3121,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
           </div>
 
           {testSuccess && (
-            <div className="p-4 bg-emerald-50 border border-emerald-300 rounded-2xl flex items-center justify-between text-xs text-emerald-900 animate-fade-in shadow-sm">
+            <div className="p-4 bg-emerald-50 border border-emerald-300 rounded-2xl flex items-center justify-between text-xs text-emerald-900 shadow-sm">
               <div className="flex items-center space-x-2">
                 <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
                 <span>
@@ -3866,7 +3905,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
 
       {/* EDIT ORDER MODAL */}
       {editingOrder && createPortal(
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto animate-fade-in">
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
           <div className="bg-white border border-slate-300 rounded-3xl max-w-4xl w-full max-h-[92vh] overflow-y-auto shadow-2xl space-y-5 p-6 text-xs my-auto">
             {/* Modal Header */}
             <div className="flex items-center justify-between border-b border-slate-200 pb-4">
@@ -4359,7 +4398,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
 
       {/* NOTIFICATION PREVIEW MODAL */}
       {previewNotification && createPortal(
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto animate-fade-in">
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
           <div className="bg-white border border-slate-300 rounded-3xl max-w-2xl w-full max-h-[92vh] overflow-y-auto shadow-2xl p-6 space-y-4 text-xs my-auto">
             <div className="flex items-center justify-between border-b border-slate-200 pb-3">
               <div className="flex items-center space-x-3">
@@ -4442,7 +4481,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
 
       {/* DRIVER DETAILS & ACTIVITY HUB MODAL */}
       {viewingStaffProfile && createPortal(
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 overflow-y-auto animate-fade-in">
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
           <div className="bg-white border border-slate-300 rounded-3xl max-w-3xl w-full max-h-[92vh] flex flex-col shadow-2xl overflow-hidden my-auto text-xs">
             {/* Header */}
             <div className="p-5 sm:p-6 border-b border-slate-200 bg-slate-50 flex items-center justify-between shrink-0">
@@ -4475,7 +4514,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
                           : 'bg-slate-100 text-slate-600 border border-slate-300'
                       }`}
                     >
-                      <span className={`w-1.5 h-1.5 rounded-full mr-1 ${viewingStaffProfile.is_active ? 'bg-emerald-600 animate-pulse' : 'bg-slate-400'}`} />
+                      <span className={`w-1.5 h-1.5 rounded-full mr-1 ${viewingStaffProfile.is_active ? 'bg-emerald-600' : 'bg-slate-400'}`} />
                       <span>{viewingStaffProfile.is_active ? 'Active & On Duty' : 'Shift Suspended'}</span>
                     </span>
                   </div>
@@ -4602,7 +4641,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
                           </h4>
                         </div>
                         {activeRuns.length > 0 && (
-                          <span className="text-[10px] bg-blue-100 text-blue-800 font-bold px-2 py-0.5 rounded-full animate-pulse">
+                          <span className="text-[10px] bg-blue-100 text-blue-800 font-bold px-2 py-0.5 rounded-full">
                             Live On Road
                           </span>
                         )}
@@ -4791,7 +4830,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
 
       {/* REVIEW & SEND PRICE QUOTE MODAL */}
       {reviewingQuoteOrder && createPortal(
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto animate-fade-in">
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
           <div className="bg-white border border-slate-300 rounded-3xl max-w-3xl w-full max-h-[92vh] overflow-y-auto shadow-2xl space-y-5 p-6 text-xs my-auto">
             {/* Modal Header */}
             <div className="flex items-center justify-between border-b border-slate-200 pb-4">
@@ -5193,7 +5232,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
 
       {/* DRIVER ASSIGNMENT MODAL */}
       {assignModalOrder && createPortal(
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto animate-fade-in">
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
           <div className="bg-white border border-slate-300 rounded-2xl p-6 max-w-md w-full shadow-2xl space-y-4 my-auto">
             <h3 className="text-lg font-bold text-slate-900 font-['Outfit']">
               Assign Driver to Order {assignModalOrder.order_number}
@@ -5266,7 +5305,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
 
       {/* COMPREHENSIVE ORDER DETAILS & PROOF OF DELIVERY (POD) MODAL */}
       {selectedOrderDetails && createPortal(
-        <div className="fixed inset-0 z-[55] bg-slate-900/70 backdrop-blur-sm flex items-center justify-center p-3 sm:p-6 overflow-y-auto animate-fade-in">
+        <div className="fixed inset-0 z-[55] bg-slate-900/70 backdrop-blur-sm flex items-center justify-center p-3 sm:p-6 overflow-y-auto">
           <div className="bg-white border border-slate-200 rounded-3xl max-w-5xl w-full max-h-[92vh] flex flex-col shadow-2xl overflow-hidden my-auto text-xs">
             {/* Modal Header */}
             <div className="p-5 sm:p-6 border-b border-slate-200 bg-slate-50 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shrink-0">
@@ -5654,7 +5693,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
 
               {/* SECTION 2: ROUTE & DOCK ACCESS DETAILS */}
               {orderDetailSubTab === 'manifest' && (
-                <div className="space-y-6 animate-fade-in">
+                <div className="space-y-6">
                   <div className="space-y-3">
                 <div className="flex items-center justify-between text-xs font-bold text-slate-900 uppercase tracking-wider">
                   <span className="flex items-center space-x-1.5">
@@ -5910,7 +5949,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
 
           {/* SECTION 5: PRICING, APPLIED DISCOUNTS & BILLING BREAKDOWN */}
           {orderDetailSubTab === 'financials' && (
-            <div className="space-y-6 animate-fade-in">
+            <div className="space-y-6">
               <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-3">
                 <div className="flex items-center justify-between text-xs font-bold text-slate-900 uppercase tracking-wider">
                   <span className="flex items-center space-x-1.5">
@@ -6006,7 +6045,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
 
           {/* SECTION 6: CHAIN OF CUSTODY & AUDIT TIMELINE */}
           {orderDetailSubTab === 'audit' && (
-            <div className="space-y-6 animate-fade-in">
+            <div className="space-y-6">
               <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-3">
                 <div className="flex items-center space-x-1.5 text-xs font-bold text-slate-900 uppercase tracking-wider">
                   <Clock className="w-3.5 h-3.5 text-slate-700" />
@@ -6106,7 +6145,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
       {zoomedPhotoUrl && createPortal(
         <div
           onClick={() => setZoomedPhotoUrl(null)}
-          className="fixed inset-0 z-[70] bg-black/90 backdrop-blur-md flex flex-col items-center justify-center p-4 animate-fade-in cursor-zoom-out"
+          className="fixed inset-0 z-[70] bg-black/90 backdrop-blur-md flex flex-col items-center justify-center p-4 cursor-zoom-out"
         >
           <div
             onClick={(e) => e.stopPropagation()}
@@ -6149,6 +6188,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
         </div>,
         document.body
       )}
+      </div>
     </div>
   );
 };

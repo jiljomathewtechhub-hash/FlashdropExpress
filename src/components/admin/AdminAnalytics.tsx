@@ -416,7 +416,7 @@ export const AdminAnalytics: React.FC<AdminAnalyticsProps> = ({ orders, drivers,
   };
 
   return (
-    <div className="space-y-6 animate-fade-in">
+    <div className="space-y-6">
       {/* Top Header & Reporting Controls Bar */}
       <div className="bg-white border border-slate-200 rounded-3xl p-5 sm:p-6 shadow-sm space-y-4">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-slate-100 pb-4">
@@ -702,7 +702,7 @@ export const AdminAnalytics: React.FC<AdminAnalyticsProps> = ({ orders, drivers,
                   >
                     {/* Hover Tooltip Card */}
                     {isHovered && (
-                      <div className="absolute bottom-full mb-2 z-20 bg-slate-900 text-white rounded-xl px-3 py-2 text-[11px] shadow-xl space-y-1 w-max pointer-events-none animate-fade-in border border-slate-700">
+                      <div className="absolute bottom-full mb-2 z-20 bg-slate-900 text-white rounded-xl px-3 py-2 text-[11px] shadow-xl space-y-1 w-max pointer-events-none border border-slate-700">
                         <div className="font-bold text-slate-200 border-b border-slate-800 pb-1">
                           {d.label}
                         </div>

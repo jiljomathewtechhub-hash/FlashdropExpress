@@ -359,3 +359,53 @@ input[type="range"]::-moz-range-thumb {
   }
 }
 
+/* ==========================================================================
+   Admin Dashboard: Distraction-Free High-Performance Mode (Zero Animations)
+   ========================================================================== */
+body.admin-dashboard-scope,
+.admin-dashboard-scope {
+  scroll-behavior: auto !important;
+}
+
+body.admin-dashboard-scope *,
+body.admin-dashboard-scope *::before,
+body.admin-dashboard-scope *::after,
+.admin-dashboard-scope *,
+.admin-dashboard-scope *::before,
+.admin-dashboard-scope *::after {
+  animation: none !important;
+  animation-duration: 0.001ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.001ms !important;
+  transition-delay: 0s !important;
+}
+
+/* Hide continuous decorative radar ping rings in admin dashboard */
+body.admin-dashboard-scope .animate-ping,
+.admin-dashboard-scope .animate-ping {
+  display: none !important;
+}
+
+/* Ensure pulsing badges and dots remain solid, steady, and high-contrast */
+body.admin-dashboard-scope .animate-pulse,
+.admin-dashboard-scope .animate-pulse {
+  animation: none !important;
+  opacity: 1 !important;
+}
+
+/* Ensure modals and tabs appear instantly with 0 transition lag */
+body.admin-dashboard-scope .animate-fade-in,
+body.admin-dashboard-scope .animate-slide-up,
+.admin-dashboard-scope .animate-fade-in,
+.admin-dashboard-scope .animate-slide-up {
+  animation: none !important;
+  opacity: 1 !important;
+  transform: none !important;
+}
+
+/* Allow deliberate loading spinners during active data saving/fetching */
+body.admin-dashboard-scope .animate-spin,
+.admin-dashboard-scope .animate-spin {
+  animation: spin 0.8s linear infinite !important;
+}
+

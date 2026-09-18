@@ -204,10 +204,23 @@ export default function App() {
     }
   }, [currentTab, currentUser]);
 
+  const isAdminTab = currentTab === 'admin' || currentTab === 'owner';
+
+  useEffect(() => {
+    if (isAdminTab) {
+      document.body.classList.add('admin-dashboard-scope');
+    } else {
+      document.body.classList.remove('admin-dashboard-scope');
+    }
+    return () => {
+      document.body.classList.remove('admin-dashboard-scope');
+    };
+  }, [isAdminTab]);
+
   return (
-    <div className="min-h-screen bg-[#F8FAFC] text-slate-800 flex flex-col justify-between selection:bg-red-500 selection:text-white relative">
-      {/* Full-Website Moving Highway & Vehicle Experience */}
-      <FullPage3DHighway />
+    <div className={`min-h-screen ${isAdminTab ? 'bg-[#F1F5F9] admin-dashboard-scope' : 'bg-[#F8FAFC]'} text-slate-800 flex flex-col justify-between selection:bg-red-500 selection:text-white relative`}>
+      {/* Full-Website Moving Highway & Vehicle Experience (disabled on Admin Dashboard for distraction-free performance) */}
+      {!isAdminTab && <FullPage3DHighway />}
 
       {/* Top Navbar */}
       <Navbar currentTab={currentTab} onNavigate={handleNavigate} />
