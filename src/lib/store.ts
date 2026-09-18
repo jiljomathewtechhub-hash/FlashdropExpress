@@ -1293,107 +1293,149 @@ class FlashDropStore {
 
     const sb = supabase;
     if (isSupabaseConfigured && sb) {
-      const matchFilter = updatedOrder.id.length === 36 ? { id: updatedOrder.id } : { order_number: updatedOrder.order_number };
-      const driverUUID =
-        updatedOrder.assigned_driver_id && updatedOrder.assigned_driver_id.length === 36
-          ? updatedOrder.assigned_driver_id
-          : null;
-
-      const payload: Record<string, any> = {
-        customer_name: updatedOrder.customer_name,
-        customer_phone: updatedOrder.customer_phone,
-        customer_email: updatedOrder.customer_email,
-        company_name: updatedOrder.company_name || null,
-        pickup_address: updatedOrder.pickup_address,
-        pickup_unit: updatedOrder.pickup_unit || null,
-        pickup_contact_name: updatedOrder.pickup_contact_name || null,
-        pickup_contact_phone: updatedOrder.pickup_contact_phone || null,
-        pickup_notes: updatedOrder.pickup_notes || null,
-        delivery_address: updatedOrder.delivery_address,
-        delivery_unit: updatedOrder.delivery_unit || null,
-        delivery_contact_name: updatedOrder.delivery_contact_name || null,
-        delivery_contact_phone: updatedOrder.delivery_contact_phone || null,
-        delivery_notes: updatedOrder.delivery_notes || null,
-        pickup_date: updatedOrder.pickup_date,
-        pickup_time: updatedOrder.pickup_time,
-        delivery_time_option: updatedOrder.delivery_time_option,
-        service_area: updatedOrder.service_area,
-        item_type: updatedOrder.item_type,
-        item_description: updatedOrder.item_description || null,
-        weight_lbs: updatedOrder.weight_lbs,
-        quantity: updatedOrder.quantity,
-        distance_km: updatedOrder.distance_km,
-        custom_instructions: updatedOrder.custom_instructions || null,
-        base_price: updatedOrder.base_price,
-        excess_km_charge: updatedOrder.excess_km_charge || 0,
-        delivery_type_charge: updatedOrder.delivery_type_charge || 0,
-        after_hours_charge: updatedOrder.after_hours_charge || 0,
-        waiting_charge: updatedOrder.waiting_charge || 0,
-        labor_charge: updatedOrder.labor_charge || 0,
-        discount_amount: updatedOrder.discount_amount || 0,
-        discount_type: updatedOrder.discount_type || null,
-        discount_notes: updatedOrder.discount_notes || null,
-        quote_notes: updatedOrder.quote_notes || null,
-        quote_sent_at: updatedOrder.quote_sent_at || null,
-        quote_accepted_at: updatedOrder.quote_accepted_at || null,
-        subtotal: updatedOrder.subtotal,
-        tax_amount: updatedOrder.tax_amount,
-        total_price: updatedOrder.total_price,
-        payment_status: updatedOrder.payment_status,
-        order_status: updatedOrder.order_status,
-        assigned_driver_id: driverUUID,
-        updated_at: updatedOrder.updated_at,
-      };
-
-      sb
-        .from('orders')
-        .update(payload)
-        .match(matchFilter)
-        .then(async ({ error }) => {
-          if (error) {
-            console.warn('Supabase updateOrder notice:', error.message);
-            // If PostgreSQL enum rejects 'quote_sent' or 'accepted', fallback gracefully to DB-safe status
-            // while preserving all financial columns, discounts, and quote timestamps in Supabase
-            if (error.message?.includes('order_status') || error.message?.includes('enum')) {
-              const fallbackStatus =
-                payload.order_status === 'quote_sent'
-                  ? 'submitted'
-                  : payload.order_status === 'accepted'
-                  ? 'en_route_pickup'
-                  : 'submitted';
-              const { error: retryErr } = await sb
-                .from('orders')
-                .update({ ...payload, order_status: fallbackStatus })
-                .match(matchFilter);
-              if (retryErr) console.warn('Supabase updateOrder fallback notice:', retryErr.message);
-            }
-          }
-        });
-
-      if (updatedOrder.id.length === 36) {
-        const histStatus =
-          updatedOrder.order_status === 'accepted'
-            ? 'en_route_pickup'
-            : updatedOrder.order_status === 'quote_sent'
-            ? 'submitted'
-            : updatedOrder.order_status;
-        sb
-          .from('order_status_history')
-          .insert([
-            {
-              order_id: updatedOrder.id,
-              status: histStatus,
-              notes:
-                updatedOrder.order_status === 'quote_sent'
-                  ? `Official price quote of $${updatedOrder.total_price.toFixed(2)} CAD dispatched to customer`
-                  : 'Order updated by Dispatch Command Desk',
-            },
-          ])
-          .then();
-      }
+      this.syncOrderToSupabase(updatedOrder).catch((err) => {
+        console.warn('Background Supabase sync error in updateOrder:', err);
+      });
     }
 
     return updatedOrder;
+  }
+
+  /**
+   * Resiliently synchronizes an order to Supabase PostgreSQL backend.
+   * Tolerates schema column variations by dynamically removing unknown columns if rejected.
+   */
+  public async syncOrderToSupabase(updatedOrder: Order): Promise<void> {
+    const sb = supabase;
+    if (!isSupabaseConfigured || !sb) return;
+
+    const matchFilter = updatedOrder.id.length === 36 ? { id: updatedOrder.id } : { order_number: updatedOrder.order_number };
+    const driverUUID =
+      updatedOrder.assigned_driver_id && updatedOrder.assigned_driver_id.length === 36
+        ? updatedOrder.assigned_driver_id
+        : null;
+
+    const payload: Record<string, any> = {
+      customer_name: updatedOrder.customer_name,
+      customer_phone: updatedOrder.customer_phone,
+      customer_email: updatedOrder.customer_email,
+      company_name: updatedOrder.company_name || null,
+      pickup_address: updatedOrder.pickup_address,
+      pickup_unit: updatedOrder.pickup_unit || null,
+      pickup_contact_name: updatedOrder.pickup_contact_name || null,
+      pickup_contact_phone: updatedOrder.pickup_contact_phone || null,
+      pickup_notes: updatedOrder.pickup_notes || null,
+      delivery_address: updatedOrder.delivery_address,
+      delivery_unit: updatedOrder.delivery_unit || null,
+      delivery_contact_name: updatedOrder.delivery_contact_name || null,
+      delivery_contact_phone: updatedOrder.delivery_contact_phone || null,
+      delivery_notes: updatedOrder.delivery_notes || null,
+      pickup_date: updatedOrder.pickup_date,
+      pickup_time: updatedOrder.pickup_time,
+      delivery_time_option: updatedOrder.delivery_time_option,
+      service_area: updatedOrder.service_area,
+      item_type: updatedOrder.item_type,
+      item_description: updatedOrder.item_description || null,
+      weight_lbs: updatedOrder.weight_lbs,
+      quantity: updatedOrder.quantity,
+      distance_km: updatedOrder.distance_km,
+      inside_gta_km: updatedOrder.inside_gta_km !== undefined ? updatedOrder.inside_gta_km : null,
+      outside_gta_km: updatedOrder.outside_gta_km !== undefined ? updatedOrder.outside_gta_km : null,
+      vehicle_slug: updatedOrder.vehicle_slug || null,
+      vehicle_name: updatedOrder.vehicle_name || null,
+      custom_instructions: updatedOrder.custom_instructions || null,
+      base_price: updatedOrder.base_price,
+      excess_km_charge: updatedOrder.excess_km_charge || 0,
+      delivery_type_charge: updatedOrder.delivery_type_charge || 0,
+      outside_gta_charge: updatedOrder.outside_gta_charge || 0,
+      after_hours_charge: updatedOrder.after_hours_charge || 0,
+      waiting_charge: updatedOrder.waiting_charge || 0,
+      labor_charge: updatedOrder.labor_charge || 0,
+      discount_amount: updatedOrder.discount_amount || 0,
+      discount_type: updatedOrder.discount_type || null,
+      discount_notes: updatedOrder.discount_notes || null,
+      quote_notes: updatedOrder.quote_notes || null,
+      quote_sent_at: updatedOrder.quote_sent_at || null,
+      quote_accepted_at: updatedOrder.quote_accepted_at || null,
+      subtotal: updatedOrder.subtotal,
+      tax_amount: updatedOrder.tax_amount,
+      total_price: updatedOrder.total_price,
+      payment_status: updatedOrder.payment_status,
+      order_status: updatedOrder.order_status,
+      assigned_driver_id: driverUUID,
+      updated_at: updatedOrder.updated_at,
+    };
+
+    let currentPayload = { ...payload };
+    let attempts = 0;
+    while (attempts < 6) {
+      const { error } = await sb.from('orders').update(currentPayload).match(matchFilter);
+      if (!error) {
+        break;
+      }
+
+      console.warn(`Supabase order sync notice (attempt ${attempts + 1}):`, error.message);
+
+      // 1. If a column doesn't exist in the current PostgreSQL schema, strip it and retry safely
+      if (error.message?.includes('does not exist')) {
+        const match = error.message.match(/column "([^"]+)" of relation/i);
+        if (match && match[1] && match[1] in currentPayload) {
+          delete currentPayload[match[1]];
+          attempts++;
+          continue;
+        }
+      }
+
+      // 2. If order_status enum rejects custom status like 'quote_sent', fallback to 'submitted'
+      if (error.message?.includes('order_status') || error.message?.includes('enum')) {
+        const fallbackStatus =
+          currentPayload.order_status === 'quote_sent'
+            ? 'submitted'
+            : currentPayload.order_status === 'accepted'
+            ? 'en_route_pickup'
+            : 'submitted';
+        currentPayload.order_status = fallbackStatus;
+        attempts++;
+        continue;
+      }
+
+      break;
+    }
+
+    // Record audit trail in order_status_history
+    if (updatedOrder.id.length === 36) {
+      const histStatus =
+        updatedOrder.order_status === 'accepted'
+          ? 'en_route_pickup'
+          : updatedOrder.order_status === 'quote_sent'
+          ? 'submitted'
+          : updatedOrder.order_status;
+
+      sb
+        .from('order_status_history')
+        .insert([
+          {
+            order_id: updatedOrder.id,
+            status: histStatus,
+            notes:
+              updatedOrder.order_status === 'quote_sent'
+                ? `Official price quote of $${updatedOrder.total_price.toFixed(2)} CAD dispatched to customer`
+                : 'Order updated by Dispatch Command Desk',
+          },
+        ])
+        .then();
+    }
+  }
+
+  /**
+   * Updates order locally and awaits asynchronous sync to Supabase backend.
+   */
+  public async updateOrderAndSync(orderId: string, updates: Partial<Order>): Promise<Order | null> {
+    const updated = this.updateOrder(orderId, updates);
+    if (updated) {
+      await this.syncOrderToSupabase(updated);
+    }
+    return updated;
   }
 
   public deleteOrder(orderId: string): boolean {

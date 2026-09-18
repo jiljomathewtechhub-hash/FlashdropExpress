@@ -241,6 +241,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
   });
   const [isSendingQuote, setIsSendingQuote] = useState(false);
   const [quoteSentSuccess, setQuoteSentSuccess] = useState(false);
+  const [quoteSuccessMsg, setQuoteSuccessMsg] = useState('');
 
   // Notification Monitor states
   const [notifications, setNotifications] = useState<NotificationLog[]>(() => store.getNotificationLogs());
@@ -642,6 +643,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
       quote_notes: order.quote_notes || 'Custom commercial freight quotation based on verified route specs and cargo dimensions.',
     });
     setQuoteSentSuccess(false);
+    setQuoteSuccessMsg('');
   };
 
   const recalculateQuotePricing = (fields: Partial<typeof quoteFormData>) => {
@@ -841,12 +843,12 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
         tax_amount: quoteFormData.tax_amount,
         total_price: quoteFormData.total_price,
         quote_notes: quoteFormData.quote_notes,
-        order_status: 'quote_sent',
-        quote_sent_at: now,
+        order_status: sendEmail ? 'quote_sent' : (reviewingQuoteOrder.order_status || 'submitted'),
+        quote_sent_at: sendEmail ? now : (reviewingQuoteOrder.quote_sent_at || undefined),
       };
 
-      const res = store.updateOrder(reviewingQuoteOrder.id, updatedData);
-      const updatedOrder = res || ({ ...reviewingQuoteOrder, ...updatedData, order_status: 'quote_sent' } as Order);
+      const res = await store.updateOrderAndSync(reviewingQuoteOrder.id, updatedData);
+      const updatedOrder = res || ({ ...reviewingQuoteOrder, ...updatedData, order_status: sendEmail ? 'quote_sent' : reviewingQuoteOrder.order_status } as Order);
 
       if (sendEmail) {
         await notificationService.notifyQuoteSent(updatedOrder, settings);
@@ -854,14 +856,23 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
       }
 
       setOrders(store.getOrders());
+      if (selectedOrderDetails && selectedOrderDetails.id === reviewingQuoteOrder.id) {
+        setSelectedOrderDetails(updatedOrder);
+      }
+
+      const successMsg = sendEmail
+        ? 'Price quotation saved and official quotation email dispatched to customer successfully!'
+        : 'All modified order details, route specifications, and pricing saved successfully (not sent to customer)!';
+      setQuoteSuccessMsg(successMsg);
       setQuoteSentSuccess(true);
       setTimeout(() => {
         setQuoteSentSuccess(false);
+        setQuoteSuccessMsg('');
         setReviewingQuoteOrder(null);
-      }, 1500);
+      }, 1600);
     } catch (err) {
-      console.error('Failed to dispatch quote:', err);
-      alert('Failed to send quote: ' + String(err));
+      console.error('Failed to save / dispatch quote:', err);
+      alert('Failed to save quote: ' + String(err));
     } finally {
       setIsSendingQuote(false);
     }
@@ -5135,11 +5146,11 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
               </button>
             </div>
 
-            {/* Success Alert if Quote Sent */}
+            {/* Success Alert if Quote Saved / Sent */}
             {quoteSentSuccess && (
-              <div className="p-3.5 bg-emerald-50 border border-emerald-300 rounded-2xl flex items-center space-x-3 text-emerald-800 font-bold text-xs">
+              <div className="p-3.5 bg-emerald-50 border border-emerald-300 rounded-2xl flex items-center space-x-3 text-emerald-800 font-bold text-xs shadow-xs animate-in fade-in duration-200">
                 <CheckCircle2 className="w-5 h-5 text-emerald-600 flex-shrink-0" />
-                <span>Price quotation saved and official quotation email dispatched to customer successfully!</span>
+                <span>{quoteSuccessMsg || 'Changes saved successfully!'}</span>
               </div>
             )}
 
@@ -5796,34 +5807,145 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
             </div>
 
             {/* Modal Actions */}
-            <div className="pt-2 border-t border-slate-200 flex items-center justify-between">
-              <button
-                type="button"
-                onClick={() => setReviewingQuoteOrder(null)}
-                className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 font-semibold rounded-xl text-xs transition cursor-pointer"
-              >
-                Cancel
-              </button>
+            <div className="pt-3 border-t border-slate-200 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setReviewingQuoteOrder(null)}
+                  className="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 font-semibold rounded-xl text-xs transition cursor-pointer"
+                >
+                  Cancel
+                </button>
 
-              <div className="flex items-center space-x-3">
+                {/* Instant Invoice & Waybill Preview / Download with current modified specs */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    const previewOrder: Order = {
+                      ...reviewingQuoteOrder,
+                      customer_name: quoteFormData.customer_name,
+                      customer_phone: quoteFormData.customer_phone,
+                      customer_email: quoteFormData.customer_email,
+                      company_name: quoteFormData.company_name,
+                      pickup_address: quoteFormData.pickup_address,
+                      pickup_unit: quoteFormData.pickup_unit,
+                      pickup_contact_name: quoteFormData.pickup_contact_name,
+                      pickup_contact_phone: quoteFormData.pickup_contact_phone,
+                      pickup_date: quoteFormData.pickup_date,
+                      pickup_time: quoteFormData.pickup_time,
+                      pickup_notes: quoteFormData.pickup_notes,
+                      delivery_address: quoteFormData.delivery_address,
+                      delivery_unit: quoteFormData.delivery_unit,
+                      delivery_contact_name: quoteFormData.delivery_contact_name,
+                      delivery_contact_phone: quoteFormData.delivery_contact_phone,
+                      delivery_time_option: quoteFormData.delivery_time_option as any,
+                      delivery_notes: quoteFormData.delivery_notes,
+                      vehicle_slug: quoteFormData.vehicle_slug as any,
+                      vehicle_name: quoteFormData.vehicle_name,
+                      weight_lbs: quoteFormData.weight_lbs,
+                      quantity: quoteFormData.quantity,
+                      item_type: quoteFormData.item_type as any,
+                      item_description: quoteFormData.item_description,
+                      custom_instructions: quoteFormData.custom_instructions,
+                      distance_km: quoteFormData.distance_km,
+                      base_price: quoteFormData.base_price,
+                      excess_km_charge: quoteFormData.excess_km_charge,
+                      delivery_type_charge: quoteFormData.urgency_surcharge,
+                      after_hours_charge: quoteFormData.after_hours_charge,
+                      outside_gta_charge: quoteFormData.outside_gta_charge,
+                      discount_amount: quoteFormData.discount_amount,
+                      discount_type: quoteFormData.discount_type,
+                      discount_notes: quoteFormData.discount_notes,
+                      subtotal: quoteFormData.subtotal,
+                      tax_amount: quoteFormData.tax_amount,
+                      total_price: quoteFormData.total_price,
+                      quote_notes: quoteFormData.quote_notes,
+                    };
+                    generateOrderPdf(previewOrder, settings);
+                  }}
+                  className="px-3 py-2 bg-white hover:bg-red-50 text-red-700 hover:text-red-800 border border-red-200 rounded-xl text-xs font-bold transition flex items-center space-x-1.5 cursor-pointer shadow-2xs"
+                  title="Generate and download commercial invoice with current modified details"
+                >
+                  <FileDown className="w-3.5 h-3.5 text-red-600" />
+                  <span>Invoice (PDF)</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    const previewOrder: Order = {
+                      ...reviewingQuoteOrder,
+                      customer_name: quoteFormData.customer_name,
+                      customer_phone: quoteFormData.customer_phone,
+                      customer_email: quoteFormData.customer_email,
+                      company_name: quoteFormData.company_name,
+                      pickup_address: quoteFormData.pickup_address,
+                      pickup_unit: quoteFormData.pickup_unit,
+                      pickup_contact_name: quoteFormData.pickup_contact_name,
+                      pickup_contact_phone: quoteFormData.pickup_contact_phone,
+                      pickup_date: quoteFormData.pickup_date,
+                      pickup_time: quoteFormData.pickup_time,
+                      pickup_notes: quoteFormData.pickup_notes,
+                      delivery_address: quoteFormData.delivery_address,
+                      delivery_unit: quoteFormData.delivery_unit,
+                      delivery_contact_name: quoteFormData.delivery_contact_name,
+                      delivery_contact_phone: quoteFormData.delivery_contact_phone,
+                      delivery_time_option: quoteFormData.delivery_time_option as any,
+                      delivery_notes: quoteFormData.delivery_notes,
+                      vehicle_slug: quoteFormData.vehicle_slug as any,
+                      vehicle_name: quoteFormData.vehicle_name,
+                      weight_lbs: quoteFormData.weight_lbs,
+                      quantity: quoteFormData.quantity,
+                      item_type: quoteFormData.item_type as any,
+                      item_description: quoteFormData.item_description,
+                      custom_instructions: quoteFormData.custom_instructions,
+                      distance_km: quoteFormData.distance_km,
+                      base_price: quoteFormData.base_price,
+                      excess_km_charge: quoteFormData.excess_km_charge,
+                      delivery_type_charge: quoteFormData.urgency_surcharge,
+                      after_hours_charge: quoteFormData.after_hours_charge,
+                      outside_gta_charge: quoteFormData.outside_gta_charge,
+                      discount_amount: quoteFormData.discount_amount,
+                      discount_type: quoteFormData.discount_type,
+                      discount_notes: quoteFormData.discount_notes,
+                      subtotal: quoteFormData.subtotal,
+                      tax_amount: quoteFormData.tax_amount,
+                      total_price: quoteFormData.total_price,
+                      quote_notes: quoteFormData.quote_notes,
+                    };
+                    generateWaybillPdf(previewOrder, settings);
+                  }}
+                  className="px-3 py-2 bg-white hover:bg-slate-50 text-slate-700 hover:text-slate-900 border border-slate-300 rounded-xl text-xs font-bold transition flex items-center space-x-1.5 cursor-pointer shadow-2xs"
+                  title="Generate and download shipping waybill BOL with current modified details"
+                >
+                  <FileText className="w-3.5 h-3.5 text-slate-600" />
+                  <span>Waybill (BOL)</span>
+                </button>
+              </div>
+
+              <div className="flex items-center space-x-2.5">
+                {/* Save button: saves all modified details, route KM, and pricing without sending email */}
                 <button
                   type="button"
                   onClick={() => handleSendQuoteSubmit(false)}
                   disabled={isSendingQuote}
-                  className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300 font-bold rounded-xl text-xs transition flex items-center space-x-1.5 cursor-pointer disabled:opacity-50"
+                  className="px-5 py-2.5 bg-slate-800 hover:bg-slate-900 text-white font-bold rounded-xl text-xs transition flex items-center space-x-1.5 cursor-pointer disabled:opacity-50 shadow-sm"
+                  title="Save all modified information, route KM, and pricing without sending email to customer"
                 >
-                  <Save className="w-3.5 h-3.5" />
-                  <span>Save Price Only</span>
+                  <Save className="w-4 h-4 text-emerald-400" />
+                  <span>{isSendingQuote ? 'Saving...' : 'Save'}</span>
                 </button>
 
+                {/* Save & Send to Customer */}
                 <button
                   type="button"
                   onClick={() => handleSendQuoteSubmit(true)}
                   disabled={isSendingQuote}
                   className="px-6 py-2.5 bg-gradient-to-r from-red-600 to-amber-600 hover:from-red-500 hover:to-amber-500 text-white font-bold rounded-xl text-xs transition shadow-lg shadow-red-950/50 flex items-center space-x-2 cursor-pointer disabled:opacity-50"
+                  title="Save all changes and dispatch the official price quotation email to the customer"
                 >
                   <Send className="w-3.5 h-3.5" />
-                  <span>{isSendingQuote ? 'Sending Quotation...' : 'Save & Dispatch Quote to Customer'}</span>
+                  <span>{isSendingQuote ? 'Sending Quotation...' : 'Save & Send to Customer'}</span>
                 </button>
               </div>
             </div>
