@@ -754,18 +754,20 @@ export const DriverDashboard: React.FC<DriverDashboardProps> = ({ onNavigate, in
                   )}
                 </div>
 
-                {/* Secondary Action: Official Carrier Waybill (BOL & Manifest) */}
-                <div className="pt-1">
-                  <button
-                    type="button"
-                    onClick={() => generateWaybillPdf(activeMission, store.getSettings())}
-                    className="w-full py-2.5 px-4 bg-slate-800/90 hover:bg-slate-700/90 active:scale-[0.99] text-slate-200 hover:text-white rounded-xl text-xs font-bold border border-slate-700/80 transition flex items-center justify-center space-x-2 cursor-pointer shadow-xs"
-                    title="Download/Print Official Uniform Bill of Lading (Waybill)"
-                  >
-                    <FileText className="w-4 h-4 text-emerald-400" />
-                    <span>View Official Waybill (BOL &amp; Cargo Manifest)</span>
-                  </button>
-                </div>
+                {/* Secondary Action: Official Carrier Waybill (BOL & Manifest) - Unlocked only after accepting run */}
+                {isAccepted && (
+                  <div className="pt-1">
+                    <button
+                      type="button"
+                      onClick={() => generateWaybillPdf(activeMission, store.getSettings())}
+                      className="w-full py-2.5 px-4 bg-slate-800/90 hover:bg-slate-700/90 active:scale-[0.99] text-slate-200 hover:text-white rounded-xl text-xs font-bold border border-slate-700/80 transition flex items-center justify-center space-x-2 cursor-pointer shadow-xs"
+                      title="Download/Print Official Uniform Bill of Lading (Waybill)"
+                    >
+                      <FileText className="w-4 h-4 text-emerald-400" />
+                      <span>View Official Waybill (BOL &amp; Cargo Manifest)</span>
+                    </button>
+                  </div>
+                )}
               </>
             );
           })()}
