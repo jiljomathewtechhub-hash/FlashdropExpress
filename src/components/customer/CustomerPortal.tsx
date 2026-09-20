@@ -960,8 +960,7 @@ export const CustomerPortal: React.FC<CustomerPortalProps> = ({ onNavigate }) =>
                   CRA-Compliant Commercial Invoicing &amp; Tax Receipts
                 </h3>
                 <p className="text-xs text-slate-500 mt-1 max-w-2xl leading-relaxed">
-                  Every FlashDrop Express invoice includes our registered Federal GST/HST Number{' '}
-                  <strong className="text-slate-900 font-mono">80126 9414 RT0001</strong> and your company&apos;s registered HST number for full input tax credit (ITC) write-offs.
+                  Every FlashDrop Express official invoice includes our registered Federal GST/HST details and your company&apos;s registered business number for input tax credit (ITC) tax write-offs.
                 </p>
               </div>
             </div>

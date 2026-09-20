@@ -341,7 +341,6 @@ export const AboutPage: React.FC<AboutPageProps> = ({ onNavigate }) => {
               <Building2 className="w-4 h-4 text-red-600" />
               <div className="font-bold text-slate-900">Parent Company</div>
               <div className="text-slate-800 font-semibold">SNM Group International Inc.</div>
-              <span className="text-[11px] text-slate-500">CRA: 78750 1444 RT0001</span>
             </div>
 
             <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-2xs space-y-1.5">

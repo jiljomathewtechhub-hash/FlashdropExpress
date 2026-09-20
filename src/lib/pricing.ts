@@ -67,7 +67,7 @@ export const DEFAULT_BUSINESS_SETTINGS: BusinessSettings = {
   outside_gta_surcharge: 60.0,
   hst_enabled: true,
   hst_rate: 0.13,
-  hst_number: '78750 1444 RT0001',
+  hst_number: '',
   admin_sms_phone: '+16478049775',
   carrier_sms_gateway: 'freedom',
   admin_notification_email: ((typeof import.meta !== 'undefined' && (import.meta as any).env?.VITE_ADMIN_EMAIL) as string) || 'support@flashdropexpress.com',

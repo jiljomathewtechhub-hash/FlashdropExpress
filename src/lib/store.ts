@@ -1162,8 +1162,12 @@ class FlashDropStore {
       if (!this.settings.address) {
         this.settings.address = DEFAULT_BUSINESS_SETTINGS.address;
       }
-      if (!this.settings.hst_number || this.settings.hst_number === '78492 1038 RT0001') {
-        this.settings.hst_number = '78750 1444 RT0001';
+      if (
+        this.settings.hst_number === '78492 1038 RT0001' ||
+        this.settings.hst_number === '78750 1444 RT0001' ||
+        this.settings.hst_number === '80126 9414 RT0001'
+      ) {
+        this.settings.hst_number = '';
       }
       if (!this.settings.parent_company) {
         this.settings.parent_company = 'SNM Group International Inc.';

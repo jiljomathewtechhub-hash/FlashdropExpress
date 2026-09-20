@@ -322,7 +322,7 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
             <span>•</span>
             <span>Payment: Pay Later on Delivery</span>
             <span>•</span>
-            <span>All rates in CAD subject to HST (CRA Reg: 78750 1444 RT0001)</span>
+            <span>All rates in CAD subject to applicable 13% Ontario HST</span>
           </div>
         </div>
       </div>

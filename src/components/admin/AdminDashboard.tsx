@@ -4187,7 +4187,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
                 type="text"
                 value={settings.hst_number || ''}
                 onChange={(e) => setSettings({ ...settings, hst_number: e.target.value })}
-                placeholder="e.g. 78750 1444 RT0001"
+                placeholder="e.g. 12345 6789 RT0001"
                 className="w-full bg-slate-50 border border-slate-300 p-2.5 rounded-xl text-slate-900 focus:outline-none focus:border-red-600 shadow-xs"
               />
               <span className="text-[10px] text-slate-500 mt-1 block">

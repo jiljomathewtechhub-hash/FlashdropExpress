@@ -269,7 +269,7 @@ export const TermsPage: React.FC<TermsPageProps> = ({ onNavigate }) => {
                 A Division of SNM Group International Inc.
               </p>
               <p className="text-xs text-slate-500 mt-0.5">
-                Licensed Commercial Freight &amp; Same-Day Courier Services &bull; CRA GST/HST Reg: 78750 1444 RT0001
+                Licensed Commercial Freight &amp; Same-Day Courier Services &bull; Operating across Ontario
               </p>
             </div>
             <div className="mt-3 sm:mt-0 inline-flex items-center px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-bold">

@@ -1104,7 +1104,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
                   type="text"
                   value={formData.hst_number}
                   onChange={(e) => setFormData({ ...formData, hst_number: e.target.value })}
-                  placeholder="e.g. 84920 1144 RT0001"
+                  placeholder="e.g. 12345 6789 RT0001"
                   className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-900 focus:bg-white focus:border-red-600 focus:outline-none font-mono transition"
                 />
               </div>

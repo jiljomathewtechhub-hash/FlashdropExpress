@@ -69,13 +69,14 @@ export function generateOrderPdf(
 
   // Company contact details below brand emblem
   const parentCo = settings.parent_company || 'SNM Group International Inc.';
-  const hstRegNo = settings.hst_number || '78750 1444 RT0001';
+  const hstRegNo = settings.hst_number ? settings.hst_number.trim() : '';
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(textBody[0], textBody[1], textBody[2]);
   doc.setFontSize(7);
   doc.text(`Operated by ${parentCo}  •  Suite 108, 3064 Jaguar Valley Dr, Mississauga, ON L5A 2J3`, 15, 33);
+  const hstSuffix = hstRegNo ? `  •  HST/GST Reg: ${hstRegNo}` : '';
   doc.text(
-    `Dispatch: ${settings.phone || '+1 (647) 804-9775'}  •  Email: ${settings.email || 'support@flashdropexpress.com'}  •  HST/GST Reg: ${hstRegNo}`,
+    `Dispatch: ${settings.phone || '+1 (647) 804-9775'}  •  Email: ${settings.email || 'support@flashdropexpress.com'}${hstSuffix}`,
     15,
     37.5
   );
@@ -404,11 +405,13 @@ export function generateOrderPdf(
     doc.setTextColor(textDark[0], textDark[1], textDark[2]);
     doc.text(`$${order.tax_amount.toFixed(2)} CAD`, rightValX, y, { align: 'right' });
 
-    y += 4;
-    doc.setFontSize(7);
-    doc.setFont('helvetica', 'normal');
-    doc.setTextColor(mutedText[0], mutedText[1], mutedText[2]);
-    doc.text(`CRA Reg: ${hstRegNo}`, rightValX, y, { align: 'right' });
+    if (hstRegNo) {
+      y += 4;
+      doc.setFontSize(7);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(mutedText[0], mutedText[1], mutedText[2]);
+      doc.text(`CRA Reg: ${hstRegNo}`, rightValX, y, { align: 'right' });
+    }
   }
 
   // Total Due Card (Clean Crimson Card with Bold White Text)
