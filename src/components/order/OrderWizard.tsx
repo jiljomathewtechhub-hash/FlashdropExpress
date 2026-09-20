@@ -1191,7 +1191,7 @@ export const OrderWizard: React.FC<OrderWizardProps> = ({ initialData, onNavigat
                   const isOverweight = weightLbs > veh.max_weight_lbs;
                   return (
                     <div
-                      key={veh.id}
+                      key={veh.slug}
                       onClick={() => setVehicleSlug(veh.slug)}
                       className={`p-4 rounded-xl border cursor-pointer transition flex flex-col justify-between ${
                         isSelected
