@@ -572,7 +572,6 @@ class FlashDropStore {
           '1c6118f5-d70e-41ce-b1a1-96726b41db26',
         ];
         const testEmails = [
-          'jiljo555@gmail.com',
           'marcus@apexbuilds.ca',
           'elena@studiojenkins.design',
           'orders@metropaint.ca',
@@ -652,7 +651,6 @@ class FlashDropStore {
 
       if (!error && data) {
         const BLACKLIST_TEST_EMAILS = [
-          'jiljo555@gmail.com',
           'marcus@apexbuilds.ca',
           'elena@studiojenkins.design',
           'orders@metropaint.ca',
@@ -666,12 +664,9 @@ class FlashDropStore {
             if (roleLower === 'driver' || roleLower === 'admin' || roleLower === 'owner') return false;
             const emailLower = (p.email || '').toLowerCase().trim();
             const nameLower = (p.full_name || '').toLowerCase().trim();
-            const compLower = (p.company_name || '').toLowerCase().trim();
             return (
               emailLower &&
               !BLACKLIST_TEST_EMAILS.includes(emailLower) &&
-              compLower !== 'jo' &&
-              nameLower !== 'jiljo mathew' &&
               nameLower !== 'test customer' &&
               nameLower !== 'marcus vance'
             );
@@ -802,7 +797,6 @@ class FlashDropStore {
       // Purge any legacy mock or test customer accounts
       const mockCustomerIds = ['cust-apex-001', 'cust-jenkins-002', 'cust-metro-003'];
       const testEmails = [
-        'jiljo555@gmail.com',
         'marcus@apexbuilds.ca',
         'elena@studiojenkins.design',
         'orders@metropaint.ca',
@@ -813,8 +807,7 @@ class FlashDropStore {
         (c) =>
           !mockCustomerIds.includes(c.id) &&
           !testEmails.includes((c.email || '').toLowerCase().trim()) &&
-          (c.company_name || '').toLowerCase().trim() !== 'jo' &&
-          (c.name || '').toLowerCase().trim() !== 'jiljo mathew'
+          (c.name || '').toLowerCase().trim() !== 'test customer'
       );
 
       // Purge any legacy test orders from local storage
@@ -838,7 +831,12 @@ class FlashDropStore {
         } catch {
           this.deletedCustomerIds = [];
         }
+      } else {
+        this.deletedCustomerIds = [];
       }
+      this.deletedCustomerIds = this.deletedCustomerIds.filter(
+        (id) => id.toLowerCase().trim() !== 'jiljo555@gmail.com'
+      );
 
       const savedVehicles = localStorage.getItem(`${STORAGE_KEY_PREFIX}vehicles`);
       this.vehicles = savedVehicles ? JSON.parse(savedVehicles) : INITIAL_VEHICLES;
@@ -1180,56 +1178,64 @@ class FlashDropStore {
     // Async sync to Supabase if configured
     const sb = supabase;
     if (isSupabaseConfigured && sb) {
-      sb
-        .from('orders')
-        .insert([
-          {
-            order_number: newOrder.order_number,
-            customer_name: newOrder.customer_name,
-            customer_phone: newOrder.customer_phone,
-            customer_email: newOrder.customer_email,
-            company_name: newOrder.company_name || null,
-            pickup_address: newOrder.pickup_address,
-            pickup_unit: newOrder.pickup_unit || null,
-            pickup_contact_name: newOrder.pickup_contact_name || null,
-            pickup_contact_phone: newOrder.pickup_contact_phone || null,
-            pickup_notes: newOrder.pickup_notes || null,
-            delivery_address: newOrder.delivery_address,
-            delivery_unit: newOrder.delivery_unit || null,
-            delivery_contact_name: newOrder.delivery_contact_name || null,
-            delivery_contact_phone: newOrder.delivery_contact_phone || null,
-            delivery_notes: newOrder.delivery_notes || null,
-            pickup_date: newOrder.pickup_date,
-            pickup_time: newOrder.pickup_time,
-            delivery_time_option: newOrder.delivery_time_option,
-            service_area: newOrder.service_area || 'GTA',
-            item_type: newOrder.item_type,
-            item_description: newOrder.item_description || null,
-            weight_lbs: newOrder.weight_lbs,
-            quantity: newOrder.quantity,
-            distance_km: newOrder.distance_km,
-            custom_instructions: newOrder.custom_instructions || null,
-            base_price: newOrder.base_price,
-            excess_km_charge: newOrder.excess_km_charge || 0,
-            after_hours_charge: newOrder.after_hours_charge || 0,
-            waiting_charge: newOrder.waiting_charge || 0,
-            labor_charge: newOrder.labor_charge || 0,
-            subtotal: newOrder.subtotal,
-            tax_amount: newOrder.tax_amount,
-            total_price: newOrder.total_price,
-            payment_status: newOrder.payment_status || 'pay_later',
-            order_status: newOrder.order_status,
-          },
-        ])
-        .select()
-        .single()
-        .then(({ data, error }) => {
-          if (error) {
-            console.warn('Supabase sync warning:', error.message);
-          } else if (data) {
+      (async () => {
+        let currentPayload: any = {
+          order_number: newOrder.order_number,
+          customer_id: newOrder.customer_id || null,
+          customer_name: newOrder.customer_name,
+          customer_phone: newOrder.customer_phone,
+          customer_email: newOrder.customer_email,
+          company_name: newOrder.company_name || null,
+          pickup_address: newOrder.pickup_address,
+          pickup_lat: newOrder.pickup_lat ?? null,
+          pickup_lng: newOrder.pickup_lng ?? null,
+          pickup_unit: newOrder.pickup_unit || null,
+          pickup_contact_name: newOrder.pickup_contact_name || null,
+          pickup_contact_phone: newOrder.pickup_contact_phone || null,
+          pickup_notes: newOrder.pickup_notes || null,
+          delivery_address: newOrder.delivery_address,
+          delivery_lat: newOrder.delivery_lat ?? null,
+          delivery_lng: newOrder.delivery_lng ?? null,
+          delivery_unit: newOrder.delivery_unit || null,
+          delivery_contact_name: newOrder.delivery_contact_name || null,
+          delivery_contact_phone: newOrder.delivery_contact_phone || null,
+          delivery_notes: newOrder.delivery_notes || null,
+          pickup_date: newOrder.pickup_date,
+          pickup_time: newOrder.pickup_time,
+          delivery_time_option: newOrder.delivery_time_option,
+          service_area: newOrder.service_area || 'GTA',
+          vehicle_id: newOrder.vehicle_id || null,
+          item_type: newOrder.item_type,
+          item_description: newOrder.item_description || null,
+          weight_lbs: newOrder.weight_lbs,
+          quantity: newOrder.quantity,
+          distance_km: newOrder.distance_km,
+          custom_instructions: newOrder.custom_instructions || null,
+          base_price: newOrder.base_price,
+          excess_km_charge: newOrder.excess_km_charge || 0,
+          after_hours_charge: newOrder.after_hours_charge || 0,
+          waiting_charge: newOrder.waiting_charge || 0,
+          labor_charge: newOrder.labor_charge || 0,
+          subtotal: newOrder.subtotal,
+          tax_amount: newOrder.tax_amount,
+          total_price: newOrder.total_price,
+          payment_status: newOrder.payment_status || 'pay_later',
+          order_status: newOrder.order_status,
+        };
+
+        let attempts = 0;
+        while (attempts < 20) {
+          const { data, error } = await sb
+            .from('orders')
+            .insert([currentPayload])
+            .select()
+            .single();
+
+          if (!error && data) {
             // Update local order id to the PostgreSQL UUID
             newOrder.id = data.id;
             this.saveToStorage();
+            this.notify();
 
             // Insert initial status history
             sb
@@ -1242,8 +1248,27 @@ class FlashDropStore {
                 },
               ])
               .then();
+
+            // Re-fetch to ensure cross-tab & cross-device state is synchronized
+            this.fetchOrdersFromSupabase();
+            break;
           }
-        });
+
+          if (error) {
+            console.warn(`Supabase order create notice (attempt ${attempts + 1}):`, error.message);
+            const colMatch =
+              error.message?.match(/Could not find the '([^']+)' column/i) ||
+              error.message?.match(/column "([^"]+)" of relation/i) ||
+              error.message?.match(/column ([a-zA-Z0-9_]+) does not exist/i);
+            if (colMatch && colMatch[1] && colMatch[1] in currentPayload) {
+              delete currentPayload[colMatch[1]];
+              attempts++;
+              continue;
+            }
+            break;
+          }
+        }
+      })();
     }
 
     return newOrder;
@@ -2114,7 +2139,6 @@ class FlashDropStore {
   public getCustomers(): Customer[] {
     const customerMap = new Map<string, Customer>();
     const BLACKLIST_TEST_EMAILS = [
-      'jiljo555@gmail.com',
       'marcus@apexbuilds.ca',
       'elena@studiojenkins.design',
       'orders@metropaint.ca',
@@ -2125,12 +2149,9 @@ class FlashDropStore {
     // 1. Add explicitly configured customers (excluding deleted and test dummy accounts)
     for (const c of this.customers) {
       const emailLower = (c.email || '').toLowerCase().trim();
-      const compLower = (c.company_name || '').toLowerCase().trim();
       const nameLower = (c.name || '').toLowerCase().trim();
       if (
         BLACKLIST_TEST_EMAILS.includes(emailLower) ||
-        compLower === 'jo' ||
-        nameLower === 'jiljo mathew' ||
         nameLower === 'test customer' ||
         nameLower === 'marcus vance'
       ) {
@@ -2146,12 +2167,9 @@ class FlashDropStore {
     for (const ord of this.orders) {
       if (!ord.customer_email) continue;
       const emailLower = ord.customer_email.toLowerCase().trim();
-      const compLower = (ord.company_name || '').toLowerCase().trim();
       const nameLower = (ord.customer_name || '').toLowerCase().trim();
       if (
         BLACKLIST_TEST_EMAILS.includes(emailLower) ||
-        compLower === 'jo' ||
-        nameLower === 'jiljo mathew' ||
         nameLower === 'test customer'
       ) {
         continue;

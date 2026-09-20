@@ -317,6 +317,11 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
 
     refresh();
 
+    // Immediately fetch fresh orders, customers, and drivers from Supabase
+    store.fetchOrdersFromSupabase();
+    store.fetchCustomersFromSupabase();
+    store.fetchDriversFromSupabase();
+
     // Auto-reconcile drivers in Supabase with profiles
     if (isSupabaseConfigured && supabase) {
       (async () => {
