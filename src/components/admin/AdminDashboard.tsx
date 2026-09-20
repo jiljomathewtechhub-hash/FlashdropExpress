@@ -175,6 +175,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
     delivery_time_option: string;
     delivery_notes: string;
 
+    vehicle_id?: string;
     vehicle_slug: string;
     vehicle_name: string;
     weight_lbs: number;
@@ -648,6 +649,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
       delivery_time_option: order.delivery_time_option || 'standard',
       delivery_notes: order.delivery_notes || '',
 
+      vehicle_id: order.vehicle_id,
       vehicle_slug: order.vehicle_slug || 'cargo_van',
       vehicle_name: order.vehicle_name || 'Cargo Van',
       weight_lbs: Number(order.weight_lbs || 0),
@@ -850,6 +852,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
         delivery_time_option: quoteFormData.delivery_time_option as any,
         delivery_notes: quoteFormData.delivery_notes,
 
+        vehicle_id: vehicles.find(v => v.slug === quoteFormData.vehicle_slug)?.id || quoteFormData.vehicle_id || quoteFormData.vehicle_slug,
         vehicle_slug: quoteFormData.vehicle_slug as any,
         vehicle_name: quoteFormData.vehicle_name,
         weight_lbs: quoteFormData.weight_lbs,
@@ -4547,12 +4550,26 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
                 <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
                   <div>
                     <label className="block text-slate-700 mb-1 font-semibold">Vehicle Required</label>
-                    <input
-                      type="text"
-                      value={editFormData.vehicle_name ?? editingOrder.vehicle_name}
-                      onChange={(e) => setEditFormData({ ...editFormData, vehicle_name: e.target.value })}
-                      className="w-full bg-white border border-slate-300 px-3 py-2 rounded-xl text-slate-900 focus:outline-none focus:border-red-500"
-                    />
+                    <select
+                      value={editFormData.vehicle_slug || editingOrder.vehicle_slug}
+                      onChange={(e) => {
+                        const slug = e.target.value;
+                        const matched = vehicles.find((v) => v.slug === slug);
+                        setEditFormData({
+                          ...editFormData,
+                          vehicle_id: matched?.id || slug,
+                          vehicle_slug: slug as any,
+                          vehicle_name: matched?.name || editFormData.vehicle_name || editingOrder.vehicle_name,
+                        });
+                      }}
+                      className="w-full bg-white border border-slate-300 px-3 py-2 rounded-xl text-slate-900 focus:outline-none focus:border-red-500 font-semibold"
+                    >
+                      {vehicles.map((v) => (
+                        <option key={v.slug} value={v.slug}>
+                          {v.name}
+                        </option>
+                      ))}
+                    </select>
                   </div>
                   <div>
                     <label className="block text-slate-700 mb-1 font-semibold">Cargo Category</label>
@@ -5562,25 +5579,20 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
                       value={quoteFormData.vehicle_slug}
                       onChange={(e) => {
                         const slug = e.target.value;
-                        const nameMap: Record<string, string> = {
-                          cargo_van: 'Cargo Van',
-                          car: 'Car / Sedan',
-                          suv_minivan: 'SUV / Minivan',
-                          van: 'Mid-Size Van',
-                          truck: 'Box Truck / Large Fleet',
-                        };
+                        const matched = vehicles.find((v) => v.slug === slug);
                         recalculateQuotePricing({
+                          vehicle_id: matched?.id || slug,
                           vehicle_slug: slug,
-                          vehicle_name: nameMap[slug] || 'Cargo Van',
+                          vehicle_name: matched?.name || 'Cargo Van',
                         });
                       }}
                       className="w-full bg-slate-50 border border-slate-300 rounded-lg px-2 py-1.5 text-xs text-slate-900 font-bold focus:bg-white focus:outline-none focus:border-red-500"
                     >
-                      <option value="cargo_van">Cargo Van (High-Roof)</option>
-                      <option value="car">Car / Compact Courier</option>
-                      <option value="suv_minivan">SUV / Minivan</option>
-                      <option value="van">Mid-Size Van</option>
-                      <option value="truck">Box Truck / Large Fleet</option>
+                      {vehicles.map((v) => (
+                        <option key={v.slug} value={v.slug}>
+                          {v.name} (up to {v.max_weight_lbs} lbs)
+                        </option>
+                      ))}
                     </select>
                   </div>
 

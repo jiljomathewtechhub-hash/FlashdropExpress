@@ -492,6 +492,65 @@ class FlashDropStore {
             outGta = recalculated.outsideGtaKm;
           }
 
+          // Strict Vehicle Resolution:
+          // 1. Look up by row, existing in-memory state, or slug/name aliases against vehicle fleet
+          const vehiclePool = (this.vehicles && this.vehicles.length > 0) ? this.vehicles : INITIAL_VEHICLES;
+
+          const vLookup = (val?: string | null) => {
+            if (!val) return undefined;
+            const clean = String(val).toLowerCase().trim();
+            return vehiclePool.find(
+              (v) =>
+                v.id.toLowerCase() === clean ||
+                v.slug.toLowerCase() === clean ||
+                v.name.toLowerCase() === clean ||
+                clean.includes(v.slug.toLowerCase()) ||
+                v.slug.toLowerCase().includes(clean)
+            );
+          };
+
+          let matchedVeh =
+            vLookup(row.vehicle_id) ||
+            vLookup(existing?.vehicle_id) ||
+            vLookup(existing?.vehicle_slug) ||
+            vLookup(existing?.vehicle_name) ||
+            vLookup(row.vehicle_slug) ||
+            vLookup(row.vehicle_name);
+
+          // 2. If vehicle was missing from DB row (e.g. legacy quote), infer from base price & distance against pricing tiers
+          if (!matchedVeh && (base > 0 || Number(row.subtotal || 0) > 0)) {
+            const targetBase = base > 0 ? base : Number(row.subtotal || 0);
+            const targetKm = kmTotal;
+            const pricingPool = (this.pricingTiers && this.pricingTiers.length > 0) ? this.pricingTiers : DEFAULT_PRICING_TIERS;
+
+            const matchedTier = pricingPool.find((t) => {
+              if (targetKm <= 25) return Math.abs(t.rate0to25 - targetBase) < 0.01;
+              if (targetKm <= 40) return Math.abs(t.rate25to40 - targetBase) < 0.01;
+              return Math.abs(t.rate40PlusBase - targetBase) < 0.01;
+            });
+
+            if (matchedTier) {
+              matchedVeh = vLookup(matchedTier.vehicleSlug);
+            }
+          }
+
+          // 3. If still unresolved, infer from cargo weight
+          if (!matchedVeh && (row.weight_lbs || existing?.weight_lbs)) {
+            const w = Number(row.weight_lbs || existing?.weight_lbs || 0);
+            if (w <= 750) matchedVeh = vLookup('car');
+            else if (w <= 1100) matchedVeh = vLookup('suv_minivan');
+            else if (w <= 1500) matchedVeh = vLookup('van');
+            else if (w <= 3200) matchedVeh = vLookup('cargo_van');
+            else matchedVeh = vLookup('sprinter');
+          }
+
+          const resolvedVehicle = matchedVeh || vehiclePool.find((v) => v.slug === 'cargo_van') || vehiclePool[0];
+
+          // Opportunistically sync resolved vehicle_id back to DB if missing
+          if (!row.vehicle_id && sb && isSupabaseConfigured && row.id) {
+            sb.from('orders').update({ vehicle_id: resolvedVehicle.id }).eq('id', row.id).then();
+          }
+
           return {
             id: row.id,
             order_number: (row.order_number || '').replace(/^FD-/i, 'FD'),
@@ -518,9 +577,9 @@ class FlashDropStore {
             pickup_time: row.pickup_time,
             delivery_time_option: row.delivery_time_option,
             service_area: row.service_area,
-            vehicle_id: row.vehicle_id,
-            vehicle_slug: row.vehicle_slug || 'cargo_van',
-            vehicle_name: row.vehicle_name || 'Cargo Van',
+            vehicle_id: resolvedVehicle.id,
+            vehicle_slug: resolvedVehicle.slug,
+            vehicle_name: resolvedVehicle.name,
             item_type: row.item_type,
             item_description: row.item_description,
             weight_lbs: Number(row.weight_lbs),
@@ -1179,6 +1238,12 @@ class FlashDropStore {
     const sb = supabase;
     if (isSupabaseConfigured && sb) {
       (async () => {
+        const vPool = (this.vehicles && this.vehicles.length > 0) ? this.vehicles : INITIAL_VEHICLES;
+        const matchedV = vPool.find(
+          (v) => v.id === newOrder.vehicle_id || v.slug === newOrder.vehicle_slug
+        );
+        const vehicleIdToSave = newOrder.vehicle_id || matchedV?.id || newOrder.vehicle_slug || 'v-suv';
+
         let currentPayload: any = {
           order_number: newOrder.order_number,
           customer_id: newOrder.customer_id || null,
@@ -1204,7 +1269,7 @@ class FlashDropStore {
           pickup_time: newOrder.pickup_time,
           delivery_time_option: newOrder.delivery_time_option,
           service_area: newOrder.service_area || 'GTA',
-          vehicle_id: newOrder.vehicle_id || null,
+          vehicle_id: vehicleIdToSave,
           item_type: newOrder.item_type,
           item_description: newOrder.item_description || null,
           weight_lbs: newOrder.weight_lbs,
@@ -1284,6 +1349,22 @@ class FlashDropStore {
       ...updates,
       updated_at: new Date().toISOString(),
     };
+
+    // Keep vehicle fields in lockstep when updated
+    if (updates.vehicle_slug || updates.vehicle_name || updates.vehicle_id) {
+      const vPool = (this.vehicles && this.vehicles.length > 0) ? this.vehicles : INITIAL_VEHICLES;
+      const matched = vPool.find(
+        (v) =>
+          (updates.vehicle_id && (v.id === updates.vehicle_id || v.slug === updates.vehicle_id)) ||
+          (updates.vehicle_slug && (v.slug === updates.vehicle_slug || v.id === updates.vehicle_slug)) ||
+          (updates.vehicle_name && v.name.toLowerCase() === updates.vehicle_name.toLowerCase())
+      );
+      if (matched) {
+        updatedOrder.vehicle_id = matched.id;
+        updatedOrder.vehicle_slug = matched.slug;
+        updatedOrder.vehicle_name = matched.name;
+      }
+    }
 
     // Enforce driver assignment isolation for quote requests
     if (updatedOrder.order_status === 'submitted' || updatedOrder.order_status === 'quote_sent') {
@@ -1401,6 +1482,12 @@ class FlashDropStore {
         ? updatedOrder.assigned_driver_id
         : null;
 
+    const vPool = (this.vehicles && this.vehicles.length > 0) ? this.vehicles : INITIAL_VEHICLES;
+    const vObj = vPool.find(
+      (v) => v.id === updatedOrder.vehicle_id || v.slug === updatedOrder.vehicle_slug
+    );
+    const vehicleIdToSave = updatedOrder.vehicle_id || vObj?.id || updatedOrder.vehicle_slug || null;
+
     const payload: Record<string, any> = {
       customer_name: updatedOrder.customer_name,
       customer_phone: updatedOrder.customer_phone,
@@ -1420,6 +1507,7 @@ class FlashDropStore {
       pickup_time: updatedOrder.pickup_time,
       delivery_time_option: updatedOrder.delivery_time_option,
       service_area: updatedOrder.service_area,
+      vehicle_id: vehicleIdToSave,
       item_type: updatedOrder.item_type,
       item_description: updatedOrder.item_description || null,
       weight_lbs: updatedOrder.weight_lbs,
