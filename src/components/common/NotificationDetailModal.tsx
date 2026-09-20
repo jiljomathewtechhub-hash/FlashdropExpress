@@ -188,16 +188,16 @@ export const NotificationDetailModal: React.FC<NotificationDetailModalProps> = (
 
   return createPortal(
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in overflow-y-auto"
+      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in overflow-y-auto"
       onClick={handleClose}
     >
       <div
-        className="bg-white rounded-3xl shadow-2xl border border-slate-200 max-w-xl w-full overflow-hidden animate-scale-up my-auto max-h-[90vh] overflow-y-auto"
+        className="bg-white rounded-2xl sm:rounded-3xl shadow-2xl border border-slate-200 max-w-xl w-full overflow-hidden animate-scale-up my-auto max-h-[92vh] sm:max-h-[90vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Modal Top Header with Dynamic Opened / Unopened Accent */}
         <div
-          className={`p-6 border-b flex items-start justify-between gap-4 transition-all duration-300 ${
+          className={`p-4 sm:p-6 border-b flex items-start justify-between gap-3 sm:gap-4 transition-all duration-300 ${
             isUnopened
               ? 'bg-gradient-to-r from-red-50/95 via-red-50/60 to-white border-b-2 border-red-200'
               : 'bg-slate-50/80 border-slate-200'
@@ -252,7 +252,7 @@ export const NotificationDetailModal: React.FC<NotificationDetailModalProps> = (
         </div>
 
         {/* Modal Body */}
-        <div className="p-6 space-y-5 max-h-[75vh] overflow-y-auto">
+        <div className="p-4 sm:p-6 space-y-4 sm:space-y-5 max-h-[75vh] overflow-y-auto">
           {/* Main Message Box */}
           <div
             className={`border rounded-2xl p-4.5 space-y-2 transition-colors ${

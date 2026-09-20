@@ -16,6 +16,7 @@ import {
   ChevronRight,
   Shield,
   EyeOff,
+  X,
 } from 'lucide-react';
 import { inAppNotificationService, InAppNotification } from '../../lib/inAppNotificationService';
 import { store, UserSession } from '../../lib/store';
@@ -67,18 +68,30 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({
     };
   }, []);
 
-  // Close dropdown on outside click
+  // Close dropdown on outside click or touch tap
   useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
+    const handleClickOutside = (e: MouseEvent | TouchEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
         setIsOpen(false);
       }
     };
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isOpen) {
+        setIsOpen(false);
+      }
+    };
+
     if (isOpen) {
       document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener('touchstart', handleClickOutside);
+      window.addEventListener('keydown', handleKeyDown);
     }
+
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('touchstart', handleClickOutside);
+      window.removeEventListener('keydown', handleKeyDown);
     };
   }, [isOpen]);
 
@@ -169,32 +182,41 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({
         )}
       </button>
 
-      {/* Floating Dropdown Window */}
+      {/* Mobile Backdrop Overlay to dismiss on tap */}
       {isOpen && (
         <div
-          className={`absolute ${
-            align === 'right' ? 'right-0' : 'left-0'
-          } mt-2 w-80 sm:w-96 rounded-2xl bg-white shadow-2xl border border-slate-200/90 z-50 overflow-hidden animate-fade-in divide-y divide-slate-100 text-slate-800`}
-          style={{ maxHeight: 'calc(100vh - 90px)' }}
+          className="fixed inset-0 bg-slate-900/35 backdrop-blur-[2px] z-40 sm:hidden animate-fade-in"
+          onClick={() => setIsOpen(false)}
+          aria-hidden="true"
+        />
+      )}
+
+      {/* Floating Dropdown Window: Full-width fixed card on mobile, anchored absolute on desktop */}
+      {isOpen && (
+        <div
+          className={`fixed sm:absolute inset-x-3 sm:inset-x-auto ${
+            align === 'left' ? 'sm:left-0' : 'sm:right-0'
+          } top-[54px] sm:top-auto sm:mt-2 w-auto sm:w-96 max-w-[calc(100vw-24px)] sm:max-w-none rounded-2xl bg-white shadow-2xl border border-slate-200/90 z-50 overflow-hidden animate-fade-in divide-y divide-slate-100 text-slate-800 flex flex-col`}
+          style={{ maxHeight: 'calc(100dvh - 72px)' }}
         >
           {/* Header Panel */}
-          <div className="p-3.5 bg-slate-50/80 flex items-center justify-between border-b border-slate-200/80">
-            <div className="flex items-center space-x-2">
-              <div className="w-6 h-6 rounded-lg bg-red-100 flex items-center justify-center text-red-600">
+          <div className="p-3.5 bg-slate-50/80 flex items-center justify-between border-b border-slate-200/80 shrink-0">
+            <div className="flex items-center space-x-2 min-w-0">
+              <div className="w-6 h-6 rounded-lg bg-red-100 flex items-center justify-center text-red-600 shrink-0">
                 <Bell className="w-3.5 h-3.5" />
               </div>
-              <span className="text-xs font-black text-slate-900 font-['Outfit'] uppercase tracking-wider">
+              <span className="text-xs font-black text-slate-900 font-['Outfit'] uppercase tracking-wider truncate">
                 Live Notifications
               </span>
               {unreadCount > 0 && (
-                <span className="text-[10px] font-bold bg-red-600 text-white px-2 py-0.5 rounded-full shadow-xs">
+                <span className="text-[10px] font-bold bg-red-600 text-white px-2 py-0.5 rounded-full shadow-xs shrink-0">
                   {unreadCount} new
                 </span>
               )}
             </div>
 
             {/* Quick Header Actions */}
-            <div className="flex items-center space-x-1">
+            <div className="flex items-center space-x-1 shrink-0">
               {/* Sound Toggle */}
               <button
                 type="button"
@@ -220,11 +242,22 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({
                   <CheckCheck className="w-3.5 h-3.5" />
                 </button>
               )}
+
+              {/* Mobile Close Button */}
+              <button
+                type="button"
+                onClick={() => setIsOpen(false)}
+                className="p-1.5 rounded-lg bg-white border border-slate-200 text-slate-500 hover:text-slate-800 hover:bg-slate-100 transition text-xs shadow-xs cursor-pointer sm:hidden"
+                title="Close notifications"
+                aria-label="Close"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
             </div>
           </div>
 
           {/* Filter Bar */}
-          <div className="px-3 py-1.5 bg-white flex items-center justify-between text-[11px] border-b border-slate-100">
+          <div className="px-3 py-1.5 bg-white flex items-center justify-between text-[11px] border-b border-slate-100 shrink-0">
             <div className="flex space-x-1">
               <button
                 type="button"
@@ -264,7 +297,7 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({
           </div>
 
           {/* Notifications Scrollable List */}
-          <div className="overflow-y-auto max-h-[360px] divide-y divide-slate-100 bg-slate-50/40">
+          <div className="flex-1 overflow-y-auto max-h-[380px] divide-y divide-slate-100 bg-slate-50/40 min-h-0">
             {displayedNotifications.length === 0 ? (
               <div className="p-8 text-center space-y-2">
                 <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center mx-auto text-slate-400">
@@ -394,20 +427,20 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({
           </div>
 
           {/* Footer Bar */}
-          <div className="p-2.5 bg-slate-50 flex items-center justify-between border-t border-slate-200 text-xs px-3">
-            <span className="text-[10px] text-slate-500">
-              {user.role === 'admin' || user.role === 'owner'
+          <div className="p-2.5 bg-slate-50 flex items-center justify-between border-t border-slate-200 text-xs px-3 shrink-0">
+            <span className="text-[10px] text-slate-500 truncate mr-2">
+              {user?.role === 'admin' || user?.role === 'owner'
                 ? 'GTA Operations Dispatch Monitor'
                 : 'Assigned Courier & Dispatch Channel'}
             </span>
-            {(user.role === 'admin' || user.role === 'owner') && onNavigate && (
+            {(user?.role === 'admin' || user?.role === 'owner') && onNavigate && (
               <button
                 type="button"
                 onClick={() => {
                   setIsOpen(false);
                   onNavigate('admin', { tab: 'notifications' });
                 }}
-                className="text-[10px] text-red-600 hover:text-red-800 font-bold hover:underline cursor-pointer"
+                className="text-[10px] text-red-600 hover:text-red-800 font-bold hover:underline cursor-pointer shrink-0"
                 title="View SMS and Email Dispatch Gateway Logs"
               >
                 Gateway Logs &rarr;

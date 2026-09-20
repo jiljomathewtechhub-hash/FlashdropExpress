@@ -329,9 +329,10 @@ input[type="range"]::-moz-range-thumb {
     padding-bottom: env(safe-area-inset-bottom, 16px);
   }
 
-  /* Prevent any nested element from breaking out horizontally */
-  * {
+  /* Ensure media elements fit on small screens without breaking layout */
+  img, video, canvas, svg {
     max-width: 100%;
+    height: auto;
   }
 }
 
