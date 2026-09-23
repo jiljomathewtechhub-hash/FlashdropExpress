@@ -183,13 +183,20 @@ export function isTimeAfterHours(timeStr?: string, settings: BusinessSettings = 
  * Finds the best matching pricing tier given vehicle, weight, and quantity.
  */
 export function selectPricingTier(
-  vehicleSlug: VehicleSlug,
+  vehicleSlug: VehicleSlug | string,
   weightLbs: number,
   quantity = 1,
   isPaintPails = false,
   tiers: PricingTierRule[] = DEFAULT_PRICING_TIERS
 ): PricingTierRule {
-  const vehicleTiers = tiers.filter((t) => t.vehicleSlug === vehicleSlug);
+  const normalizedSlug: VehicleSlug =
+    vehicleSlug === 'box_truck' || vehicleSlug === 'box-truck'
+      ? 'truck'
+      : vehicleSlug === 'suv' || vehicleSlug === 'minivan'
+      ? 'suv_minivan'
+      : (vehicleSlug as VehicleSlug);
+
+  const vehicleTiers = tiers.filter((t) => t.vehicleSlug === normalizedSlug);
   if (vehicleTiers.length === 0) {
     return tiers[0];
   }

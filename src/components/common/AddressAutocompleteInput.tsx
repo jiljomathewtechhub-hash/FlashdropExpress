@@ -7,7 +7,7 @@ import {
 import { resolveOntarioCoordinates } from '../../lib/distance';
 
 interface AddressAutocompleteInputProps {
-  label: string;
+  label?: string;
   value: string;
   onChange: (value: string) => void;
   onSelect: (suggestion: AddressSuggestion) => void;
@@ -15,6 +15,7 @@ interface AddressAutocompleteInputProps {
   accentColor?: 'emerald' | 'rose';
   required?: boolean;
   disabled?: boolean;
+  className?: string;
 }
 
 export const AddressAutocompleteInput: React.FC<AddressAutocompleteInputProps> = ({
@@ -26,6 +27,7 @@ export const AddressAutocompleteInput: React.FC<AddressAutocompleteInputProps> =
   accentColor = 'rose',
   required = false,
   disabled = false,
+  className = '',
 }) => {
   const isSelectedRef = React.useRef(false);
   const lastSelectedAddressRef = React.useRef('');
@@ -66,13 +68,24 @@ export const AddressAutocompleteInput: React.FC<AddressAutocompleteInputProps> =
       }
 
       if (value && value.trim().length >= 3) {
-        // If there's an active top suggestion from Photon geocoder, use its exact coordinates!
+        const CANADIAN_POSTAL_REGEX = /\b([A-CEGHJ-NPR-TVXY]\d[A-CEGHJ-NPR-TV-Z])\s*(\d[A-CEGHJ-NPR-TV-Z]\d)\b/i;
+        const userHasPostal = CANADIAN_POSTAL_REGEX.test(value);
+
+        // If user explicitly selected from dropdown, respect it
+        if (isSelectedRef.current) return;
+
+        // If there is an active top suggestion, borrow its coordinates without clobbering user's typed text/postal code!
         if (suggestions && suggestions.length > 0) {
           const topMatch = suggestions[0];
           isSelectedRef.current = true;
-          lastSelectedAddressRef.current = topMatch.fullAddress;
-          onChange(topMatch.fullAddress);
-          onSelect(topMatch);
+          // If user provided their own postal code or formatting, preserve it
+          const finalAddressString = userHasPostal ? value.trim() : topMatch.fullAddress;
+          lastSelectedAddressRef.current = finalAddressString;
+          onChange(finalAddressString);
+          onSelect({
+            ...topMatch,
+            fullAddress: finalAddressString,
+          });
           return;
         }
 
@@ -124,23 +137,25 @@ export const AddressAutocompleteInput: React.FC<AddressAutocompleteInputProps> =
     accentColor === 'emerald' ? 'focus:border-emerald-500' : 'focus:border-red-500';
 
   return (
-    <div className="relative" ref={containerRef}>
+    <div className={`relative ${className}`} ref={containerRef}>
       {/* Field Label & Live Indicator */}
-      <div className="flex items-center justify-between mb-1.5">
-        <label className="block text-xs font-semibold text-slate-700">
-          {label}
-        </label>
-        {isLoading ? (
-          <span className="flex items-center space-x-1 text-[10px] text-slate-500 font-medium animate-pulse">
-            <Loader2 className="w-2.5 h-2.5 animate-spin text-red-600" />
-            <span>Finding Ontario match...</span>
-          </span>
-        ) : (
-          <span className="text-[10px] text-slate-500 font-medium">
-            Ontario, Canada
-          </span>
-        )}
-      </div>
+      {label && (
+        <div className="flex items-center justify-between mb-1.5">
+          <label className="block text-xs font-semibold text-slate-700">
+            {label}
+          </label>
+          {isLoading ? (
+            <span className="flex items-center space-x-1 text-[10px] text-slate-500 font-medium animate-pulse">
+              <Loader2 className="w-2.5 h-2.5 animate-spin text-red-600" />
+              <span>Finding Ontario match...</span>
+            </span>
+          ) : (
+            <span className="text-[10px] text-slate-500 font-medium">
+              Ontario, Canada
+            </span>
+          )}
+        </div>
+      )}
 
       {/* Input Field */}
       <div className="relative">

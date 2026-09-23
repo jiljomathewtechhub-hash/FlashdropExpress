@@ -456,9 +456,12 @@ export function useAddressAutocomplete({
     []
   );
 
+  // Canadian Postal Code Regex (e.g. M5V 2T6, L5A2J3)
+  const CANADIAN_POSTAL_REGEX = /\b([A-CEGHJ-NPR-TVXY]\d[A-CEGHJ-NPR-TV-Z])\s*(\d[A-CEGHJ-NPR-TV-Z]\d)\b/i;
+
   // Parse a Photon GeoJSON feature into a verified Ontario AddressSuggestion
   const parsePhotonFeature = useCallback(
-    (feature: PhotonFeature, index: number): AddressSuggestion | null => {
+    (feature: PhotonFeature, index: number, queryContext?: string): AddressSuggestion | null => {
       const p = feature.properties;
       const [lon, lat] = feature.geometry.coordinates;
 
@@ -482,7 +485,12 @@ export function useAddressAutocomplete({
       const street = p.street || '';
       const name = p.name || '';
       const city = p.city || p.locality || p.district || 'Toronto';
-      const postcode = p.postcode || '';
+
+      // If user typed an explicit postal code in their query, PRESERVE IT strictly over OSM district centroid!
+      const userPostalMatch = queryContext ? queryContext.match(CANADIAN_POSTAL_REGEX) : null;
+      const postcode = userPostalMatch
+        ? `${userPostalMatch[1].toUpperCase()} ${userPostalMatch[2].toUpperCase()}`
+        : p.postcode || '';
 
       let primary = '';
       if (housenumber && street) {
@@ -553,7 +561,7 @@ export function useAddressAutocomplete({
 
       setIsLoading(true);
 
-      // 3. Step 2: Fire debounced Photon / OpenStreetMap API fetch
+      // 3. Step 2: Fire debounced geocoder
       if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
       if (abortControllerRef.current) abortControllerRef.current.abort();
 
@@ -564,6 +572,39 @@ export function useAddressAutocomplete({
         const timeoutId = setTimeout(() => controller.abort(), 2500);
 
         try {
+          // Optional Google Places API Integration if VITE_GOOGLE_MAPS_API_KEY is configured
+          const googleKey = (import.meta.env.VITE_GOOGLE_MAPS_API_KEY as string) || '';
+          if (googleKey && typeof window !== 'undefined') {
+            try {
+              const gUrl = `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodeURIComponent(trimmed)}&components=country:ca&types=address&key=${googleKey}`;
+              const gRes = await fetch(gUrl, { signal: controller.signal });
+              if (gRes.ok) {
+                const gData = await gRes.json();
+                if (gData.predictions && gData.predictions.length > 0) {
+                  const gSuggestions: AddressSuggestion[] = gData.predictions.slice(0, 5).map((p: any, idx: number) => ({
+                    id: `gmaps-${idx}-${p.place_id}`,
+                    fullAddress: p.description,
+                    primaryText: p.structured_formatting?.main_text || p.description.split(',')[0],
+                    secondaryText: p.structured_formatting?.secondary_text || 'ON, Canada',
+                    streetAddress: p.structured_formatting?.main_text || p.description.split(',')[0],
+                    city: 'Toronto',
+                    state: 'ON',
+                    country: 'Canada',
+                    lon: -79.3832,
+                    lat: 43.6532,
+                    isGta: checkIsGta(p.description),
+                  }));
+                  setSuggestions(gSuggestions);
+                  setIsOpen(true);
+                  setIsLoading(false);
+                  return;
+                }
+              }
+            } catch {
+              // Fallback to Photon
+            }
+          }
+
           const hasOntario =
             trimmed.toLowerCase().includes('ontario') ||
             trimmed.toLowerCase().includes('on') ||
@@ -591,7 +632,7 @@ export function useAddressAutocomplete({
           const seen = new Set<string>();
 
           for (let i = 0; i < features.length; i++) {
-            const parsed = parsePhotonFeature(features[i], i);
+            const parsed = parsePhotonFeature(features[i], i, trimmed);
             if (parsed) {
               const key = `${parsed.primaryText.toLowerCase()}-${parsed.city.toLowerCase()}`;
               if (!seen.has(key)) {

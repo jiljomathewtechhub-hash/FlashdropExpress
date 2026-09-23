@@ -19,6 +19,7 @@ import { calculateGtaKmBreakdown } from './distance';
 const STORAGE_KEY_PREFIX = 'flashdrop_';
 
 export interface UserSession {
+  id?: string;
   role: UserRole;
   email: string;
   name: string;
@@ -67,22 +68,10 @@ export const INITIAL_VEHICLES: Vehicle[] = [
     slug: 'suv_minivan',
     name: 'SUV / Minivan',
     display_order: 2,
-    max_weight_lbs: 1100,
-    max_pails: 22,
-    dimensions: 'Cargo Bay: 35 cu. ft.',
-    description: 'Medium transport for wholesale inventory, tools, equipment, and up to 22 paint pails (1,100 lbs).',
-    image_url: '/images/vehicle-suv.svg',
-    is_active: true,
-  },
-  {
-    id: '22222222-2222-2222-2222-222222222223',
-    slug: 'van',
-    name: 'Van',
-    display_order: 3,
     max_weight_lbs: 1500,
     max_pails: 30,
-    dimensions: 'Cargo Bay: 55 cu. ft.',
-    description: 'Commercial van transport for bulk inventory, tools, equipment, and up to 30 paint pails (1,500 lbs).',
+    dimensions: 'Cargo Bay: 50 cu. ft.',
+    description: 'Medium transport for wholesale inventory, tools, equipment, and up to 30 paint pails (1,500 lbs).',
     image_url: '/images/vehicle-suv.svg',
     is_active: true,
   },
@@ -90,7 +79,7 @@ export const INITIAL_VEHICLES: Vehicle[] = [
     id: '33333333-3333-3333-3333-333333333333',
     slug: 'cargo_van',
     name: 'Cargo Van',
-    display_order: 4,
+    display_order: 3,
     max_weight_lbs: 3200,
     max_pails: 64,
     dimensions: 'High-Roof Cargo: 250 cu. ft.',
@@ -102,7 +91,7 @@ export const INITIAL_VEHICLES: Vehicle[] = [
     id: '44444444-4444-4444-4444-444444444444',
     slug: 'truck',
     name: 'Box Truck',
-    display_order: 5,
+    display_order: 4,
     max_weight_lbs: 4500,
     max_pails: 100,
     dimensions: '16ft Box Truck with Hydraulic Liftgate',
@@ -1458,11 +1447,26 @@ class FlashDropStore {
     const sb = supabase;
     if (isSupabaseConfigured && sb) {
       (async () => {
+        const isValidUuid = (val?: string | null): boolean =>
+          typeof val === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(val);
+
+        let resolvedCustomerId: string | null = null;
+        if (isValidUuid(newOrder.customer_id)) {
+          resolvedCustomerId = newOrder.customer_id!;
+        } else if (newOrder.customer_email) {
+          const matchedCust = this.customers.find(
+            (c) => c.email.toLowerCase() === newOrder.customer_email!.toLowerCase()
+          );
+          if (matchedCust && isValidUuid(matchedCust.id)) {
+            resolvedCustomerId = matchedCust.id;
+          }
+        }
+
         const vehicleIdToSave = resolveVehicleUuid(newOrder.vehicle_id || newOrder.vehicle_slug);
 
         let currentPayload: any = {
           order_number: newOrder.order_number,
-          customer_id: newOrder.customer_id || null,
+          customer_id: resolvedCustomerId,
           customer_name: newOrder.customer_name,
           customer_phone: newOrder.customer_phone,
           customer_email: newOrder.customer_email,
@@ -1537,9 +1541,32 @@ class FlashDropStore {
 
           if (error) {
             console.warn(`Supabase order create notice (attempt ${attempts + 1}):`, error.message);
-            // 1. If vehicle_id has invalid uuid syntax or violates foreign key, strip and retry
-            if (error.code === '22P02' || error.code === '23503' || error.message?.includes('vehicle_id')) {
+
+            // Disambiguated UUID error handling per column
+            if (
+              error.message?.includes('customer_id') ||
+              (error.code === '22P02' && currentPayload.customer_id && !isValidUuid(currentPayload.customer_id))
+            ) {
+              currentPayload.customer_id = null;
+              attempts++;
+              continue;
+            }
+
+            if (
+              error.message?.includes('vehicle_id') ||
+              error.code === '23503' ||
+              (error.code === '22P02' && currentPayload.vehicle_id && !isValidUuid(currentPayload.vehicle_id))
+            ) {
               delete currentPayload.vehicle_id;
+              attempts++;
+              continue;
+            }
+
+            if (
+              error.message?.includes('assigned_driver_id') ||
+              (error.code === '22P02' && currentPayload.assigned_driver_id && !isValidUuid(currentPayload.assigned_driver_id))
+            ) {
+              delete currentPayload.assigned_driver_id;
               attempts++;
               continue;
             }
@@ -1774,9 +1801,36 @@ class FlashDropStore {
 
       console.warn(`Supabase order sync notice (attempt ${attempts + 1}):`, error.message);
 
-      // 1. If vehicle_id has invalid uuid syntax or violates foreign key, strip and retry
-      if (error.code === '22P02' || error.code === '23503' || error.message?.includes('vehicle_id')) {
+      const isValidUuid = (val?: string | null): boolean =>
+        typeof val === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(val);
+
+      // Handle customer_id UUID error
+      if (
+        error.message?.includes('customer_id') ||
+        (error.code === '22P02' && currentPayload.customer_id && !isValidUuid(currentPayload.customer_id))
+      ) {
+        currentPayload.customer_id = null;
+        attempts++;
+        continue;
+      }
+
+      // Handle vehicle_id UUID or FK error
+      if (
+        error.message?.includes('vehicle_id') ||
+        error.code === '23503' ||
+        (error.code === '22P02' && currentPayload.vehicle_id && !isValidUuid(currentPayload.vehicle_id))
+      ) {
         delete currentPayload.vehicle_id;
+        attempts++;
+        continue;
+      }
+
+      // Handle assigned_driver_id UUID or FK error
+      if (
+        error.message?.includes('assigned_driver_id') ||
+        (error.code === '22P02' && currentPayload.assigned_driver_id && !isValidUuid(currentPayload.assigned_driver_id))
+      ) {
+        delete currentPayload.assigned_driver_id;
         attempts++;
         continue;
       }

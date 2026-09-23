@@ -413,8 +413,17 @@ export const OrderWizard: React.FC<OrderWizardProps> = ({ initialData, onNavigat
     setValidationError(null);
     const selectedVeh = vehicles.find((v) => v.slug === vehicleSlug) || vehicles[0];
 
+    const currentUser = store.getCurrentUser();
+    const isUuid = (val?: string | null): boolean =>
+      typeof val === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(val);
+    const resolvedCustomerId: string | null = isUuid(currentUser?.id)
+      ? (currentUser!.id as string)
+      : isUuid(currentUser?.driverId)
+      ? (currentUser!.driverId as string)
+      : null;
+
     const orderData = {
-      customer_id: store.getCurrentUser()?.email || null,
+      customer_id: resolvedCustomerId,
       account_type: accountType,
       customer_name: customerName.trim(),
       customer_phone: customerPhone.trim(),
@@ -475,20 +484,8 @@ export const OrderWizard: React.FC<OrderWizardProps> = ({ initialData, onNavigat
     setCreatedOrder(newOrder);
     setStep(4); // Confirmation step
 
-    // Auto-update customer's profile so any newly entered or verified details are saved for future dispatches
-    if (store.getCurrentUser()?.role === 'customer') {
-      store.updateCustomerProfile({
-        name: customerName.trim(),
-        phone: customerPhone.trim(),
-        companyName: companyName.trim() || undefined,
-        hstNumber: customerHstNumber.trim() || undefined,
-        accountType,
-        defaultPickupAddress: pickupAddress.trim() || undefined,
-        defaultPickupUnit: pickupUnit.trim() || undefined,
-        defaultPickupContactName: pickupContactName.trim() || undefined,
-        defaultPickupContactPhone: pickupContactPhone.trim() || undefined,
-      }).catch(console.warn);
-    }
+    // Note: Default profile address is strictly protected and never overwritten by one-off quote requests.
+    // Permanent default address updates must only occur explicitly in Customer Profile settings.
 
     // Confetti celebration
     try {
