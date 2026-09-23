@@ -13,9 +13,7 @@ import {
   CheckCircle2,
   Clock,
   Compass,
-  Building2,
-  Phone,
-  FileCheck,
+  Crown,
 } from 'lucide-react';
 
 interface TeamPageProps {
@@ -50,9 +48,9 @@ export const TeamPage: React.FC<TeamPageProps> = ({ onNavigate }) => {
     role: 'Founder & Chief Executive Officer (CEO)',
     tier: 'executive',
     department: 'Executive Leadership',
-    image: '/images/team/team-1.jpg',
+    image: '', // Photo currently unavailable; renders dignified round executive avatar
     fallbackInitials: 'SG',
-    bio: 'Driving strategic vision, corporate expansion, and operational excellence to position FlashDrop Express as a leader in modern logistics.',
+    bio: 'Driving strategic vision, corporate expansion, and operational excellence to position FlashDrop Express as Ontario’s premier courier logistics provider.',
     linkedin: 'https://www.linkedin.com',
     email: 'support@flashdropexpress.com',
     highlights: [
@@ -86,7 +84,7 @@ export const TeamPage: React.FC<TeamPageProps> = ({ onNavigate }) => {
       department: 'Client Acquisitions & Growth',
       image: '/images/team/team-3.jpg',
       fallbackInitials: 'AY',
-      bio: 'Leading corporate partnerships, enterprise client acquisitions, and strategic market expansion.',
+      bio: 'Leading corporate partnerships, enterprise client acquisitions, and strategic market expansion across Southern Ontario.',
       linkedin: 'https://www.linkedin.com',
       email: 'support@flashdropexpress.com',
       highlights: [
@@ -120,7 +118,7 @@ export const TeamPage: React.FC<TeamPageProps> = ({ onNavigate }) => {
     department: 'Brand & Digital Growth',
     image: '/images/team/team-5.jpg',
     fallbackInitials: 'JS',
-    bio: 'Driving brand awareness, digital acquisition, customer engagement, and performance marketing strategies.',
+    bio: 'Driving brand awareness, digital acquisition, customer engagement, and performance marketing strategies across Canada.',
     linkedin: 'https://www.linkedin.com',
     email: 'support@flashdropexpress.com',
     highlights: [
@@ -154,7 +152,7 @@ export const TeamPage: React.FC<TeamPageProps> = ({ onNavigate }) => {
   ];
 
   return (
-    <div className="py-12 sm:py-16 space-y-20 bg-[#F8FAFC]">
+    <div className="py-12 sm:py-16 space-y-16 sm:space-y-20 bg-[#F8FAFC]">
       {/* 1. Hero Section */}
       <section className="max-w-6xl mx-auto px-4 sm:px-6 text-center space-y-6 relative">
         {/* Breadcrumb Navigation */}
@@ -213,7 +211,7 @@ export const TeamPage: React.FC<TeamPageProps> = ({ onNavigate }) => {
           </h2>
         </div>
 
-        <div className="max-w-3xl mx-auto">
+        <div className="max-w-2xl mx-auto">
           <TeamMemberCard
             member={executiveLeader}
             prominent={true}
@@ -369,91 +367,109 @@ const TeamMemberCard: React.FC<TeamMemberCardProps> = ({
   const [imgError, setImgError] = useState(false);
   const [imgLoaded, setImgLoaded] = useState(false);
 
+  const hasPhoto = Boolean(member.image) && !imgError;
+
   return (
     <div
-      className={`group bg-white rounded-3xl border border-slate-200/90 shadow-sm hover:shadow-xl hover:border-red-300 transition-all duration-300 overflow-hidden flex flex-col ${
-        prominent ? 'ring-2 ring-red-500/15' : ''
+      className={`group bg-white rounded-3xl border border-slate-200/90 shadow-sm hover:shadow-xl hover:border-red-300 transition-all duration-300 flex flex-col justify-between text-center relative overflow-hidden ${
+        prominent
+          ? 'p-7 sm:p-9 ring-2 ring-red-500/20 bg-gradient-to-b from-white via-white to-red-50/20'
+          : 'p-6 sm:p-7'
       }`}
     >
-      {/* Photo Container */}
-      <div
-        className={`relative w-full overflow-hidden bg-slate-100 ${
-          prominent ? 'aspect-[4/3] sm:aspect-[16/10]' : 'aspect-[4/5]'
-        }`}
-      >
-        {!imgError ? (
-          <img
-            src={member.image}
-            alt={`${member.name} - ${member.role}`}
-            onLoad={() => setImgLoaded(true)}
-            onError={() => setImgError(true)}
-            className={`w-full h-full object-cover object-top transition-transform duration-500 group-hover:scale-105 ${
-              imgLoaded ? 'opacity-100' : 'opacity-0'
-            }`}
-          />
-        ) : null}
-
-        {/* Graceful Fallback Placeholder if image fails to load or hasn't been dropped in */}
-        {(!imgLoaded || imgError) && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-slate-100 via-slate-200 to-red-50 text-slate-500 p-6 text-center">
-            <div className="w-20 h-20 rounded-2xl bg-white border border-slate-300 flex items-center justify-center text-2xl font-black text-red-600 shadow-md font-['Outfit'] mb-3">
-              {member.fallbackInitials}
-            </div>
-            <span className="text-xs font-bold text-slate-700 font-['Outfit']">
-              {member.name}
-            </span>
-            <span className="text-[10px] text-slate-500 mt-1">
-              Photo placeholder ({member.image.split('/').pop()})
-            </span>
-          </div>
-        )}
-
-        {/* Top Badges Overlay */}
-        <div className="absolute top-3 left-3 right-3 flex items-center justify-between pointer-events-none">
-          <span className="px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-slate-900/85 text-white backdrop-blur-md shadow-sm">
-            {member.department}
-          </span>
-          {prominent && (
-            <span className="px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-red-600 text-white shadow-md flex items-center space-x-1">
-              <Award className="w-3 h-3 mr-1" />
-              <span>Executive</span>
-            </span>
-          )}
-        </div>
-
-        {/* Bottom Gradient Scrim */}
-        <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-slate-950/60 to-transparent pointer-events-none" />
+      {/* Top subtle decorative pill / badge */}
+      <div className="flex items-center justify-center mb-5">
+        <span
+          className={`px-3 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider ${
+            prominent
+              ? 'bg-red-600 text-white shadow-xs flex items-center space-x-1.5'
+              : 'bg-slate-100 text-slate-700 border border-slate-200/70'
+          }`}
+        >
+          {prominent && <Crown className="w-3 h-3 mr-1 text-amber-300" />}
+          <span>{member.department}</span>
+        </span>
       </div>
 
-      {/* Card Content Details */}
-      <div className="p-6 sm:p-7 flex-1 flex flex-col justify-between space-y-5">
-        <div className="space-y-2">
-          {/* Member Name */}
+      {/* Round Photo Container */}
+      <div className="relative mb-5 flex justify-center">
+        <div
+          className={`relative rounded-full ring-4 ring-slate-100 ring-offset-2 border-2 border-red-500/20 shadow-md overflow-hidden bg-slate-100 flex-shrink-0 transition-transform duration-300 group-hover:scale-105 group-hover:ring-red-100 ${
+            prominent
+              ? 'w-32 h-32 sm:w-36 sm:h-36 ring-red-500/30 ring-offset-4 shadow-lg'
+              : 'w-28 h-28 sm:w-32 sm:h-32'
+          }`}
+        >
+          {hasPhoto ? (
+            <img
+              src={member.image}
+              alt={`${member.name} - ${member.role}`}
+              onLoad={() => setImgLoaded(true)}
+              onError={() => setImgError(true)}
+              className={`w-full h-full object-cover object-top transition-opacity duration-300 ${
+                imgLoaded ? 'opacity-100' : 'opacity-0'
+              }`}
+            />
+          ) : (
+            /* Dignified Executive Avatar Placeholder (e.g. Shyju Govind) */
+            <div className="w-full h-full bg-gradient-to-br from-slate-900 via-slate-800 to-red-950 flex flex-col items-center justify-center text-white relative">
+              <span className="text-2xl sm:text-3xl font-black font-['Outfit'] tracking-wider text-white">
+                {member.fallbackInitials}
+              </span>
+              <span className="text-[9px] font-bold uppercase tracking-wider text-red-200 mt-1">
+                {prominent ? 'Executive' : 'Leadership'}
+              </span>
+            </div>
+          )}
+
+          {/* Corner Badge on Round Avatar */}
+          {prominent ? (
+            <div
+              className="absolute bottom-1 right-1 w-7 h-7 rounded-full bg-red-600 text-white flex items-center justify-center shadow-md ring-2 ring-white"
+              title="Chief Executive Officer"
+            >
+              <Award className="w-3.5 h-3.5" />
+            </div>
+          ) : (
+            <div
+              className="absolute bottom-0 right-0 w-6 h-6 rounded-full bg-slate-900 text-white flex items-center justify-center shadow-xs ring-2 ring-white"
+              title="Leadership Member"
+            >
+              <Shield className="w-3 h-3 text-red-400" />
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Member Details */}
+      <div className="flex-1 flex flex-col justify-between space-y-4">
+        <div className="space-y-1.5">
           <h3
             className={`font-black text-slate-900 font-['Outfit'] tracking-tight group-hover:text-red-700 transition-colors ${
-              prominent ? 'text-2xl sm:text-3xl' : 'text-xl'
+              prominent ? 'text-2xl sm:text-3xl' : 'text-lg sm:text-xl'
             }`}
           >
             {member.name}
           </h3>
 
-          {/* Member Role */}
-          <div className="text-xs sm:text-sm font-bold text-red-600 font-['Outfit'] flex items-center space-x-1.5">
-            <Shield className="w-3.5 h-3.5 text-red-600 shrink-0" />
-            <span>{member.role}</span>
-          </div>
+          <p className="text-xs sm:text-sm font-bold text-red-600 font-['Outfit']">
+            {member.role}
+          </p>
 
-          {/* Bio */}
-          <p className="text-xs sm:text-sm text-slate-600 leading-relaxed pt-1">
+          <p className="text-xs text-slate-600 leading-relaxed pt-1.5 max-w-sm mx-auto">
             {member.bio}
           </p>
 
-          {/* Prominent Executive Key Highlights */}
+          {/* Highlights */}
           {member.highlights && member.highlights.length > 0 && (
-            <div className="pt-3 border-t border-slate-100 space-y-1.5">
+            <div
+              className={`pt-3 border-t border-slate-100 space-y-1 text-left ${
+                prominent ? 'max-w-md mx-auto' : 'max-w-xs mx-auto'
+              }`}
+            >
               {member.highlights.map((item, idx) => (
-                <div key={idx} className="flex items-center space-x-2 text-xs text-slate-600">
-                  <div className="w-1.5 h-1.5 rounded-full bg-red-600 shrink-0" />
+                <div key={idx} className="flex items-start space-x-2 text-[11px] text-slate-600">
+                  <div className="w-1.5 h-1.5 rounded-full bg-red-600 mt-1 shrink-0" />
                   <span className="leading-tight">{item}</span>
                 </div>
               ))}
@@ -461,54 +477,49 @@ const TeamMemberCard: React.FC<TeamMemberCardProps> = ({
           )}
         </div>
 
-        {/* Card Footer: Social & Contact Links */}
-        <div className="pt-4 border-t border-slate-100 flex items-center justify-between gap-3">
-          <div className="flex items-center space-x-2">
-            {/* LinkedIn Placeholder Button */}
-            <a
-              href={member.linkedin || 'https://www.linkedin.com'}
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label={`Visit ${member.name}'s LinkedIn profile`}
-              className="w-9 h-9 rounded-xl bg-slate-100 hover:bg-[#0A66C2] hover:text-white text-slate-600 flex items-center justify-center transition-all duration-200 border border-slate-200 hover:border-[#0A66C2] shadow-2xs cursor-pointer group/link"
-              title="LinkedIn Profile"
-            >
-              <Linkedin className="w-4 h-4 transition-transform group-hover/link:scale-110" />
-            </a>
+        {/* Card Footer: Social Actions */}
+        <div className="pt-4 border-t border-slate-100 flex flex-wrap items-center justify-center gap-2">
+          {/* LinkedIn Button */}
+          <a
+            href={member.linkedin || 'https://www.linkedin.com'}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label={`Visit ${member.name}'s LinkedIn profile`}
+            className="w-8 h-8 rounded-xl bg-slate-100 hover:bg-[#0A66C2] hover:text-white text-slate-600 flex items-center justify-center transition-all duration-200 border border-slate-200 hover:border-[#0A66C2] shadow-2xs cursor-pointer group/link"
+            title="LinkedIn Profile"
+          >
+            <Linkedin className="w-3.5 h-3.5 transition-transform group-hover/link:scale-110" />
+          </a>
 
-            {/* Email Contact Button */}
-            <a
-              href={`mailto:${member.email}?subject=Inquiry%20for%20${encodeURIComponent(member.name)}%20-%20FlashDrop%20Express`}
-              aria-label={`Send email to ${member.name}`}
-              className="w-9 h-9 rounded-xl bg-slate-100 hover:bg-red-600 hover:text-white text-slate-600 flex items-center justify-center transition-all duration-200 border border-slate-200 hover:border-red-600 shadow-2xs cursor-pointer group/email"
-              title={`Email ${member.name}`}
-            >
-              <Mail className="w-4 h-4 transition-transform group-hover/email:scale-110" />
-            </a>
+          {/* Email Button */}
+          <a
+            href={`mailto:${member.email}?subject=Inquiry%20for%20${encodeURIComponent(member.name)}%20-%20FlashDrop%20Express`}
+            aria-label={`Send email to ${member.name}`}
+            className="w-8 h-8 rounded-xl bg-slate-100 hover:bg-red-600 hover:text-white text-slate-600 flex items-center justify-center transition-all duration-200 border border-slate-200 hover:border-red-600 shadow-2xs cursor-pointer group/email"
+            title={`Email ${member.name}`}
+          >
+            <Mail className="w-3.5 h-3.5 transition-transform group-hover/email:scale-110" />
+          </a>
 
-            {/* Quick Copy Email Action */}
-            <button
-              type="button"
-              onClick={(e) => onCopyEmail(member.email, e)}
-              className="text-[11px] font-bold text-slate-500 hover:text-red-600 transition px-2 py-1 rounded-md hover:bg-slate-100 cursor-pointer"
-              title="Copy official email to clipboard"
-            >
-              {copiedEmail === member.email ? (
-                <span className="text-emerald-700 font-bold flex items-center">
-                  <CheckCircle2 className="w-3 h-3 mr-1 text-emerald-600" />
-                  Copied!
-                </span>
-              ) : (
-                'Copy Email'
-              )}
-            </button>
-          </div>
-
-          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-            FlashDrop Leader
-          </span>
+          {/* Quick Copy Email Action */}
+          <button
+            type="button"
+            onClick={(e) => onCopyEmail(member.email, e)}
+            className="text-[11px] font-bold text-slate-600 hover:text-red-600 transition px-2.5 py-1.5 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 cursor-pointer flex items-center space-x-1"
+            title="Copy official email to clipboard"
+          >
+            {copiedEmail === member.email ? (
+              <span className="text-emerald-700 font-bold flex items-center">
+                <CheckCircle2 className="w-3 h-3 mr-1 text-emerald-600" />
+                Copied!
+              </span>
+            ) : (
+              'Copy Email'
+            )}
+          </button>
         </div>
       </div>
     </div>
   );
 };
+
