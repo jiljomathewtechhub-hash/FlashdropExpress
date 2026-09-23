@@ -134,7 +134,7 @@ export const Navbar: React.FC<NavbarProps> = ({ currentTab, onNavigate }) => {
           </div>
 
           {/* Action CTAs (Tablet & Desktop >= 640px) */}
-          <div className="hidden sm:flex items-center space-x-1.5 xl:space-x-2 shrink-0">
+          <div className="hidden sm:flex items-center space-x-1.5 xl:space-x-2 shrink-0 ml-auto">
             {/* Quick Dispatch Phone Callout (Only on wide 2XL screens when logged out) */}
             {!user && (
               <a
@@ -147,12 +147,12 @@ export const Navbar: React.FC<NavbarProps> = ({ currentTab, onNavigate }) => {
               </a>
             )}
 
-            {/* Quick Order Status button: ONLY shown for guest visitors when logged OUT.
+            {/* Quick Order Status button: ONLY shown for guest visitors when logged OUT on full desktop screens (>=1280px).
                 When logged in to Admin, Staff, or Customer portal, user already has full orders tracking in their dashboard */}
-            {!user && (
+            {!user && !['admin', 'driver', 'customer', 'owner'].includes(currentTab) && (
               <button
                 onClick={() => onNavigate('tracking')}
-                className={`flex items-center space-x-1.5 px-2.5 py-1.5 text-xs font-semibold rounded-lg transition-smooth cursor-pointer whitespace-nowrap border ${
+                className={`hidden xl:flex items-center space-x-1.5 px-2.5 py-1.5 text-xs font-semibold rounded-lg transition-smooth cursor-pointer whitespace-nowrap border ${
                   currentTab === 'tracking'
                     ? 'bg-red-50 text-red-700 border-red-200 font-bold'
                     : 'text-slate-700 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 border-slate-200'
