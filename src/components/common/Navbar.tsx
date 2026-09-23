@@ -52,6 +52,7 @@ export const Navbar: React.FC<NavbarProps> = ({ currentTab, onNavigate }) => {
     { id: 'services', label: 'Services' },
     { id: 'service-areas', label: 'Coverage' },
     { id: 'vehicles', label: 'Fleet' },
+    { id: 'team', label: 'Meet the Team' },
     { id: 'contact', label: 'Contact' },
   ];
 
@@ -61,6 +62,7 @@ export const Navbar: React.FC<NavbarProps> = ({ currentTab, onNavigate }) => {
     { id: 'services', label: 'Services' },
     { id: 'service-areas', label: 'Coverage' },
     { id: 'vehicles', label: 'Fleet' },
+    { id: 'team', label: 'Meet the Team' },
     { id: 'tracking', label: 'Order Status' },
     { id: 'contact', label: 'Contact' },
   ];

@@ -249,6 +249,14 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
               </li>
               <li>
                 <button
+                  onClick={() => onNavigate('team')}
+                  className="py-1 text-slate-600 hover:text-red-600 transition-smooth cursor-pointer block text-left"
+                >
+                  Meet the Team
+                </button>
+              </li>
+              <li>
+                <button
                   onClick={() => onNavigate('pricing')}
                   className="py-1 text-slate-600 hover:text-slate-900 transition-smooth cursor-pointer block text-left"
                 >
@@ -311,6 +319,13 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
               className="hover:text-red-600 font-medium transition cursor-pointer"
             >
               About Us
+            </button>
+            <span>•</span>
+            <button
+              onClick={() => onNavigate('team')}
+              className="hover:text-red-600 font-medium transition cursor-pointer"
+            >
+              Meet the Team
             </button>
             <span>•</span>
             <button

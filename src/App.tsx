@@ -10,6 +10,7 @@ import { ContactPage } from './pages/ContactPage';
 import { LoginPage } from './pages/LoginPage';
 import { TermsPage } from './pages/TermsPage';
 import { AboutPage } from './pages/AboutPage';
+import { TeamPage } from './pages/TeamPage';
 import { OrderWizard } from './components/order/OrderWizard';
 import { OrderTracker } from './components/tracking/OrderTracker';
 import { CustomerPortal } from './components/customer/CustomerPortal';
@@ -28,6 +29,7 @@ const VALID_TABS = [
   'services',
   'service-areas',
   'vehicles',
+  'team',
   'pricing',
   'terms',
   'order',
@@ -42,6 +44,7 @@ const VALID_TABS = [
 
 const getTabFromHash = (): string => {
   if (typeof window === 'undefined') return 'home';
+  const pathname = window.location.pathname.replace(/^\//, '').replace(/\/$/, '').toLowerCase();
   const rawHash = window.location.hash.replace(/^#\/?/, '').trim();
   const search = window.location.search;
 
@@ -66,7 +69,13 @@ const getTabFromHash = (): string => {
 
   const cleanHash = rawHash.split('?')[0].split('&')[0];
   if (cleanHash === 'track') return 'tracking';
-  return VALID_TABS.includes(cleanHash) ? cleanHash : 'home';
+  if (VALID_TABS.includes(cleanHash)) return cleanHash;
+
+  const cleanPath = pathname.split('?')[0].split('&')[0];
+  if (cleanPath === 'track') return 'tracking';
+  if (VALID_TABS.includes(cleanPath)) return cleanPath;
+
+  return 'home';
 };
 
 export default function App() {
@@ -238,6 +247,7 @@ export default function App() {
         {currentTab === 'services' && <ServicesPage onNavigate={handleNavigate} />}
         {currentTab === 'service-areas' && <ServiceAreasPage onNavigate={handleNavigate} />}
         {currentTab === 'vehicles' && <VehiclesPage onNavigate={handleNavigate} />}
+        {currentTab === 'team' && <TeamPage onNavigate={handleNavigate} />}
         {currentTab === 'pricing' && <PricingPage onNavigate={handleNavigate} />}
         {currentTab === 'terms' && <TermsPage onNavigate={handleNavigate} />}
         {currentTab === 'order' && <OrderWizard initialData={navParam} onNavigate={handleNavigate} />}
