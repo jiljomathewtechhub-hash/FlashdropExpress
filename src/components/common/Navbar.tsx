@@ -110,26 +110,32 @@ export const Navbar: React.FC<NavbarProps> = ({ currentTab, onNavigate }) => {
             <BrandLogo size="sm" />
           </div>
 
-          {/* Desktop Nav Links */}
-          <div className="hidden lg:flex items-center space-x-0.5 xl:space-x-1 shrink min-w-0">
+          {/* Desktop Nav Links (Visible on desktop >= 1024px) */}
+          <div className="hidden lg:flex items-center space-x-0.5 xl:space-x-1 shrink-0">
             {navLinks.map((link) => (
               <button
                 key={link.id}
                 onClick={() => onNavigate(link.id)}
-                className={`px-2.5 py-1.5 rounded-lg text-xs font-medium transition-smooth cursor-pointer whitespace-nowrap ${
+                className={`px-2 xl:px-2.5 py-1.5 rounded-lg text-xs font-medium transition-smooth cursor-pointer whitespace-nowrap ${
                   currentTab === link.id
                     ? 'text-red-700 bg-red-50 font-bold border border-red-200'
                     : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
                 }`}
               >
-                {link.label}
+                {link.id === 'team' ? (
+                  <span>
+                    <span className="hidden xl:inline">Meet the </span>Team
+                  </span>
+                ) : (
+                  link.label
+                )}
               </button>
             ))}
           </div>
 
-          {/* Action CTAs */}
+          {/* Action CTAs (Tablet & Desktop >= 640px) */}
           <div className="hidden sm:flex items-center space-x-1.5 xl:space-x-2 shrink-0">
-            {/* Quick Dispatch Phone Callout (Only on very wide screens when logged out to preserve spacing) */}
+            {/* Quick Dispatch Phone Callout (Only on wide 2XL screens when logged out) */}
             {!user && (
               <a
                 href="tel:+16478049775"
@@ -141,19 +147,22 @@ export const Navbar: React.FC<NavbarProps> = ({ currentTab, onNavigate }) => {
               </a>
             )}
 
-            {/* Quick Order Status button */}
-            <button
-              onClick={() => onNavigate('tracking')}
-              className={`flex items-center space-x-1.5 px-2.5 py-1.5 text-xs font-semibold rounded-lg transition-smooth cursor-pointer whitespace-nowrap border ${
-                currentTab === 'tracking'
-                  ? 'bg-red-50 text-red-700 border-red-200 font-bold'
-                  : 'text-slate-700 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 border-slate-200'
-              }`}
-              title="Check order status with FD number"
-            >
-              <Search className="w-3.5 h-3.5 text-slate-500" />
-              <span>Order Status</span>
-            </button>
+            {/* Quick Order Status button: ONLY shown for guest visitors when logged OUT.
+                When logged in to Admin, Staff, or Customer portal, user already has full orders tracking in their dashboard */}
+            {!user && (
+              <button
+                onClick={() => onNavigate('tracking')}
+                className={`flex items-center space-x-1.5 px-2.5 py-1.5 text-xs font-semibold rounded-lg transition-smooth cursor-pointer whitespace-nowrap border ${
+                  currentTab === 'tracking'
+                    ? 'bg-red-50 text-red-700 border-red-200 font-bold'
+                    : 'text-slate-700 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 border-slate-200'
+                }`}
+                title="Check order status with FD number"
+              >
+                <Search className="w-3.5 h-3.5 text-slate-500" />
+                <span>Order Status</span>
+              </button>
+            )}
 
             {/* Portal / Role Button & Notification Bell */}
             {user ? (
@@ -163,7 +172,7 @@ export const Navbar: React.FC<NavbarProps> = ({ currentTab, onNavigate }) => {
                 )}
                 <button
                   onClick={() => onNavigate(user.role === 'owner' || user.role === 'admin' ? 'admin' : user.role === 'driver' ? 'driver' : 'customer')}
-                  className="flex items-center space-x-1.5 px-3 py-1.5 text-xs font-bold rounded-lg border border-red-200 bg-red-50 text-red-700 hover:bg-red-100 transition-smooth cursor-pointer"
+                  className="flex items-center space-x-1.5 px-2.5 xl:px-3 py-1.5 text-xs font-bold rounded-lg border border-red-200 bg-red-50 text-red-700 hover:bg-red-100 transition-smooth cursor-pointer whitespace-nowrap"
                 >
                   <Shield className="w-3.5 h-3.5 text-red-600" />
                   <span>{user.role === 'owner' || user.role === 'admin' ? 'Admin' : user.role === 'driver' ? 'Staff' : 'Portal'}</span>
@@ -179,7 +188,7 @@ export const Navbar: React.FC<NavbarProps> = ({ currentTab, onNavigate }) => {
             ) : (
               <button
                 onClick={() => onNavigate('login')}
-                className="flex items-center space-x-1.5 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-lg transition-smooth cursor-pointer"
+                className="flex items-center space-x-1.5 px-2.5 xl:px-3 py-1.5 text-xs font-semibold text-slate-700 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-lg transition-smooth cursor-pointer whitespace-nowrap"
               >
                 <User className="w-3.5 h-3.5 text-slate-500" />
                 <span>Sign In</span>
@@ -189,28 +198,39 @@ export const Navbar: React.FC<NavbarProps> = ({ currentTab, onNavigate }) => {
             {/* Primary Order CTA */}
             <button
               onClick={() => onNavigate('order')}
-              className="flex items-center space-x-1.5 px-3.5 py-1.5 text-xs font-bold text-white btn-gradient-primary rounded-lg shadow-md transition-smooth group cursor-pointer"
+              className="flex items-center space-x-1.5 px-3 xl:px-3.5 py-1.5 text-xs font-bold text-white btn-gradient-primary rounded-lg shadow-md transition-smooth group cursor-pointer whitespace-nowrap"
             >
               <Truck className="w-3.5 h-3.5" />
-              <span>Request a Quote</span>
+              <span>
+                <span className="hidden xl:inline">Request a </span>Quote
+              </span>
               <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
+            </button>
+
+            {/* Tablet Hamburger Toggle (Shown when screen is tablet size: >=640px and <1024px) */}
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="lg:hidden min-h-[36px] min-w-[36px] p-2 text-slate-700 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-xl transition-smooth flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-red-500/40 cursor-pointer shrink-0 ml-1"
+              aria-label={mobileMenuOpen ? 'Close navigation menu' : 'Open navigation menu'}
+            >
+              {mobileMenuOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
             </button>
           </div>
 
-          {/* Mobile Menu Controls */}
+          {/* Mobile Menu Controls (< 640px phone view) */}
           <div className="flex items-center space-x-1.5 sm:hidden shrink-0">
             {user && (user.role === 'admin' || user.role === 'owner' || user.role === 'driver') && (
               <NotificationBell onNavigate={onNavigate} />
             )}
             <button
               onClick={() => onNavigate('order')}
-              className="min-h-[36px] px-2.5 py-1 text-[11px] font-bold text-white btn-gradient-primary rounded-lg shadow-sm transition-smooth flex items-center justify-center cursor-pointer whitespace-nowrap"
+              className="min-h-[34px] px-2.5 py-1 text-[11px] font-bold text-white btn-gradient-primary rounded-lg shadow-xs transition-smooth flex items-center justify-center cursor-pointer whitespace-nowrap"
             >
-              Order Now
+              Quote
             </button>
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="min-h-[38px] min-w-[38px] p-2 text-slate-700 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-xl transition-smooth flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-red-500/40 cursor-pointer shrink-0"
+              className="min-h-[36px] min-w-[36px] p-2 text-slate-700 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-xl transition-smooth flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-red-500/40 cursor-pointer shrink-0"
               aria-label={mobileMenuOpen ? 'Close navigation menu' : 'Open navigation menu'}
             >
               {mobileMenuOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
@@ -218,9 +238,27 @@ export const Navbar: React.FC<NavbarProps> = ({ currentTab, onNavigate }) => {
           </div>
         </div>
 
-        {/* Mobile Dropdown Menu */}
+        {/* Mobile & Tablet Dropdown Menu Drawer */}
         {mobileMenuOpen && (
-          <div className="lg:hidden mt-3 pt-3 border-t border-slate-200 pb-4 space-y-1 bg-white">
+          <div className="lg:hidden mt-2 pt-3 border-t border-slate-200 pb-4 space-y-1 bg-white animate-fade-in max-h-[calc(100vh-80px)] overflow-y-auto">
+            {/* If user logged in: show compact user status card in drawer */}
+            {user && (
+              <div className="mb-2 p-3 bg-slate-50 border border-slate-200 rounded-2xl flex items-center justify-between">
+                <div className="flex items-center space-x-2.5 min-w-0">
+                  <div className="w-8 h-8 rounded-xl bg-red-600 text-white font-bold flex items-center justify-center text-xs shrink-0">
+                    {user.name ? user.name.charAt(0).toUpperCase() : 'U'}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-xs font-bold text-slate-900 truncate">{user.name}</p>
+                    <p className="text-[11px] text-slate-500 truncate">{user.email}</p>
+                  </div>
+                </div>
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-red-100 text-red-700 uppercase shrink-0">
+                  {user.role === 'owner' || user.role === 'admin' ? 'Admin' : user.role === 'driver' ? 'Staff' : 'Customer'}
+                </span>
+              </div>
+            )}
+
             {mobileNavLinks.map((link) => (
               <button
                 key={link.id}
@@ -230,7 +268,7 @@ export const Navbar: React.FC<NavbarProps> = ({ currentTab, onNavigate }) => {
                 }}
                 className={`w-full text-left min-h-[44px] px-4 py-2.5 rounded-xl text-sm font-semibold transition-smooth flex items-center justify-between cursor-pointer ${
                   currentTab === link.id
-                    ? 'bg-red-50 text-red-700 border border-red-200'
+                    ? 'bg-red-50 text-red-700 border border-red-200 font-bold'
                     : 'text-slate-700 hover:bg-slate-50 hover:text-slate-900 border border-transparent'
                 }`}
               >
@@ -239,28 +277,53 @@ export const Navbar: React.FC<NavbarProps> = ({ currentTab, onNavigate }) => {
               </button>
             ))}
 
-            <div className="pt-3 border-t border-slate-200 flex flex-col space-y-2.5">
+            <div className="pt-3 border-t border-slate-200 flex flex-col space-y-2">
               <button
                 onClick={() => {
                   onNavigate('order');
                   setMobileMenuOpen(false);
                 }}
-                className="w-full min-h-[48px] py-3 btn-gradient-primary text-white font-bold rounded-xl text-sm text-center flex items-center justify-center space-x-2 transition-smooth shadow-lg cursor-pointer"
+                className="w-full min-h-[44px] py-2.5 btn-gradient-primary text-white font-bold rounded-xl text-xs sm:text-sm text-center flex items-center justify-center space-x-2 transition-smooth shadow-md cursor-pointer"
               >
                 <Truck className="w-4 h-4" />
-                <span>Request a Delivery</span>
+                <span>Request a Delivery Quote</span>
               </button>
 
-              <button
-                onClick={() => {
-                  onNavigate(user ? (user.role === 'owner' || user.role === 'admin' ? 'admin' : user.role === 'driver' ? 'driver' : 'customer') : 'login');
-                  setMobileMenuOpen(false);
-                }}
-                className="w-full min-h-[44px] py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-800 font-semibold rounded-xl text-sm flex items-center justify-center space-x-2 border border-slate-200 transition-smooth cursor-pointer"
-              >
-                <User className="w-4 h-4 text-slate-600" />
-                <span>{user ? `Go to ${user.role === 'owner' || user.role === 'admin' ? 'Admin Panel' : user.role === 'driver' ? 'Staff Portal' : 'Customer Portal'}` : 'Portal Sign In / Register'}</span>
-              </button>
+              {user ? (
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    onClick={() => {
+                      onNavigate(user.role === 'owner' || user.role === 'admin' ? 'admin' : user.role === 'driver' ? 'driver' : 'customer');
+                      setMobileMenuOpen(false);
+                    }}
+                    className="w-full min-h-[42px] py-2 bg-slate-900 hover:bg-black text-white font-bold rounded-xl text-xs flex items-center justify-center space-x-1.5 transition-smooth cursor-pointer"
+                  >
+                    <Shield className="w-3.5 h-3.5 text-red-400" />
+                    <span>Go to {user.role === 'owner' || user.role === 'admin' ? 'Admin' : user.role === 'driver' ? 'Staff' : 'Portal'}</span>
+                  </button>
+                  <button
+                    onClick={() => {
+                      handleLogout();
+                      setMobileMenuOpen(false);
+                    }}
+                    className="w-full min-h-[42px] py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 font-bold rounded-xl text-xs flex items-center justify-center space-x-1.5 transition-smooth cursor-pointer"
+                  >
+                    <LogOut className="w-3.5 h-3.5" />
+                    <span>Sign Out</span>
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={() => {
+                    onNavigate('login');
+                    setMobileMenuOpen(false);
+                  }}
+                  className="w-full min-h-[42px] py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 font-semibold rounded-xl text-xs sm:text-sm flex items-center justify-center space-x-2 border border-slate-200 transition-smooth cursor-pointer"
+                >
+                  <User className="w-4 h-4 text-slate-600" />
+                  <span>Sign In / Register</span>
+                </button>
+              )}
             </div>
           </div>
         )}
