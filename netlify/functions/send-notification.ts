@@ -93,28 +93,6 @@ export const handler = async (event: any) => {
             text: message,
           }),
         });
-
-        const targetAdmin = payload.admin_email || process.env.ADMIN_EMAIL || process.env.VITE_ADMIN_EMAIL || 'support@flashdropexpress.com';
-        if (targetAdmin) {
-          const toAdminList = targetAdmin.includes(',')
-            ? targetAdmin.split(',').map((s: string) => s.trim()).filter(Boolean)
-            : targetAdmin;
-
-          await fetch('https://api.resend.com/emails', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              Authorization: `Bearer ${apiKey}`,
-            },
-            body: JSON.stringify({
-              from: senderDomain,
-              to: toAdminList,
-              reply_to: 'support@flashdropexpress.com',
-              subject: `[SMS URGENT ALERT] Order #${order_number || ''}`,
-              text: `[SMS notification alert for ${destination} (${gateway.toUpperCase()})]:\n\n${message}`,
-            }),
-          }).catch(() => {});
-        }
       } catch (carrierErr) {
         console.warn('Carrier email-to-sms warning:', carrierErr);
       }
