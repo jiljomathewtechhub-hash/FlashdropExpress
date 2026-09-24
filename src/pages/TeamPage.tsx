@@ -6,7 +6,6 @@ import {
   Shield,
   Briefcase,
   TrendingUp,
-  Award,
   Sparkles,
   ArrowRight,
   Truck,
@@ -396,7 +395,7 @@ const TeamMemberCard: React.FC<TeamMemberCardProps> = ({
         <div
           className={`relative rounded-full ring-4 ring-slate-100 ring-offset-2 border-2 border-red-500/20 shadow-md overflow-hidden bg-slate-100 flex-shrink-0 transition-transform duration-300 group-hover:scale-105 group-hover:ring-red-100 ${
             prominent
-              ? 'w-32 h-32 sm:w-36 sm:h-36 ring-red-500/30 ring-offset-4 shadow-lg'
+              ? 'w-32 h-32 sm:w-36 sm:h-36 shadow-lg'
               : 'w-28 h-28 sm:w-32 sm:h-32'
           }`}
         >
@@ -411,7 +410,7 @@ const TeamMemberCard: React.FC<TeamMemberCardProps> = ({
               }`}
             />
           ) : (
-            /* Dignified Executive Avatar Placeholder (e.g. Shyju Govind) */
+            /* Dignified Executive Avatar Placeholder */
             <div className="w-full h-full bg-gradient-to-br from-slate-900 via-slate-800 to-red-950 flex flex-col items-center justify-center text-white relative">
               <span className="text-2xl sm:text-3xl font-black font-['Outfit'] tracking-wider text-white">
                 {member.fallbackInitials}
@@ -419,23 +418,6 @@ const TeamMemberCard: React.FC<TeamMemberCardProps> = ({
               <span className="text-[9px] font-bold uppercase tracking-wider text-red-200 mt-1">
                 {prominent ? 'Executive' : 'Leadership'}
               </span>
-            </div>
-          )}
-
-          {/* Corner Badge on Round Avatar */}
-          {prominent ? (
-            <div
-              className="absolute bottom-1 right-1 w-7 h-7 rounded-full bg-red-600 text-white flex items-center justify-center shadow-md ring-2 ring-white"
-              title="Chief Executive Officer"
-            >
-              <Award className="w-3.5 h-3.5" />
-            </div>
-          ) : (
-            <div
-              className="absolute bottom-0 right-0 w-6 h-6 rounded-full bg-slate-900 text-white flex items-center justify-center shadow-xs ring-2 ring-white"
-              title="Leadership Member"
-            >
-              <Shield className="w-3 h-3 text-red-400" />
             </div>
           )}
         </div>
