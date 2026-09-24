@@ -35,7 +35,7 @@ import {
 import { Order, Customer, BusinessSettings } from '../../types/order';
 import { store } from '../../lib/store';
 import { getOrderStatusBadge } from '../../lib/statusHelper';
-import { formatScheduleDate, formatDateTime } from '../../lib/dateUtils';
+import { formatScheduleDate, formatDateTime, formatTimeSlot, formatPlacedAt } from '../../lib/dateUtils';
 import { generateOrderPdf } from '../../lib/pdf';
 
 interface CustomerManagementProps {
@@ -873,7 +873,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
                       <thead>
                         <tr className="bg-slate-50/80 border-b border-slate-200 text-[10px] font-bold text-slate-600 uppercase tracking-wider">
                           <th className="py-2.5 px-3">Order #</th>
-                          <th className="py-2.5 px-3">Date</th>
+                          <th className="py-2.5 px-3 min-w-[170px]">Schedule &amp; Placed</th>
                           <th className="py-2.5 px-3">Route (Pickup &rarr; Delivery)</th>
                           <th className="py-2.5 px-3">Vehicle / Cargo</th>
                           <th className="py-2.5 px-3">Total</th>
@@ -888,8 +888,16 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
                               <td className="py-2.5 px-3 font-mono font-black text-slate-900">
                                 {ord.order_number}
                               </td>
-                              <td className="py-2.5 px-3 text-slate-500 whitespace-nowrap">
-                                {formatScheduleDate(ord.pickup_date || ord.created_at)}
+                              <td className="py-2.5 px-3 text-slate-700 whitespace-nowrap">
+                                <div className="text-[11px] font-bold text-blue-950 flex items-center space-x-1">
+                                  <Calendar className="w-3 h-3 text-blue-600 shrink-0" />
+                                  <span>Pickup: {formatScheduleDate(ord.pickup_date || ord.created_at)}</span>
+                                  {ord.pickup_time && <span className="text-[10px] text-blue-800 font-semibold">({formatTimeSlot(ord.pickup_time)})</span>}
+                                </div>
+                                <div className="text-[10px] text-slate-500 flex items-center space-x-1 mt-0.5">
+                                  <Clock className="w-2.5 h-2.5 text-slate-400 shrink-0" />
+                                  <span>Placed: {formatPlacedAt(ord.created_at)}</span>
+                                </div>
                               </td>
                               <td className="py-2.5 px-3 max-w-[220px]">
                                 <div className="truncate text-slate-800 font-medium">

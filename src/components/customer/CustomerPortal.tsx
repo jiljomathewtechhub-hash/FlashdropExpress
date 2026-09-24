@@ -39,7 +39,7 @@ import { Order, OrderStatus } from '../../types/order';
 import { store, UserSession } from '../../lib/store';
 import { generateOrderPdf, generateWaybillPdf } from '../../lib/pdf';
 import { getOrderStatusBadge, ORDER_STATUS_CONFIG } from '../../lib/statusHelper';
-import { formatScheduleDate, formatDateTime } from '../../lib/dateUtils';
+import { formatScheduleDate, formatDateTime, formatTimeSlot, formatPlacedAt } from '../../lib/dateUtils';
 import { AddressAutocompleteInput } from '../common/AddressAutocompleteInput';
 
 interface CustomerPortalProps {
@@ -795,8 +795,8 @@ export const CustomerPortal: React.FC<CustomerPortalProps> = ({ onNavigate }) =>
                               `$${Number(ord.total_price).toFixed(2)} CAD`
                             )}
                           </div>
-                          <div className="text-[10px] text-slate-400">
-                            Booked on {formatScheduleDate(ord.created_at)}
+                          <div className="text-[10px] text-slate-500 font-medium">
+                            Placed: {formatPlacedAt(ord.created_at)}
                           </div>
                         </div>
                       </div>
@@ -858,8 +858,8 @@ export const CustomerPortal: React.FC<CustomerPortalProps> = ({ onNavigate }) =>
 
                         <div className="text-[11px] font-medium text-slate-700 bg-white p-2 rounded-lg border border-slate-200/80">
                           <Calendar className="w-3 h-3 text-blue-600 inline mr-1" />
-                          <span>Pickup: {ord.pickup_date ? formatScheduleDate(ord.pickup_date) : formatScheduleDate(ord.created_at)}</span>
-                          {ord.pickup_time && <span className="text-slate-500"> ({ord.pickup_time})</span>}
+                          <span className="font-bold text-slate-900">Pickup: {ord.pickup_date ? formatScheduleDate(ord.pickup_date) : formatScheduleDate(ord.created_at)}</span>
+                          {ord.pickup_time && <span className="text-blue-700 font-semibold ml-1">at {formatTimeSlot(ord.pickup_time)}</span>}
                         </div>
                       </div>
                     </div>

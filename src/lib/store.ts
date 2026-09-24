@@ -294,6 +294,16 @@ export function generateOrderNumber(existingOrders: Order[] = []): string {
   return `FD${nextNumber}`;
 }
 
+export function sortOrdersChronological(ordersList: Order[]): Order[] {
+  if (!Array.isArray(ordersList)) return [];
+  return [...ordersList].sort((a, b) => {
+    const timeB = new Date(b.created_at || 0).getTime();
+    const timeA = new Date(a.created_at || 0).getTime();
+    if (timeB !== timeA) return timeB - timeA;
+    return (b.order_number || '').localeCompare(a.order_number || '', undefined, { numeric: true });
+  });
+}
+
 class FlashDropStore {
   private orders: Order[] = [];
   private drivers: Driver[] = [];
@@ -825,10 +835,12 @@ class FlashDropStore {
           'test@example.com',
           'bbbb',
         ];
-        this.orders = allOrders.filter(
-          (o) =>
-            !testOrderIds.includes(o.id) &&
-            !testEmails.includes((o.customer_email || '').toLowerCase().trim())
+        this.orders = sortOrdersChronological(
+          allOrders.filter(
+            (o) =>
+              !testOrderIds.includes(o.id) &&
+              !testEmails.includes((o.customer_email || '').toLowerCase().trim())
+          )
         );
         this.saveToStorage();
         this.notify();
@@ -1080,10 +1092,12 @@ class FlashDropStore {
         'a86b5e99-3091-4a1a-a5ca-92e72f539fa1',
         '1c6118f5-d70e-41ce-b1a1-96726b41db26',
       ];
-      this.orders = this.orders.filter(
-        (o) =>
-          !testOrderIds.includes(o.id) &&
-          !testEmails.includes((o.customer_email || '').toLowerCase().trim())
+      this.orders = sortOrdersChronological(
+        this.orders.filter(
+          (o) =>
+            !testOrderIds.includes(o.id) &&
+            !testEmails.includes((o.customer_email || '').toLowerCase().trim())
+        )
       );
 
       const savedDeletedCust = localStorage.getItem(`${STORAGE_KEY_PREFIX}deleted_customer_ids`);
@@ -1355,7 +1369,7 @@ class FlashDropStore {
 
   // --- Orders ---
   public getOrders(): Order[] {
-    return this.orders;
+    return sortOrdersChronological(this.orders);
   }
 
   public getOrderById(idOrNumber: string): Order | undefined {
@@ -1383,17 +1397,21 @@ class FlashDropStore {
   public getOrdersForCustomer(emailOrIdOrCompany: string): Order[] {
     if (!emailOrIdOrCompany) return [];
     const query = emailOrIdOrCompany.toLowerCase().trim();
-    return this.orders.filter((o) => {
-      if (o.customer_email && o.customer_email.toLowerCase().trim() === query) return true;
-      if (o.customer_id && o.customer_id.toLowerCase().trim() === query) return true;
-      if (o.company_name && o.company_name.toLowerCase().trim() === query) return true;
-      if (o.customer_name && o.customer_name.toLowerCase().trim() === query) return true;
-      return false;
-    });
+    return sortOrdersChronological(
+      this.orders.filter((o) => {
+        if (o.customer_email && o.customer_email.toLowerCase().trim() === query) return true;
+        if (o.customer_id && o.customer_id.toLowerCase().trim() === query) return true;
+        if (o.company_name && o.company_name.toLowerCase().trim() === query) return true;
+        if (o.customer_name && o.customer_name.toLowerCase().trim() === query) return true;
+        return false;
+      })
+    );
   }
 
   public getOrdersForDriver(driverId: string): Order[] {
-    return this.orders.filter((o) => o.assigned_driver_id === driverId);
+    return sortOrdersChronological(
+      this.orders.filter((o) => o.assigned_driver_id === driverId)
+    );
   }
 
   public createOrder(orderInput: Omit<Order, 'id' | 'order_number' | 'created_at' | 'updated_at'>): Order {
@@ -1414,7 +1432,7 @@ class FlashDropStore {
       ],
     };
 
-    this.orders = [newOrder, ...this.orders];
+    this.orders = sortOrdersChronological([newOrder, ...this.orders]);
     this.saveToStorage();
 
     // Multi-channel dispatch: Customer Email + Admin Email & SMS

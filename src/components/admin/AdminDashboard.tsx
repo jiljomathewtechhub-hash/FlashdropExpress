@@ -71,7 +71,7 @@ import { supabase, isSupabaseConfigured, createUnpersistedClient } from '../../l
 import { notificationService } from '../../lib/notificationService';
 import { inAppNotificationService, InAppNotification } from '../../lib/inAppNotificationService';
 import { getOrderStatusBadge } from '../../lib/statusHelper';
-import { formatScheduleDate, formatDateTime } from '../../lib/dateUtils';
+import { formatScheduleDate, formatDateTime, formatTimeSlot, formatPlacedAt } from '../../lib/dateUtils';
 import { AdminAnalytics } from './AdminAnalytics';
 import { CustomerManagement } from './CustomerManagement';
 
@@ -133,6 +133,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
   // Filter states
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [orderSortBy, setOrderSortBy] = useState<'received_desc' | 'received_asc' | 'pickup_asc' | 'pickup_desc' | 'amount_desc'>('received_desc');
   const [orderViewMode, setOrderViewMode] = useState<'table' | 'kanban'>('table');
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [selectedOrderDetails, setSelectedOrderDetails] = useState<Order | null>(null);
@@ -397,32 +398,69 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
     }
   }, [orders, selectedOrderDetails]);
 
-  // Filter orders
-  const filteredOrders = orders.filter((o) => {
-    const matchesSearch =
-      o.order_number.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      o.customer_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      o.pickup_address.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      o.delivery_address.toLowerCase().includes(searchQuery.toLowerCase());
+  // Filter and sort orders (latest received first by default)
+  const filteredOrders = orders
+    .filter((o) => {
+      const matchesSearch =
+        o.order_number.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        o.customer_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        o.pickup_address.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        o.delivery_address.toLowerCase().includes(searchQuery.toLowerCase());
 
-    const matchesStatus =
-      statusFilter === 'all'
-        ? true
-        : statusFilter === 'pending'
-        ? (o.order_status === 'submitted' || o.order_status === 'quote_sent' || o.order_status === 'confirmed' || o.order_status === 'assigned')
-        : statusFilter === 'in_transit'
-        ? ['accepted', 'en_route_pickup', 'picked_up', 'in_transit'].includes(o.order_status)
-        : statusFilter === 'submitted'
-        ? (o.order_status === 'submitted' || o.order_status === 'quote_sent')
-        : statusFilter === 'confirmed'
-        ? (o.order_status === 'confirmed' && !o.assigned_driver_id)
-        : statusFilter === 'assigned'
-        ? (o.order_status === 'assigned' || Boolean(o.assigned_driver_id && o.order_status !== 'delivered' && o.order_status !== 'cancelled'))
-        : statusFilter === 'cancelled'
-        ? (o.order_status === 'cancelled' || o.order_status === 'cancellation_requested')
-        : o.order_status === statusFilter;
-    return matchesSearch && matchesStatus;
-  });
+      const matchesStatus =
+        statusFilter === 'all'
+          ? true
+          : statusFilter === 'pending'
+          ? (o.order_status === 'submitted' || o.order_status === 'quote_sent' || o.order_status === 'confirmed' || o.order_status === 'assigned')
+          : statusFilter === 'in_transit'
+          ? ['accepted', 'en_route_pickup', 'picked_up', 'in_transit'].includes(o.order_status)
+          : statusFilter === 'submitted'
+          ? (o.order_status === 'submitted' || o.order_status === 'quote_sent')
+          : statusFilter === 'confirmed'
+          ? (o.order_status === 'confirmed' && !o.assigned_driver_id)
+          : statusFilter === 'assigned'
+          ? (o.order_status === 'assigned' || Boolean(o.assigned_driver_id && o.order_status !== 'delivered' && o.order_status !== 'cancelled'))
+          : statusFilter === 'cancelled'
+          ? (o.order_status === 'cancelled' || o.order_status === 'cancellation_requested')
+          : o.order_status === statusFilter;
+      return matchesSearch && matchesStatus;
+    })
+    .sort((a, b) => {
+      if (orderSortBy === 'received_desc') {
+        const timeB = new Date(b.created_at || 0).getTime();
+        const timeA = new Date(a.created_at || 0).getTime();
+        if (timeB !== timeA) return timeB - timeA;
+        return (b.order_number || '').localeCompare(a.order_number || '', undefined, { numeric: true });
+      }
+      if (orderSortBy === 'received_asc') {
+        const timeB = new Date(b.created_at || 0).getTime();
+        const timeA = new Date(a.created_at || 0).getTime();
+        if (timeA !== timeB) return timeA - timeB;
+        return (a.order_number || '').localeCompare(b.order_number || '', undefined, { numeric: true });
+      }
+      if (orderSortBy === 'pickup_asc') {
+        const dateA = a.pickup_date || (a.created_at ? a.created_at.split('T')[0] : '9999-12-31');
+        const timeA = a.pickup_time || '00:00';
+        const tsA = new Date(`${dateA}T${timeA.length === 5 ? timeA : '00:00'}`).getTime() || 0;
+        const dateB = b.pickup_date || (b.created_at ? b.created_at.split('T')[0] : '9999-12-31');
+        const timeB = b.pickup_time || '00:00';
+        const tsB = new Date(`${dateB}T${timeB.length === 5 ? timeB : '00:00'}`).getTime() || 0;
+        return tsA - tsB;
+      }
+      if (orderSortBy === 'pickup_desc') {
+        const dateA = a.pickup_date || (a.created_at ? a.created_at.split('T')[0] : '0000-01-01');
+        const timeA = a.pickup_time || '00:00';
+        const tsA = new Date(`${dateA}T${timeA.length === 5 ? timeA : '00:00'}`).getTime() || 0;
+        const dateB = b.pickup_date || (b.created_at ? b.created_at.split('T')[0] : '0000-01-01');
+        const timeB = b.pickup_time || '00:00';
+        const tsB = new Date(`${dateB}T${timeB.length === 5 ? timeB : '00:00'}`).getTime() || 0;
+        return tsB - tsA;
+      }
+      if (orderSortBy === 'amount_desc') {
+        return (b.total_price || 0) - (a.total_price || 0);
+      }
+      return 0;
+    });
 
   // Metrics
   const totalRevenue = orders.reduce((sum, o) => sum + o.total_price, 0);
@@ -1538,6 +1576,22 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
                   <option value="cancelled">Cancelled</option>
                 </select>
               </div>
+
+              <div className="flex items-center space-x-1.5 shrink-0">
+                <Clock className="w-3.5 h-3.5 text-slate-400 hidden sm:block" />
+                <select
+                  value={orderSortBy}
+                  onChange={(e) => setOrderSortBy(e.target.value as any)}
+                  className="bg-slate-50 border border-slate-200 text-slate-900 text-xs rounded-xl px-3 py-2 font-medium focus:bg-white focus:outline-none cursor-pointer"
+                  title="Sort orders by date or value"
+                >
+                  <option value="received_desc">Order: Latest Received</option>
+                  <option value="received_asc">Order: Oldest Received</option>
+                  <option value="pickup_asc">Pickup: Earliest First</option>
+                  <option value="pickup_desc">Pickup: Latest First</option>
+                  <option value="amount_desc">Amount: Highest First</option>
+                </select>
+              </div>
             </div>
 
             {/* View Mode Switcher: Table vs Kanban Dispatch Board */}
@@ -1708,7 +1762,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
                 <table className="w-full text-left text-xs text-slate-700">
                   <thead className="sticky top-0 bg-slate-50/95 backdrop-blur-xs text-slate-700 uppercase text-[10px] font-bold border-b border-slate-200 z-10">
                     <tr>
-                      <th className="py-3.5 px-4">Order #</th>
+                      <th className="py-3.5 px-4 min-w-[210px]">Order # &amp; Schedule</th>
                       <th className="py-3.5 px-4">Customer</th>
                       <th className="py-3.5 px-4">Route & Area</th>
                       <th className="py-3.5 px-4">Vehicle & Cargo</th>
@@ -1742,39 +1796,62 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
                       filteredOrders.map((ord) => (
                         <tr key={ord.id} className="hover:bg-slate-50/80 transition-colors">
                           <td className="py-3 px-4 font-mono font-bold text-slate-900">
-                            <button
-                              type="button"
-                              onClick={() => setSelectedOrderDetails(ord)}
-                              className="text-left font-mono font-bold text-slate-900 hover:text-blue-600 hover:underline flex items-center space-x-1 cursor-pointer group"
-                              title="Click to view full order details & proof of delivery"
-                            >
-                              <span>#{ord.order_number}</span>
-                              <Eye className="w-3 h-3 text-slate-400 group-hover:text-blue-600 transition" />
-                            </button>
-                            {/* Schedule & Booking Dates */}
-                            <div className="font-sans font-normal mt-1 space-y-0.5">
-                              <div className="text-[11px] text-slate-700 flex items-center space-x-1" title="Scheduled Pickup Date & Time">
-                                <Calendar className="w-3 h-3 text-blue-600 shrink-0" />
-                                <span className="font-semibold text-slate-800">
-                                  {ord.pickup_date ? formatScheduleDate(ord.pickup_date) : formatScheduleDate(ord.created_at)}
-                                </span>
-                                {ord.pickup_time && <span className="text-slate-500 font-normal">({ord.pickup_time})</span>}
-                              </div>
-                              <div className="text-[10px] text-slate-400 pl-4" title="Order Created / Booked Timestamp">
-                                Booked: {formatScheduleDate(ord.created_at)}
-                              </div>
-                            </div>
-                            {ord.order_status !== 'submitted' && ord.order_status !== 'quote_sent' && ord.proof_of_delivery?.photo_url && (
+                            <div className="flex items-center space-x-2">
                               <button
                                 type="button"
                                 onClick={() => setSelectedOrderDetails(ord)}
-                                className="inline-flex items-center space-x-1 px-1.5 py-0.5 mt-1 rounded-md bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-[10px] font-bold border border-emerald-200 transition cursor-pointer"
-                                title="Verified Proof of Delivery Photo Available — Click to view"
+                                className="text-left font-mono font-black text-sm text-slate-900 hover:text-blue-600 hover:underline flex items-center space-x-1 cursor-pointer group tracking-tight"
+                                title="Click to view full order details & proof of delivery"
                               >
-                                <Camera className="w-2.5 h-2.5 text-emerald-700" />
-                                <span>POD Photo</span>
+                                <span>#{ord.order_number}</span>
+                                <Eye className="w-3.5 h-3.5 text-slate-400 group-hover:text-blue-600 transition" />
                               </button>
-                            )}
+                              {ord.order_status !== 'submitted' && ord.order_status !== 'quote_sent' && ord.proof_of_delivery?.photo_url && (
+                                <button
+                                  type="button"
+                                  onClick={() => setSelectedOrderDetails(ord)}
+                                  className="inline-flex items-center space-x-1 px-1.5 py-0.5 rounded-md bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-[10px] font-bold border border-emerald-200 transition cursor-pointer"
+                                  title="Verified Proof of Delivery Photo Available — Click to view"
+                                >
+                                  <Camera className="w-2.5 h-2.5 text-emerald-700" />
+                                  <span>POD</span>
+                                </button>
+                              )}
+                            </div>
+
+                            {/* Distinct Placed vs Pickup Timestamps */}
+                            <div className="font-sans font-normal mt-2 space-y-1.5">
+                              {/* 1. Date Placed / Order Received */}
+                              <div
+                                className="flex items-center space-x-1.5 px-2 py-1 rounded-md bg-slate-100/90 text-slate-700 border border-slate-200/80 text-[11px] max-w-fit"
+                                title="Timestamp when order was received / requested"
+                              >
+                                <Clock className="w-3 h-3 text-slate-500 shrink-0" />
+                                <span className="text-[10px] font-bold uppercase text-slate-500">Placed:</span>
+                                <span className="font-semibold text-slate-800">
+                                  {formatPlacedAt(ord.created_at)}
+                                </span>
+                              </div>
+
+                              {/* 2. Scheduled Pickup Date & Time */}
+                              <div
+                                className="flex items-center space-x-1.5 px-2 py-1 rounded-md bg-blue-50/90 text-blue-900 border border-blue-200/80 text-[11px] max-w-fit"
+                                title="Scheduled Pickup Date & Time window"
+                              >
+                                <Calendar className="w-3 h-3 text-blue-600 shrink-0" />
+                                <span className="text-[10px] font-bold uppercase text-blue-700">Pickup:</span>
+                                <span className="font-bold text-blue-950">
+                                  {ord.pickup_date ? formatScheduleDate(ord.pickup_date) : formatScheduleDate(ord.created_at)}
+                                </span>
+                                {ord.pickup_time ? (
+                                  <span className="text-blue-900 font-bold bg-white/90 px-1.5 py-0.5 rounded text-[10px] border border-blue-200/60 shadow-2xs">
+                                    {formatTimeSlot(ord.pickup_time)}
+                                  </span>
+                                ) : (
+                                  <span className="text-blue-600 text-[10px] italic">Flexible</span>
+                                )}
+                              </div>
+                            </div>
                           </td>
                           <td className="py-3 px-4">
                             <div className="font-semibold text-slate-900">{ord.customer_name}</div>
@@ -2099,16 +2176,34 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
                               </div>
                             )}
 
-                            {/* Scheduled / Order Date Badge */}
-                            <div className="flex items-center justify-between text-[11px] text-slate-600 bg-slate-50 px-2.5 py-1 rounded-lg border border-slate-200/70">
-                              <div className="flex items-center space-x-1.5 font-semibold text-slate-800">
-                                <Calendar className="w-3 h-3 text-blue-600 shrink-0" />
-                                <span>{ord.pickup_date ? formatScheduleDate(ord.pickup_date) : formatScheduleDate(ord.created_at)}</span>
-                                {ord.pickup_time && <span className="text-slate-500 font-normal">({ord.pickup_time})</span>}
+                            {/* Distinct Placed vs Pickup Timestamps */}
+                            <div className="space-y-1.5 bg-slate-50/90 p-2 rounded-xl border border-slate-200/80 text-[11px]">
+                              {/* Scheduled Pickup */}
+                              <div className="flex items-center justify-between text-blue-950 font-bold">
+                                <div className="flex items-center space-x-1.5">
+                                  <Calendar className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+                                  <span className="text-[10px] font-bold uppercase text-blue-700">Pickup:</span>
+                                  <span>{ord.pickup_date ? formatScheduleDate(ord.pickup_date) : formatScheduleDate(ord.created_at)}</span>
+                                </div>
+                                {ord.pickup_time ? (
+                                  <span className="text-[10px] font-bold bg-white text-blue-950 px-1.5 py-0.5 rounded border border-blue-200/70 shadow-2xs">
+                                    {formatTimeSlot(ord.pickup_time)}
+                                  </span>
+                                ) : (
+                                  <span className="text-[10px] text-blue-500 font-normal italic">Flexible</span>
+                                )}
                               </div>
-                              <span className="text-[10px] text-slate-400" title={`Booked: ${formatScheduleDate(ord.created_at)}`}>
-                                {formatScheduleDate(ord.created_at)}
-                              </span>
+
+                              {/* Placed Date & Time */}
+                              <div className="flex items-center justify-between text-slate-600 text-[10px] pt-1 border-t border-slate-200/60">
+                                <div className="flex items-center space-x-1">
+                                  <Clock className="w-3 h-3 text-slate-400 shrink-0" />
+                                  <span className="font-bold text-slate-500 uppercase">Placed:</span>
+                                </div>
+                                <span className="font-medium text-slate-700">
+                                  {formatPlacedAt(ord.created_at)}
+                                </span>
+                              </div>
                             </div>
 
                             {/* Customer & Cargo Info */}
@@ -6201,9 +6296,28 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
                     </span>
                   )}
                 </div>
-                <p className="text-slate-500 text-[11px]">
-                  Created on {new Date(selectedOrderDetails.created_at).toLocaleString()} • Last updated {new Date(selectedOrderDetails.updated_at).toLocaleString()}
-                </p>
+                <div className="flex flex-wrap items-center gap-2 pt-1 text-[11px]">
+                  <span className="inline-flex items-center space-x-1 px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700 border border-slate-200 font-semibold" title="Timestamp when order was placed / requested">
+                    <Clock className="w-3.5 h-3.5 text-slate-500" />
+                    <span className="text-slate-500 font-bold uppercase text-[10px]">Placed:</span>
+                    <span>{formatPlacedAt(selectedOrderDetails.created_at)}</span>
+                  </span>
+                  <span className="inline-flex items-center space-x-1 px-2.5 py-1 rounded-lg bg-blue-50 text-blue-900 border border-blue-200 font-semibold" title="Scheduled Pickup Date & Time window">
+                    <Calendar className="w-3.5 h-3.5 text-blue-600" />
+                    <span className="text-blue-700 font-bold uppercase text-[10px]">Pickup:</span>
+                    <span>{selectedOrderDetails.pickup_date ? formatScheduleDate(selectedOrderDetails.pickup_date) : formatScheduleDate(selectedOrderDetails.created_at)}</span>
+                    {selectedOrderDetails.pickup_time ? (
+                      <span className="bg-white px-1.5 py-0.5 rounded text-[10px] font-bold text-blue-950 border border-blue-200/60 shadow-2xs">
+                        {formatTimeSlot(selectedOrderDetails.pickup_time)}
+                      </span>
+                    ) : (
+                      <span className="text-blue-600 text-[10px] italic">Flexible</span>
+                    )}
+                  </span>
+                  <span className="text-slate-400 text-[10px]">
+                    Updated: {formatDateTime(selectedOrderDetails.updated_at || selectedOrderDetails.created_at)}
+                  </span>
+                </div>
               </div>
 
               {/* Header Actions */}
@@ -6628,7 +6742,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
                         <div>
                           <span className="text-[10px] uppercase font-bold text-slate-500 block">Scheduled Pickup</span>
                           <span className="font-semibold text-slate-800">
-                            {selectedOrderDetails.pickup_date} {selectedOrderDetails.pickup_time ? `@ ${selectedOrderDetails.pickup_time}` : ''}
+                            {selectedOrderDetails.pickup_date ? formatScheduleDate(selectedOrderDetails.pickup_date) : formatScheduleDate(selectedOrderDetails.created_at)}
+                            {selectedOrderDetails.pickup_time ? ` @ ${formatTimeSlot(selectedOrderDetails.pickup_time)}` : ''}
                           </span>
                         </div>
                       </div>

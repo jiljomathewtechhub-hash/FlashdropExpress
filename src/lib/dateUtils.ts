@@ -68,3 +68,45 @@ export function formatTimeOnly(dateStr?: string | null): string {
     return String(dateStr);
   }
 }
+
+/**
+ * Formats a 24-hr time string (e.g. "11:00", "13:30") to standard Canadian 12-hr format ("11:00 AM", "1:30 PM")
+ */
+export function formatTimeSlot(timeStr?: string | null): string {
+  if (!timeStr) return '';
+  const trimmed = String(timeStr).trim();
+  const match = trimmed.match(/^(\d{1,2}):(\d{2})$/);
+  if (match) {
+    let hour = parseInt(match[1], 10);
+    const min = match[2];
+    const ampm = hour >= 12 ? 'PM' : 'AM';
+    hour = hour % 12 || 12;
+    return `${hour}:${min} ${ampm}`;
+  }
+  return trimmed;
+}
+
+/**
+ * Formats an ISO date string or timestamp into a concise, readable placement label (e.g. "Sep 23, 2026 • 2:45 PM")
+ */
+export function formatPlacedAt(dateStr?: string | null): string {
+  if (!dateStr) return '';
+  try {
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return String(dateStr);
+    const datePart = d.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    });
+    const timePart = d.toLocaleTimeString('en-US', {
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true,
+    });
+    return `${datePart} • ${timePart}`;
+  } catch {
+    return String(dateStr);
+  }
+}
+

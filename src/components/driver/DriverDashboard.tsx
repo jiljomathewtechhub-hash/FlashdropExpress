@@ -43,7 +43,7 @@ import { store, UserSession } from '../../lib/store';
 import { inAppNotificationService } from '../../lib/inAppNotificationService';
 import { NotificationBell } from '../common/NotificationBell';
 import { getOrderStatusBadge, ORDER_STATUS_CONFIG } from '../../lib/statusHelper';
-import { formatScheduleDate, formatDateTime } from '../../lib/dateUtils';
+import { formatScheduleDate, formatDateTime, formatTimeSlot, formatPlacedAt } from '../../lib/dateUtils';
 import { generateWaybillPdf } from '../../lib/pdf';
 
 // High-performance client-side photo compression utility for mobile and desktop uploads
@@ -934,7 +934,7 @@ export const DriverDashboard: React.FC<DriverDashboardProps> = ({ onNavigate, in
                             {getOrderStatusBadge('assigned', 'sm')}
                             <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-100/90 text-amber-950 border border-amber-300 flex items-center space-x-1">
                               <Calendar className="w-3 h-3 text-amber-700" />
-                              <span>Pickup: {ord.pickup_date ? formatScheduleDate(ord.pickup_date) : formatScheduleDate(ord.created_at)} {ord.pickup_time ? `@ ${ord.pickup_time}` : ''}</span>
+                              <span>Pickup: {ord.pickup_date ? formatScheduleDate(ord.pickup_date) : formatScheduleDate(ord.created_at)} {ord.pickup_time ? `@ ${formatTimeSlot(ord.pickup_time)}` : ''}</span>
                             </span>
                             <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-slate-100 text-slate-700 border border-slate-200">
                               {ord.vehicle_name}
@@ -1009,7 +1009,7 @@ export const DriverDashboard: React.FC<DriverDashboardProps> = ({ onNavigate, in
                           {getOrderStatusBadge(ord.order_status, 'sm')}
                           <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-blue-50 text-blue-900 border border-blue-200 flex items-center space-x-1">
                             <Calendar className="w-3 h-3 text-blue-600" />
-                            <span>Pickup: {ord.pickup_date ? formatScheduleDate(ord.pickup_date) : formatScheduleDate(ord.created_at)} {ord.pickup_time ? `@ ${ord.pickup_time}` : ''}</span>
+                            <span>Pickup: {ord.pickup_date ? formatScheduleDate(ord.pickup_date) : formatScheduleDate(ord.created_at)} {ord.pickup_time ? `@ ${formatTimeSlot(ord.pickup_time)}` : ''}</span>
                           </span>
                           <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-slate-100 text-slate-700 border border-slate-200">
                             {ord.vehicle_name}
