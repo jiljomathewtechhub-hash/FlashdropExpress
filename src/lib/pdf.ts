@@ -279,16 +279,29 @@ export function generateOrderPdf(
   doc.setDrawColor(cardBorder[0], cardBorder[1], cardBorder[2]);
   doc.rect(15, y, 180, 8, 'FD');
 
-  doc.setFontSize(8);
+  // Vertical column dividers in header
+  doc.setDrawColor(cardBorder[0], cardBorder[1], cardBorder[2]);
+  doc.setLineWidth(0.3);
+  doc.line(88, y, 88, y + 8);
+  doc.line(162, y, 162, y + 8);
+
+  doc.setFontSize(7.5);
   doc.setFont('helvetica', 'bold');
   doc.setTextColor(textDark[0], textDark[1], textDark[2]);
-  doc.text('DESCRIPTION / LOGISTICS SPECIFICATION', 20, y + 5.5);
-  doc.text('SPECS / DETAILS', 120, y + 5.5);
-  doc.text('AMOUNT (CAD)', 190, y + 5.5, { align: 'right' });
+  doc.text('DESCRIPTION / LOGISTICS SPECIFICATION', 19, y + 5.2);
+  doc.text('SPECS / DETAILS', 92, y + 5.2);
+  doc.text('AMOUNT (CAD)', 191, y + 5.2, { align: 'right' });
 
   // Rows
   y += 8;
   const addRow = (label: string, specs: string, amount: number, isSub = false, isDiscount = false) => {
+    doc.setFontSize(8);
+    const labelLines = doc.splitTextToSize(label, 67);
+    doc.setFontSize(7.5);
+    const specsLines = doc.splitTextToSize(specs, 68);
+    const lineCount = Math.max(labelLines.length, specsLines.length, 1);
+    const rowH = Math.max(7.5, lineCount * 4 + 3);
+
     if (isDiscount) {
       doc.setFillColor(240, 253, 244);
     } else if (isSub) {
@@ -296,43 +309,59 @@ export function generateOrderPdf(
     } else {
       doc.setFillColor(255, 255, 255);
     }
-    doc.rect(15, y, 180, 7.5, 'F');
+    doc.rect(15, y, 180, rowH, 'F');
 
-    // Subtle line
+    // Subtle horizontal bottom line
     doc.setDrawColor(241, 245, 249);
-    doc.line(15, y + 7.5, 195, y + 7.5);
+    doc.setLineWidth(0.3);
+    doc.line(15, y + rowH, 195, y + rowH);
 
-    doc.setFontSize(8.5);
+    // Subtle vertical column dividers
+    doc.setDrawColor(cardBorder[0], cardBorder[1], cardBorder[2]);
+    doc.setLineWidth(0.2);
+    doc.line(88, y, 88, y + rowH);
+    doc.line(162, y, 162, y + rowH);
+
+    // Description text
+    doc.setFontSize(8);
     doc.setFont('helvetica', isSub ? 'normal' : 'bold');
     if (isDiscount) {
       doc.setTextColor(4, 120, 87);
     } else {
       doc.setTextColor(textDark[0], textDark[1], textDark[2]);
     }
-    doc.text(label, 20, y + 5.2);
+    doc.text(labelLines, 19, y + 4.8);
 
+    // Specs text (confined strictly to 68mm width in Col 2, never reaching Col 3)
     doc.setFont('helvetica', 'normal');
+    doc.setFontSize(7.5);
     if (isDiscount) {
       doc.setTextColor(5, 150, 105);
     } else {
       doc.setTextColor(mutedText[0], mutedText[1], mutedText[2]);
     }
-    doc.text(specs, 120, y + 5.2);
+    doc.text(specsLines, 92, y + 4.8);
 
+    // Amount text (right-aligned in Col 3, completely isolated from Col 2)
+    doc.setFontSize(8.5);
     doc.setFont('helvetica', 'bold');
     if (isDiscount) {
       doc.setTextColor(4, 120, 87);
-      doc.text(`-$${Math.abs(amount).toFixed(2)}`, 190, y + 5.2, { align: 'right' });
+      doc.text(`-$${Math.abs(amount).toFixed(2)}`, 191, y + 4.8, { align: 'right' });
     } else {
       doc.setTextColor(textDark[0], textDark[1], textDark[2]);
-      doc.text(`$${amount.toFixed(2)}`, 190, y + 5.2, { align: 'right' });
+      doc.text(`$${amount.toFixed(2)}`, 191, y + 4.8, { align: 'right' });
     }
-    y += 7.5;
+    y += rowH;
   };
+
+  const baseSpecs = outsideKm > 0
+    ? `${order.distance_km} km (${insideKm} km GTA / ${outsideKm} km Outside) • ${order.weight_lbs || 50} lbs`
+    : `${order.distance_km} km (GTA Metro Direct) • ${order.weight_lbs || 50} lbs`;
 
   addRow(
     `Transport Base Rate (${order.vehicle_name})`,
-    `${order.distance_km} km (${insideKm} km GTA / ${outsideKm} km Outside) • ${order.weight_lbs} lbs`,
+    baseSpecs,
     order.base_price
   );
 
@@ -872,54 +901,94 @@ export function generateWaybillPdf(
 
   // --- CARGO MANIFEST & LOGISTICS SPECIFICATIONS TABLE ---
   y += cardHeight + 4;
+  const manifestStartY = y;
+  const headerH = 7.5;
+  const rowH = 9.5;
+  const totalH = headerH + rowH; // 17mm
+
   doc.setFillColor(tableHeaderBg[0], tableHeaderBg[1], tableHeaderBg[2]);
   doc.setDrawColor(cardBorder[0], cardBorder[1], cardBorder[2]);
-  doc.rect(15, y, 180, 7.5, 'FD');
+  doc.setLineWidth(0.3);
+  doc.rect(15, y, 180, headerH, 'FD');
 
-  doc.setFontSize(7.5);
+  // Vertical column dividers in header
+  doc.line(26, y, 26, y + headerH);
+  doc.line(52, y, 52, y + headerH);
+  doc.line(78, y, 78, y + headerH);
+  doc.line(138, y, 138, y + headerH);
+  doc.line(174, y, 174, y + headerH);
+
+  doc.setFontSize(7.2);
   doc.setFont('helvetica', 'bold');
   doc.setTextColor(textDark[0], textDark[1], textDark[2]);
-  doc.text('ITEM #', 19, y + 5);
-  doc.text('PIECES / UNITS', 34, y + 5);
-  doc.text('PACKAGING TYPE', 65, y + 5);
-  doc.text('DESCRIPTION OF ARTICLES / COMMODITY', 105, y + 5);
-  doc.text('WEIGHT (LBS / KG)', 160, y + 5);
-  doc.text('CLASS', 186, y + 5);
+  doc.text('ITEM', 20.5, y + 5, { align: 'center' });
+  doc.text('PIECES / UNITS', 28, y + 5);
+  doc.text('PACKAGING', 54, y + 5);
+  doc.text('COMMODITY / DESCRIPTION', 81, y + 5);
+  doc.text('WEIGHT (LBS / KG)', 140, y + 5);
+  doc.text('CLASS', 184.5, y + 5, { align: 'center' });
 
-  y += 7.5;
+  // Data Row
+  y += headerH;
   doc.setFillColor(255, 255, 255);
-  doc.rect(15, y, 180, 8.5, 'F');
-  doc.setDrawColor(cardBorder[0], cardBorder[1], cardBorder[2]);
-  doc.rect(15, y - 7.5, 180, 16, 'S');
+  doc.rect(15, y, 180, rowH, 'F');
 
+  // Vertical column dividers in data row
+  doc.setDrawColor(cardBorder[0], cardBorder[1], cardBorder[2]);
+  doc.setLineWidth(0.2);
+  doc.line(26, y, 26, y + rowH);
+  doc.line(52, y, 52, y + rowH);
+  doc.line(78, y, 78, y + rowH);
+  doc.line(138, y, 138, y + rowH);
+  doc.line(174, y, 174, y + rowH);
+
+  // Outer border around entire manifest table
+  doc.setLineWidth(0.3);
+  doc.rect(15, manifestStartY, 180, totalH, 'S');
+
+  // Col 1: Item Number
   doc.setFontSize(8);
   doc.setFont('helvetica', 'bold');
   doc.setTextColor(textDark[0], textDark[1], textDark[2]);
-  doc.text('01', 20, y + 5.5);
+  doc.text('01', 20.5, y + 6, { align: 'center' });
 
+  // Col 2: Quantity & Units
   doc.setFont('helvetica', 'normal');
-  doc.text(`${order.quantity || 1} Handling Unit(s)`, 34, y + 5.5);
+  doc.setFontSize(7.5);
+  const unitsLabel = `${order.quantity || 1} Handling Unit(s)`;
+  const truncatedUnits = doc.splitTextToSize(unitsLabel, 24)[0] || unitsLabel;
+  doc.text(truncatedUnits, 28, y + 6);
 
+  // Col 3: Packaging Type
   const pkgLabel = (order.item_type || 'General Freight').replace(/_/g, ' ').toUpperCase();
-  doc.text(pkgLabel, 65, y + 5.5);
+  const truncatedPkg = doc.splitTextToSize(pkgLabel, 24)[0] || pkgLabel;
+  doc.text(truncatedPkg, 54, y + 6);
 
+  // Col 4: Commodity / Description
   const descLabel = order.item_description
     ? order.item_description
     : `${pkgLabel} - Commercial Freight Transport`;
-  const truncatedDesc = doc.splitTextToSize(descLabel, 50)[0] || descLabel;
-  doc.text(truncatedDesc, 105, y + 5.5);
+  const truncatedDesc = doc.splitTextToSize(descLabel, 55)[0] || descLabel;
+  doc.text(truncatedDesc, 81, y + 6);
 
+  // Col 5: Total Weight
   const kgWeight = Math.round(Number(order.weight_lbs || 50) * 0.453592);
   doc.setFont('helvetica', 'bold');
-  doc.text(`${order.weight_lbs || 50} lbs (${kgWeight} kg)`, 160, y + 5.5);
+  doc.setFontSize(7.8);
+  doc.text(`${order.weight_lbs || 50} lbs (${kgWeight} kg)`, 140, y + 6);
 
-  doc.setFontSize(7);
+  // Col 6: Class (Regulatory Non-Hazardous Badge Pill - completely inside bounds 174mm to 195mm)
+  doc.setFillColor(236, 253, 245); // Emerald-50
+  doc.setDrawColor(167, 243, 208); // Emerald-200
+  doc.setLineWidth(0.3);
+  doc.roundedRect(176, y + 2.5, 17, 5.2, 1, 1, 'FD');
+  doc.setFontSize(6.8);
   doc.setFont('helvetica', 'bold');
-  doc.setTextColor(16, 185, 129); // Green Non-Haz
-  doc.text('NON-HAZ', 186, y + 5.5);
+  doc.setTextColor(5, 150, 105); // Emerald-600
+  doc.text('NON-HAZ', 184.5, y + 6.1, { align: 'center' });
 
   // Special Handling Instructions Box
-  y += 11;
+  y += rowH + 3.5;
   doc.setFillColor(lightBg[0], lightBg[1], lightBg[2]);
   doc.setDrawColor(cardBorder[0], cardBorder[1], cardBorder[2]);
   doc.roundedRect(15, y, 180, 14, 1.5, 1.5, 'FD');
