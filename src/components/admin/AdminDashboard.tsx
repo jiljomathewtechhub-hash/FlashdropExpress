@@ -1128,10 +1128,21 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
           <div className="flex items-center space-x-2">
             <button
               onClick={() => onNavigate('order')}
-              className="flex items-center space-x-1.5 px-4 py-2 bg-gradient-to-r from-[#C5161D] to-[#A31217] hover:from-[#B01319] hover:to-[#8E1015] text-white font-bold text-xs rounded-xl shadow-sm shadow-red-900/20 active:scale-95 transition cursor-pointer"
+              className="flex items-center space-x-1.5 px-3 sm:px-4 py-2 bg-gradient-to-r from-[#C5161D] to-[#A31217] hover:from-[#B01319] hover:to-[#8E1015] text-white font-bold text-xs rounded-xl shadow-sm shadow-red-900/20 active:scale-95 transition cursor-pointer shrink-0"
             >
               <Plus className="w-4 h-4" />
               <span>Create Order</span>
+            </button>
+            <button
+              onClick={() => {
+                store.logout();
+                onNavigate('login');
+              }}
+              className="flex items-center space-x-1.5 px-3 py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-bold rounded-xl border border-rose-200 transition cursor-pointer shrink-0"
+              title="Sign Out of Admin"
+            >
+              <LogOut className="w-3.5 h-3.5 text-rose-600" />
+              <span>Sign Out</span>
             </button>
           </div>
         </div>

@@ -489,10 +489,10 @@ export const CustomerPortal: React.FC<CustomerPortalProps> = ({ onNavigate }) =>
               store.logout();
               onNavigate('login');
             }}
-            className="flex items-center space-x-1.5 px-3.5 py-2.5 bg-slate-100 hover:bg-rose-50 text-slate-700 hover:text-rose-700 text-xs font-semibold rounded-xl border border-slate-200 hover:border-rose-200 transition cursor-pointer"
+            className="flex items-center space-x-1.5 px-3.5 py-2.5 bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-bold rounded-xl border border-rose-200 transition cursor-pointer"
             title="Sign out of customer portal"
           >
-            <LogOut className="w-3.5 h-3.5" />
+            <LogOut className="w-3.5 h-3.5 text-rose-600" />
             <span>Sign Out</span>
           </button>
         </div>

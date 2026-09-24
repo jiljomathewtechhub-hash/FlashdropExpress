@@ -179,10 +179,11 @@ export const Navbar: React.FC<NavbarProps> = ({ currentTab, onNavigate }) => {
                 </button>
                 <button
                   onClick={handleLogout}
-                  className="p-1.5 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-lg transition-smooth cursor-pointer"
+                  className="flex items-center space-x-1 px-2 py-1.5 text-xs font-semibold text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200 rounded-lg transition-smooth cursor-pointer"
                   title="Log out"
                 >
-                  <LogOut className="w-3.5 h-3.5" />
+                  <LogOut className="w-3.5 h-3.5 text-rose-600" />
+                  <span className="hidden md:inline">Sign Out</span>
                 </button>
               </div>
             ) : (
@@ -222,6 +223,17 @@ export const Navbar: React.FC<NavbarProps> = ({ currentTab, onNavigate }) => {
             {user && (user.role === 'admin' || user.role === 'owner' || user.role === 'driver') && (
               <NotificationBell onNavigate={onNavigate} />
             )}
+            {user && (
+              <button
+                onClick={handleLogout}
+                className="min-h-[34px] px-2 py-1 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 text-[11px] font-bold rounded-lg transition-smooth flex items-center space-x-1 cursor-pointer"
+                title="Log Out"
+                aria-label="Log Out"
+              >
+                <LogOut className="w-3.5 h-3.5 text-rose-600 shrink-0" />
+                <span>Logout</span>
+              </button>
+            )}
             <button
               onClick={() => onNavigate('order')}
               className="min-h-[34px] px-2.5 py-1 text-[11px] font-bold text-white btn-gradient-primary rounded-lg shadow-xs transition-smooth flex items-center justify-center cursor-pointer whitespace-nowrap"
@@ -241,21 +253,45 @@ export const Navbar: React.FC<NavbarProps> = ({ currentTab, onNavigate }) => {
         {/* Mobile & Tablet Dropdown Menu Drawer */}
         {mobileMenuOpen && (
           <div className="lg:hidden mt-2 pt-3 border-t border-slate-200 pb-4 space-y-1 bg-white animate-fade-in max-h-[calc(100vh-80px)] overflow-y-auto">
-            {/* If user logged in: show compact user status card in drawer */}
+            {/* If user logged in: show compact user status card in drawer with instant Sign Out */}
             {user && (
-              <div className="mb-2 p-3 bg-slate-50 border border-slate-200 rounded-2xl flex items-center justify-between">
-                <div className="flex items-center space-x-2.5 min-w-0">
-                  <div className="w-8 h-8 rounded-xl bg-red-600 text-white font-bold flex items-center justify-center text-xs shrink-0">
-                    {user.name ? user.name.charAt(0).toUpperCase() : 'U'}
+              <div className="mb-2 p-3 bg-slate-50 border border-slate-200 rounded-2xl">
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center space-x-2.5 min-w-0 flex-1">
+                    <div className="w-8 h-8 rounded-xl bg-red-600 text-white font-bold flex items-center justify-center text-xs shrink-0">
+                      {user.name ? user.name.charAt(0).toUpperCase() : 'U'}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-xs font-bold text-slate-900 truncate">{user.name}</p>
+                      <p className="text-[11px] text-slate-500 truncate">{user.email}</p>
+                    </div>
                   </div>
-                  <div className="min-w-0">
-                    <p className="text-xs font-bold text-slate-900 truncate">{user.name}</p>
-                    <p className="text-[11px] text-slate-500 truncate">{user.email}</p>
-                  </div>
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-red-100 text-red-700 uppercase shrink-0">
+                    {user.role === 'owner' || user.role === 'admin' ? 'Admin' : user.role === 'driver' ? 'Staff' : 'Customer'}
+                  </span>
                 </div>
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-red-100 text-red-700 uppercase shrink-0">
-                  {user.role === 'owner' || user.role === 'admin' ? 'Admin' : user.role === 'driver' ? 'Staff' : 'Customer'}
-                </span>
+                <div className="mt-2.5 pt-2 border-t border-slate-200/80 flex items-center justify-between gap-2">
+                  <button
+                    onClick={() => {
+                      onNavigate(user.role === 'owner' || user.role === 'admin' ? 'admin' : user.role === 'driver' ? 'driver' : 'customer');
+                      setMobileMenuOpen(false);
+                    }}
+                    className="flex-1 py-1.5 px-2 bg-slate-900 hover:bg-black text-white text-xs font-bold rounded-lg flex items-center justify-center space-x-1.5 transition cursor-pointer"
+                  >
+                    <Shield className="w-3.5 h-3.5 text-red-400" />
+                    <span>My {user.role === 'owner' || user.role === 'admin' ? 'Admin' : user.role === 'driver' ? 'Staff' : 'Portal'}</span>
+                  </button>
+                  <button
+                    onClick={() => {
+                      handleLogout();
+                      setMobileMenuOpen(false);
+                    }}
+                    className="flex-1 py-1.5 px-2 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 text-xs font-bold rounded-lg flex items-center justify-center space-x-1.5 transition cursor-pointer"
+                  >
+                    <LogOut className="w-3.5 h-3.5 text-rose-600" />
+                    <span>Sign Out</span>
+                  </button>
+                </div>
               </div>
             )}
 

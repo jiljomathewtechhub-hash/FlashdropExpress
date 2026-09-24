@@ -19,6 +19,7 @@ import {
   ArrowLeft,
   RefreshCw,
   Sparkles,
+  LogOut,
 } from 'lucide-react';
 import { UserRole } from '../types/order';
 import { store } from '../lib/store';
@@ -84,6 +85,13 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate, initialParams 
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(initialParams?.error || null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [currentUser, setCurrentUser] = useState(store.getCurrentUser());
+
+  useEffect(() => {
+    return store.subscribe(() => {
+      setCurrentUser(store.getCurrentUser());
+    });
+  }, []);
 
   // Parse recovery tokens, hash parameters, and listen to Supabase recovery events
   useEffect(() => {
@@ -703,6 +711,45 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate, initialParams 
           <div className="p-3.5 bg-emerald-50 border border-emerald-200 rounded-xl flex items-start space-x-2.5 text-xs text-emerald-800 animate-fade-in shadow-xs">
             <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
             <span className="leading-relaxed font-medium">{successMessage}</span>
+          </div>
+        )}
+
+        {/* If already signed in, show notification card with Sign Out button */}
+        {currentUser && (
+          <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-3 text-xs animate-fade-in">
+            <div className="flex items-center space-x-2.5 min-w-0 w-full sm:w-auto">
+              <div className="w-8 h-8 rounded-xl bg-red-600 text-white font-bold flex items-center justify-center shrink-0 text-xs">
+                {currentUser.name ? currentUser.name.charAt(0).toUpperCase() : 'U'}
+              </div>
+              <div className="min-w-0">
+                <p className="font-bold text-slate-900 truncate">
+                  Logged in as {currentUser.name || currentUser.email}
+                </p>
+                <p className="text-[11px] text-slate-500 capitalize">
+                  Active role: <span className="font-semibold text-red-600">{currentUser.role}</span>
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center space-x-2 shrink-0 w-full sm:w-auto">
+              <button
+                type="button"
+                onClick={() => onNavigate(currentUser.role === 'admin' || currentUser.role === 'owner' ? 'admin' : currentUser.role === 'driver' ? 'driver' : 'customer')}
+                className="flex-1 sm:flex-none px-3 py-1.5 bg-slate-900 hover:bg-black text-white font-bold rounded-lg text-xs transition cursor-pointer whitespace-nowrap"
+              >
+                Go to Portal
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  store.logout();
+                  setSuccessMessage('Successfully signed out.');
+                }}
+                className="flex-1 sm:flex-none px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 font-bold rounded-lg text-xs transition cursor-pointer whitespace-nowrap flex items-center justify-center space-x-1"
+              >
+                <LogOut className="w-3 h-3 text-rose-600" />
+                <span>Sign Out</span>
+              </button>
+            </div>
           </div>
         )}
 
