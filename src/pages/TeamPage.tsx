@@ -48,7 +48,7 @@ export const TeamPage: React.FC<TeamPageProps> = ({ onNavigate }) => {
     role: 'Founder & Chief Executive Officer (CEO)',
     tier: 'executive',
     department: 'Executive Leadership',
-    image: '', // Photo currently unavailable; renders dignified round executive avatar
+    image: '/images/team/team-1.jpg',
     fallbackInitials: 'SG',
     bio: 'Driving strategic vision, corporate expansion, and operational excellence to position FlashDrop Express as Ontario’s premier courier logistics provider.',
     linkedin: 'https://www.linkedin.com',
