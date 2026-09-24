@@ -408,19 +408,28 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
         o.pickup_address.toLowerCase().includes(searchQuery.toLowerCase()) ||
         o.delivery_address.toLowerCase().includes(searchQuery.toLowerCase());
 
+      const isOrderPendingDispatch = (o: Order) =>
+        o.order_status === 'submitted' ||
+        o.order_status === 'quote_sent' ||
+        (o.order_status === 'confirmed' && !o.assigned_driver_id);
+
+      const isOrderInTransit = (o: Order) =>
+        ['assigned', 'accepted', 'en_route_pickup', 'picked_up', 'in_transit'].includes(o.order_status) ||
+        Boolean(o.assigned_driver_id && o.order_status !== 'delivered' && o.order_status !== 'cancelled');
+
       const matchesStatus =
         statusFilter === 'all'
           ? true
           : statusFilter === 'pending'
-          ? (o.order_status === 'submitted' || o.order_status === 'quote_sent' || o.order_status === 'confirmed' || o.order_status === 'assigned')
-          : statusFilter === 'in_transit'
-          ? ['accepted', 'en_route_pickup', 'picked_up', 'in_transit'].includes(o.order_status)
+          ? isOrderPendingDispatch(o)
+          : (statusFilter === 'in_transit' || statusFilter === 'assigned')
+          ? isOrderInTransit(o)
           : statusFilter === 'submitted'
           ? (o.order_status === 'submitted' || o.order_status === 'quote_sent')
           : statusFilter === 'confirmed'
           ? (o.order_status === 'confirmed' && !o.assigned_driver_id)
-          : statusFilter === 'assigned'
-          ? (o.order_status === 'assigned' || Boolean(o.assigned_driver_id && o.order_status !== 'delivered' && o.order_status !== 'cancelled'))
+          : statusFilter === 'delivered'
+          ? o.order_status === 'delivered'
           : statusFilter === 'cancelled'
           ? (o.order_status === 'cancelled' || o.order_status === 'cancellation_requested')
           : o.order_status === statusFilter;
@@ -463,19 +472,26 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
       return 0;
     });
 
-  // Metrics
+  // Metrics - 100% Synchronized with card & dropdown filtering
   const totalRevenue = orders.reduce((sum, o) => sum + o.total_price, 0);
-  const pendingOrders = orders.filter((o) => o.order_status === 'submitted' || o.order_status === 'quote_sent' || o.order_status === 'confirmed').length;
-  const inTransitOrders = orders.filter((o) => ['assigned', 'accepted', 'en_route_pickup', 'picked_up', 'in_transit'].includes(o.order_status)).length;
+  const pendingOrders = orders.filter((o) =>
+    o.order_status === 'submitted' ||
+    o.order_status === 'quote_sent' ||
+    (o.order_status === 'confirmed' && !o.assigned_driver_id)
+  ).length;
+  const inTransitOrders = orders.filter((o) =>
+    ['assigned', 'accepted', 'en_route_pickup', 'picked_up', 'in_transit'].includes(o.order_status) ||
+    Boolean(o.assigned_driver_id && o.order_status !== 'delivered' && o.order_status !== 'cancelled')
+  ).length;
   const deliveredOrders = orders.filter((o) => o.order_status === 'delivered').length;
   const pendingRequests = requests.filter((r) => r.status === 'pending').length;
   const quotesToPrice = orders.filter((o) => o.order_status === 'submitted').length;
   const quotesNeedingDriver = orders.filter((o) => (o.order_status === 'confirmed' || Boolean(o.quote_accepted_at)) && !o.assigned_driver_id).length;
   const quotesCount = orders.filter((o) => o.order_status === 'submitted' || o.order_status === 'quote_sent').length;
   const readyCount = orders.filter((o) => o.order_status === 'confirmed' && !o.assigned_driver_id).length;
-  const assignedCount = orders.filter((o) => o.order_status === 'assigned' || (Boolean(o.assigned_driver_id) && o.order_status !== 'delivered' && o.order_status !== 'cancelled')).length;
-  const inTransitCount = orders.filter((o) => ['accepted', 'en_route_pickup', 'picked_up', 'in_transit'].includes(o.order_status)).length;
-  const deliveredCount = orders.filter((o) => o.order_status === 'delivered').length;
+  const assignedCount = inTransitOrders;
+  const inTransitCount = inTransitOrders;
+  const deliveredCount = deliveredOrders;
   const cancelledCount = orders.filter((o) => o.order_status === 'cancelled' || o.order_status === 'cancellation_requested').length;
 
   const handleAssignDriver = () => {
@@ -1191,7 +1207,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
             setStatusFilter('pending');
           }}
           className={`bg-amber-500/[0.04] border rounded-2xl p-4 transition-all duration-200 cursor-pointer group shadow-2xs hover:shadow-md ${
-            activeTab === 'orders' && (statusFilter === 'pending' || statusFilter === 'submitted')
+            activeTab === 'orders' && (statusFilter === 'pending' || statusFilter === 'submitted' || statusFilter === 'confirmed')
               ? 'border-amber-500 ring-2 ring-amber-500/20 bg-amber-500/10'
               : 'border-amber-200/80 hover:border-amber-300'
           }`}
@@ -1218,7 +1234,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
             setStatusFilter('in_transit');
           }}
           className={`bg-blue-500/[0.04] border rounded-2xl p-4 transition-all duration-200 cursor-pointer group shadow-2xs hover:shadow-md ${
-            activeTab === 'orders' && statusFilter === 'in_transit'
+            activeTab === 'orders' && (statusFilter === 'in_transit' || statusFilter === 'assigned')
               ? 'border-blue-500 ring-2 ring-blue-500/20 bg-blue-500/10'
               : 'border-blue-200/80 hover:border-blue-300'
           }`}
@@ -1355,19 +1371,18 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
             <div className="relative shrink-0">
               <select
                 aria-label="Filter by Status"
-                value={statusFilter}
+                value={statusFilter === 'assigned' ? 'in_transit' : statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
                 className="appearance-none bg-slate-50 border border-slate-200 hover:border-slate-300 text-slate-800 text-xs font-semibold rounded-xl pl-3 pr-7 py-1.5 sm:py-2 focus:bg-white focus:outline-none focus:border-red-600 cursor-pointer transition shadow-2xs"
                 title="Filter orders by status"
               >
                 <option value="all">All Statuses ({orders.length})</option>
-                <option value="submitted">Quotes ({quotesCount})</option>
+                <option value="pending">Pending Dispatch ({pendingOrders})</option>
+                <option value="in_transit">Active In-Transit ({inTransitOrders})</option>
+                <option value="submitted">Quotes &amp; Inquiries ({quotesCount})</option>
                 <option value="confirmed">Ready for Driver ({readyCount})</option>
-                <option value="assigned">Driver Assigned ({assignedCount})</option>
-                <option value="in_transit">Active In Transit ({inTransitCount})</option>
-                <option value="delivered">Delivered ({deliveredCount})</option>
+                <option value="delivered">Completed Delivered ({deliveredOrders})</option>
                 <option value="cancelled">Cancelled ({cancelledCount})</option>
-                <option value="pending">All Pending ({pendingOrders})</option>
               </select>
               <ChevronDown className="w-3 h-3 text-slate-400 absolute right-2.5 top-2.5 pointer-events-none" />
             </div>
