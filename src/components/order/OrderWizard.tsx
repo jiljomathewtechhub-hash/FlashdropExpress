@@ -156,6 +156,19 @@ export const OrderWizard: React.FC<OrderWizardProps> = ({ initialData, onNavigat
       : initialData?.vehicleSlug || 'cargo_van';
   const [vehicleSlug, setVehicleSlug] = useState<VehicleSlug>(initialVehSlug);
 
+  // Synchronize state if initialData is passed or updated via navigation
+  useEffect(() => {
+    if (initialData) {
+      const vSlug: VehicleSlug | undefined =
+        typeof initialData === 'string'
+          ? (initialData as VehicleSlug)
+          : initialData?.vehicleSlug;
+      if (vSlug) {
+        setVehicleSlug(vSlug);
+      }
+    }
+  }, [initialData]);
+
   // 7. Extra options
   const [waitingHours, setWaitingHours] = useState<number>(0);
   const [laborHours, setLaborHours] = useState<number>(0);
@@ -452,7 +465,7 @@ export const OrderWizard: React.FC<OrderWizardProps> = ({ initialData, onNavigat
 
       service_area: serviceArea,
       vehicle_id: selectedVeh.id,
-      vehicle_slug: vehicleSlug,
+      vehicle_slug: selectedVeh.slug,
       vehicle_name: selectedVeh.name,
       item_type: itemType,
       item_description: itemDescription || 'Commercial Freight Cargo',

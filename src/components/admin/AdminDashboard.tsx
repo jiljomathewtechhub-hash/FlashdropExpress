@@ -4657,14 +4657,14 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
                   <div>
                     <label className="block text-slate-700 mb-1 font-semibold">Vehicle Required</label>
                     <select
-                      value={editFormData.vehicle_slug || editingOrder.vehicle_slug}
+                      value={((editFormData.vehicle_slug || editingOrder.vehicle_slug) === 'van_suv' ? 'suv_minivan' : (editFormData.vehicle_slug || editingOrder.vehicle_slug))}
                       onChange={(e) => {
                         const slug = e.target.value;
                         const matched = vehicles.find((v) => v.slug === slug);
                         setEditFormData({
                           ...editFormData,
                           vehicle_id: matched?.id || slug,
-                          vehicle_slug: slug as any,
+                          vehicle_slug: (matched?.slug || slug) as any,
                           vehicle_name: matched?.name || editFormData.vehicle_name || editingOrder.vehicle_name,
                         });
                       }}
@@ -5682,13 +5682,13 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, init
                   <div>
                     <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-600 mb-1">Vehicle Required</label>
                     <select
-                      value={quoteFormData.vehicle_slug}
+                      value={quoteFormData.vehicle_slug === 'van_suv' ? 'suv_minivan' : quoteFormData.vehicle_slug}
                       onChange={(e) => {
                         const slug = e.target.value;
                         const matched = vehicles.find((v) => v.slug === slug);
                         recalculateQuotePricing({
                           vehicle_id: matched?.id || slug,
-                          vehicle_slug: slug,
+                          vehicle_slug: matched?.slug || slug,
                           vehicle_name: matched?.name || 'Cargo Van',
                         });
                       }}
